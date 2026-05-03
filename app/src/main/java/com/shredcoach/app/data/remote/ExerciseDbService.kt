@@ -74,9 +74,11 @@ data class ExerciseDbMeta(
 // ═══════════════════════════════════════
 
 @Singleton
-class ExerciseDbService @Inject constructor() {
+class ExerciseDbService @Inject constructor(
+    @com.shredcoach.app.di.NetworkModule.BaseHttpClient baseClient: OkHttpClient
+) {
 
-    private val client = OkHttpClient.Builder()
+    private val client = baseClient.newBuilder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(45, TimeUnit.SECONDS)
         .writeTimeout(15, TimeUnit.SECONDS)

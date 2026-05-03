@@ -71,10 +71,11 @@ data class Micronutrient(
 // ═══════════════════════════════════════
 
 @Singleton
-class GeminiMealService @Inject constructor() {
+class GeminiMealService @Inject constructor(
+    @com.shredcoach.app.di.NetworkModule.BaseHttpClient baseClient: OkHttpClient
+) {
 
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
+    private val client = baseClient.newBuilder()
         .readTimeout(180, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()

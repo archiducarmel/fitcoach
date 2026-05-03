@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Configuration de sécurité réseau (Android 7+).
+  Interdit tout trafic HTTP en clair (force HTTPS) et impose la validation
+  des certificats par les autorités système.
+
+  Cert pinning des domaines LLM (api.openai.com, api.anthropic.com,
+  api.groq.com, generativelanguage.googleapis.com, api.mistral.ai) sera
+  ajouté en Phase B.2 après validation des SPKI pins + backup pins.
+-->
+<network-security-config>
+    <!-- Configuration par défaut : HTTPS uniquement, validation système. -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!--
+      Builds debug : on autorise les certificats utilisateur (Charles Proxy,
+      mitmproxy) pour permettre l'inspection réseau en développement.
+      Désactivé automatiquement en release.
+    -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>

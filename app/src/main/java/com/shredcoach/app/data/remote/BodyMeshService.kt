@@ -25,10 +25,11 @@ import javax.inject.Singleton
  * (erreur 404 "model not found" selon le tier/région API de l'utilisateur).
  */
 @Singleton
-class BodyMeshService @Inject constructor() {
+class BodyMeshService @Inject constructor(
+    @com.shredcoach.app.di.NetworkModule.BaseHttpClient baseClient: OkHttpClient
+) {
 
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
+    private val client = baseClient.newBuilder()
         .readTimeout(180, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
