@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ShredCoach brand monogram : flamme stylisée + haltère minimaliste.
+  Monochrome (blanc), tintable via Compose ColorFilter.tint().
+  Viewport 48×48 centré vertical.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Flamme (y 8→32) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,8
+            C 20,12 16,16 16,24
+            C 16,28 18,30 20,31
+            C 19,29 20,27 22,26
+            C 24,27 25,29 25,30
+            C 25,32 23.5,33 22,33
+            C 18,33 13,30 13,23
+            C 13,16 19,11 24,8 Z" />
+
+    <!-- Barre centrale de l'haltère -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M18,38 L30,38 L30,40 L18,40 Z" />
+
+    <!-- Plateau gauche -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M14,34 L18,34 L18,44 L14,44 Z" />
+
+    <!-- Plateau droit -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,34 L34,34 L34,44 L30,44 Z" />
+
+    <!-- Embout gauche -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M11,36 L14,36 L14,42 L11,42 Z" />
+
+    <!-- Embout droit -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M34,36 L37,36 L37,42 L34,42 Z" />
+</vector>

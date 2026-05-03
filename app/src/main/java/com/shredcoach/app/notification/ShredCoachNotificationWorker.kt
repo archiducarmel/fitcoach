@@ -1,0 +1,97 @@
+package com.shredcoach.app.notification
+
+import android.content.Context
+import androidx.hilt.work.HiltWorker
+import androidx.work.CoroutineWorker
+import androidx.work.WorkerParameters
+import com.shredcoach.app.ShredCoachApplication
+import com.shredcoach.app.data.local.entity.NotifType
+import com.shredcoach.app.data.repository.UserRepository
+import com.shredcoach.app.data.repository.WorkoutRepository
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
+import java.time.LocalDate
+
+@HiltWorker
+class ShredCoachNotificationWorker @AssistedInject constructor(
+    @Assisted private val context: Context,
+    @Assisted params: WorkerParameters,
+    private val userRepository: UserRepository,
+    private val workoutRepository: WorkoutRepository,
+    private val dispatcher: AppNotificationDispatcher
+) : CoroutineWorker(context, params) {
+
+    override suspend fun doWork(): Result {
+        val type = inputData.getString("type") ?: return Result.failure()
+        val profile = userRepository.getUserProfileOnce()
+
+        if (profile?.notificationsEnabled != true) return Result.success()
+
+        when (type) {
+            TYPE_BREAKFAST -> if (profile.notifBreakfast) dispatcher.dispatch(
+                NotifType.MEAL_REMINDER, "🌅 Petit-déjeuner",
+                "C'est l'heure de ton petit-déj ! Les protéines n'attendent pas.",
+                ShredCoachApplication.CHANNEL_MEALS
+            )
+            TYPE_LUNCH -> if (profile.notifLunch) dispatcher.dispatch(
+                NotifType.MEAL_REMINDER, "☀️ Déjeuner",
+                "Pause déjeuner ! Pense à tes protéines et glucides.",
+                ShredCoachApplication.CHANNEL_MEALS
+            )
+            TYPE_SNACK -> if (profile.notifSnack) dispatcher.dispatch(
+                NotifType.MEAL_REMINDER, "🍎 Snack",
+                "Un petit snack pré-training ? Banane + beurre de cacahuète !",
+                ShredCoachApplication.CHANNEL_MEALS
+            )
+            TYPE_DINNER -> if (profile.notifDinner) dispatcher.dispatch(
+                NotifType.MEAL_REMINDER, "🌙 Dîner",
+                "C'est l'heure du dîner. Protéines + légumes pour la récup !",
+                ShredCoachApplication.CHANNEL_MEALS
+            )
+            TYPE_SHAKER_MORNING -> if (profile.notifShaker) dispatcher.dispatch(
+                NotifType.SHAKER_REMINDER, "🥤 Shaker protéines",
+                "N'oublie pas ton shaker du matin ! 30g de whey.",
+                ShredCoachApplication.CHANNEL_MEALS
+            )
+            TYPE_SHAKER_EVENING -> if (profile.notifShaker) dispatcher.dispatch(
+                NotifType.SHAKER_REMINDER, "🥤 Shaker avant coucher",
+                "Caséine + eau : récupération musculaire pendant la nuit.",
+                ShredCoachApplication.CHANNEL_MEALS
+            )
+            TYPE_BEDTIME -> if (profile.notifBedtime) dispatcher.dispatch(
+                NotifType.BEDTIME_REMINDER, "😴 Bientôt l'heure de dormir",
+                "Le sommeil c'est 80% de la récup. 7-8h minimum !",
+                ShredCoachApplication.CHANNEL_BEDTIME
+            )
+            TYPE_MOTIVATION -> if (profile.notifMotivation) {
+                checkMotivation()
+            }
+        }
+        return Result.success()
+    }
+
+    private suspend fun checkMotivation() {
+        val today = LocalDate.now()
+        val threeDaysAgo = today.minusDays(3)
+        val count = workoutRepository.getWorkoutCountInPeriod(threeDaysAgo, today)
+
+        if (count == 0) {
+            dispatcher.dispatch(
+                NotifType.MOTIVATION, "💪 On lâche rien !",
+                "Ça fait 3 jours sans séance. Une petite session aujourd'hui ?",
+                ShredCoachApplication.CHANNEL_WORKOUT
+            )
+        }
+    }
+
+    companion object {
+        const val TYPE_BREAKFAST = "breakfast"
+        const val TYPE_LUNCH = "lunch"
+        const val TYPE_SNACK = "snack"
+        const val TYPE_DINNER = "dinner"
+        const val TYPE_SHAKER_MORNING = "shaker_morning"
+        const val TYPE_SHAKER_EVENING = "shaker_evening"
+        const val TYPE_BEDTIME = "bedtime"
+        const val TYPE_MOTIVATION = "motivation"
+    }
+}

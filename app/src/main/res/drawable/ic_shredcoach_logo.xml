@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Icône splash screen ShredCoach : monogramme flamme + haltère
+  sur fond circulaire OrangeVibrant.
+  Viewport 96×96, tout le contenu visible tient dans la safe area (~60%)
+  d'Android 12+ splash screen, soit ~x:19-77, y:19-77.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+
+    <!-- Fond circulaire orange -->
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M48,0C21.5,0 0,21.5 0,48s21.5,48 48,48s48,-21.5 48,-48S74.5,0 48,0z" />
+
+    <!-- Flamme -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M48,22
+            C 45,28 41,32 41,40
+            C 41,44 43,46 45,47
+            C 44,44 45,42 48,41
+            C 50,43 52,45 52,48
+            C 52,51 50,53 48,53
+            C 43,53 38,50 38,42
+            C 38,34 44,28 48,22 Z" />
+
+    <!-- Barre centrale de l'haltère -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M42,60 L54,60 L54,62 L42,62 Z" />
+
+    <!-- Plateau gauche -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,56 L42,56 L42,66 L38,66 Z" />
+
+    <!-- Plateau droit -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,56 L58,56 L58,66 L54,66 Z" />
+
+    <!-- Embout gauche -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M35,58 L38,58 L38,64 L35,64 Z" />
+
+    <!-- Embout droit -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M58,58 L61,58 L61,64 L58,64 Z" />
+</vector>

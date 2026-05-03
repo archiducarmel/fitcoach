@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/c/Users/Sitou/.gradle/wrapper/dists/gradle-8.5-bin/5t9huq95ubn472n8rpzujfbqh/gradle-8.5/bin/gradle assembleDebug)",
+      "Bash(curl -sL -o gradle/wrapper/gradle-wrapper.jar \"https://raw.githubusercontent.com/gradle/gradle/v8.5.0/gradle/wrapper/gradle-wrapper.jar\")",
+      "Bash(./gradlew.bat assembleDebug)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew.bat assembleDebug)",
+      "Bash(find .:*)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew.bat clean assembleDebug)",
+      "Bash(find:*)",
+      "Bash(xargs grep:*)",
+      "Bash(./gradlew.bat compileDebugKotlin)",
+      "Bash(./gradlew.bat compileDebugKotlin --info)",
+      "Bash(./gradlew compileDebugKotlin)",
+      "Bash(ls \"C:/Users/Sitou/Desktop/FitCoach/gradlew\"*)",
+      "Bash(ls \"C:/Users/Sitou/Desktop/FitCoach/\"*.bat)",
+      "Bash(cmd.exe //c \"gradlew.bat compileDebugKotlin 2>&1\")",
+      "Bash(cmd.exe //c \".\\\\gradlew.bat compileDebugKotlin\")",
+      "Bash(grep -E \"\\\\.kt$\")",
+      "Bash(ls gradlew*)",
+      "Bash(cmd.exe //c \"gradlew.bat compileDebugKotlin\")",
+      "Bash(cmd.exe //c \".\\\\\\\\gradlew.bat compileDebugKotlin\")",
+      "Bash(./gradlew assembleDebug)",
+      "Bash(ls:*)",
+      "Bash(cmd.exe /c \"gradlew.bat assembleDebug 2>&1\")",
+      "Bash(cmd.exe /c \"gradlew.bat assembleDebug\")",
+      "Bash(bash gradlew:*)",
+      "Bash(bash ./gradlew assembleDebug)",
+      "Bash(C:/Users/Sitou/Desktop/FitCoach/gradlew.bat assembleDebug)",
+      "WebSearch",
+      "Bash(ls gradlew* *.bat)",
+      "Bash(ls -la gradle*)",
+      "Bash(powershell -Command \"& .\\\\gradlew.bat assembleDebug 2>&1 | Select-Object -Last 50\")",
+      "WebFetch(domain:oss.exercisedb.dev)",
+      "WebFetch(domain:docs.exercisedb.dev)",
+      "WebFetch(domain:v2.exercisedb.io)",
+      "WebFetch(domain:exercisedb-api.vercel.app)",
+      "WebFetch(domain:exercisedb.p.rapidapi.com)",
+      "Bash(python *)"
+    ]
+  }
+}

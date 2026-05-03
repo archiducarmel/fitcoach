@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Dumbbell icon centered in adaptive icon safe zone -->
+    <!-- Left outer plate -->
+    <path android:fillColor="#FFFFFF" android:pathData="M28,44 L32,44 L32,64 L28,64 Z"/>
+    <!-- Left inner plate -->
+    <path android:fillColor="#FFFFFF" android:pathData="M32,42 L38,42 L38,66 L32,66 Z"/>
+    <!-- Left bar -->
+    <path android:fillColor="#FFFFFF" android:pathData="M38,50 L44,50 L44,58 L38,58 Z"/>
+    <!-- Center bar -->
+    <path android:fillColor="#FFFFFF" android:pathData="M44,52 L64,52 L64,56 L44,56 Z"/>
+    <!-- Right bar -->
+    <path android:fillColor="#FFFFFF" android:pathData="M64,50 L70,50 L70,58 L64,58 Z"/>
+    <!-- Right inner plate -->
+    <path android:fillColor="#FFFFFF" android:pathData="M70,42 L76,42 L76,66 L70,66 Z"/>
+    <!-- Right outer plate -->
+    <path android:fillColor="#FFFFFF" android:pathData="M76,44 L80,44 L80,64 L76,64 Z"/>
+</vector>

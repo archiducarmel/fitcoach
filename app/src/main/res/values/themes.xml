@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.ShredCoach" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/splash_background</item>
+    </style>
+
+    <style name="Theme.ShredCoach.Splash" parent="Theme.ShredCoach">
+        <item name="android:windowBackground">@color/splash_background</item>
+    </style>
+
+    <color name="splash_background">#0F172A</color>
+    <color name="orange_vibrant">#FF6B35</color>
+</resources>
