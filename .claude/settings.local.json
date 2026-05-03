@@ -50,7 +50,10 @@
       "PowerShell($env:JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:Path = \"$env:JAVA_HOME\\\\bin;$env:Path\"; .\\\\gradlew.bat :app:kspDebugKotlin --console=plain --no-daemon 2>&1 | Select-Object -Last 25)",
       "PowerShell($env:JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:Path = \"$env:JAVA_HOME\\\\bin;$env:Path\"; .\\\\gradlew.bat :app:kspDebugKotlin --console=plain --no-daemon 2>&1 | Select-Object -Last 20)",
       "PowerShell($env:JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:Path = \"$env:JAVA_HOME\\\\bin;$env:Path\"; .\\\\gradlew.bat :app:compileDebugKotlin --console=plain --no-daemon 2>&1 | Select-Object -Last 30)",
-      "Bash(git -c user.email=claude@local -c 'user.name=ShredCoach Dev' commit -q -m 'Phase D: Room migration v33→v34 \\(drop legacy API key columns\\) *)"
+      "Bash(git -c user.email=claude@local -c 'user.name=ShredCoach Dev' commit -q -m 'Phase D: Room migration v33→v34 \\(drop legacy API key columns\\) *)",
+      "PowerShell($env:JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:Path = \"$env:JAVA_HOME\\\\bin;$env:Path\"; .\\\\gradlew.bat :app:testDebugUnitTest --console=plain --no-daemon 2>&1 | Select-Object -Last 50)",
+      "PowerShell($env:JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:Path = \"$env:JAVA_HOME\\\\bin;$env:Path\"; .\\\\gradlew.bat :app:assembleDebugAndroidTest --console=plain --no-daemon 2>&1 | Select-Object -Last 30)",
+      "Bash(git -c user.email=claude@local -c 'user.name=ShredCoach Dev' commit -q -m 'Phase E: testing infrastructure + first security tests *)"
     ]
   }
 }

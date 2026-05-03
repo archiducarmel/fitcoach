@@ -16,7 +16,8 @@ android {
         versionCode = 1
         versionName = "1.0.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Custom runner injecte HiltTestApplication pour les instrumented tests.
+        testInstrumentationRunner = "com.shredcoach.app.HiltTestRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -57,6 +58,13 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+
+    // MigrationTestHelper a besoin d'accéder aux schémas Room exportés
+    // au runtime des tests instrumentés — on les déclare comme asset
+    // du source set androidTest (ils sont packagés dans le test APK).
+    sourceSets {
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
     }
 }
 
@@ -127,10 +135,33 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
-    // Testing
+    // ───────────────────────────────────────────────
+    // Tests unitaires (src/test) — JVM, rapides, isolés
+    // ───────────────────────────────────────────────
     testImplementation("junit:junit:4.13.2")
+    testImplementation("io.mockk:mockk:1.13.9")
+    testImplementation("app.cash.turbine:turbine:1.0.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation("com.google.truth:truth:1.4.0")
+
+    // ───────────────────────────────────────────────
+    // Tests instrumentés (src/androidTest) — emulator/device
+    // ───────────────────────────────────────────────
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test:rules:1.5.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation(platform("androidx.compose:compose-bom:2023.10.01"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    // Room migration testing (MigrationTestHelper)
+    androidTestImplementation("androidx.room:room-testing:2.6.1")
+
+    // Hilt testing
+    androidTestImplementation("com.google.dagger:hilt-android-testing:2.50")
+    kspAndroidTest("com.google.dagger:hilt-android-compiler:2.50")
+
+    // Truth pour les assertions lisibles
+    androidTestImplementation("com.google.truth:truth:1.4.0")
 }
