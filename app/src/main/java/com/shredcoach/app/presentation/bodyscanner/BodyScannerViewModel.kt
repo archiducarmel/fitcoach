@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.shredcoach.app.data.local.secure.SecureKeyStore
 import com.shredcoach.app.data.remote.BodyAnalysisResult
 import com.shredcoach.app.data.remote.BodyAnalysisService
 import com.shredcoach.app.data.remote.BodyMeshService
@@ -89,9 +90,9 @@ class BodyScannerViewModel @Inject constructor(
         // Charger les valeurs existantes du profil pour pré-remplir les champs
         viewModelScope.launch {
             val profile = userRepository.getUserProfileOnce()
-            val hasKey = !profile?.geminiApiKey.isNullOrBlank()
-                || !profile?.groqMealApiKey.isNullOrBlank()
-                || !profile?.mistralApiKey.isNullOrBlank()
+            val hasKey = userRepository.hasApiKey(SecureKeyStore.Provider.GEMINI)
+                || userRepository.hasApiKey(SecureKeyStore.Provider.GROQ_MEAL)
+                || userRepository.hasApiKey(SecureKeyStore.Provider.MISTRAL)
             _state.update {
                 it.copy(
                     isConfigured = hasKey,
@@ -130,9 +131,9 @@ class BodyScannerViewModel @Inject constructor(
             // On réutilise le provider du Meal Scanner (même pipeline multi-provider vision)
             val provider = profile?.mealScanProvider ?: "GEMINI"
             val apiKey = when (provider) {
-                "GROQ" -> profile?.groqMealApiKey ?: ""
-                "MISTRAL" -> profile?.mistralApiKey ?: ""
-                else -> profile?.geminiApiKey ?: ""
+                "GROQ" -> userRepository.getApiKey(SecureKeyStore.Provider.GROQ_MEAL)
+                "MISTRAL" -> userRepository.getApiKey(SecureKeyStore.Provider.MISTRAL)
+                else -> userRepository.getApiKey(SecureKeyStore.Provider.GEMINI)
             }
             val model = profile?.geminiModel ?: "gemini-2.5-flash"
 
@@ -232,8 +233,7 @@ class BodyScannerViewModel @Inject constructor(
         _state.update { it.copy(isGeneratingMesh = true, meshError = null) }
 
         viewModelScope.launch {
-            val profile = userRepository.getUserProfileOnce()
-            val apiKey = profile?.geminiApiKey ?: ""
+            val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.GEMINI)
             if (apiKey.isBlank()) {
                 _state.update { it.copy(isGeneratingMesh = false, meshError = "Clé API Gemini requise pour générer le mesh") }
                 return@launch

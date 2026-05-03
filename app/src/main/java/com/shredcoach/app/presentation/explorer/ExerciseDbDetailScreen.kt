@@ -101,11 +101,11 @@ class ExerciseDbDetailViewModel @Inject constructor(
             val profile = userRepository.getUserProfileOnce() ?: return@launch
             val provider = profile.mealScanProvider
             val apiKey = when (provider) {
-                "GROQ" -> profile.groqMealApiKey
-                "MISTRAL" -> profile.mistralApiKey
-                else -> profile.geminiApiKey
+                "GROQ" -> userRepository.getApiKey(com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.GROQ_MEAL)
+                "MISTRAL" -> userRepository.getApiKey(com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.MISTRAL)
+                else -> userRepository.getApiKey(com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.GEMINI)
             }
-            if (apiKey.isNullOrBlank()) return@launch // Pas de clé → on reste en anglais silencieusement
+            if (apiKey.isBlank()) return@launch // Pas de clé → on reste en anglais silencieusement
 
             _state.update { it.copy(isTranslating = true) }
             instructionsTranslator.translate(

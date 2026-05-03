@@ -3,6 +3,7 @@ package com.shredcoach.app.presentation.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shredcoach.app.data.local.entity.*
+import com.shredcoach.app.data.local.secure.SecureKeyStore
 import com.shredcoach.app.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -12,7 +13,12 @@ import javax.inject.Inject
 data class SettingsState(
     val profile: UserProfileEntity? = null,
     val isLoading: Boolean = true,
-    val saved: Boolean = false
+    val saved: Boolean = false,
+    // Clés API : lues depuis SecureKeyStore (chiffré), pas Room.
+    val llmApiKey: String = "",
+    val geminiApiKey: String = "",
+    val groqMealApiKey: String = "",
+    val mistralApiKey: String = ""
 )
 
 @HiltViewModel
@@ -28,6 +34,19 @@ class SettingsViewModel @Inject constructor(
             userRepository.getUserProfile().collect { profile ->
                 _state.update { it.copy(profile = profile, isLoading = false) }
             }
+        }
+        refreshApiKeys()
+    }
+
+    /** Recharge les 4 clés depuis le SecureKeyStore. */
+    private fun refreshApiKeys() {
+        _state.update {
+            it.copy(
+                llmApiKey = userRepository.getApiKey(SecureKeyStore.Provider.LLM),
+                geminiApiKey = userRepository.getApiKey(SecureKeyStore.Provider.GEMINI),
+                groqMealApiKey = userRepository.getApiKey(SecureKeyStore.Provider.GROQ_MEAL),
+                mistralApiKey = userRepository.getApiKey(SecureKeyStore.Provider.MISTRAL)
+            )
         }
     }
 
@@ -62,16 +81,22 @@ class SettingsViewModel @Inject constructor(
     fun updateDarkMode(v: String) = updateProfile { it.copy(darkMode = v) }
     fun updateThemePalette(key: String) = updateProfile { it.copy(themePalette = key) }
     fun updateUseImperial(v: Boolean) = updateProfile { it.copy(useImperial = v) }
-    // Meal Scanner
+    // Meal Scanner — provider/model restent dans Room, mais clés API → SecureKeyStore
     fun updateMealScanProvider(v: String) = updateProfile { it.copy(mealScanProvider = v) }
-    fun updateGeminiApiKey(v: String) = updateProfile { it.copy(geminiApiKey = v) }
     fun updateGeminiModel(v: String) = updateProfile { it.copy(geminiModel = v) }
-    fun updateGroqMealApiKey(v: String) = updateProfile { it.copy(groqMealApiKey = v) }
-    fun updateMistralApiKey(v: String) = updateProfile { it.copy(mistralApiKey = v) }
-    // Assistant IA
+    fun updateGeminiApiKey(v: String) = setApiKey(SecureKeyStore.Provider.GEMINI, v)
+    fun updateGroqMealApiKey(v: String) = setApiKey(SecureKeyStore.Provider.GROQ_MEAL, v)
+    fun updateMistralApiKey(v: String) = setApiKey(SecureKeyStore.Provider.MISTRAL, v)
+    // Assistant IA — provider/model restent dans Room, clé API → SecureKeyStore
     fun updateLlmProvider(v: String) = updateProfile { it.copy(llmProvider = v) }
-    fun updateLlmApiKey(v: String) = updateProfile { it.copy(llmApiKey = v) }
     fun updateLlmModel(v: String) = updateProfile { it.copy(llmModel = v) }
+    fun updateLlmApiKey(v: String) = setApiKey(SecureKeyStore.Provider.LLM, v)
+
+    private fun setApiKey(provider: SecureKeyStore.Provider, value: String) {
+        userRepository.setApiKey(provider, value)
+        refreshApiKeys()
+        _state.update { it.copy(saved = true) }
+    }
 
     private fun updateProfile(transform: (UserProfileEntity) -> UserProfileEntity) {
         viewModelScope.launch {

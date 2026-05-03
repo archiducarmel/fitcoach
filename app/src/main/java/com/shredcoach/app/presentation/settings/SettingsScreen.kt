@@ -285,7 +285,7 @@ fun SettingsScreen(
                         )
                         var showGeminiKey by remember { mutableStateOf(false) }
                         OutlinedTextField(
-                            value = profile.geminiApiKey,
+                            value = state.geminiApiKey,
                             onValueChange = { viewModel.updateGeminiApiKey(it.trim()) },
                             label = { Text("Clé API Gemini") },
                             modifier = Modifier.fillMaxWidth(),
@@ -313,7 +313,7 @@ fun SettingsScreen(
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                         var showGroqKey by remember { mutableStateOf(false) }
                         OutlinedTextField(
-                            value = profile.groqMealApiKey,
+                            value = state.groqMealApiKey,
                             onValueChange = { viewModel.updateGroqMealApiKey(it.trim()) },
                             label = { Text("Clé API Groq") },
                             modifier = Modifier.fillMaxWidth(),
@@ -341,7 +341,7 @@ fun SettingsScreen(
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                         var showMistralKey by remember { mutableStateOf(false) }
                         OutlinedTextField(
-                            value = profile.mistralApiKey,
+                            value = state.mistralApiKey,
                             onValueChange = { viewModel.updateMistralApiKey(it.trim()) },
                             label = { Text("Clé API Mistral") },
                             modifier = Modifier.fillMaxWidth(),
@@ -391,7 +391,7 @@ fun SettingsScreen(
                     var showKey by remember { mutableStateOf(false) }
                     val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
                     OutlinedTextField(
-                        value = profile.llmApiKey,
+                        value = state.llmApiKey,
                         onValueChange = { viewModel.updateLlmApiKey(it.trim()) },
                         label = { Text("Clé API") },
                         modifier = Modifier.fillMaxWidth(),

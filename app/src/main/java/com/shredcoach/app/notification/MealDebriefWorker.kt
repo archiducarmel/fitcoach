@@ -7,6 +7,7 @@ import androidx.work.WorkerParameters
 import com.shredcoach.app.ShredCoachApplication
 import com.shredcoach.app.data.local.dao.MealScanDao
 import com.shredcoach.app.data.local.entity.NotifType
+import com.shredcoach.app.data.local.secure.SecureKeyStore
 import com.shredcoach.app.data.remote.LlmProvider
 import com.shredcoach.app.data.repository.ChatRepository
 import com.shredcoach.app.data.repository.NutritionRepository
@@ -66,7 +67,7 @@ class MealDebriefWorker @AssistedInject constructor(
         )
 
         // Appeler le LLM (fallback local si échec/timeout/no-key)
-        val apiKey = profile.llmApiKey
+        val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.LLM)
         val llmMessage = if (apiKey.isNotBlank()) {
             try {
                 val provider = runCatching { LlmProvider.valueOf(profile.llmProvider) }.getOrDefault(LlmProvider.GROQ)

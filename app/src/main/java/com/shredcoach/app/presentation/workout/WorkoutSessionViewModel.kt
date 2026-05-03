@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shredcoach.app.data.local.entity.ExerciseEntity
 import com.shredcoach.app.data.local.entity.WorkoutSetEntity
+import com.shredcoach.app.data.local.secure.SecureKeyStore
 import com.shredcoach.app.data.remote.LlmProvider
 import com.shredcoach.app.data.repository.ChatRepository
 import com.shredcoach.app.data.repository.ExerciseRepository
@@ -1027,7 +1028,7 @@ class WorkoutSessionViewModel @Inject constructor(
             )
 
             val profile = userRepository.getUserProfileOnce()
-            val apiKey = profile?.llmApiKey ?: ""
+            val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.LLM)
 
             if (apiKey.isNotBlank()) {
                 val provider = try { LlmProvider.valueOf(profile?.llmProvider ?: "GROQ") } catch (_: Exception) { LlmProvider.GROQ }
@@ -1132,7 +1133,7 @@ class WorkoutSessionViewModel @Inject constructor(
                 isPersonalRecord = s.isPersonalRecord, goalName = s.userGoalName
             )
             val profile = userRepository.getUserProfileOnce()
-            val apiKey = profile?.llmApiKey ?: ""
+            val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.LLM)
             if (apiKey.isNotBlank()) {
                 val provider = try { LlmProvider.valueOf(profile?.llmProvider ?: "GROQ") } catch (_: Exception) { LlmProvider.GROQ }
                 val model = profile?.llmModel?.takeIf { it.isNotBlank() }
@@ -1330,7 +1331,7 @@ class WorkoutSessionViewModel @Inject constructor(
 
                 // Appel LLM en arrière-plan — met à jour le summary si encore visible
                 val profile2 = profileFresh
-                val apiKey = profile2?.llmApiKey ?: ""
+                val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.LLM)
                 if (apiKey.isNotBlank()) {
                     viewModelScope.launch {
                         val provider = try { LlmProvider.valueOf(profile2?.llmProvider ?: "GROQ") } catch (_: Exception) { LlmProvider.GROQ }

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shredcoach.app.data.local.dao.ConversationSummary
 import com.shredcoach.app.data.local.entity.ChatMessageEntity
+import com.shredcoach.app.data.local.secure.SecureKeyStore
 import com.shredcoach.app.data.remote.LlmProvider
 import com.shredcoach.app.data.repository.ChatRepository
 import com.shredcoach.app.data.repository.UserContextBuilder
@@ -65,7 +66,7 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             val profile = userRepository.getUserProfileOnce()
             _state.update { it.copy(
-                isConfigured = !profile?.llmApiKey.isNullOrBlank(),
+                isConfigured = userRepository.hasApiKey(SecureKeyStore.Provider.LLM),
                 providerName = try { LlmProvider.valueOf(profile?.llmProvider ?: "GROQ").displayName } catch (_: Exception) { "Groq" }
             ) }
         }
@@ -127,7 +128,7 @@ class ChatViewModel @Inject constructor(
             ))
 
             val profile = userRepository.getUserProfileOnce()
-            val apiKey = profile?.llmApiKey ?: ""
+            val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.LLM)
             val providerStr = profile?.llmProvider ?: "GROQ"
             val provider = try { LlmProvider.valueOf(providerStr) } catch (_: Exception) { LlmProvider.GROQ }
             val model = profile?.llmModel?.takeIf { it.isNotBlank() }

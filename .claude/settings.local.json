@@ -44,7 +44,9 @@
       "Bash(/c/Program Files/Android/Android Studio/jbr/bin/java *)",
       "PowerShell($env:JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:Path = \"$env:JAVA_HOME\\\\bin;$env:Path\"; .\\\\gradlew.bat :app:compileDebugKotlin --console=plain --no-daemon 2>&1 | Select-Object -Last 60)",
       "Bash(git add *)",
-      "Bash(git -c user.email=claude@local -c 'user.name=ShredCoach Dev' commit -q -m 'Phase B.1: network security baseline *)"
+      "Bash(git -c user.email=claude@local -c 'user.name=ShredCoach Dev' commit -q -m 'Phase B.1: network security baseline *)",
+      "PowerShell($env:JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:Path = \"$env:JAVA_HOME\\\\bin;$env:Path\"; .\\\\gradlew.bat :app:compileDebugKotlin --console=plain --no-daemon 2>&1 | Select-Object -Last 50)",
+      "Bash(git -c user.email=claude@local -c 'user.name=ShredCoach Dev' commit -q -m 'Phase C: encrypt LLM API keys \\(Room → EncryptedSharedPreferences\\) *)"
     ]
   }
 }

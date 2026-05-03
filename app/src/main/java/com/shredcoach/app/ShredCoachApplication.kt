@@ -14,11 +14,15 @@ class ShredCoachApplication : Application(), Configuration.Provider {
 
     @Inject lateinit var workerFactory: HiltWorkerFactory
     @Inject lateinit var shreddyVoice: com.shredcoach.app.domain.voice.ShreddyVoice
+    @Inject lateinit var apiKeyMigrationManager: com.shredcoach.app.data.local.secure.ApiKeyMigrationManager
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannels()
         shreddyVoice.init(this)
+        // Migre les clés API en clair (Room) vers SecureKeyStore (chiffré)
+        // au premier démarrage post-Phase C. Idempotent + non bloquant.
+        apiKeyMigrationManager.migrateInBackground()
     }
 
     override val workManagerConfiguration: Configuration

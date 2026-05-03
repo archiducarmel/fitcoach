@@ -4,6 +4,7 @@ import com.shredcoach.app.data.local.dao.UserProfileDao
 import com.shredcoach.app.data.local.entity.ProgressPhotoEntity
 import com.shredcoach.app.data.local.entity.UserProfileEntity
 import com.shredcoach.app.data.local.entity.WeightLogEntity
+import com.shredcoach.app.data.local.secure.SecureKeyStore
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 import javax.inject.Inject
@@ -11,7 +12,8 @@ import javax.inject.Singleton
 
 @Singleton
 class UserRepository @Inject constructor(
-    private val userProfileDao: UserProfileDao
+    private val userProfileDao: UserProfileDao,
+    private val secureKeyStore: SecureKeyStore
 ) {
     fun getUserProfile(): Flow<UserProfileEntity?> =
         userProfileDao.getUserProfile()
@@ -43,4 +45,25 @@ class UserRepository @Inject constructor(
     suspend fun getPhotosByType(type: String) = userProfileDao.getPhotosByType(type)
     suspend fun insertPhoto(photo: ProgressPhotoEntity) = userProfileDao.insertPhoto(photo)
     suspend fun deletePhoto(photo: ProgressPhotoEntity) = userProfileDao.deletePhoto(photo)
+
+    // ──────────────────────────────────────────────────────────
+    // Clés API (chiffrées via SecureKeyStore — JAMAIS dans Room).
+    // Les colonnes correspondantes dans UserProfileEntity sont
+    // conservées le temps de la migration douce, puis retirées
+    // en Phase D via Room migration v33 → v34.
+    // ──────────────────────────────────────────────────────────
+
+    fun getApiKey(provider: SecureKeyStore.Provider): String =
+        secureKeyStore.getKey(provider)
+
+    fun setApiKey(provider: SecureKeyStore.Provider, value: String) {
+        secureKeyStore.setKey(provider, value)
+    }
+
+    fun hasApiKey(provider: SecureKeyStore.Provider): Boolean =
+        secureKeyStore.hasKey(provider)
+
+    fun clearApiKey(provider: SecureKeyStore.Provider) {
+        secureKeyStore.clear(provider)
+    }
 }

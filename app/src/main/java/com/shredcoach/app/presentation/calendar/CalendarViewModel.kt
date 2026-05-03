@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.shredcoach.app.data.local.entity.ScheduledWorkoutEntity
 import com.shredcoach.app.data.local.entity.WorkoutEntity
 import com.shredcoach.app.data.local.entity.WorkoutLogEntity
+import com.shredcoach.app.data.local.secure.SecureKeyStore
 import com.shredcoach.app.data.remote.LlmProvider
 import com.shredcoach.app.data.repository.ChatRepository
 import com.shredcoach.app.data.repository.ScheduledWorkoutRepository
@@ -244,7 +245,7 @@ class CalendarViewModel @Inject constructor(
             }
 
             // Message IA (contextualisé)
-            val apiKey = profile?.llmApiKey ?: ""
+            val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.LLM)
             val llmMessage = if (apiKey.isNotBlank() && suggestions.isNotEmpty() && profile != null) {
                 try {
                     val provider = runCatching { LlmProvider.valueOf(profile.llmProvider) }

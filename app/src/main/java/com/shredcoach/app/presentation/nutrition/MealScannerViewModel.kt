@@ -10,6 +10,7 @@ import com.shredcoach.app.data.local.entity.FoodEntity
 import com.shredcoach.app.data.local.entity.MealLogEntity
 import com.shredcoach.app.data.local.entity.MealScanEntity
 import com.shredcoach.app.data.local.entity.MealType
+import com.shredcoach.app.data.local.secure.SecureKeyStore
 import com.shredcoach.app.data.remote.BowlType
 import com.shredcoach.app.data.remote.GeminiMealService
 import com.shredcoach.app.data.remote.MealAnalysisResult
@@ -72,9 +73,9 @@ class MealScannerViewModel @Inject constructor(
         viewModelScope.launch {
             val profile = userRepository.getUserProfileOnce()
             val hasKey = when (profile?.mealScanProvider) {
-                "GROQ" -> !profile.groqMealApiKey.isNullOrBlank()
-                "MISTRAL" -> !profile.mistralApiKey.isNullOrBlank()
-                else -> !profile?.geminiApiKey.isNullOrBlank()
+                "GROQ" -> userRepository.hasApiKey(SecureKeyStore.Provider.GROQ_MEAL)
+                "MISTRAL" -> userRepository.hasApiKey(SecureKeyStore.Provider.MISTRAL)
+                else -> userRepository.hasApiKey(SecureKeyStore.Provider.GEMINI)
             }
             _state.update { it.copy(isConfigured = hasKey) }
         }
@@ -117,9 +118,9 @@ class MealScannerViewModel @Inject constructor(
             val profile = userRepository.getUserProfileOnce()
             val provider = profile?.mealScanProvider ?: "GEMINI"
             val apiKey = when (provider) {
-                "GROQ" -> profile?.groqMealApiKey ?: ""
-                "MISTRAL" -> profile?.mistralApiKey ?: ""
-                else -> profile?.geminiApiKey ?: ""
+                "GROQ" -> userRepository.getApiKey(SecureKeyStore.Provider.GROQ_MEAL)
+                "MISTRAL" -> userRepository.getApiKey(SecureKeyStore.Provider.MISTRAL)
+                else -> userRepository.getApiKey(SecureKeyStore.Provider.GEMINI)
             }
             val model = profile?.geminiModel ?: "gemini-2.5-flash"
 

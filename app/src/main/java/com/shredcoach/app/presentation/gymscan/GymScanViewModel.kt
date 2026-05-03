@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.shredcoach.app.data.local.secure.SecureKeyStore
 import com.shredcoach.app.data.remote.ExerciseDbExercise
 import com.shredcoach.app.data.remote.ExerciseDbService
 import com.shredcoach.app.data.remote.GymScanMatcher
@@ -47,9 +48,9 @@ class GymScanViewModel @Inject constructor(
         viewModelScope.launch {
             val profile = userRepository.getUserProfileOnce()
             val hasKey = when (profile?.mealScanProvider) {
-                "GROQ" -> !profile.groqMealApiKey.isNullOrBlank()
-                "MISTRAL" -> !profile.mistralApiKey.isNullOrBlank()
-                else -> !profile?.geminiApiKey.isNullOrBlank()
+                "GROQ" -> userRepository.hasApiKey(SecureKeyStore.Provider.GROQ_MEAL)
+                "MISTRAL" -> userRepository.hasApiKey(SecureKeyStore.Provider.MISTRAL)
+                else -> userRepository.hasApiKey(SecureKeyStore.Provider.GEMINI)
             }
             _state.update { it.copy(isConfigured = hasKey) }
             Log.d(TAG, "isConfigured=$hasKey")
@@ -76,9 +77,9 @@ class GymScanViewModel @Inject constructor(
             val profile = userRepository.getUserProfileOnce()
             val provider = profile?.mealScanProvider ?: "GEMINI"
             val apiKey = when (provider) {
-                "GROQ" -> profile?.groqMealApiKey ?: ""
-                "MISTRAL" -> profile?.mistralApiKey ?: ""
-                else -> profile?.geminiApiKey ?: ""
+                "GROQ" -> userRepository.getApiKey(SecureKeyStore.Provider.GROQ_MEAL)
+                "MISTRAL" -> userRepository.getApiKey(SecureKeyStore.Provider.MISTRAL)
+                else -> userRepository.getApiKey(SecureKeyStore.Provider.GEMINI)
             }
             val model = profile?.geminiModel ?: "gemini-2.5-flash"
 
