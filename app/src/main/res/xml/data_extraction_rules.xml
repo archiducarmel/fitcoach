@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Règles de sauvegarde pour Android 12+ (API 31+).
+  Distingue le backup cloud (Google Drive) du transfert device-à-device.
+-->
 <data-extraction-rules>
+    <!--
+      Sauvegarde Cloud (Google Drive auto-backup) : risque maximal, on exclut
+      les données sensibles. La DB Room contient des informations privées
+      (photos progression, mesures, scans repas, et temporairement les clés API
+      LLM en clair — voir Phase C). Les fichiers -shm/-wal sont les compagnons
+      SQLite WAL, à exclure ensemble pour cohérence.
+    -->
     <cloud-backup>
-        <include domain="sharedpref" path="."/>
-        <include domain="database" path="."/>
+        <exclude domain="database" path="shredcoach_db"/>
+        <exclude domain="database" path="shredcoach_db-shm"/>
+        <exclude domain="database" path="shredcoach_db-wal"/>
+        <exclude domain="sharedpref" path="shredcoach_secure_keys.xml"/>
     </cloud-backup>
+
+    <!--
+      Transfert device-à-device (Smart Switch Samsung, Quick Share Pixel, etc.) :
+      transfert physique direct entre deux appareils du même utilisateur,
+      risque faible. On autorise tout pour préserver l'UX lors d'un
+      changement de téléphone (l'historique d'entraînement est conservé).
+    -->
+    <device-transfer>
+        <!-- Tout est inclus par défaut -->
+    </device-transfer>
 </data-extraction-rules>

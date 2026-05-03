@@ -1,5 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Règles de sauvegarde pour Android 6-11 (auto-backup vers Google Drive).
+  Pour Android 12+, voir data_extraction_rules.xml.
+
+  Stratégie : allowBackup=true mais exclusion stricte des données sensibles.
+-->
 <full-backup-content>
-    <include domain="sharedpref" path="."/>
-    <include domain="database" path="."/>
+    <!-- Base Room : contient les données utilisateur sensibles
+         (photos de progression, mesures corporelles, scans repas, historique séances,
+         et temporairement les clés API LLM en clair — voir Phase C de la roadmap sécurité).
+         Les fichiers -shm et -wal sont les compagnons SQLite WAL : à exclure ensemble
+         pour éviter un backup incohérent. -->
+    <exclude domain="database" path="shredcoach_db"/>
+    <exclude domain="database" path="shredcoach_db-shm"/>
+    <exclude domain="database" path="shredcoach_db-wal"/>
+
+    <!-- Préférences chiffrées (créées en Phase C : EncryptedSharedPreferences pour
+         les clés API). Bien que chiffrées avec une clé Keystore device-specific
+         (donc inutilisables hors device), on les exclut par défense en profondeur. -->
+    <exclude domain="sharedpref" path="shredcoach_secure_keys.xml"/>
 </full-backup-content>
