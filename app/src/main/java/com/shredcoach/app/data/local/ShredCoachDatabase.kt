@@ -27,11 +27,12 @@ import com.shredcoach.app.data.local.entity.*
         AppNotificationEntity::class,
         ScheduledWorkoutEntity::class
     ],
-    version = 33,
+    version = 34,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class ShredCoachDatabase : RoomDatabase() {
+
     abstract fun exerciseDao(): ExerciseDao
     abstract fun workoutDao(): WorkoutDao
     abstract fun workoutLogDao(): WorkoutLogDao

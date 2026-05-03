@@ -73,16 +73,15 @@ data class UserProfileEntity(
     val healthNotes: String = "", // "douleur épaule gauche", "tendinite genou"...
     // ── Meal Scanner ──
     val mealScanProvider: String = "GEMINI", // GEMINI, GROQ, MISTRAL
-    val geminiApiKey: String = "",
     val geminiModel: String = "gemini-2.5-flash",
-    val groqMealApiKey: String = "",
-    val mistralApiKey: String = "",
     // ── Assistant IA ──
     val llmProvider: String = "GROQ", // GROQ, OPENAI, CLAUDE
-    val llmApiKey: String = "",
     val llmModel: String = "", // vide = défaut du provider
     // Profile photo
     val profilePhotoPath: String? = null
+    // NOTE : les clés API (llmApiKey, geminiApiKey, groqMealApiKey, mistralApiKey)
+    // ont été retirées en v34 et déplacées vers SecureKeyStore (Phase C).
+    // Voir ShredCoachDatabase.DropLegacyApiKeyColumns pour la migration.
 )
 
 enum class FitnessLevel {

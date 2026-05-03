@@ -60,9 +60,12 @@ android {
     }
 }
 
-// Configure KSP to work correctly with Hilt
+// Configure KSP to work correctly with Hilt + export Room schemas
 ksp {
     arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
+    // Schémas Room exportés vers app/schemas/ — versionnés dans Git pour
+    // permettre l'écriture de migrations testables (compile-time + runtime).
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {

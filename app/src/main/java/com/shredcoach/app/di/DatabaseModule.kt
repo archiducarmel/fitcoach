@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.shredcoach.app.data.local.Migrations
 import com.shredcoach.app.data.local.ShredCoachDatabase
 import com.shredcoach.app.data.local.dao.*
 import com.shredcoach.app.data.seed.SeedData
@@ -54,7 +55,14 @@ object DatabaseModule {
             ShredCoachDatabase::class.java,
             ShredCoachDatabase.DATABASE_NAME
         )
-            .fallbackToDestructiveMigration()
+            // Migrations explicites — toute évolution de schéma à partir
+            // de v33 doit ajouter une Migration ici (cf. Migrations.kt).
+            .addMigrations(Migrations.migration33to34(context))
+            // Fallback uniquement en cas de **downgrade** (ex : utilisateur
+            // sideload une version plus ancienne). Aucun fallback destructif
+            // sur les forward migrations — on ne perd jamais les données
+            // utilisateur en mettant à jour l'app.
+            .fallbackToDestructiveMigrationOnDowngrade()
             .addCallback(callback)
             .build()
     }
