@@ -10,14 +10,19 @@ import com.shredcoach.app.data.repository.ExerciseRepository
 import com.shredcoach.app.data.repository.NutritionRepository
 import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.data.repository.WorkoutRepository
+import com.shredcoach.app.data.local.dao.WorkoutLogDao
 import com.shredcoach.app.domain.streak.StreakMilestoneStore
 import com.shredcoach.app.domain.streak.StreakService
+import com.shredcoach.app.domain.training.PlateauDetector
+import com.shredcoach.app.domain.training.ProgressStatus
+import com.shredcoach.app.domain.wellness.WellnessStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -37,6 +42,12 @@ data class GreetingInfo(
     val streakDays: Int = 0,
     val bestStreakDays: Int = 0,
     val pendingMilestone: Int? = null,
+    /**
+     * Compte des séances complétées cette semaine (lundi → dimanche, semaine courante).
+     * Affichage hero : "Full Body · {sessionsThisWeek}/{totalSessionsPerWeek} cette semaine".
+     */
+    val sessionsThisWeek: Int = 0,
+    val totalSessionsPerWeek: Int = 0,
 )
 
 @HiltViewModel
@@ -47,6 +58,9 @@ class HomeViewModel @Inject constructor(
     private val nutritionRepository: NutritionRepository,
     private val streakService: StreakService,
     private val streakMilestoneStore: StreakMilestoneStore,
+    private val plateauDetector: PlateauDetector,
+    private val workoutLogDao: WorkoutLogDao,
+    private val wellnessStore: WellnessStore,
 ) : ViewModel() {
 
     private val _userProfile = MutableStateFlow<UserProfileEntity?>(null)
@@ -95,6 +109,41 @@ class HomeViewModel @Inject constructor(
     val resumableSession: StateFlow<ResumableSession?> = workoutRepository
         .observeLatestUncompletedLog()
         .map { log -> if (log == null) null else buildResumable(log) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = null,
+        )
+
+    /**
+     * Mood du jour (0..4) ou null si pas encore tapé. La card check-in
+     * s'affiche/disparaît reactive à ce flow.
+     */
+    val todayMood: StateFlow<Int?> = wellnessStore.observeMood(LocalDate.now())
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = null,
+        )
+
+    /** Enregistre le mood du jour — la card disparaît automatiquement. */
+    fun saveMood(index: Int) {
+        viewModelScope.launch {
+            wellnessStore.saveMood(LocalDate.now(), index)
+        }
+    }
+
+    /**
+     * Insight de la semaine — recomputé à chaque ajout de séance complétée.
+     * Trigger via Flow sur `getAllWorkoutLogs()` filtré complétées : on observe
+     * uniquement le *count* (distinctUntilChanged côté composition) pour éviter
+     * de relancer 5 queries Plateau à chaque tick de chrono qui touche un set.
+     */
+    val weeklyInsight: StateFlow<WeeklyInsight?> = workoutRepository
+        .getAllWorkoutLogs()
+        .map { logs -> logs.count { it.completed } }
+        .distinctUntilChanged()
+        .map { _ -> computeWeeklyInsight() }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
@@ -192,6 +241,15 @@ class HomeViewModel @Inject constructor(
             alreadyCelebrated = celebrated,
         )
 
+        // Séances cette semaine — semaine ISO (lundi → dimanche).
+        // weekFields.firstDayOfWeek = MONDAY en Locale.FRANCE (cohérent avec la culture user).
+        val weekStart = today.with(java.time.DayOfWeek.MONDAY)
+        val sessionsThisWeek = completedLogs.count { log ->
+            val d = log.date.toLocalDate()
+            !d.isBefore(weekStart) && !d.isAfter(today)
+        }
+        val totalSessionsPerWeek = profile?.workoutDays?.size ?: 3
+
         _greetingInfo.value = GreetingInfo(
             isTodayWorkoutDay = isTodayWorkoutDay,
             hasWorkedOutToday = streakState.hasWorkedOutToday,
@@ -200,6 +258,8 @@ class HomeViewModel @Inject constructor(
             streakDays = streakState.currentDays,
             bestStreakDays = streakState.bestDays,
             pendingMilestone = nextToCelebrate,
+            sessionsThisWeek = sessionsThisWeek,
+            totalSessionsPerWeek = totalSessionsPerWeek,
         )
         Log.i(
             TAG,
@@ -253,6 +313,60 @@ class HomeViewModel @Inject constructor(
             fatsConsumedGrams = fats.toInt(),
             next = next,
         )
+    }
+
+    /**
+     * Calcule l'Insight de la semaine — choisit UN exercice à mettre en avant.
+     *
+     * Algo :
+     *  1. Top 5 exercices par nombre de sets (proxy "exercices les plus pratiqués")
+     *  2. PlateauDetector.analyze() sur chacun → 5 ExerciseProgression
+     *  3. Tri par priorité métier :
+     *     a. PR récent → priorité absolue
+     *     b. Sinon, plus forte progression positive
+     *     c. Sinon, plateau le plus long (nudge actionnable)
+     *     d. Sinon, null (Stable → on n'affiche rien, évite le bruit)
+     *
+     * Coût : 1 query DB initiale + 5 queries indexées via PlateauDetector.
+     * Recomputé seulement quand le nombre de logs complétés change (cf.
+     * `distinctUntilChanged` dans le Flow), pas à chaque tick de chrono.
+     */
+    private suspend fun computeWeeklyInsight(): WeeklyInsight? {
+        return try {
+            val allSets = workoutLogDao.getAllWorkoutSetsOnce()
+                .filter { it.completed && it.weightKg > 0 }
+            if (allSets.isEmpty()) return null
+
+            val topExerciseIds = allSets.groupingBy { it.exerciseId }.eachCount()
+                .toList()
+                .sortedByDescending { it.second }
+                .take(5)
+                .map { it.first }
+
+            val candidates = topExerciseIds.mapNotNull { exerciseId ->
+                val progression = plateauDetector.analyze(exerciseId) ?: return@mapNotNull null
+                val name = exerciseRepository.getExerciseById(exerciseId)?.name ?: return@mapNotNull null
+                val tone = when {
+                    progression.hasFreshPr -> InsightTone.PR
+                    progression.status is ProgressStatus.Progressing -> InsightTone.PROGRESS
+                    progression.status is ProgressStatus.Plateau -> InsightTone.PLATEAU
+                    else -> null  // Stable → on filtre
+                } ?: return@mapNotNull null
+                WeeklyInsight(name, progression, tone)
+            }
+
+            // Hiérarchie : PR > top progression > plateau le plus long
+            candidates.firstOrNull { it.tone == InsightTone.PR }
+                ?: candidates.filter { it.tone == InsightTone.PROGRESS }
+                    .maxByOrNull { it.progression.weeklySlopeKg }
+                ?: candidates.filter { it.tone == InsightTone.PLATEAU }
+                    .maxByOrNull {
+                        (it.progression.status as? ProgressStatus.Plateau)?.weeksFlat ?: 0
+                    }
+        } catch (e: Exception) {
+            Log.w(TAG, "Insight computation failed", e)
+            null
+        }
     }
 
     /**

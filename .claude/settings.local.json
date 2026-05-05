@@ -83,7 +83,10 @@
       "Bash(.\\\\gradlew.bat :app:compileDebugKotlin --console=plain)",
       "PowerShell(.\\\\gradlew.bat :app:compileDebugKotlin --console=plain 2>&1 | Select-Object -Last 100)",
       "PowerShell($env:JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:Path=\"$env:JAVA_HOME\\\\bin;$env:Path\"; .\\\\gradlew.bat :app:compileDebugKotlin --console=plain 2>&1 | Select-Object -Last 80)",
-      "PowerShell($env:JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:Path=\"$env:JAVA_HOME\\\\bin;$env:Path\"; .\\\\gradlew.bat :app:compileDebugKotlin :app:testDebugUnitTest --console=plain 2>&1 | Select-Object -Last 30)"
+      "PowerShell($env:JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:Path=\"$env:JAVA_HOME\\\\bin;$env:Path\"; .\\\\gradlew.bat :app:compileDebugKotlin :app:testDebugUnitTest --console=plain 2>&1 | Select-Object -Last 30)",
+      "PowerShell($env:JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:Path=\"$env:JAVA_HOME\\\\bin;$env:Path\"; .\\\\gradlew.bat :app:compileDebugKotlin --console=plain 2>&1 | Select-Object -Last 40)",
+      "PowerShell($env:JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:Path=\"$env:JAVA_HOME\\\\bin;$env:Path\"; .\\\\gradlew.bat :app:compileDebugKotlin --console=plain 2>&1 | Select-Object -Last 30)",
+      "PowerShell($env:JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:Path=\"$env:JAVA_HOME\\\\bin;$env:Path\"; .\\\\gradlew.bat :app:compileDebugKotlin --console=plain 2>&1 | Select-Object -Last 50)"
     ]
   }
 }

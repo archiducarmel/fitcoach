@@ -1,6 +1,7 @@
 package com.shredcoach.app.presentation.home
 
 import com.shredcoach.app.data.local.entity.NutritionType
+import com.shredcoach.app.domain.training.ExerciseProgression
 import java.time.LocalDateTime
 import java.time.LocalTime
 
@@ -48,6 +49,34 @@ data class NextScheduleItem(
  * Au-delà, on n'expose pas la session (auto-hide ; le log reste en base
  * pour ne pas perdre les sets déjà loggés, mais sort de la home).
  */
+/**
+ * "Insight de la semaine" — un highlight unique surfacé en hero, basé sur
+ * [com.shredcoach.app.domain.training.PlateauDetector] sur les exercices les
+ * plus pratiqués. Choix du highlight (par priorité) :
+ *  1. PR récent (hasFreshPr)
+ *  2. Progression la plus marquée (pente kg/sem la plus élevée > seuil)
+ *  3. Plateau le plus long (nudge actionnable)
+ *  4. Stable → sinon null (on ne montre pas de carte)
+ *
+ * Pourquoi UN seul insight et pas un carrousel : la home est dense, et on veut
+ * une seule prise d'attention forte. Le carrousel complet existe déjà sur
+ * [com.shredcoach.app.presentation.stats.DashboardScreen].
+ */
+data class WeeklyInsight(
+    val exerciseName: String,
+    val progression: ExerciseProgression,
+    val tone: InsightTone,
+)
+
+enum class InsightTone {
+    /** PR battu récemment → célébration. */
+    PR,
+    /** Pente de progression positive significative. */
+    PROGRESS,
+    /** Plateau détecté ≥ 3 semaines → nudge "essaie de varier". */
+    PLATEAU,
+}
+
 data class ResumableSession(
     val workoutLogId: Long,
     val workoutName: String,

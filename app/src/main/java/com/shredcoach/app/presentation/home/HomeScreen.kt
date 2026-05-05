@@ -62,6 +62,8 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
     val greetingInfo by viewModel.greetingInfo.collectAsState()
     val todayNutrition by viewModel.todayNutrition.collectAsState()
     val resumableSession by viewModel.resumableSession.collectAsState()
+    val weeklyInsight by viewModel.weeklyInsight.collectAsState()
+    val todayMood by viewModel.todayMood.collectAsState()
 
     // Demander la permission POST_NOTIFICATIONS (Android 13+) une seule fois
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -98,24 +100,44 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
 
     Scaffold(
         topBar = {
+            // TopBar épurée : avatar+prénom (= accès Profile) à gauche, cloche
+            // notifications à droite. Calendar accessible via NextSessionWidget,
+            // Settings accessible depuis ProfileScreen.
             TopAppBar(
                 title = {},
                 navigationIcon = {
                     Row(
-                        modifier = Modifier.padding(start = 12.dp),
+                        modifier = Modifier
+                            .padding(start = 12.dp)
+                            .clip(RoundedCornerShape(20.dp)),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        com.shredcoach.app.presentation.common.ShredCoachLogo(size = 28.dp)
+                        IconButton(onClick = { navController.switchTo(Screen.Profile.route) }) {
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                                    .background(OrangeVibrant.copy(alpha = 0.18f)),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    Icons.Default.Person,
+                                    contentDescription = "Profil",
+                                    tint = OrangeVibrant,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
+                        }
                         Text(
-                            "ShredCoach",
+                            text = firstName,
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
                         )
                     }
                 },
                 actions = {
-                    // Cloche notifications avec badge
                     val notifVm: com.shredcoach.app.presentation.notifications.NotificationsViewModel = hiltViewModel()
                     val notifState by notifVm.state.collectAsState()
                     BadgedBox(
@@ -126,17 +148,12 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                                 }
                             }
                         },
-                        modifier = Modifier.padding(end = 4.dp)
+                        modifier = Modifier.padding(end = 8.dp)
                     ) {
                         IconButton(onClick = { navController.navigate(Screen.Notifications.route) }) {
                             Icon(Icons.Default.Notifications, "Notifications")
                         }
                     }
-                    IconButton(onClick = { navController.navigate(Screen.Calendar.route) }) {
-                        Icon(Icons.Default.CalendarMonth, "Calendrier")
-                    }
-                    IconButton(onClick = { navController.switchTo(Screen.Profile.route) }) { Icon(Icons.Default.Person, "Profil") }
-                    IconButton(onClick = { navController.switchTo(Screen.Settings.route) }) { Icon(Icons.Default.Settings, "Paramètres") }
                 }
             )
         },
@@ -159,6 +176,20 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         lineHeight = 30.sp
                     )
+                    // Programme jour : "Full Body · 2/3 cette semaine".
+                    // Affiché seulement si l'user a un planning (workoutDays != vide).
+                    // Pourquoi "Full Body" hardcodé : le programme PDF source est un
+                    // Full Body 3x/sem (cf reference_pdf_program). Quand on supportera
+                    // d'autres splits (PPL, Upper/Lower), on stockera le splitName
+                    // dans UserProfile.
+                    if (greetingInfo.totalSessionsPerWeek > 0) {
+                        Text(
+                            text = "Full Body · ${greetingInfo.sessionsThisWeek}/${greetingInfo.totalSessionsPerWeek} cette semaine",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Medium,
+                            color = OrangeVibrant,
+                        )
+                    }
                     Text(
                         subtitle,
                         style = MaterialTheme.typography.bodyMedium,
@@ -343,6 +374,31 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             }
 
             // ═══════════════════════════════════════
+            // INSIGHT DE LA SEMAINE (H3)
+            // PR récent / Progression / Plateau — un seul highlight
+            // ═══════════════════════════════════════
+            weeklyInsight?.let { insight ->
+                StaggeredAppear(index = 6) {
+                    com.shredcoach.app.presentation.home.components.WeeklyInsightCard(
+                        insight = insight,
+                        onClick = { navController.switchTo(Screen.Stats.route) },
+                    )
+                }
+            }
+
+            // ═══════════════════════════════════════
+            // DAILY CHECK-IN (H4)
+            // 5 emojis 1-tap, affiché tant que mood d'aujourd'hui pas tapé
+            // ═══════════════════════════════════════
+            if (todayMood == null) {
+                StaggeredAppear(index = 7) {
+                    com.shredcoach.app.presentation.home.components.DailyCheckInCard(
+                        onMoodSelected = { viewModel.saveMood(it) },
+                    )
+                }
+            }
+
+            // ═══════════════════════════════════════
             // SECTION 2 : PROGRESSION
             // ═══════════════════════════════════════
 
@@ -391,30 +447,39 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             }
 
             // ═══════════════════════════════════════
-            // SECTION 3 : EXPLORER
+            // SECTION "PLUS" — collapsible (navigation secondaire)
             // ═══════════════════════════════════════
-
+            // Pourquoi collapsible : la home doit rester actionable (CTA + nutrition
+            // + insight + check-in). Les routes secondaires (catalogue, photos, etc.)
+            // sont accessibles partout via la nav globale, pas besoin qu'elles
+            // occupent 3 rangées en permanence sur la home.
+            var moreExpanded by rememberSaveable { mutableStateOf(false) }
             StaggeredAppear(index = 8) {
-                Text("Explorer", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                MoreSectionHeader(
+                    expanded = moreExpanded,
+                    onToggle = { moreExpanded = !moreExpanded },
+                )
             }
 
-            StaggeredAppear(index = 9) {
-                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ActionCard(Modifier.weight(1f).fillMaxHeight(), "Exercices", Icons.Default.FitnessCenter, OrangeVibrant) {
-                        navController.switchTo(Screen.Exercises.route)
+            AnimatedVisibility(
+                visible = moreExpanded,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        ActionCard(Modifier.weight(1f).fillMaxHeight(), "Exercices", Icons.Default.FitnessCenter, OrangeVibrant) {
+                            navController.switchTo(Screen.Exercises.route)
+                        }
+                        ActionCard(Modifier.weight(1f).fillMaxHeight(), "Mes Stats", Icons.Default.Analytics, NeonGreen) {
+                            navController.switchTo(Screen.Stats.route)
+                        }
                     }
-                    ActionCard(Modifier.weight(1f).fillMaxHeight(), "Mes Stats", Icons.Default.Analytics, NeonGreen) {
-                        navController.switchTo(Screen.Stats.route)
+                    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        SmallCard(Modifier.weight(1f).fillMaxHeight(), "Nutrition", Icons.Default.Restaurant) { navController.switchTo(Screen.Nutrition.route) }
+                        SmallCard(Modifier.weight(1f).fillMaxHeight(), "Photos", Icons.Default.CameraAlt) { navController.switchTo(Screen.ProgressPhotos.route) }
+                        SmallCard(Modifier.weight(1f).fillMaxHeight(), "Calendrier", Icons.Default.CalendarMonth) { navController.navigate(Screen.Calendar.route) }
                     }
-                }
-            }
-
-            StaggeredAppear(index = 10) {
-                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SmallCard(Modifier.weight(1f).fillMaxHeight(), "Nutrition", Icons.Default.Restaurant) { navController.switchTo(Screen.Nutrition.route) }
-                    SmallCard(Modifier.weight(1f).fillMaxHeight(), "Profil", Icons.Default.Person) { navController.switchTo(Screen.Profile.route) }
-                    SmallCard(Modifier.weight(1f).fillMaxHeight(), "Photos", Icons.Default.CameraAlt) { navController.switchTo(Screen.ProgressPhotos.route) }
                 }
             }
 
@@ -427,26 +492,23 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
 }
 
 /**
- * Header cliquable de la section "Autres options" (Libre/Favoris/Créer).
- * Chevron qui pivote selon l'état expanded — feedback visuel immédiat.
+ * Header cliquable de section collapsible — chevron qui pivote selon expanded.
+ * Réutilisé pour les sections "Autres options" (CTAs séance) et "Plus" (nav secondaire).
  */
 @Composable
-private fun OtherOptionsHeader(expanded: Boolean, onToggle: () -> Unit) {
+private fun CollapsibleHeader(
+    expanded: Boolean,
+    labelExpanded: String,
+    labelCollapsed: String,
+    onToggle: () -> Unit,
+) {
     val rotation by androidx.compose.animation.core.animateFloatAsState(
         targetValue = if (expanded) 90f else 0f,
         animationSpec = androidx.compose.animation.core.tween(220),
         label = "chevronRotation",
     )
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.0f))
-            .padding(vertical = 4.dp)
-            .let {
-                // clic sans ripple inutile pour ne pas dénaturer le header de section
-                it.then(Modifier)
-            },
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         TextButton(
@@ -454,7 +516,7 @@ private fun OtherOptionsHeader(expanded: Boolean, onToggle: () -> Unit) {
             contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
         ) {
             Text(
-                text = if (expanded) "Moins d'options" else "Autres options",
+                text = if (expanded) labelExpanded else labelCollapsed,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
@@ -470,6 +532,26 @@ private fun OtherOptionsHeader(expanded: Boolean, onToggle: () -> Unit) {
             )
         }
     }
+}
+
+@Composable
+private fun OtherOptionsHeader(expanded: Boolean, onToggle: () -> Unit) {
+    CollapsibleHeader(
+        expanded = expanded,
+        labelExpanded = "Moins d'options",
+        labelCollapsed = "Autres options",
+        onToggle = onToggle,
+    )
+}
+
+@Composable
+private fun MoreSectionHeader(expanded: Boolean, onToggle: () -> Unit) {
+    CollapsibleHeader(
+        expanded = expanded,
+        labelExpanded = "Réduire",
+        labelCollapsed = "Plus",
+        onToggle = onToggle,
+    )
 }
 
 // ═══════════════════════════════════════
@@ -628,45 +710,26 @@ private fun fmtTime(minutes: Int): String = when {
 // FAB SHREDDY — Design premium, brandé
 // ═══════════════════════════════════════
 
+/**
+ * FAB simple sans animation continue. Le halo pulsant infini précédent était
+ * lu comme distractif en périphérie de vision (anti-pattern Apple/Google :
+ * jamais d'animation de loop sur un FAB en idle). Si l'on veut signaler
+ * "Shreddy a quelque chose à dire", il faudra brancher un badge `unreadMessage`
+ * sur ChatRepository et n'animer que dans ce cas.
+ */
 @Composable
 private fun ShreddyFab(onClick: () -> Unit) {
-    // Halo pulsant subtil autour du FAB
-    val inf = rememberInfiniteTransition(label = "shreddyPulse")
-    val haloAlpha by inf.animateFloat(
-        initialValue = 0.25f, targetValue = 0.05f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ), label = "haloAlpha"
-    )
-    val haloScale by inf.animateFloat(
-        initialValue = 1f, targetValue = 1.25f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ), label = "haloScale"
-    )
-
-    Box(contentAlignment = Alignment.Center) {
-        // Halo
-        Box(
-            Modifier.size(64.dp)
-                .graphicsLayer { scaleX = haloScale; scaleY = haloScale; alpha = haloAlpha }
-                .background(OrangeVibrant, CircleShape)
+    FloatingActionButton(
+        onClick = onClick,
+        modifier = Modifier.size(56.dp),
+        shape = CircleShape,
+        containerColor = OrangeVibrant,
+        contentColor = androidx.compose.ui.graphics.Color.White,
+        elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
+    ) {
+        com.shredcoach.app.presentation.common.ShredCoachLogo(
+            size = 30.dp,
+            tint = androidx.compose.ui.graphics.Color.White
         )
-        // FAB
-        FloatingActionButton(
-            onClick = onClick,
-            modifier = Modifier.size(56.dp),
-            shape = CircleShape,
-            containerColor = OrangeVibrant,
-            contentColor = androidx.compose.ui.graphics.Color.White,
-            elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
-        ) {
-            com.shredcoach.app.presentation.common.ShredCoachLogo(
-                size = 30.dp,
-                tint = androidx.compose.ui.graphics.Color.White
-            )
-        }
     }
 }
