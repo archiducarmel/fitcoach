@@ -19,7 +19,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 105, // moyenne de 90-120s
             tips = "Pieds hauts = fessiers, pieds bas = quadriceps",
-            gifUrl = "file:///android_asset/gifs/presse-a-cuisses-inclinee.gif",
+            gifUrl = gif("Presse_à_cuisses_inclinée.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -34,7 +34,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 105,
             tips = "ROI des exercices. 3 sec de descente minimum",
-            gifUrl = "file:///android_asset/gifs/squat-avec-barre.gif",
+            gifUrl = gif("Squat.gif"),
             difficulty = 2
         ),
         ExerciseEntity(
@@ -49,7 +49,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 105,
             tips = "Ajoute des haltères quand c'est trop facile",
-            gifUrl = "file:///android_asset/gifs/fentes-marchees.gif",
+            gifUrl = gif("Fentes_marchées_avec_sandbag.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -64,7 +64,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 105,
             tips = "Finisher parfait après squat ou presse",
-            gifUrl = "file:///android_asset/gifs/leg-extension.gif",
+            gifUrl = gif("Leg_extension.gif"),
             difficulty = 1
         ),
 
@@ -81,7 +81,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 60, // moyenne de 60-75s
             tips = "Zone la plus négligée. La descente lente est la clé",
-            gifUrl = "file:///android_asset/gifs/leg-curl-couche.gif",
+            gifUrl = gif("Leg_curl_allongé.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -96,7 +96,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 60,
             tips = "Excellent pour fessiers + ischio. Dos plat impératif",
-            gifUrl = "file:///android_asset/gifs/souleve-de-terre-roumain.gif",
+            gifUrl = gif("Soulevé_de_terre_roumain.gif"),
             difficulty = 2
         ),
         ExerciseEntity(
@@ -111,7 +111,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 60,
             tips = "Active les fessiers mieux que le squat. Progresser vers le hip thrust avec barre",
-            gifUrl = "file:///android_asset/gifs/hips-thrust.gif",
+            gifUrl = gif("Hip_thrust.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -126,7 +126,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 60,
             tips = "Cible les ischio sous un angle différent du leg curl couché",
-            gifUrl = "file:///android_asset/gifs/leg-curl-assis-machine.gif",
+            gifUrl = gif("Leg_curl_assis_à_la_machine.gif"),
             difficulty = 1
         ),
 
@@ -143,7 +143,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 90, // moyenne de 75-90s
             tips = "Parfait pour débuter. Sécurisé, pas besoin de pareur",
-            gifUrl = "file:///android_asset/gifs/chest-press-machine.gif",
+            gifUrl = gif("Développé_assis_à_la_machine_pour_les_pectoraux.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -158,7 +158,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 90,
             tips = "L'exercice roi pour les pecs. Demande un pareur sur les séries lourdes",
-            gifUrl = "file:///android_asset/gifs/developpe-couche-barre.gif",
+            gifUrl = gif("Développé_couché.gif"),
             difficulty = 2
         ),
         ExerciseEntity(
@@ -173,7 +173,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 90,
             tips = "Si +20 reps faciles, passe aux pompes lestées (sac à dos) ou déclinées",
-            gifUrl = "file:///android_asset/gifs/pompe-push-up-musculation.gif",
+            gifUrl = gif("Pompes.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -188,7 +188,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 90,
             tips = "Dessine la séparation entre les pecs. Contraction > charge",
-            gifUrl = "file:///android_asset/gifs/ecarte-poulie-vis-a-vis-exercice-musculation-pectoraux.gif",
+            gifUrl = gif("Écartés_à_la_poulie_vis-à-vis.gif"),
             difficulty = 1
         ),
 
@@ -205,7 +205,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 75,
             tips = "Cible spécifiquement le haut des pecs",
-            gifUrl = "file:///android_asset/gifs/chest-press-incline.gif",
+            gifUrl = gif("Développé_incliné_à_la_machine_convergente.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -220,7 +220,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 75,
             tips = "Complète le couché pour un développement complet",
-            gifUrl = "file:///android_asset/gifs/developpe-incline-halteres-exercice-musculation.gif",
+            gifUrl = gif("Développé_incliné_avec_haltères.gif"),
             difficulty = 2
         ),
         ExerciseEntity(
@@ -235,7 +235,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 75,
             tips = "Version avancée des pompes qui cible le haut des pecs",
-            gifUrl = "file:///android_asset/gifs/pompe-declinee.gif",
+            gifUrl = gif("Pompes.gif"),
             difficulty = 2
         ),
         ExerciseEntity(
@@ -250,7 +250,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 75,
             tips = "Sensation de brûlure = bon signe. Léger et précis",
-            gifUrl = "file:///android_asset/gifs/ecartes-incline-avec-halteres.gif",
+            gifUrl = gif("Écartés_incliné_avec_haltères.gif"),
             difficulty = 1
         ),
 
@@ -267,7 +267,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 90,
             tips = "Construit la largeur du dos en V. Coudes vers les poches arrière",
-            gifUrl = "file:///android_asset/gifs/tirage-vertical-poitrine.gif",
+            gifUrl = gif("Tirage_vertical_poitrine.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -282,7 +282,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 90,
             tips = "Construit l'épaisseur du dos. Dos rond = trop lourd",
-            gifUrl = "file:///android_asset/gifs/rowing-barre.gif",
+            gifUrl = gif("Rowing_barre.gif"),
             difficulty = 2
         ),
         ExerciseEntity(
@@ -297,7 +297,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 90,
             tips = "Le meilleur exercice de dos. Assistée si <8 reps",
-            gifUrl = "file:///android_asset/gifs/pull-up-street-lifting.gif",
+            gifUrl = gif("Traction.gif"),
             difficulty = 3
         ),
         ExerciseEntity(
@@ -312,7 +312,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 90,
             tips = "Isole le grand dorsal sans biceps. Bras tendus = clé",
-            gifUrl = "file:///android_asset/gifs/pull-over-poulie.gif",
+            gifUrl = gif("Pull-over_à_la_poulie.gif"),
             difficulty = 1
         ),
 
@@ -329,7 +329,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 75,
             tips = "Cible les rhomboïdes (milieu du dos) et améliore la posture",
-            gifUrl = "file:///android_asset/gifs/tirage-horizontal-poulie.gif",
+            gifUrl = gif("Tirage_horizontal_à_la_poulie.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -344,7 +344,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 75,
             tips = "Corrige les déséquilibres gauche/droite",
-            gifUrl = "file:///android_asset/gifs/rowing-avec-halteres.gif",
+            gifUrl = gif("Rowing_haltère_à_un_bras.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -359,7 +359,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 75,
             tips = "Version débutant des tractions. Excellent pour la posture",
-            gifUrl = "file:///android_asset/gifs/rowing-inverse.gif",
+            gifUrl = gif("Rowing_inversé_sous_une_table.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -374,7 +374,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 75,
             tips = "Protège les épaules et construit l'arrière des deltoïdes",
-            gifUrl = "file:///android_asset/gifs/face-pull.gif",
+            gifUrl = gif("Face_pull.gif"),
             difficulty = 1
         ),
 
@@ -391,7 +391,7 @@ object SeedData {
             repsMax = 15,
             restSeconds = 60,
             tips = "Sécurisé, pas de risque de déséquilibre",
-            gifUrl = "file:///android_asset/gifs/shoulder-press.gif",
+            gifUrl = gif("Développé_épaules_à_la_machine.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -406,7 +406,7 @@ object SeedData {
             repsMax = 15,
             restSeconds = 60,
             tips = "Épaules fragiles — monte doucement. Pas de cambrure",
-            gifUrl = "file:///android_asset/gifs/developpe-epaule-halteres.gif",
+            gifUrl = gif("Développé_épaules_avec_haltères.gif"),
             difficulty = 2
         ),
         ExerciseEntity(
@@ -421,7 +421,7 @@ object SeedData {
             repsMax = 15,
             restSeconds = 60,
             tips = "Progression vers le handstand push-up. Excellent pour la masse",
-            gifUrl = "file:///android_asset/gifs/Pike-push-up.gif",
+            gifUrl = gif("Pompes_piquées.gif"),
             difficulty = 2
         ),
         ExerciseEntity(
@@ -436,7 +436,7 @@ object SeedData {
             repsMax = 15,
             restSeconds = 60,
             tips = "Crée la largeur. Pense « coudes vers le plafond ». Léger et strict",
-            gifUrl = "file:///android_asset/gifs/elevations-laterales.gif",
+            gifUrl = gif("Élévations_latérales.gif"),
             difficulty = 1
         ),
 
@@ -453,7 +453,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 60,
             tips = "Isole parfaitement les biceps, pas de triche possible",
-            gifUrl = "file:///android_asset/gifs/curl-machine-chargee.gif",
+            gifUrl = gif("Curl_biceps_assis_à_la_machine.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -468,7 +468,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 60,
             tips = "Zéro balancement. Strict = plus gros biceps",
-            gifUrl = "file:///android_asset/gifs/curl-barre-ez.gif",
+            gifUrl = gif("Curl_à_la_barre.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -483,7 +483,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 60,
             tips = "Le meilleur exercice de biceps. Travaille aussi le dos",
-            gifUrl = "file:///android_asset/gifs/chin-up-traction-supination.gif",
+            gifUrl = gif("Traction_supination.gif"),
             difficulty = 3
         ),
         ExerciseEntity(
@@ -498,7 +498,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 60,
             tips = "Construit le « pic » du biceps. L'étirement en bas est la clé",
-            gifUrl = "file:///android_asset/gifs/curl-haltere-incline.gif",
+            gifUrl = gif("Curl_biceps_alterné_en_supination_sur_banc_incliné.gif"),
             difficulty = 1
         ),
 
@@ -515,7 +515,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 60,
             tips = "Écarter la corde en bas recrute la longue portion (volume)",
-            gifUrl = "file:///android_asset/gifs/extension-triceps-poulie-haute.gif",
+            gifUrl = gif("Extensions_des_triceps_à_la_poulie_haute_à_la_corde.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -530,7 +530,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 60,
             tips = "Forme en « fer à cheval » du triceps. Mouvement de précision",
-            gifUrl = "file:///android_asset/gifs/extensions-triceps-couche-halteres-baare-au-front-skullcrusher.gif",
+            gifUrl = gif("Barre_front.gif"),
             difficulty = 2
         ),
         ExerciseEntity(
@@ -545,7 +545,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 60,
             tips = "Si trop dur, machine assistée. Un des meilleurs exos du haut du corps",
-            gifUrl = "file:///android_asset/gifs/dips-sol.gif",
+            gifUrl = gif("Dips_aux_barres_parallèles.gif"),
             difficulty = 3
         ),
         ExerciseEntity(
@@ -560,7 +560,7 @@ object SeedData {
             repsMax = 12,
             restSeconds = 60,
             tips = "Finition triceps. Léger et contrôlé, sensation de brûlure",
-            gifUrl = "file:///android_asset/gifs/kickback-triceps.gif",
+            gifUrl = gif("Kickback.gif"),
             difficulty = 1
         ),
 
@@ -577,7 +577,7 @@ object SeedData {
             repsMax = 20,
             restSeconds = 45,
             tips = "Meilleur exo d'abdos en salle. Chargeable progressivement",
-            gifUrl = "file:///android_asset/gifs/crunch-poulie-haute-exercice-musculation.gif",
+            gifUrl = gif("Crunch_à_la_poulie.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -592,7 +592,7 @@ object SeedData {
             repsMax = 20,
             restSeconds = 45,
             tips = "Version lestée du crunch classique. Progression facile",
-            gifUrl = "file:///android_asset/gifs/exercice-musculation-crunch-haltere-disque.gif",
+            gifUrl = gif("Crunch.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -607,7 +607,7 @@ object SeedData {
             repsMax = 20,
             restSeconds = 45,
             tips = "Basique mais efficace. 20+ reps avec contraction lente",
-            gifUrl = "file:///android_asset/gifs/crunch-au-sol-exercice-musculation.gif",
+            gifUrl = gif("Crunch.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -622,7 +622,7 @@ object SeedData {
             repsMax = 20,
             restSeconds = 45,
             tips = "Guidé et sécurisé. Bonne alternative à la poulie",
-            gifUrl = "file:///android_asset/gifs/crunch-machine-abdos.gif",
+            gifUrl = gif("Crunch_à_la_machine.gif"),
             difficulty = 1
         ),
 
@@ -639,7 +639,7 @@ object SeedData {
             repsMax = 15,
             restSeconds = 45,
             tips = "Sculpte les obliques. Lent et contrôlé, pas de à-coups",
-            gifUrl = "file:///android_asset/gifs/crunch-rotatif-machine.gif",
+            gifUrl = gif("Rotation_du_buste_debout_à_la_poulie.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -654,7 +654,7 @@ object SeedData {
             repsMax = 15,
             restSeconds = 45,
             tips = "Travaille le transverse + obliques + avant-bras. Fonctionnel",
-            gifUrl = "file:///android_asset/gifs/Farmers-walk_Cardio.gif",
+            gifUrl = gif("Marche_du_fermier_avec_kettlebells.gif"),
             difficulty = 2
         ),
         ExerciseEntity(
@@ -669,7 +669,7 @@ object SeedData {
             repsMax = 15,
             restSeconds = 45,
             tips = "Cible les abdos du bas (sous la bouée). L'enroulement est tout",
-            gifUrl = "file:///android_asset/gifs/releve-jambes-chaise-romaine-abdominaux.gif",
+            gifUrl = gif("Relevé_de_jambes_à_la_chaise_romaine.gif"),
             difficulty = 2
         ),
         ExerciseEntity(
@@ -684,7 +684,7 @@ object SeedData {
             repsMax = 60,
             restSeconds = 45,
             tips = "Renforce le transverse (ventre plat) + obliques (taille fine)",
-            gifUrl = "file:///android_asset/gifs/gainage-planche-abdos.gif",
+            gifUrl = gif("Planche.gif"),
             difficulty = 1,
             isTimeBased = true
         ),
@@ -702,7 +702,7 @@ object SeedData {
             repsMax = 20,
             restSeconds = 45,
             tips = "Les mollets résistent à la croissance. Amplitude + volume = clé",
-            gifUrl = "file:///android_asset/gifs/extension-mollets-debout-machine.gif",
+            gifUrl = gif("Extensions_des_mollets_debout_à_la_machine.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -717,7 +717,7 @@ object SeedData {
             repsMax = 20,
             restSeconds = 45,
             tips = "Progresse vers des charges lourdes. Les mollets supportent beaucoup",
-            gifUrl = "file:///android_asset/gifs/extensions-mollet-debout-avec-planche-barre.gif",
+            gifUrl = gif("Extension_des_mollets_à_la_barre_debout.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -732,7 +732,7 @@ object SeedData {
             repsMax = 20,
             restSeconds = 45,
             tips = "Un pied à la fois double l'intensité. Tiens-toi au mur",
-            gifUrl = "file:///android_asset/gifs/extension-mollets-sur-marche.gif",
+            gifUrl = gif("Extensions_des_mollets_sur_une_marche.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -747,7 +747,7 @@ object SeedData {
             repsMax = 20,
             restSeconds = 45,
             tips = "Cible le soléaire (muscle profond). Complète le mollet debout",
-            gifUrl = "file:///android_asset/gifs/extension-mollets-assis-machine.gif",
+            gifUrl = gif("Extension_des_mollets_assis_à_la_machine.gif"),
             difficulty = 1
         ),
 
@@ -765,7 +765,7 @@ object SeedData {
             restSeconds = 0,
             tips = "5-10 minutes pour augmenter la température corporelle et préparer le cœur",
             tempo = "N/A",
-            gifUrl = "file:///android_asset/gifs/velo-stationnaire.gif",
+            gifUrl = gif("Vélo_spinning.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -781,7 +781,7 @@ object SeedData {
             restSeconds = 0,
             tips = "Prépare les articulations aux mouvements de la séance. Pas de rebonds",
             tempo = "N/A",
-            gifUrl = "file:///android_asset/gifs/Rotation-de-Hanches.gif",
+            gifUrl = gif("Cercles_de_hanches.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -797,7 +797,7 @@ object SeedData {
             restSeconds = 0,
             tips = "Étire dynamiquement les muscles. Ne pas tenir les positions (pas de statique)",
             tempo = "N/A",
-            gifUrl = "file:///android_asset/gifs/Etirrements-Papillon.gif",
+            gifUrl = gif("Étirement_des_adducteurs_en_fente_latérale.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -813,7 +813,7 @@ object SeedData {
             restSeconds = 30,
             tips = "Active les muscles principaux avant de charger. Prépare le système neuromusculaire",
             tempo = "2-0-1-0",
-            gifUrl = "file:///android_asset/gifs/squat-leger.gif",
+            gifUrl = gif("Air_Squat.gif"),
             difficulty = 1
         ),
 
@@ -831,7 +831,7 @@ object SeedData {
             restSeconds = 0,
             tips = "Excellent cardio complet. Travaille jambes, dos, bras simultanément. Vise 70-80% FCM",
             tempo = "N/A",
-            gifUrl = "file:///android_asset/gifs/rameur.gif",
+            gifUrl = gif("Rameur.gif"),
             difficulty = 2
         ),
         ExerciseEntity(
@@ -847,7 +847,7 @@ object SeedData {
             restSeconds = 0,
             tips = "Faible impact sur les articulations. Parfait post-entraînement jambes",
             tempo = "N/A",
-            gifUrl = "file:///android_asset/gifs/velo-stationnaire.gif",
+            gifUrl = gif("Vélo_spinning.gif"),
             difficulty = 1
         ),
         ExerciseEntity(
@@ -863,7 +863,7 @@ object SeedData {
             restSeconds = 0,
             tips = "Marche inclinée : brûle autant qu'une course, moins de choc. Course : intensité élevée",
             tempo = "N/A",
-            gifUrl = "file:///android_asset/gifs/marche-inclinee-tapis.gif",
+            gifUrl = gif("Tapis_de_course.gif"),
             difficulty = 2
         ),
         ExerciseEntity(
@@ -879,7 +879,7 @@ object SeedData {
             restSeconds = 0,
             tips = "Très faible impact. Idéal pour récupération active ou cardio léger post-séance",
             tempo = "N/A",
-            gifUrl = "file:///android_asset/gifs/velo-elliptique.gif",
+            gifUrl = gif("Vélo_elliptique.gif"),
             difficulty = 1
         ),
 
@@ -891,81 +891,81 @@ object SeedData {
         ExerciseEntity(name = "Squat sumo", muscleGroup = MuscleGroup.QUADS, variant = ExerciseVariant.WEIGHTS,
             equipment = "Barre ou haltère", executionKey = "Pieds très écartés, pointes vers l'extérieur. Descendre en gardant le dos droit. Pousser sur les talons pour remonter.",
             startingWeight = "Barre vide 20 kg", series = 5, repsMin = 10, repsMax = 15, restSeconds = 90,
-            tips = "Cible davantage les adducteurs et fessiers que le squat classique", gifUrl = "file:///android_asset/gifs/squat-sumo.gif", difficulty = 2),
+            tips = "Cible davantage les adducteurs et fessiers que le squat classique", gifUrl = gif("Squat_sumo_avec_haltère.gif"), difficulty = 2),
         ExerciseEntity(name = "Squat goblet", muscleGroup = MuscleGroup.QUADS, variant = ExerciseVariant.WEIGHTS,
             equipment = "Haltère ou kettlebell", executionKey = "Tenir l'haltère contre la poitrine. Descendre profond en gardant les coudes entre les genoux. Remonter en poussant sur les talons.",
             startingWeight = "10-20 kg", series = 5, repsMin = 12, repsMax = 15, restSeconds = 75,
-            tips = "Excellent pour apprendre la mécanique du squat", gifUrl = "file:///android_asset/gifs/squat-goblet.gif", difficulty = 1),
+            tips = "Excellent pour apprendre la mécanique du squat", gifUrl = gif("Squat_goblet_avec_kettlebell.gif"), difficulty = 1),
         ExerciseEntity(name = "Squat bulgare", muscleGroup = MuscleGroup.QUADS, variant = ExerciseVariant.WEIGHTS,
             equipment = "Haltères + banc", executionKey = "Pied arrière sur le banc. Descendre le genou arrière vers le sol. Garder le buste droit. Pousser sur le pied avant.",
             startingWeight = "8-12 kg/main", series = 5, repsMin = 10, repsMax = 12, restSeconds = 90,
-            tips = "Unilatéral : corrige les déséquilibres. Étire le psoas du côté arrière", gifUrl = "file:///android_asset/gifs/squat-bulgare-halteres.gif", difficulty = 2),
+            tips = "Unilatéral : corrige les déséquilibres. Étire le psoas du côté arrière", gifUrl = gif("Squat_bulgare_avec_haltères.gif"), difficulty = 2),
         ExerciseEntity(name = "Squat Smith machine", muscleGroup = MuscleGroup.QUADS, variant = ExerciseVariant.MACHINE,
             equipment = "Smith machine", executionKey = "Placer la barre sur les trapèzes. Pieds légèrement en avant. Descendre jusqu'à 90°. Remonter en contrôlant.",
             startingWeight = "20-40 kg", series = 5, repsMin = 10, repsMax = 12, restSeconds = 90,
-            tips = "Plus sécurisé que le squat libre, permet de charger lourd", gifUrl = "file:///android_asset/gifs/squat-smith-machine-exercice-musculation.gif", difficulty = 1),
+            tips = "Plus sécurisé que le squat libre, permet de charger lourd", gifUrl = gif("Squat_à_la_Smith_machine.gif"), difficulty = 1),
         ExerciseEntity(name = "Sissy squat", muscleGroup = MuscleGroup.QUADS, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Support pour équilibre", executionKey = "Se tenir à un support. Pencher le buste en arrière en fléchissant les genoux. Descendre en gardant les hanches alignées.",
             startingWeight = "Poids du corps", series = 5, repsMin = 10, repsMax = 15, restSeconds = 60,
-            tips = "Isolation extrême du quadriceps. Attention aux genoux sensibles", gifUrl = "file:///android_asset/gifs/sissy-squat.gif", difficulty = 3),
+            tips = "Isolation extrême du quadriceps. Attention aux genoux sensibles", gifUrl = gif("Sissy_squat_sans_machine.gif"), difficulty = 3),
         ExerciseEntity(name = "Hack squat", muscleGroup = MuscleGroup.QUADS, variant = ExerciseVariant.MACHINE,
             equipment = "Hack squat machine", executionKey = "Dos contre le dossier. Pieds à largeur d'épaules. Descendre profond. Pousser pour remonter.",
             startingWeight = "40-60 kg", series = 5, repsMin = 10, repsMax = 12, restSeconds = 105,
-            tips = "Machine guidée, permet de charger lourd en sécurité", gifUrl = "file:///android_asset/gifs/hack-squat.gif", difficulty = 1),
+            tips = "Machine guidée, permet de charger lourd en sécurité", gifUrl = gif("Hack_squat.gif"), difficulty = 1),
         ExerciseEntity(name = "Step-ups", muscleGroup = MuscleGroup.QUADS, variant = ExerciseVariant.WEIGHTS,
             equipment = "Banc + haltères", executionKey = "Monter sur le banc avec un pied. Pousser pour monter complètement. Redescendre en contrôlant.",
             startingWeight = "8-12 kg/main", series = 5, repsMin = 12, repsMax = 15, restSeconds = 75,
-            tips = "Travail unilatéral fonctionnel. Hauteur du banc = difficulté", gifUrl = "file:///android_asset/gifs/step-up.gif", difficulty = 1),
+            tips = "Travail unilatéral fonctionnel. Hauteur du banc = difficulté", gifUrl = gif("Montées_sur_banc.gif"), difficulty = 1),
         ExerciseEntity(name = "Pistol squat", muscleGroup = MuscleGroup.QUADS, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Aucun", executionKey = "Debout sur un pied. Tendre l'autre jambe devant. Descendre le plus bas possible. Remonter sans aide.",
             startingWeight = "Poids du corps", series = 5, repsMin = 5, repsMax = 8, restSeconds = 90,
-            tips = "Exercice avancé nécessitant force, équilibre et mobilité", gifUrl = "file:///android_asset/gifs/squat-pistol.gif", difficulty = 3),
+            tips = "Exercice avancé nécessitant force, équilibre et mobilité", gifUrl = gif("Pistol_squat.gif"), difficulty = 3),
         ExerciseEntity(name = "Wall sit", muscleGroup = MuscleGroup.QUADS, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Mur", executionKey = "Dos contre le mur, cuisses parallèles au sol. Maintenir la position le plus longtemps possible.",
             startingWeight = "Poids du corps", series = 5, repsMin = 30, repsMax = 60, restSeconds = 60,
-            tips = "Exercice isométrique. Les reps représentent des secondes de maintien", tempo = "N/A", gifUrl = "file:///android_asset/gifs/wall-sit.gif", difficulty = 1),
+            tips = "Exercice isométrique. Les reps représentent des secondes de maintien", tempo = "N/A", gifUrl = gif("Squat_statique_contre_un_mur_(exercice_de_la_chaise).gif"), difficulty = 1),
         ExerciseEntity(name = "Jump squat", muscleGroup = MuscleGroup.QUADS, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Aucun", executionKey = "Squat classique puis exploser vers le haut en sautant. Atterrir en douceur. Enchaîner immédiatement.",
             startingWeight = "Poids du corps", series = 5, repsMin = 10, repsMax = 15, restSeconds = 60,
-            tips = "Plyométrique : développe la puissance explosive", gifUrl = "file:///android_asset/gifs/jump-squats.gif", difficulty = 2),
+            tips = "Plyométrique : développe la puissance explosive", gifUrl = gif("Squat_sauté.gif"), difficulty = 2),
 
         // ===== HAMSTRINGS — Exercices supplémentaires =====
         ExerciseEntity(name = "Soulevé de terre classique", muscleGroup = MuscleGroup.HAMSTRINGS, variant = ExerciseVariant.WEIGHTS,
             equipment = "Barre olympique", executionKey = "Pieds largeur de hanches. Saisir la barre. Dos droit, pousser le sol avec les pieds. Verrouiller en haut.",
             startingWeight = "60-80 kg", series = 5, repsMin = 6, repsMax = 10, restSeconds = 120,
-            tips = "Mouvement roi. Travaille tout le corps. Technique irréprochable obligatoire", gifUrl = "file:///android_asset/gifs/souleve-de-terre.gif", difficulty = 2),
+            tips = "Mouvement roi. Travaille tout le corps. Technique irréprochable obligatoire", gifUrl = gif("Soulevé_de_terre.gif"), difficulty = 2),
         ExerciseEntity(name = "Soulevé de terre sumo", muscleGroup = MuscleGroup.HAMSTRINGS, variant = ExerciseVariant.WEIGHTS,
             equipment = "Barre olympique", executionKey = "Pieds très écartés, pointes vers l'extérieur. Saisir la barre entre les jambes. Pousser le sol pour monter.",
             startingWeight = "60-80 kg", series = 5, repsMin = 6, repsMax = 10, restSeconds = 120,
-            tips = "Recrute davantage les adducteurs et quadriceps que le conventionnel", gifUrl = "file:///android_asset/gifs/souleve-de-terre-sumo.gif", difficulty = 2),
+            tips = "Recrute davantage les adducteurs et quadriceps que le conventionnel", gifUrl = gif("Soulevé_de_terre_sumo.gif"), difficulty = 2),
         ExerciseEntity(name = "Soulevé de terre jambes tendues", muscleGroup = MuscleGroup.HAMSTRINGS, variant = ExerciseVariant.WEIGHTS,
             equipment = "Barre ou haltères", executionKey = "Jambes quasi tendues. Descendre la barre le long des jambes en poussant les fesses en arrière. Remonter en contractant les ischio-jambiers.",
             startingWeight = "40-60 kg", series = 5, repsMin = 10, repsMax = 12, restSeconds = 90,
-            tips = "Plus d'étirement des ischio-jambiers que le roumain classique", gifUrl = "file:///android_asset/gifs/souleve-de-terre-jambes-tendues.gif", difficulty = 2),
+            tips = "Plus d'étirement des ischio-jambiers que le roumain classique", gifUrl = gif("Soulevé_de_terre_jambes_tendues.gif"), difficulty = 2),
         ExerciseEntity(name = "Good morning", muscleGroup = MuscleGroup.HAMSTRINGS, variant = ExerciseVariant.WEIGHTS,
             equipment = "Barre sur trapèzes", executionKey = "Barre sur les trapèzes. Fléchir le buste en poussant les fesses en arrière. Dos droit. Remonter en contractant les fessiers.",
             startingWeight = "Barre vide 20 kg", series = 5, repsMin = 10, repsMax = 12, restSeconds = 75,
-            tips = "Excellent pour la chaîne postérieure. Commencer léger pour maîtriser la technique", gifUrl = "file:///android_asset/gifs/good-morning-exercice.gif", difficulty = 2),
+            tips = "Excellent pour la chaîne postérieure. Commencer léger pour maîtriser la technique", gifUrl = gif("Good_morning.gif"), difficulty = 2),
         ExerciseEntity(name = "Glute kickback machine", muscleGroup = MuscleGroup.HAMSTRINGS, variant = ExerciseVariant.MACHINE,
             equipment = "Machine à kickback", executionKey = "Placer le pied sur la plateforme. Pousser vers l'arrière en contractant le fessier. Contrôler le retour.",
             startingWeight = "15-25 kg", series = 5, repsMin = 12, repsMax = 15, restSeconds = 60,
-            tips = "Isolation du grand fessier", gifUrl = "file:///android_asset/gifs/glute-kickback-machine.gif", difficulty = 1),
+            tips = "Isolation du grand fessier", gifUrl = gif("Extension_de_hanche_à_la_machine.gif"), difficulty = 1),
         ExerciseEntity(name = "Kickback poulie basse", muscleGroup = MuscleGroup.HAMSTRINGS, variant = ExerciseVariant.ISOLATION,
             equipment = "Poulie basse + sangle cheville", executionKey = "Attacher la sangle à la cheville. Face à la poulie. Pousser la jambe vers l'arrière en gardant le dos droit.",
             startingWeight = "5-10 kg", series = 5, repsMin = 12, repsMax = 15, restSeconds = 60,
-            tips = "Mouvement contrôlé, pas d'élan", gifUrl = "file:///android_asset/gifs/kickback-poulie-basse-min.gif", difficulty = 1),
+            tips = "Mouvement contrôlé, pas d'élan", gifUrl = gif("Extension_de_la_hanche_à_la_poulie_basse.gif"), difficulty = 1),
         ExerciseEntity(name = "Nordic curl", muscleGroup = MuscleGroup.HAMSTRINGS, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Support pour pieds", executionKey = "À genoux, pieds bloqués. Se laisser descendre lentement vers l'avant. Freiner avec les ischio-jambiers. Se rattraper avec les mains si nécessaire.",
             startingWeight = "Poids du corps", series = 5, repsMin = 5, repsMax = 8, restSeconds = 90,
-            tips = "Excentrique intense. L'un des meilleurs exercices pour les ischio-jambiers", gifUrl = "file:///android_asset/gifs/nordic-curl.gif", difficulty = 3),
+            tips = "Excentrique intense. L'un des meilleurs exercices pour les ischio-jambiers", gifUrl = gif("Nordic_hamstring_curl_avec_élastique.gif"), difficulty = 3),
         ExerciseEntity(name = "Glute ham raise", muscleGroup = MuscleGroup.HAMSTRINGS, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Banc GHR", executionKey = "Installer sur le banc GHR. Descendre le buste vers le sol. Remonter en contractant les ischio-jambiers et fessiers.",
             startingWeight = "Poids du corps", series = 5, repsMin = 8, repsMax = 12, restSeconds = 75,
-            tips = "Combine flexion de genou et extension de hanche", gifUrl = "file:///android_asset/gifs/glute-ham-raise.gif", difficulty = 2),
+            tips = "Combine flexion de genou et extension de hanche", gifUrl = gif("Extensions_de_hanches_au_GHD.gif"), difficulty = 2),
         ExerciseEntity(name = "Extension hanche machine", muscleGroup = MuscleGroup.HAMSTRINGS, variant = ExerciseVariant.MACHINE,
             equipment = "Machine à fessiers", executionKey = "Régler la machine. Pousser la cuisse vers l'arrière en contractant le fessier. Contrôler le retour.",
             startingWeight = "20-30 kg", series = 5, repsMin = 12, repsMax = 15, restSeconds = 60,
-            tips = "Isolation du grand fessier. Serrer fort en position haute", gifUrl = "file:///android_asset/gifs/extension-hanche-machine.gif", difficulty = 1),
+            tips = "Isolation du grand fessier. Serrer fort en position haute", gifUrl = gif("Extension_de_hanche_à_la_machine.gif"), difficulty = 1),
 
         // ===== ADDUCTEURS / ABDUCTEURS =====
         ExerciseEntity(name = "Adducteurs machine", muscleGroup = MuscleGroup.ADDUCTORS, variant = ExerciseVariant.MACHINE,
@@ -987,202 +987,202 @@ object SeedData {
         ExerciseEntity(name = "Fentes latérales", muscleGroup = MuscleGroup.ADDUCTORS, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Aucun ou haltères", executionKey = "Faire un grand pas sur le côté. Fléchir la jambe d'appui, l'autre reste tendue. Pousser pour revenir.",
             startingWeight = "Poids du corps", series = 5, repsMin = 10, repsMax = 12, restSeconds = 60,
-            tips = "Travaille adducteurs, quadriceps et fessiers en dynamique", gifUrl = "file:///android_asset/gifs/side-lunge.gif", difficulty = 1),
+            tips = "Travaille adducteurs, quadriceps et fessiers en dynamique", gifUrl = gif("Squat_cosaque.gif"), difficulty = 1),
 
         // ===== PECTORAUX — Exercices supplémentaires =====
         ExerciseEntity(name = "Développé couché prise serrée", muscleGroup = MuscleGroup.CHEST, variant = ExerciseVariant.WEIGHTS,
             equipment = "Barre + banc plat", executionKey = "Prise largeur d'épaules. Descendre la barre vers le bas des pecs. Pousser en verrouillant.",
             startingWeight = "40-60 kg", series = 5, repsMin = 8, repsMax = 12, restSeconds = 90,
-            tips = "Recrute aussi fortement les triceps", gifUrl = "file:///android_asset/gifs/developpe-couche-prise-serree-smith-machine.gif", difficulty = 2),
+            tips = "Recrute aussi fortement les triceps", gifUrl = gif("Développé_couché_prise_serrée_à_la_Smith_machine.gif"), difficulty = 2),
         ExerciseEntity(name = "Pull-over haltère", muscleGroup = MuscleGroup.CHEST, variant = ExerciseVariant.WEIGHTS,
             equipment = "Haltère + banc plat", executionKey = "Allongé sur le banc. Tenir l'haltère au-dessus de la poitrine. Descendre derrière la tête en gardant les bras semi-tendus.",
             startingWeight = "10-15 kg", series = 5, repsMin = 12, repsMax = 15, restSeconds = 60,
-            tips = "Étire le grand pectoral et le grand dorsal. Expansion thoracique", gifUrl = "file:///android_asset/gifs/pullover-avec-deux-halteres.gif", difficulty = 1),
+            tips = "Étire le grand pectoral et le grand dorsal. Expansion thoracique", gifUrl = gif("Pullover_avec_deux_haltères.gif"), difficulty = 1),
         ExerciseEntity(name = "Pec deck / Butterfly", muscleGroup = MuscleGroup.CHEST, variant = ExerciseVariant.MACHINE,
             equipment = "Machine pec deck", executionKey = "Régler la machine. Amener les bras devant soi en serrant les pectoraux. Contrôler le retour.",
             startingWeight = "20-40 kg", series = 5, repsMin = 12, repsMax = 15, restSeconds = 60,
-            tips = "Isolation pure des pectoraux. Serrer fort en position fermée", gifUrl = "file:///android_asset/gifs/pec-deck-butterfly.gif", difficulty = 1),
+            tips = "Isolation pure des pectoraux. Serrer fort en position fermée", gifUrl = gif("Pec-deck_ou_butterfly.gif"), difficulty = 1),
         ExerciseEntity(name = "Pompes diamant", muscleGroup = MuscleGroup.CHEST, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Aucun", executionKey = "Mains jointes sous la poitrine formant un diamant. Descendre le torse. Pousser pour remonter.",
             startingWeight = "Poids du corps", series = 5, repsMin = 10, repsMax = 15, restSeconds = 60,
-            tips = "Cible les triceps et la partie interne des pectoraux", gifUrl = "file:///android_asset/gifs/pompe-mains-serrees.gif", difficulty = 2),
+            tips = "Cible les triceps et la partie interne des pectoraux", gifUrl = gif("Pompes.gif"), difficulty = 2),
         ExerciseEntity(name = "Pompes archer", muscleGroup = MuscleGroup.CHEST, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Aucun", executionKey = "Position de pompe large. Fléchir un bras, l'autre reste tendu sur le côté. Alterner.",
             startingWeight = "Poids du corps", series = 5, repsMin = 6, repsMax = 10, restSeconds = 75,
-            tips = "Transition vers les pompes une main. Unilatéral intense", gifUrl = "file:///android_asset/gifs/pompes_archer.gif", difficulty = 3),
+            tips = "Transition vers les pompes une main. Unilatéral intense", gifUrl = gif("Pompes.gif"), difficulty = 3),
         ExerciseEntity(name = "Pompes claquées", muscleGroup = MuscleGroup.CHEST, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Aucun", executionKey = "Pompe explosive. Se projeter en l'air et claquer des mains. Atterrir en douceur.",
             startingWeight = "Poids du corps", series = 5, repsMin = 8, repsMax = 12, restSeconds = 75,
-            tips = "Plyométrique : développe la puissance du haut du corps", gifUrl = "file:///android_asset/gifs/pompes-claquees.gif", difficulty = 3),
+            tips = "Plyométrique : développe la puissance du haut du corps", gifUrl = gif("Pompes.gif"), difficulty = 3),
         ExerciseEntity(name = "Écartés haltères couché", muscleGroup = MuscleGroup.CHEST, variant = ExerciseVariant.ISOLATION,
             equipment = "Haltères + banc plat", executionKey = "Allongé, bras semi-tendus au-dessus de la poitrine. Ouvrir les bras en arc de cercle. Remonter en serrant les pectoraux.",
             startingWeight = "8-12 kg/main", series = 5, repsMin = 12, repsMax = 15, restSeconds = 60,
-            tips = "Étirement maximal des pectoraux. Ne pas descendre trop bas", gifUrl = "file:///android_asset/gifs/ecarte-couche-haltere.gif", difficulty = 1),
+            tips = "Étirement maximal des pectoraux. Ne pas descendre trop bas", gifUrl = gif("Écartés_couché_avec_haltères.gif"), difficulty = 1),
 
         // ===== DOS — Exercices supplémentaires =====
         ExerciseEntity(name = "Tirage vertical prise serrée supination", muscleGroup = MuscleGroup.BACK_WIDTH, variant = ExerciseVariant.MACHINE,
             equipment = "Machine tirage vertical", executionKey = "Prise serrée supination (paumes vers soi). Tirer vers la poitrine. Serrer les omoplates en bas.",
             startingWeight = "30-50 kg", series = 5, repsMin = 10, repsMax = 12, restSeconds = 75,
-            tips = "Recrute fortement les biceps en plus du grand dorsal", gifUrl = "file:///android_asset/gifs/tirage-vertical-prise-serree.gif", difficulty = 1),
+            tips = "Recrute fortement les biceps en plus du grand dorsal", gifUrl = gif("Tirage_vertical_prise_serrée.gif"), difficulty = 1),
         ExerciseEntity(name = "Rowing T-bar", muscleGroup = MuscleGroup.BACK_THICKNESS, variant = ExerciseVariant.WEIGHTS,
             equipment = "Landmine + barre", executionKey = "Penché à 45°. Saisir la barre. Tirer vers la poitrine en serrant les omoplates.",
             startingWeight = "20-40 kg", series = 5, repsMin = 8, repsMax = 12, restSeconds = 90,
-            tips = "Mouvement lourd pour l'épaisseur du dos", gifUrl = "file:///android_asset/gifs/rowing-t-barre.gif", difficulty = 2),
+            tips = "Mouvement lourd pour l'épaisseur du dos", gifUrl = gif("Rowing_à_la_barre_en_T_avec_machine.gif"), difficulty = 2),
         ExerciseEntity(name = "Rowing poulie basse un bras", muscleGroup = MuscleGroup.BACK_THICKNESS, variant = ExerciseVariant.ISOLATION,
             equipment = "Poulie basse + poignée", executionKey = "Assis, tirer la poignée vers la hanche avec un bras. Rotation du torse légère. Contrôler le retour.",
             startingWeight = "10-20 kg", series = 5, repsMin = 10, repsMax = 12, restSeconds = 60,
-            tips = "Unilatéral : permet de corriger les déséquilibres", gifUrl = "file:///android_asset/gifs/rowing-un-bras-poulie-basse.gif", difficulty = 1),
+            tips = "Unilatéral : permet de corriger les déséquilibres", gifUrl = gif("Rowing_unilatéral_à_la_landmine.gif"), difficulty = 1),
         ExerciseEntity(name = "Meadows row", muscleGroup = MuscleGroup.BACK_THICKNESS, variant = ExerciseVariant.WEIGHTS,
             equipment = "Landmine + barre", executionKey = "Position en fente à côté de la landmine. Saisir l'extrémité de la barre. Tirer en arc vers la hanche.",
             startingWeight = "10-20 kg", series = 5, repsMin = 10, repsMax = 12, restSeconds = 75,
-            tips = "Inventé par John Meadows. Étirement et contraction exceptionnels", gifUrl = "file:///android_asset/gifs/meadows-row-exercise.gif", difficulty = 2),
+            tips = "Inventé par John Meadows. Étirement et contraction exceptionnels", gifUrl = gif("Rowing_unilatéral_à_la_landmine.gif"), difficulty = 2),
 
         // ===== TRAPÈZES =====
         ExerciseEntity(name = "Shrugs haltères", muscleGroup = MuscleGroup.TRAPS, variant = ExerciseVariant.WEIGHTS,
             equipment = "Haltères", executionKey = "Debout, haltères le long du corps. Monter les épaules vers les oreilles. Tenir 1-2 secondes en haut. Redescendre lentement.",
             startingWeight = "15-25 kg/main", series = 5, repsMin = 12, repsMax = 15, restSeconds = 60,
-            tips = "Ne pas rouler les épaules. Mouvement vertical uniquement", gifUrl = "file:///android_asset/gifs/shrugs-avec-halteres.gif", difficulty = 1),
+            tips = "Ne pas rouler les épaules. Mouvement vertical uniquement", gifUrl = gif("Shrugs_avec_haltères.gif"), difficulty = 1),
         ExerciseEntity(name = "Shrugs barre devant", muscleGroup = MuscleGroup.TRAPS, variant = ExerciseVariant.WEIGHTS,
             equipment = "Barre olympique", executionKey = "Barre devant les cuisses, prise largeur d'épaules. Monter les épaules le plus haut possible.",
             startingWeight = "40-60 kg", series = 5, repsMin = 12, repsMax = 15, restSeconds = 60,
-            tips = "Permet de charger plus lourd que les haltères", gifUrl = "file:///android_asset/gifs/shrug-barre-devant.gif", difficulty = 1),
+            tips = "Permet de charger plus lourd que les haltères", gifUrl = gif("Shrug_barre.gif"), difficulty = 1),
         ExerciseEntity(name = "Tirage menton", muscleGroup = MuscleGroup.TRAPS, variant = ExerciseVariant.MACHINE,
             equipment = "Machine ou barre", executionKey = "Tirer la barre le long du corps vers le menton. Coudes vers le haut et l'extérieur.",
             startingWeight = "20-30 kg", series = 5, repsMin = 10, repsMax = 12, restSeconds = 60,
-            tips = "Ne pas monter au-dessus des épaules pour préserver l'articulation", gifUrl = "file:///android_asset/gifs/tirage-menton-machine.gif", difficulty = 2),
+            tips = "Ne pas monter au-dessus des épaules pour préserver l'articulation", gifUrl = gif("Tirage_menton_barre_guidée.gif"), difficulty = 2),
         ExerciseEntity(name = "Shrugs poulie basse", muscleGroup = MuscleGroup.TRAPS, variant = ExerciseVariant.ISOLATION,
             equipment = "Poulie basse + barre", executionKey = "Face à la poulie basse. Saisir la barre. Monter les épaules en contractant les trapèzes.",
             startingWeight = "20-40 kg", series = 5, repsMin = 12, repsMax = 15, restSeconds = 60,
-            tips = "Tension constante grâce au câble", gifUrl = "file:///android_asset/gifs/shrug-poulie-basse.gif", difficulty = 1),
+            tips = "Tension constante grâce au câble", gifUrl = gif("Shrug_à_la_poulie.gif"), difficulty = 1),
 
         // ===== ÉPAULES — Exercices supplémentaires =====
         ExerciseEntity(name = "Élévations frontales", muscleGroup = MuscleGroup.SHOULDERS, variant = ExerciseVariant.ISOLATION,
             equipment = "Haltères", executionKey = "Debout, bras le long du corps. Lever un haltère devant soi jusqu'à hauteur d'épaule. Redescendre lentement.",
             startingWeight = "5-8 kg/main", series = 5, repsMin = 12, repsMax = 15, restSeconds = 60,
-            tips = "Cible le deltoïde antérieur. Ne pas balancer le corps", gifUrl = "file:///android_asset/gifs/elevations-frontales.gif", difficulty = 1),
+            tips = "Cible le deltoïde antérieur. Ne pas balancer le corps", gifUrl = gif("Élévations_frontales.gif"), difficulty = 1),
         ExerciseEntity(name = "Oiseau haltères", muscleGroup = MuscleGroup.SHOULDERS, variant = ExerciseVariant.WEIGHTS,
             equipment = "Haltères + banc", executionKey = "Penché en avant ou assis. Écarter les bras sur les côtés en serrant les omoplates. Redescendre lentement.",
             startingWeight = "5-8 kg/main", series = 5, repsMin = 12, repsMax = 15, restSeconds = 60,
-            tips = "Cible le deltoïde postérieur, souvent sous-développé", gifUrl = "file:///android_asset/gifs/oiseau-assis-sur-banc.gif", difficulty = 1),
+            tips = "Cible le deltoïde postérieur, souvent sous-développé", gifUrl = gif("Oiseau_assis_sur_un_banc.gif"), difficulty = 1),
         ExerciseEntity(name = "Oiseau machine (reverse pec deck)", muscleGroup = MuscleGroup.SHOULDERS, variant = ExerciseVariant.MACHINE,
             equipment = "Machine pec deck inversée", executionKey = "Assis face à la machine. Écarter les bras vers l'arrière en serrant les omoplates.",
             startingWeight = "15-25 kg", series = 5, repsMin = 12, repsMax = 15, restSeconds = 60,
-            tips = "Isolation du deltoïde postérieur. Garder les coudes légèrement fléchis", gifUrl = "file:///android_asset/gifs/pec-deck-inverse.gif", difficulty = 1),
+            tips = "Isolation du deltoïde postérieur. Garder les coudes légèrement fléchis", gifUrl = gif("Pec_deck_inversé.gif"), difficulty = 1),
         ExerciseEntity(name = "Développé Arnold", muscleGroup = MuscleGroup.SHOULDERS, variant = ExerciseVariant.WEIGHTS,
             equipment = "Haltères", executionKey = "Assis, haltères devant le visage paumes vers soi. Presser en tournant les poignets pour finir paumes vers l'avant.",
             startingWeight = "8-14 kg/main", series = 5, repsMin = 10, repsMax = 12, restSeconds = 75,
-            tips = "Rotation complète : travaille les 3 faisceaux du deltoïde", gifUrl = "file:///android_asset/gifs/developpe-arnold-exercice-musculation.gif", difficulty = 2),
+            tips = "Rotation complète : travaille les 3 faisceaux du deltoïde", gifUrl = gif("Développé_Arnold.gif"), difficulty = 2),
         ExerciseEntity(name = "Handstand push-ups", muscleGroup = MuscleGroup.SHOULDERS, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Mur", executionKey = "Position handstand contre un mur. Descendre la tête vers le sol. Pousser pour remonter.",
             startingWeight = "Poids du corps", series = 5, repsMin = 5, repsMax = 8, restSeconds = 90,
-            tips = "Exercice avancé. Développe une force d'épaules exceptionnelle", gifUrl = "file:///android_asset/gifs/handstand-push-up.gif", difficulty = 3),
+            tips = "Exercice avancé. Développe une force d'épaules exceptionnelle", gifUrl = gif("Handstand_push-up.gif"), difficulty = 3),
         ExerciseEntity(name = "Y-raise", muscleGroup = MuscleGroup.SHOULDERS, variant = ExerciseVariant.ISOLATION,
             equipment = "Haltères légers ou câbles", executionKey = "Penché en avant. Lever les bras en Y (au-dessus de la tête, légèrement écartés). Redescendre lentement.",
             startingWeight = "2-5 kg/main", series = 5, repsMin = 12, repsMax = 15, restSeconds = 60,
-            tips = "Travaille le deltoïde postérieur et le trapèze inférieur", gifUrl = "file:///android_asset/gifs/y-raise.gif", difficulty = 1),
+            tips = "Travaille le deltoïde postérieur et le trapèze inférieur", gifUrl = gif("Élévation_en_Y_à_la_poulie.gif"), difficulty = 1),
 
         // ===== BICEPS — Exercices supplémentaires =====
         ExerciseEntity(name = "Curl pupitre barre EZ", muscleGroup = MuscleGroup.BICEPS, variant = ExerciseVariant.WEIGHTS,
             equipment = "Barre EZ + pupitre", executionKey = "Bras sur le pupitre. Monter la barre EZ en contractant les biceps. Redescendre lentement.",
             startingWeight = "15-25 kg", series = 5, repsMin = 10, repsMax = 12, restSeconds = 60,
-            tips = "Élimine la triche. Isolation parfaite du biceps", gifUrl = "file:///android_asset/gifs/curl-au-pupitre-barre-ez.gif", difficulty = 1),
+            tips = "Élimine la triche. Isolation parfaite du biceps", gifUrl = gif("Curl_pupitre_barre_EZ.gif"), difficulty = 1),
         ExerciseEntity(name = "Curl prise serrée barre droite", muscleGroup = MuscleGroup.BICEPS, variant = ExerciseVariant.WEIGHTS,
             equipment = "Barre droite", executionKey = "Prise serrée sur la barre. Monter en contractant les biceps. Descendre lentement.",
             startingWeight = "15-25 kg", series = 5, repsMin = 10, repsMax = 12, restSeconds = 60,
-            tips = "Cible davantage la longue portion du biceps", gifUrl = "file:///android_asset/gifs/curl-barre-droite.gif", difficulty = 1),
+            tips = "Cible davantage la longue portion du biceps", gifUrl = gif("Curl_à_la_barre.gif"), difficulty = 1),
 
         // ===== TRICEPS — Exercices supplémentaires =====
         ExerciseEntity(name = "Extension triceps overhead haltère", muscleGroup = MuscleGroup.TRICEPS, variant = ExerciseVariant.WEIGHTS,
             equipment = "Haltère", executionKey = "Assis ou debout. Haltère tenu à deux mains au-dessus de la tête. Descendre derrière la nuque. Remonter en tendant les bras.",
             startingWeight = "8-14 kg", series = 5, repsMin = 10, repsMax = 12, restSeconds = 60,
-            tips = "Étire la longue portion du triceps. Garder les coudes serrés", gifUrl = "file:///android_asset/gifs/extensions-des-triceps-assis-avec-haltere.gif", difficulty = 1),
+            tips = "Étire la longue portion du triceps. Garder les coudes serrés", gifUrl = gif("Extensions_des_triceps_assis_avec_haltère.gif"), difficulty = 1),
         ExerciseEntity(name = "Extension triceps overhead poulie basse", muscleGroup = MuscleGroup.TRICEPS, variant = ExerciseVariant.ISOLATION,
             equipment = "Poulie basse + corde", executionKey = "Dos à la poulie. Saisir la corde au-dessus de la tête. Étendre les bras vers le haut et l'avant.",
             startingWeight = "10-20 kg", series = 5, repsMin = 10, repsMax = 12, restSeconds = 60,
-            tips = "Tension constante tout au long du mouvement", gifUrl = "file:///android_asset/gifs/Extension-triceps-poulie-basse.gif", difficulty = 1),
+            tips = "Tension constante tout au long du mouvement", gifUrl = gif("Extension_verticale_à_la_poulie_basse.gif"), difficulty = 1),
         ExerciseEntity(name = "Dips entre deux bancs", muscleGroup = MuscleGroup.TRICEPS, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Deux bancs", executionKey = "Mains sur un banc derrière, pieds sur un autre devant. Descendre en fléchissant les coudes. Pousser pour remonter.",
             startingWeight = "Poids du corps", series = 5, repsMin = 12, repsMax = 15, restSeconds = 60,
-            tips = "Plus facile que les dips classiques. Ajouter du poids sur les cuisses pour progresser", gifUrl = "file:///android_asset/gifs/dips-entre-deux-bancs.gif", difficulty = 1),
+            tips = "Plus facile que les dips classiques. Ajouter du poids sur les cuisses pour progresser", gifUrl = gif("Dips_entre_deux_bancs.gif"), difficulty = 1),
         ExerciseEntity(name = "JM press", muscleGroup = MuscleGroup.TRICEPS, variant = ExerciseVariant.WEIGHTS,
             equipment = "Barre EZ + banc", executionKey = "Allongé. Descendre la barre vers le menton (entre skullcrusher et développé serré). Pousser en contractant les triceps.",
             startingWeight = "20-30 kg", series = 5, repsMin = 8, repsMax = 12, restSeconds = 75,
-            tips = "Hybride skullcrusher/close grip. Mouvement avancé", gifUrl = "file:///android_asset/gifs/JM-press.gif", difficulty = 3),
+            tips = "Hybride skullcrusher/close grip. Mouvement avancé", gifUrl = gif("Barre_front.gif"), difficulty = 3),
         ExerciseEntity(name = "Tate press", muscleGroup = MuscleGroup.TRICEPS, variant = ExerciseVariant.WEIGHTS,
             equipment = "Haltères + banc", executionKey = "Allongé. Haltères au-dessus de la poitrine. Fléchir les coudes pour amener les haltères vers la poitrine, coudes vers l'extérieur. Remonter.",
             startingWeight = "6-12 kg/main", series = 5, repsMin = 10, repsMax = 12, restSeconds = 60,
-            tips = "Mouvement inhabituel mais très efficace pour la portion latérale", gifUrl = "file:///android_asset/gifs/tate-press.gif", difficulty = 2),
+            tips = "Mouvement inhabituel mais très efficace pour la portion latérale", gifUrl = gif("Tate_press_à_un_bras_avec_haltère.gif"), difficulty = 2),
 
         // ===== ABDOMINAUX — Exercices supplémentaires =====
         ExerciseEntity(name = "Sit-ups", muscleGroup = MuscleGroup.ABS_UPPER, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Tapis", executionKey = "Allongé, genoux fléchis. Monter le buste complet jusqu'à position assise. Redescendre lentement.",
             startingWeight = "Poids du corps", series = 5, repsMin = 15, repsMax = 20, restSeconds = 45,
-            tips = "Mouvement complet, travaille les fléchisseurs de hanche aussi", gifUrl = "file:///android_asset/gifs/SIT_UP.gif", difficulty = 1),
+            tips = "Mouvement complet, travaille les fléchisseurs de hanche aussi", gifUrl = gif("Sit-up_décliné.gif"), difficulty = 1),
         ExerciseEntity(name = "V-ups", muscleGroup = MuscleGroup.ABS_UPPER, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Tapis", executionKey = "Allongé, bras et jambes tendus. Monter simultanément le buste et les jambes pour toucher les pieds. Former un V.",
             startingWeight = "Poids du corps", series = 5, repsMin = 12, repsMax = 15, restSeconds = 45,
-            tips = "Travaille tout le grand droit abdominal simultanément", gifUrl = "file:///android_asset/gifs/v-ups.gif", difficulty = 2),
+            tips = "Travaille tout le grand droit abdominal simultanément", gifUrl = gif("V-Ups.gif"), difficulty = 2),
         ExerciseEntity(name = "Bicycle crunch", muscleGroup = MuscleGroup.ABS_LOWER, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Tapis", executionKey = "Allongé, mains derrière la tête. Amener le coude vers le genou opposé en alternant. Mouvement de pédalage.",
             startingWeight = "Poids du corps", series = 5, repsMin = 15, repsMax = 20, restSeconds = 45,
-            tips = "L'un des meilleurs exercices pour les obliques selon les études EMG", gifUrl = "file:///android_asset/gifs/abdos-crunch-bicyclette.gif", difficulty = 1),
+            tips = "L'un des meilleurs exercices pour les obliques selon les études EMG", gifUrl = gif("Crunch_bicyclette.gif"), difficulty = 1),
         ExerciseEntity(name = "Russian twist", muscleGroup = MuscleGroup.ABS_LOWER, variant = ExerciseVariant.WEIGHTS,
             equipment = "Disque ou medecine ball", executionKey = "Assis, pieds décollés du sol. Tourner le buste de gauche à droite en tenant le poids.",
             startingWeight = "5-10 kg", series = 5, repsMin = 20, repsMax = 30, restSeconds = 45,
-            tips = "Cible les obliques. Les reps comptent chaque côté", gifUrl = "file:///android_asset/gifs/russian-twist.gif", difficulty = 1),
+            tips = "Cible les obliques. Les reps comptent chaque côté", gifUrl = gif("Rotations_russes.gif"), difficulty = 1),
         ExerciseEntity(name = "Mountain climbers", muscleGroup = MuscleGroup.ABS_LOWER, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Aucun", executionKey = "Position de planche. Ramener alternativement les genoux vers la poitrine rapidement.",
             startingWeight = "Poids du corps", series = 5, repsMin = 30, repsMax = 45, restSeconds = 45,
-            tips = "Cardio + abdos. Garder les hanches basses et stables", gifUrl = "file:///android_asset/gifs/mountain-climbers.gif", difficulty = 1, isTimeBased = true),
+            tips = "Cardio + abdos. Garder les hanches basses et stables", gifUrl = gif("Mountain_climber.gif"), difficulty = 1, isTimeBased = true),
         ExerciseEntity(name = "Ab wheel / Roulette abdominale", muscleGroup = MuscleGroup.ABS_UPPER, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Roulette abdominale", executionKey = "À genoux. Rouler vers l'avant en étendant le corps. Revenir à la position de départ en contractant les abdos.",
             startingWeight = "Poids du corps", series = 5, repsMin = 8, repsMax = 12, restSeconds = 60,
-            tips = "Exercice intense. Commencer sur les genoux avant de tenter debout", gifUrl = "file:///android_asset/gifs/roulette-abdominale.gif", difficulty = 2),
+            tips = "Exercice intense. Commencer sur les genoux avant de tenter debout", gifUrl = gif("Roulette_à_abdominaux.gif"), difficulty = 2),
         ExerciseEntity(name = "Dragon flag", muscleGroup = MuscleGroup.ABS_UPPER, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Banc", executionKey = "Allongé sur un banc. Se tenir à l'extrémité. Lever le corps entier comme un drapeau. Descendre lentement sans toucher le banc.",
             startingWeight = "Poids du corps", series = 5, repsMin = 5, repsMax = 8, restSeconds = 90,
-            tips = "Exercice de Bruce Lee. Extrêmement avancé", gifUrl = "file:///android_asset/gifs/dragon-flag.gif", difficulty = 3),
+            tips = "Exercice de Bruce Lee. Extrêmement avancé", gifUrl = gif("Dragon_flag.gif"), difficulty = 3),
         ExerciseEntity(name = "Crunch inversé", muscleGroup = MuscleGroup.ABS_LOWER, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Tapis", executionKey = "Allongé, jambes fléchies. Rouler les hanches vers la poitrine en décollant les fesses du sol. Redescendre lentement.",
             startingWeight = "Poids du corps", series = 5, repsMin = 15, repsMax = 20, restSeconds = 45,
-            tips = "Cible la partie basse des abdos", gifUrl = "file:///android_asset/gifs/crunch-inverse.gif", difficulty = 1),
+            tips = "Cible la partie basse des abdos", gifUrl = gif("Crunch_avec_jambes_verticales.gif"), difficulty = 1),
         ExerciseEntity(name = "Woodchop poulie", muscleGroup = MuscleGroup.ABS_LOWER, variant = ExerciseVariant.ISOLATION,
             equipment = "Poulie haute", executionKey = "Saisir la poignée en haut. Tirer en diagonale vers le bas en tournant le buste. Contrôler le retour.",
             startingWeight = "10-20 kg", series = 5, repsMin = 12, repsMax = 15, restSeconds = 60,
-            tips = "Mouvement fonctionnel rotatif. Travaille les obliques", gifUrl = "file:///android_asset/gifs/Wood-Chop.gif", difficulty = 1),
+            tips = "Mouvement fonctionnel rotatif. Travaille les obliques", gifUrl = gif("Rotation_du_buste_debout_à_la_poulie.gif"), difficulty = 1),
         ExerciseEntity(name = "Dead bug", muscleGroup = MuscleGroup.ABS_UPPER, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Tapis", executionKey = "Allongé, bras et genoux à 90°. Étendre un bras et la jambe opposée simultanément. Revenir et alterner.",
             startingWeight = "Poids du corps", series = 5, repsMin = 10, repsMax = 12, restSeconds = 45,
-            tips = "Excellent pour la stabilité du core et la coordination", gifUrl = "file:///android_asset/gifs/Dead-Bug.gif", difficulty = 1),
+            tips = "Excellent pour la stabilité du core et la coordination", gifUrl = gif("Dead_bug.gif"), difficulty = 1),
         ExerciseEntity(name = "Hollow body hold", muscleGroup = MuscleGroup.ABS_UPPER, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Tapis", executionKey = "Allongé, bras tendus au-dessus de la tête. Décoller les épaules et les jambes du sol. Maintenir la position.",
             startingWeight = "Poids du corps", series = 5, repsMin = 20, repsMax = 40, restSeconds = 45,
-            tips = "Position de base en gymnastique. Les reps = secondes de maintien", tempo = "N/A", gifUrl = "file:///android_asset/gifs/hollow-body-holds.gif", difficulty = 2),
+            tips = "Position de base en gymnastique. Les reps = secondes de maintien", tempo = "N/A", gifUrl = gif("Hollow_hold.gif"), difficulty = 2),
         ExerciseEntity(name = "Pallof press", muscleGroup = MuscleGroup.ABS_LOWER, variant = ExerciseVariant.ISOLATION,
             equipment = "Poulie ou élastique", executionKey = "Debout latéralement à la poulie. Tenir la poignée devant la poitrine. Tendre les bras devant sans tourner le buste.",
             startingWeight = "5-10 kg", series = 5, repsMin = 10, repsMax = 12, restSeconds = 45,
-            tips = "Anti-rotation : travaille la stabilité du core en profondeur", gifUrl = "file:///android_asset/gifs/pallof-press.gif", difficulty = 1),
+            tips = "Anti-rotation : travaille la stabilité du core en profondeur", gifUrl = gif("Rotation_du_buste_debout_à_la_poulie.gif"), difficulty = 1),
 
         // ===== LOMBAIRES =====
         ExerciseEntity(name = "Hyperextensions banc 45°", muscleGroup = MuscleGroup.LOWER_BACK, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Banc à hyperextension", executionKey = "Installer sur le banc à 45°. Descendre le buste vers le sol. Remonter en contractant les lombaires et fessiers.",
             startingWeight = "Poids du corps", series = 5, repsMin = 12, repsMax = 15, restSeconds = 60,
-            tips = "Ne pas hyper-étendre. S'arrêter à l'alignement du corps", gifUrl = "file:///android_asset/gifs/extension-lombaire-au-banc-45.gif", difficulty = 1),
+            tips = "Ne pas hyper-étendre. S'arrêter à l'alignement du corps", gifUrl = gif("Extension_lombaire_au_banc_à_45°.gif"), difficulty = 1),
         ExerciseEntity(name = "Superman au sol", muscleGroup = MuscleGroup.LOWER_BACK, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Tapis", executionKey = "Allongé face au sol. Lever simultanément les bras et les jambes. Maintenir 2-3 secondes. Redescendre.",
             startingWeight = "Poids du corps", series = 5, repsMin = 12, repsMax = 15, restSeconds = 45,
-            tips = "Exercice simple mais efficace pour les érecteurs du rachis", gifUrl = "file:///android_asset/gifs/superman-exercice-dos.gif", difficulty = 1),
+            tips = "Exercice simple mais efficace pour les érecteurs du rachis", gifUrl = gif("Superman.gif"), difficulty = 1),
         ExerciseEntity(name = "Bird dog", muscleGroup = MuscleGroup.LOWER_BACK, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Tapis", executionKey = "À quatre pattes. Tendre un bras et la jambe opposée simultanément. Maintenir 2 secondes. Alterner.",
             startingWeight = "Poids du corps", series = 5, repsMin = 10, repsMax = 12, restSeconds = 45,
-            tips = "Stabilité, coordination et renforcement lombaire. Idéal en rééducation", gifUrl = "file:///android_asset/gifs/bird-dog.gif", difficulty = 1),
+            tips = "Stabilité, coordination et renforcement lombaire. Idéal en rééducation", gifUrl = gif("Bird_dog.gif"), difficulty = 1),
 
         // ===== AVANT-BRAS =====
         ExerciseEntity(name = "Farmer's walk", muscleGroup = MuscleGroup.FOREARMS, variant = ExerciseVariant.WEIGHTS,
             equipment = "Haltères lourds", executionKey = "Saisir un haltère lourd dans chaque main. Marcher droit sur 20-40 mètres en gardant les épaules basses et le core engagé.",
             startingWeight = "20-30 kg/main", series = 5, repsMin = 30, repsMax = 60, restSeconds = 60,
             tips = "Les reps représentent des secondes de marche. Travaille la grip strength, les trapèzes et le core", tempo = "N/A",
-            gifUrl = "file:///android_asset/gifs/Farmers-walk_Cardio.gif", difficulty = 1),
+            gifUrl = gif("Marche_du_fermier_avec_kettlebells.gif"), difficulty = 1),
         ExerciseEntity(name = "Dead hang", muscleGroup = MuscleGroup.FOREARMS, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Barre de traction", executionKey = "Se suspendre à la barre, bras tendus. Maintenir la position le plus longtemps possible.",
             startingWeight = "Poids du corps", series = 5, repsMin = 20, repsMax = 45, restSeconds = 60,
@@ -1196,15 +1196,15 @@ object SeedData {
         ExerciseEntity(name = "Donkey calf raise", muscleGroup = MuscleGroup.CALVES, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Support + partenaire ou machine", executionKey = "Penché en avant, pieds sur une marche. Monter sur la pointe des pieds. Descendre en étirant les mollets.",
             startingWeight = "Poids du corps", series = 5, repsMin = 15, repsMax = 20, restSeconds = 45,
-            tips = "Position penchée étire davantage les gastrocnémiens", gifUrl = "file:///android_asset/gifs/donkey-calf-squats.gif", difficulty = 1),
+            tips = "Position penchée étire davantage les gastrocnémiens", gifUrl = gif("Élévations_des_mollets_au_Donkey.gif"), difficulty = 1),
         ExerciseEntity(name = "Mollets presse à cuisses", muscleGroup = MuscleGroup.CALVES, variant = ExerciseVariant.MACHINE,
             equipment = "Presse à cuisses", executionKey = "Pieds en bas de la plateforme, pointe sur le bord. Pousser avec les pointes puis descendre en étirant.",
             startingWeight = "60-100 kg", series = 5, repsMin = 15, repsMax = 20, restSeconds = 45,
-            tips = "Permet de charger lourd en sécurité", gifUrl = "file:///android_asset/gifs/extension-mollets-presse-45.gif", difficulty = 1),
+            tips = "Permet de charger lourd en sécurité", gifUrl = gif("Extension_des_mollets_à_la_presse.gif"), difficulty = 1),
         ExerciseEntity(name = "Box jumps", muscleGroup = MuscleGroup.CALVES, variant = ExerciseVariant.BODYWEIGHT,
             equipment = "Boîte/plyo box", executionKey = "Face à la box. Sauter sur la box en atterrissant pieds à plat. Redescendre en contrôlant.",
             startingWeight = "Poids du corps", series = 5, repsMin = 8, repsMax = 12, restSeconds = 60,
-            tips = "Plyométrique : développe la puissance des jambes et mollets", gifUrl = "file:///android_asset/gifs/jump-box.gif", difficulty = 2),
+            tips = "Plyométrique : développe la puissance des jambes et mollets", gifUrl = gif("Box_jump.gif"), difficulty = 2),
 
         // ═══════════════════════════════════════════════════════════
         // BATCH 2 — Catalogue étendu (GIFs GitHub Releases)
