@@ -32,33 +32,52 @@ object DatabaseModule {
     ): ShredCoachDatabase {
         val callback = object : RoomDatabase.Callback() {
             /**
-             * Sync idempotente du catalogue d'exos : insère uniquement les
-             * entrées de [SeedData] dont le `name` n'est pas déjà en DB.
+             * Sync UPSERT du catalogue d'exos par `name` :
+             *  - Si un exo de [SeedData] existe en DB (match par name), on
+             *    UPDATE ses champs en conservant son `id` (préserve les FK
+             *    de `workout_sets` qui réfèrent les exos par id).
+             *  - Sinon, INSERT avec id=0 (auto-generated par Room).
              *
-             * **Pourquoi pas un truncate-then-insert** : les `workout_sets` et
-             * `workout_exercises` réfèrent les exos par `id` (auto-generated).
-             * Truncate + re-seed regénère des id différents → FK orphelins,
-             * historique de séances cassé. La diff par `name` préserve les id
-             * existants.
+             * **Pourquoi UPSERT (et pas seulement INSERT-if-missing)** :
+             * quand SeedData évolue entre versions (correction de gifUrl,
+             * d'executionKey, de tips, etc.), les utilisateurs avec une DB
+             * existante doivent voir les corrections. Sans UPDATE, l'exo
+             * « Squat barre » resterait à jamais figé sur les valeurs de la
+             * première install — par exemple, après la migration GIFs locaux
+             * → GitHub Releases (commit cf3855d), tous les v1 gardaient leurs
+             * URLs `file:///android_asset/...` pointant vers des assets
+             * supprimés → images cassées en prod. UPSERT corrige cela.
              *
-             * **Cas d'usage** :
-             *  - `onCreate` (premier launch après install) : DB vide, tout
-             *    SeedData s'insère.
-             *  - `onOpen` (chaque launch ensuite) : si SeedData a grossi entre
-             *    versions de l'app (ex: 170 → 440 exos), les nouveaux noms
-             *    s'insèrent sans toucher aux 170 anciens. Coût d'un launch
-             *    quand le catalogue est à jour : 1 SELECT name FROM exercises
-             *    + comparaison Set, ~5ms.
+             * **Pourquoi pas truncate + re-seed** : les `workout_sets` et
+             * `workout_exercises` ont des FK vers exercise.id (auto-generated).
+             * Truncate regénère des id différents → FK orphelins → historique
+             * de séances perdu. UPSERT par name préserve les id stables.
+             *
+             * **Coût** : 1 SELECT * FROM exercises + 1 batch UPDATE de N
+             * existants + 1 batch INSERT de M nouveaux par launch (~50ms en
+             * IO async, n'impacte pas le temps de démarrage UI).
              */
             private fun seedDatabaseIdempotent() {
                 CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
                     val exerciseDao = exerciseDaoProvider.get()
-                    val existingNames = exerciseDao.getAllExerciseNames().toHashSet()
-                    val missing = SeedData.getAllExercises()
-                        .filter { it.name !in existingNames }
-                    if (missing.isNotEmpty()) {
-                        exerciseDao.insertExercises(missing)
+                    // Récupère id par name pour les exos déjà en DB.
+                    val existingByName = exerciseDao.getAllExerciseIdsByName()
+                        .associate { it.name to it.id }
+
+                    val toInsert = mutableListOf<com.shredcoach.app.data.local.entity.ExerciseEntity>()
+                    val toUpdate = mutableListOf<com.shredcoach.app.data.local.entity.ExerciseEntity>()
+                    for (seed in SeedData.getAllExercises()) {
+                        val existingId = existingByName[seed.name]
+                        if (existingId == null) {
+                            toInsert.add(seed)
+                        } else {
+                            // Conserve l'id existant pour préserver les FK.
+                            toUpdate.add(seed.copy(id = existingId))
+                        }
                     }
+
+                    if (toInsert.isNotEmpty()) exerciseDao.insertExercises(toInsert)
+                    if (toUpdate.isNotEmpty()) exerciseDao.updateExercises(toUpdate)
                 }
             }
 

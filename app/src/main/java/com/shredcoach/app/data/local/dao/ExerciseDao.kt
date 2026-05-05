@@ -35,6 +35,9 @@ interface ExerciseDao {
     @Update
     suspend fun updateExercise(exercise: ExerciseEntity)
 
+    @Update
+    suspend fun updateExercises(exercises: List<ExerciseEntity>)
+
     @Delete
     suspend fun deleteExercise(exercise: ExerciseEntity)
 
@@ -53,4 +56,18 @@ interface ExerciseDao {
      */
     @Query("SELECT name FROM exercises")
     suspend fun getAllExerciseNames(): List<String>
+
+    /**
+     * Projection légère (id + name uniquement) utilisée par la sync UPSERT
+     * du catalogue. Évite de charger toutes les colonnes des 440+ exos pour
+     * un simple lookup par name lors de chaque launch.
+     */
+    @Query("SELECT id, name FROM exercises")
+    suspend fun getAllExerciseIdsByName(): List<ExerciseIdName>
 }
+
+/**
+ * Projection Room pour le mapping name → id (cf. [ExerciseDao.getAllExerciseIdsByName]).
+ * Hors interface DAO car Room interdit les data classes nested dans une `@Dao`.
+ */
+data class ExerciseIdName(val id: Long, val name: String)
