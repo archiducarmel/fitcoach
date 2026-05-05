@@ -36,8 +36,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -73,10 +73,12 @@ fun TodayNutritionCard(
 ) {
     val a11y = remember(nutrition) { buildA11yLabel(nutrition) }
 
+    // Pas de mergeDescendants : la card contient des boutons (Scanner/Manuel)
+    // qui doivent rester focusables individuellement par TalkBack. Le résumé
+    // a11y consolidé est porté par le titre "Aujourd'hui" via clearAndSetSemantics
+    // (lu en premier au swipe, puis les boutons gardent leur label propre).
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .semantics(mergeDescendants = true) { contentDescription = a11y },
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
@@ -93,6 +95,9 @@ fun TodayNutritionCard(
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                // a11y consolidé porté ici (au lieu d'un mergeDescendants
+                // global qui casserait la focusabilité des boutons).
+                modifier = Modifier.clearAndSetSemantics { contentDescription = a11y },
             )
 
             // ─── Ring calories + résumé ───

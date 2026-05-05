@@ -17,14 +17,20 @@ import com.shredcoach.app.domain.training.PlateauDetector
 import com.shredcoach.app.domain.training.ProgressStatus
 import com.shredcoach.app.domain.wellness.WellnessStore
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import com.shredcoach.app.data.local.entity.WorkoutEntity
 import com.shredcoach.app.data.local.entity.WorkoutLogEntity
@@ -86,16 +92,44 @@ class HomeViewModel @Inject constructor(
     val freestyleLogId: StateFlow<Long?> = _freestyleLogId.asStateFlow()
 
     /**
+     * Flow qui émet la date courante et re-emit à chaque passage à minuit.
+     * Évite que les flows dépendants (nutrition / mood) restent figés sur la
+     * date capturée à la construction du ViewModel quand l'app reste ouverte
+     * across minuit.
+     *
+     * Implémentation : on dort jusqu'à 00:00:01 (avec un floor de 60s pour ne pas
+     * busy-loop si l'horloge système recule). À chaque tick on re-emit la nouvelle
+     * date — `distinctUntilChanged` côté caller garantit qu'on ne déclenche pas
+     * de recomputation inutile sur le même jour.
+     */
+    @Suppress("MagicNumber")
+    private val todayDateFlow: Flow<LocalDate> = flow {
+        while (kotlinx.coroutines.currentCoroutineContext().isActive) {
+            val now = LocalDate.now()
+            emit(now)
+            // Délai jusqu'au prochain minuit + 1s de marge pour éviter de retomber
+            // sur la même date à cause d'imprécisions.
+            val nextMidnight = now.plusDays(1).atStartOfDay().plusSeconds(1)
+            val nowDt = LocalDateTime.now()
+            val delayMs = Duration.between(nowDt, nextMidnight).toMillis().coerceAtLeast(60_000L)
+            delay(delayMs)
+        }
+    }.distinctUntilChanged()
+
+    /**
      * Today nutrition card — combine meals (Flow) + goal (Flow) + schedules (Flow).
      * `null` = pas encore initialisé (jamais après le premier emit) ; un goal vide
      * donne quand même une card valide avec target par défaut.
      */
-    val todayNutrition: StateFlow<TodayNutrition?> = combine(
-        nutritionRepository.getMealsForDate(LocalDate.now()),
-        nutritionRepository.getNutritionGoal(),
-        nutritionRepository.getEnabledSchedules(),
-    ) { meals, goal, schedules ->
-        buildTodayNutrition(meals.map { Triple(it.calories, it.proteins, Pair(it.carbs, it.fats)) }, goal, schedules)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val todayNutrition: StateFlow<TodayNutrition?> = todayDateFlow.flatMapLatest { date ->
+        combine(
+            nutritionRepository.getMealsForDate(date),
+            nutritionRepository.getNutritionGoal(),
+            nutritionRepository.getEnabledSchedules(),
+        ) { meals, goal, schedules ->
+            buildTodayNutrition(meals.map { Triple(it.calories, it.proteins, Pair(it.carbs, it.fats)) }, goal, schedules)
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -119,7 +153,9 @@ class HomeViewModel @Inject constructor(
      * Mood du jour (0..4) ou null si pas encore tapé. La card check-in
      * s'affiche/disparaît reactive à ce flow.
      */
-    val todayMood: StateFlow<Int?> = wellnessStore.observeMood(LocalDate.now())
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val todayMood: StateFlow<Int?> = todayDateFlow
+        .flatMapLatest { date -> wellnessStore.observeMood(date) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
@@ -383,7 +419,9 @@ class HomeViewModel @Inject constructor(
         val workout = workoutRepository.getWorkoutById(workoutId) ?: return null
 
         val completedExercises = workoutRepository.getCompletedExerciseCount(log.id)
-        val totalExercises = workout.exerciseCount.coerceAtLeast(completedExercises)
+        // Freestyle (workout.exerciseCount = 0) → on garde 0 pour signaler à l'UI
+        // qu'il n'y a pas de plan total. Sinon on prend la valeur du workout.
+        val totalExercises = workout.exerciseCount
 
         return ResumableSession(
             workoutLogId = log.id,

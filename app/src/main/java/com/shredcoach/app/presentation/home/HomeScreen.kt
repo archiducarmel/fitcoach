@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -56,9 +57,6 @@ private fun NavController.switchTo(route: String) {
 @Composable
 fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltViewModel()) {
     val userProfile by viewModel.userProfile.collectAsState()
-    val totalWorkouts by viewModel.totalWorkouts.collectAsState()
-    val totalVolume by viewModel.totalVolume.collectAsState()
-    val totalTimeMinutes by viewModel.totalTimeMinutes.collectAsState()
     val greetingInfo by viewModel.greetingInfo.collectAsState()
     val todayNutrition by viewModel.todayNutrition.collectAsState()
     val resumableSession by viewModel.resumableSession.collectAsState()
@@ -106,28 +104,34 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             TopAppBar(
                 title = {},
                 navigationIcon = {
+                    // Avatar + firstName cliquables ensemble (cohérent Strava/Apple).
+                    // On wrap dans une Row clickable plutôt qu'un IconButton autour
+                    // de la seule icône — le tap couvre toute la zone visuelle.
                     Row(
                         modifier = Modifier
-                            .padding(start = 12.dp)
-                            .clip(RoundedCornerShape(20.dp)),
+                            .padding(start = 8.dp)
+                            .clip(RoundedCornerShape(24.dp))
+                            .clickable { navController.switchTo(Screen.Profile.route) }
+                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                            .semantics(mergeDescendants = true) {
+                                contentDescription = "Profil de $firstName"
+                            },
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        IconButton(onClick = { navController.switchTo(Screen.Profile.route) }) {
-                            Box(
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .clip(CircleShape)
-                                    .background(OrangeVibrant.copy(alpha = 0.18f)),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Icon(
-                                    Icons.Default.Person,
-                                    contentDescription = "Profil",
-                                    tint = OrangeVibrant,
-                                    modifier = Modifier.size(20.dp),
-                                )
-                            }
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(OrangeVibrant.copy(alpha = 0.18f)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = null,
+                                tint = OrangeVibrant,
+                                modifier = Modifier.size(20.dp),
+                            )
                         }
                         Text(
                             text = firstName,
@@ -398,53 +402,10 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                 }
             }
 
-            // ═══════════════════════════════════════
-            // SECTION 2 : PROGRESSION
-            // ═══════════════════════════════════════
-
-            StaggeredAppear(index = 6) {
-                Text("Ma progression", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-            }
-
-            StaggeredAppear(index = 7) {
-                if (totalWorkouts == 0) {
-                    // Nouvel utilisateur : card motivationnelle
-                    Card(
-                        onClick = { navController.switchTo(Screen.WorkoutGenerator.route) },
-                        colors = CardDefaults.cardColors(containerColor = NeonGreen.copy(alpha = 0.08f)),
-                        shape = RoundedCornerShape(16.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                    ) {
-                        Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                            Box(Modifier.size(48.dp).clip(CircleShape).background(NeonGreen.copy(alpha = 0.18f)),
-                                contentAlignment = Alignment.Center) {
-                                Icon(Icons.Default.EmojiEvents, null, Modifier.size(28.dp), tint = NeonGreen)
-                            }
-                            Column(Modifier.weight(1f)) {
-                                Text("Ta première séance t'attend !", style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                                Text("Débloque tes stats de progression.", style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                            Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = NeonGreen, modifier = Modifier.size(20.dp))
-                        }
-                    }
-                } else {
-                    // Utilisateur actif : stats avec compteurs animés (count-up depuis 0)
-                    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        AnimatedStatCard(Modifier.weight(1f).fillMaxHeight(), totalWorkouts, "Séances", OrangeVibrant) {
-                            navController.switchTo(Screen.Stats.route)
-                        }
-                        AnimatedStatCard(Modifier.weight(1f).fillMaxHeight(), totalVolume, "Volume", NeonGreen, formatter = { fmtVol(it.toDouble()) }) {
-                            navController.switchTo(Screen.Stats.route)
-                        }
-                        AnimatedStatCard(Modifier.weight(1f).fillMaxHeight(), totalTimeMinutes, "Temps", Color(0xFF3B82F6), formatter = { fmtTime(it.toInt()) }) {
-                            navController.switchTo(Screen.Stats.route)
-                        }
-                    }
-                }
-            }
+            // (Section "Ma progression" supprimée : les vanity metrics
+            //  Séances/Volume/Temps all-time ont été remplacées par
+            //  l'Insight de la semaine (H3) qui est actionnable. Les stats
+            //  détaillées restent accessibles via "Plus → Mes Stats".)
 
             // ═══════════════════════════════════════
             // SECTION "PLUS" — collapsible (navigation secondaire)
@@ -560,42 +521,6 @@ private fun MoreSectionHeader(expanded: Boolean, onToggle: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AnimatedStatCard(
-    modifier: Modifier,
-    targetValue: Number,
-    label: String,
-    color: Color,
-    formatter: (Float) -> String = { it.toInt().toString() },
-    onClick: () -> Unit
-) {
-    // Description TalkBack agrégée : valeur + label dans un seul focus.
-    // L'AnimatedCounter (texte qui se déroule) ne serait jamais lu en
-    // entier — on remplace par la valeur finale stable.
-    val a11y = remember(targetValue, label) {
-        val finalText = formatter(targetValue.toFloat())
-        "$label : $finalText"
-    }
-    Card(
-        onClick = onClick,
-        modifier = modifier.semantics(mergeDescendants = true) {
-            contentDescription = a11y
-        },
-        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f))
-    ) {
-        Column(Modifier.fillMaxWidth().padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            AnimatedCounter(
-                targetValue = targetValue,
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                color = color,
-                formatter = formatter
-            )
-            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
 private fun ActionCard(modifier: Modifier, title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, color: Color, onClick: () -> Unit) {
     Card(onClick = onClick, modifier = modifier.height(90.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
@@ -693,17 +618,6 @@ private fun NextSessionWidget(
             Icon(Icons.Default.ChevronRight, null, tint = OrangeVibrant)
         }
     }
-}
-
-private fun fmtVol(v: Double): String = when {
-    v >= 1_000_000 -> String.format(java.util.Locale.US, "%.1fM", v / 1_000_000)
-    v >= 1_000 -> String.format(java.util.Locale.US, "%.1fk", v / 1_000)
-    else -> "%.0f kg".format(v)
-}
-
-private fun fmtTime(minutes: Int): String = when {
-    minutes >= 60 -> "${minutes / 60}h${if (minutes % 60 > 0) " ${minutes % 60}m" else ""}"
-    else -> "${minutes}min"
 }
 
 // ═══════════════════════════════════════

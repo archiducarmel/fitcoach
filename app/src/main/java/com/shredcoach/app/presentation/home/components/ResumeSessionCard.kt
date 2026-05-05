@@ -56,9 +56,13 @@ fun ResumeSessionCard(
     modifier: Modifier = Modifier,
 ) {
     val a11y = remember(session) {
-        "Reprendre ta séance ${session.workoutName}, " +
-            "${session.elapsedMinutes} minutes écoulées, " +
+        val exoLabel = if (session.isFreestyle) {
+            "${session.completedExercises} exercices terminés"
+        } else {
             "${session.completedExercises} exercices sur ${session.totalExercises} terminés"
+        }
+        "Reprendre ta séance ${session.workoutName}, " +
+            "${session.elapsedMinutes} minutes écoulées, $exoLabel"
     }
     val animatedProgress by animateFloatAsState(
         targetValue = session.progress,
@@ -152,7 +156,8 @@ fun ResumeSessionCard(
                     )
                     InfoChip(
                         label = "Exercices",
-                        value = "${session.completedExercises}/${session.totalExercises}",
+                        value = if (session.isFreestyle) "${session.completedExercises}"
+                        else "${session.completedExercises}/${session.totalExercises}",
                     )
                 }
             }

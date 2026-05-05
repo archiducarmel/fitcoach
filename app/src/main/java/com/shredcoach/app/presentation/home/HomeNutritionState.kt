@@ -45,11 +45,6 @@ data class NextScheduleItem(
 )
 
 /**
- * Séance à reprendre — log non-complété datant de moins de 24h.
- * Au-delà, on n'expose pas la session (auto-hide ; le log reste en base
- * pour ne pas perdre les sets déjà loggés, mais sort de la home).
- */
-/**
  * "Insight de la semaine" — un highlight unique surfacé en hero, basé sur
  * [com.shredcoach.app.domain.training.PlateauDetector] sur les exercices les
  * plus pratiqués. Choix du highlight (par priorité) :
@@ -77,6 +72,14 @@ enum class InsightTone {
     PLATEAU,
 }
 
+/**
+ * Séance à reprendre — log non-complété datant de moins de 24h.
+ * Au-delà, on n'expose pas la session (auto-hide ; le log reste en base
+ * pour ne pas perdre les sets déjà loggés, mais sort de la home).
+ *
+ * @param totalExercises 0 = séance libre (pas de plan préétabli) — l'UI affichera
+ *                       "{completedExercises} exercices" au lieu de "X/Y".
+ */
 data class ResumableSession(
     val workoutLogId: Long,
     val workoutName: String,
@@ -85,8 +88,18 @@ data class ResumableSession(
     val completedExercises: Int,
     val totalExercises: Int,
 ) {
-    /** Ratio [0,1] pour la progress bar du card. */
+    /** True si séance libre (pas de plan préétabli). UI adapte le rendu progression. */
+    val isFreestyle: Boolean get() = totalExercises == 0
+
+    /**
+     * Ratio [0,1] pour la progress bar du card. En freestyle (totalExercises=0)
+     * on génère une asymptote vers 1 (`1 - 1/(1+done)`) — la barre se remplit à
+     * mesure que l'user fait des exos sans jamais atteindre 100% (cohérent avec
+     * l'absence de "fin" prédéfinie en freestyle).
+     */
     val progress: Float
-        get() = if (totalExercises <= 0) 0f
-        else (completedExercises.toFloat() / totalExercises).coerceIn(0f, 1f)
+        get() = when {
+            isFreestyle -> 1f - 1f / (1f + completedExercises.toFloat())
+            else -> (completedExercises.toFloat() / totalExercises).coerceIn(0f, 1f)
+        }
 }
