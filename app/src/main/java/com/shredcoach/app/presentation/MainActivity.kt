@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.lifecycleScope
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -53,6 +54,13 @@ class MainActivity : ComponentActivity() {
         }
         intent?.getStringExtra(AppNotificationDispatcher.EXTRA_DEEPLINK_ROUTE)?.let { route ->
             deeplinkRouteState.value = (deeplinkRouteState.value.first + 1) to route
+        }
+
+        // Restaure une séance non-complétée (<24h) après un cold-start. Idempotent
+        // — la tentative est garde-fou-ée dans le manager, donc onCreate multiple
+        // (config change, retour Activity) ne cause pas de double-restore.
+        lifecycleScope.launch {
+            sessionManager.tryRestoreFromDb()
         }
 
         setContent {

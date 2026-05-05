@@ -181,8 +181,20 @@ fun WorkoutSessionScreen(
     Scaffold(
         topBar = { SessionTopBar(state,
             onBack = {
-                navController.navigate(com.shredcoach.app.presentation.navigation.Screen.Home.route) {
-                    launchSingleTop = true
+                // Retour idiomatique : on dépile la session et on revient à
+                // l'écran précédent (Home, Preview, History…). Le chrono global
+                // continue de tourner via ActiveSessionManager → la bannière
+                // s'affichera automatiquement sur l'écran de destination.
+                // Si la session est l'unique entry du back stack (cas pathologique
+                // — deeplink direct), on retombe sur Home sans dupliquer Home.
+                val popped = navController.popBackStack()
+                if (!popped) {
+                    navController.navigate(com.shredcoach.app.presentation.navigation.Screen.Home.route) {
+                        launchSingleTop = true
+                        popUpTo(com.shredcoach.app.presentation.navigation.Screen.Home.route) {
+                            inclusive = true
+                        }
+                    }
                 }
             },
             onToggleChrono = { if (state.globalChronoRunning) viewModel.stopGlobalChrono() else viewModel.resumeGlobalChrono() },

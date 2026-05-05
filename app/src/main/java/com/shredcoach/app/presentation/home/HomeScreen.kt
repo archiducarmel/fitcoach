@@ -261,7 +261,14 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                     com.shredcoach.app.presentation.home.components.ResumeSessionCard(
                         session = resumable,
                         onClick = {
-                            navController.navigate(Screen.WorkoutSession.createRoute(resumable.workoutLogId))
+                            // launchSingleTop : si une instance existe déjà en haut
+                            // (ex: l'user vient juste de quitter via back), Compose
+                            // Navigation la réutilise → pas de re-init du ViewModel.
+                            // Sinon, le ViewModel est créé et loadWorkout restaure
+                            // la progression depuis les WorkoutSet persistés.
+                            navController.navigate(Screen.WorkoutSession.createRoute(resumable.workoutLogId)) {
+                                launchSingleTop = true
+                            }
                         },
                     )
                 } else {

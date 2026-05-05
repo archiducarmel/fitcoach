@@ -620,11 +620,17 @@ private fun ActiveSessionBanner(
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 6.dp)
             .hapticClickable {
-                // D'abord essayer de revenir à la session existante dans le back stack
-                val popped = navController.popBackStack(Screen.WorkoutSession.route, inclusive = false)
-                if (!popped) {
-                    // Session plus dans le back stack → relancer (perte d'état inévitable)
-                    navController.navigate(Screen.WorkoutSession.createRoute(session.workoutLogId))
+                // Navigation directe avec popUpTo Home (sans inclusive) : nettoie
+                // les sous-écrans (Exercises, MealScanner, etc.) au-dessus de Home,
+                // garantit que la session est unique en sommet de stack, et évite
+                // le crash du popBackStack-by-pattern sur certaines configurations
+                // de back-stack mixtes (sous-écran d'un autre tab + WorkoutSession
+                // déjà présente plus bas). L'état de la séance est restauré depuis
+                // la DB par WorkoutSessionViewModel.loadWorkout — pas de perte.
+                val sessionRoute = Screen.WorkoutSession.createRoute(session.workoutLogId)
+                navController.navigate(sessionRoute) {
+                    popUpTo(Screen.Home.route) { inclusive = false; saveState = false }
+                    launchSingleTop = true
                 }
             },
         colors = CardDefaults.cardColors(containerColor = OrangeVibrant),
@@ -653,7 +659,11 @@ private fun ActiveSessionBanner(
                     .background(MaterialTheme.colorScheme.onPrimary)
             )
 
-            // Infos
+            // Infos. Le sous-titre s'adapte au type de séance :
+            //  - Mode normal avec exos chargés : "Squat barre (3/8)"
+            //  - Freestyle ou totalExercises=0 (pré-ajout) : "Séance libre" ou nom courant seul
+            // Évite l'affichage moche "(1/0)" quand l'user a ouvert un freestyle
+            // sans encore avoir ajouté d'exercice.
             Column(Modifier.weight(1f)) {
                 Text(
                     "SEANCE EN COURS",
@@ -662,8 +672,14 @@ private fun ActiveSessionBanner(
                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
                     letterSpacing = 1.dp.value.sp
                 )
+                val subtitle = when {
+                    session.totalExercises > 0 && session.currentExerciseName.isNotBlank() ->
+                        "${session.currentExerciseName} (${session.currentExerciseIndex + 1}/${session.totalExercises})"
+                    session.currentExerciseName.isNotBlank() -> session.currentExerciseName
+                    else -> "Séance libre"
+                }
                 Text(
-                    "${session.currentExerciseName} (${session.currentExerciseIndex + 1}/${session.totalExercises})",
+                    subtitle,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onPrimary

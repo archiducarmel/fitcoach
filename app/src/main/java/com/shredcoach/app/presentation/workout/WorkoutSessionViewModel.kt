@@ -283,7 +283,6 @@ class WorkoutSessionViewModel @Inject constructor(
                 val workoutLog = workoutRepository.getWorkoutLogById(workoutLogId)
                 if (workoutLog != null) {
                     val exercises = workoutRepository.getExercisesForWorkoutLog(workoutLogId)
-                    val first = exercises.firstOrNull()
                     val now = LocalDateTime.now()
                     val freestyle = exercises.isEmpty()
 
@@ -291,13 +290,27 @@ class WorkoutSessionViewModel @Inject constructor(
                     val profile = userRepository.getUserProfileOnce()
                     val bodyWeight = profile?.currentWeightKg ?: 75.0
 
+                    // ── Restauration progression depuis la DB ──
+                    // **Pourquoi** : sans cela, ouvrir une séance déjà commencée
+                    // (banner, card "Reprendre", retour de background) écraserait
+                    // l'index courant à 0 et ferait disparaître toutes les séries
+                    // déjà loggées dans la même session UI → impression de "reset"
+                    // côté utilisateur, malgré que la DB ait conservé les sets.
+                    // On lit donc les sets existants pour ce log et on reconstitue
+                    // l'état à l'identique avant de reprendre.
+                    val existingSets = runCatching {
+                        workoutRepository.getWorkoutSets(workoutLogId)
+                    }.getOrDefault(emptyList())
+                    val restored = if (existingSets.isNotEmpty() && exercises.isNotEmpty())
+                        rebuildProgressFromSets(exercises, existingSets) else null
+
                     if (freestyle) {
                         // Mode Freestyle : séance vide, l'utilisateur ajoute les exercices au fur et à mesure
                         _state.update {
                             it.copy(
                                 workoutLogId = workoutLog.id,
                                 exercises = emptyList(),
-                                sessionStartTime = now,
+                                sessionStartTime = workoutLog.startTime,
                                 userBodyWeightKg = bodyWeight,
                                 isFreestyle = true,
                                 isLoading = false,
@@ -306,29 +319,39 @@ class WorkoutSessionViewModel @Inject constructor(
                             )
                         }
                     } else {
-                        // Mode normal
-                        val lastSets = first?.let { loadLastSetsForExercise(it.id) }
-                        val prWeight = first?.let { runCatching { workoutRepository.getMaxWeightForExercise(it.id) }.getOrNull() }
-                        val initialWeight = if (first?.isTimeBased == true) fmtWeightValue(bodyWeight)
-                            else lastSets?.firstOrNull()?.let { s -> s.weightKg.toString() } ?: extractWeight(first)
+                        // Mode normal — pré-remplir l'UI pour l'exo courant (resté ou restauré).
+                        val currentIndex = restored?.currentExerciseIndex ?: 0
+                        val currentExo = exercises.getOrNull(currentIndex) ?: exercises.first()
+
+                        val lastSets = loadLastSetsForExercise(currentExo.id)
+                        val prWeight = runCatching { workoutRepository.getMaxWeightForExercise(currentExo.id) }.getOrNull()
+                        val initialWeight = if (currentExo.isTimeBased) fmtWeightValue(bodyWeight)
+                            else lastSets.firstOrNull()?.let { s -> s.weightKg.toString() } ?: extractWeight(currentExo)
 
                         _state.update {
                             it.copy(
                                 workoutLogId = workoutLog.id,
                                 exercises = exercises,
-                                sessionStartTime = now,
-                                exerciseStartTimes = mapOf(0 to now),
+                                // sessionStartTime ancré sur startTime du log → durée
+                                // cohérente même après cold-start.
+                                sessionStartTime = workoutLog.startTime,
+                                exerciseStartTimes = restored?.exerciseStartTimes
+                                    ?: mapOf(0 to now),
+                                exerciseDurations = restored?.exerciseDurations ?: emptyMap(),
+                                completedSets = restored?.completedSets ?: emptyList(),
+                                currentExerciseIndex = currentIndex,
+                                currentSeries = restored?.currentSeries ?: 1,
                                 userBodyWeightKg = bodyWeight,
                                 currentSetWeight = initialWeight,
-                                currentSetReps = first?.repsMin?.toString() ?: "",
-                                currentSetTempo = first?.tempo ?: "3-0-1-0",
-                                lastSessionWeight = lastSets?.firstOrNull()?.weightKg,
-                                lastSessionReps = lastSets?.firstOrNull()?.reps,
+                                currentSetReps = currentExo.repsMin.toString(),
+                                currentSetTempo = currentExo.tempo,
+                                lastSessionWeight = lastSets.firstOrNull()?.weightKg,
+                                lastSessionReps = lastSets.firstOrNull()?.reps,
                                 personalRecordWeight = prWeight,
                                 isLoading = false
                             )
                         }
-                        sessionManager.updateExerciseInfo(first?.name ?: "", 0)
+                        sessionManager.updateExerciseInfo(currentExo.name, currentIndex)
                         startExerciseChrono()
                     }
                     startGlobalChrono()
@@ -346,12 +369,30 @@ class WorkoutSessionViewModel @Inject constructor(
     // ══════════════════════════════════════════
 
     private fun startGlobalChrono() {
-        // Le SessionManager gère le chrono — il tourne même hors de cet écran
-        if (!sessionManager.isSessionActive) {
-            sessionManager.startSession(
-                workoutLogId = _state.value.workoutLogId ?: 0,
+        // Le SessionManager gère le chrono — il tourne même hors de cet écran.
+        // 3 cas :
+        //  1. Aucune session active → on en démarre une fraîche.
+        //  2. Session active sur le MÊME workoutLogId (banner, retour de bg, restore
+        //     DB cold-start) → no-op : le chrono continue sans reset.
+        //  3. Session active sur un AUTRE workoutLogId (cas pathologique : l'user
+        //     a commencé une nouvelle séance sans terminer l'ancienne) → on bascule
+        //     proprement vers la nouvelle pour éviter un état incohérent banner/écran.
+        val current = sessionManager.session.value
+        val targetLogId = _state.value.workoutLogId ?: 0
+        when {
+            current == null -> sessionManager.startSession(
+                workoutLogId = targetLogId,
                 totalExercises = _state.value.totalExercises
             )
+            current.workoutLogId != targetLogId -> {
+                sessionManager.stopSession()
+                sessionManager.startSession(
+                    workoutLogId = targetLogId,
+                    totalExercises = _state.value.totalExercises
+                )
+            }
+            // current.workoutLogId == targetLogId : ne rien faire, chrono continue.
+            else -> sessionManager.updateTotalExercises(_state.value.totalExercises)
         }
     }
 
