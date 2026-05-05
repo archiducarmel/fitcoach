@@ -623,11 +623,12 @@ private fun ActiveSessionBanner(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 6.dp)
-            // Hauteur min FIXE pour empêcher la bannière de "respirer" quand le
-            // chrono passe de "MM:SS" à "H:MM:SS" ou que le nom d'exo varie en
-            // longueur. Min plutôt que height fixe → respecte le scaling
-            // accessibilité (font scale > 1.3 nécessite plus de place).
-            .heightIn(min = 64.dp)
+            // Hauteur min légèrement supérieure à la somme des 2 textes empilés
+            // (labelSmall + bodyMedium ≈ 36dp + padding interne 20dp = ~56dp).
+            // 68dp donne ~12dp de respiration verticale → l'œil perçoit la
+            // bannière comme "généreuse" sans qu'elle prenne trop de place,
+            // et accommode bien le scaling accessibilité jusqu'à fontScale 1.2.
+            .heightIn(min = 68.dp)
             .hapticClickable {
                 // Navigation directe avec popUpTo Home (sans inclusive) : nettoie
                 // les sous-écrans (Exercises, MealScanner, etc.) au-dessus de Home,
@@ -674,14 +675,17 @@ private fun ActiveSessionBanner(
             // Évite l'affichage moche "(1/0)" quand l'user a ouvert un freestyle
             // sans encore avoir ajouté d'exercice.
             Column(Modifier.weight(1f)) {
+                // Pas de maxLines : le label est statique ("SEANCE EN COURS"
+                // = 15 chars en labelSmall bold). Sur les écrans étroits avec
+                // fontScale élevé, on préfère qu'il wrappe sur 2 lignes plutôt
+                // que de l'ellipsiser → la lisibilité prime ici, le heightIn
+                // de la Card absorbe le débordement minimal.
                 Text(
                     "SEANCE EN COURS",
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
                     letterSpacing = 1.dp.value.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
                 )
                 val subtitle = when {
                     session.totalExercises > 0 && session.currentExerciseName.isNotBlank() ->
@@ -689,12 +693,12 @@ private fun ActiveSessionBanner(
                     session.currentExerciseName.isNotBlank() -> session.currentExerciseName
                     else -> "Séance libre"
                 }
+                // Subtitle : maxLines=1 + ellipsis ICI parce que les noms d'exos
+                // sont VARIABLES et peuvent être très longs ("Développé incliné
+                // haltères unilatéral"). Sans cette contrainte, la bannière
+                // sauterait de 1 à 2 lignes selon l'exo courant.
                 Text(
                     subtitle,
-                    // Sans maxLines=1, un nom long ("Développé incliné haltères
-                    // unilatéral") wrappe sur 2 lignes → hauteur de la bannière
-                    // qui saute à chaque transition d'exo. Ellipsis garantit
-                    // une hauteur stable sur tous les noms d'exos.
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onPrimary,
@@ -703,15 +707,10 @@ private fun ActiveSessionBanner(
                 )
             }
 
-            // Chrono. **Stabilité largeur** :
-            //  - `tnum` (tabular numbers) : tous les chiffres ont la même
-            //    largeur → "11:11" et "00:00" rendent à la pixel près identique.
-            //  - `widthIn(min = 84.dp)` : réserve assez de place pour "H:MM:SS"
-            //    (~84dp en titleLarge bold), donc la transition de "59:59" à
-            //    "1:00:00" (5→7 chars) ne décale pas les éléments voisins.
-            //  - `textAlign = End` : le chrono "grandit" vers la gauche dans son
-            //    espace réservé, alignement droit cohérent avec sa fonction
-            //    "compteur" qui reste à droite des infos.
+            // Chrono : tnum stabilise les chiffres au sein du même format
+            // (MM:SS et H:MM:SS). Pas de widthIn : sur écrans étroits, ça
+            // mangerait la place du sous-titre. Le shift mineur de 5→7 chars
+            // (à la transition 1h, événement unique par séance) est acceptable.
             Text(
                 formatBannerChrono(seconds),
                 style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"),
@@ -719,8 +718,6 @@ private fun ActiveSessionBanner(
                 color = MaterialTheme.colorScheme.onPrimary,
                 maxLines = 1,
                 softWrap = false,
-                textAlign = TextAlign.End,
-                modifier = Modifier.widthIn(min = 84.dp)
             )
 
             // Reprendre

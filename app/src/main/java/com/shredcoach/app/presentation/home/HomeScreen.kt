@@ -280,14 +280,17 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                     ) {
                         Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
-                                Text("GÉNÉRER UNE SÉANCE", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White,
-                                    maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                                // Pas de maxLines : "GÉNÉRER UNE SÉANCE" en titleLarge bold
+                                // peut juste atteindre la fin sur petits écrans + fontScale
+                                // élevé → on préfère un wrap propre à une ellipsis.
+                                Text("GÉNÉRER UNE SÉANCE", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
                                 Spacer(Modifier.height(4.dp))
-                                // maxLines=1 : empêche un wrap qui ferait grandir la card sur
-                                // les écrans étroits ou avec un fontScale > 1 (accessibilité).
+                                // maxLines=2 : la sub-line peut s'étaler sur 2 lignes si
+                                // l'écran est étroit, sans grossir indéfiniment. Donne
+                                // un comportement responsive sans truncation visible.
                                 Text("Full Body • ${userProfile?.preferredWorkoutDuration ?: 90} min • Adapté à ton niveau",
                                     style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f),
-                                    maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                                    maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                             }
                             Surface(shape = CircleShape, color = Color.White.copy(alpha = 0.2f), modifier = Modifier.size(52.dp)) {
                                 Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.AutoAwesome, null, Modifier.size(28.dp), tint = Color.White) }

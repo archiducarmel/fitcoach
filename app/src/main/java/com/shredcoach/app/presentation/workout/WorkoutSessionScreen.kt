@@ -394,7 +394,6 @@ private fun SessionTopBar(
                     color = OrangeVibrant,
                     maxLines = 1,
                     softWrap = false,
-                    modifier = Modifier.widthIn(min = 56.dp),
                 )
             }
             IconButton(onClick = onToggleChrono, modifier = Modifier.size(36.dp)) {
