@@ -31,22 +31,53 @@ object DatabaseModule {
         exerciseDaoProvider: Provider<ExerciseDao>
     ): ShredCoachDatabase {
         val callback = object : RoomDatabase.Callback() {
-            private fun seedDatabase() {
+            /**
+             * Sync idempotente du catalogue d'exos : insère uniquement les
+             * entrées de [SeedData] dont le `name` n'est pas déjà en DB.
+             *
+             * **Pourquoi pas un truncate-then-insert** : les `workout_sets` et
+             * `workout_exercises` réfèrent les exos par `id` (auto-generated).
+             * Truncate + re-seed regénère des id différents → FK orphelins,
+             * historique de séances cassé. La diff par `name` préserve les id
+             * existants.
+             *
+             * **Cas d'usage** :
+             *  - `onCreate` (premier launch après install) : DB vide, tout
+             *    SeedData s'insère.
+             *  - `onOpen` (chaque launch ensuite) : si SeedData a grossi entre
+             *    versions de l'app (ex: 170 → 440 exos), les nouveaux noms
+             *    s'insèrent sans toucher aux 170 anciens. Coût d'un launch
+             *    quand le catalogue est à jour : 1 SELECT name FROM exercises
+             *    + comparaison Set, ~5ms.
+             */
+            private fun seedDatabaseIdempotent() {
                 CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
                     val exerciseDao = exerciseDaoProvider.get()
-                    exerciseDao.deleteAllExercises()
-                    exerciseDao.insertExercises(SeedData.getAllExercises())
+                    val existingNames = exerciseDao.getAllExerciseNames().toHashSet()
+                    val missing = SeedData.getAllExercises()
+                        .filter { it.name !in existingNames }
+                    if (missing.isNotEmpty()) {
+                        exerciseDao.insertExercises(missing)
+                    }
                 }
             }
 
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
-                seedDatabase()
+                seedDatabaseIdempotent()
+            }
+
+            override fun onOpen(db: SupportSQLiteDatabase) {
+                super.onOpen(db)
+                // Re-sync à chaque ouverture pour propager l'enrichissement de
+                // SeedData aux utilisateurs qui ont déjà créé leur DB sur une
+                // version précédente. Idempotent → no-op si tout est à jour.
+                seedDatabaseIdempotent()
             }
 
             override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
                 super.onDestructiveMigration(db)
-                seedDatabase()
+                seedDatabaseIdempotent()
             }
         }
 

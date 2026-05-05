@@ -43,4 +43,14 @@ interface ExerciseDao {
 
     @Query("SELECT COUNT(*) FROM exercises")
     suspend fun getExerciseCount(): Int
+
+    /**
+     * Liste des noms d'exos déjà en base. Utilisé par la sync idempotente du
+     * catalogue (cf. [com.shredcoach.app.di.DatabaseModule.seedDatabase]) pour
+     * insérer uniquement les exos manquants quand SeedData s'enrichit entre
+     * deux versions de l'app — sans dupliquer les exos existants ni casser
+     * les FK des `workout_sets` qui réfèrent un exo par `id`.
+     */
+    @Query("SELECT name FROM exercises")
+    suspend fun getAllExerciseNames(): List<String>
 }
