@@ -3,7 +3,6 @@ package com.shredcoach.app.presentation.navigation
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import com.shredcoach.app.presentation.common.LocalAnimatedVisibilityScope
-import com.shredcoach.app.presentation.common.LocalSharedTransitionScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -271,14 +270,19 @@ fun ShredCoachNavigation(
             }
         }
     ) { paddingValues ->
-      // SharedTransitionLayout englobe le NavHost pour permettre aux shared
-      // element transitions (Modifier.sharedElementOptIn) de morpher entre
-      // destinations consécutives. Aucun coût quand aucun shared element n'est
-      // déclaré — c'est un simple wrapper layout.
-      @OptIn(ExperimentalSharedTransitionApi::class)
-      SharedTransitionLayout {
-        val sharedTransitionScope = this
-        CompositionLocalProvider(LocalSharedTransitionScope provides sharedTransitionScope) {
+      // **Pourquoi pas de SharedTransitionLayout global** : la version 1.7+ de
+      // Compose a un bug "Placement happened before lookahead" quand un
+      // SharedTransitionLayout englobe un NavHost qui contient des écrans avec
+      // LazyColumn (cf. WorkoutSessionScreen) et qu'on déclenche une transition
+      // complexe (popUpTo / popBackStack avec sauts multiples — par ex. tap sur
+      // la bannière "séance en cours" depuis un sous-écran d'un autre tab).
+      // Crash systématique avec stacktrace pointant vers
+      // SharedTransitionScopeKt$SharedTransitionScope$1$1$1$1.invoke.
+      // Les modifiers `sharedElementOptIn` / `sharedBoundsOptIn` ont un fallback
+      // no-op quand `LocalSharedTransitionScope.current == null` → la suppression
+      // du wrapper est gracieuse, on perd juste le morph image entre Exercises
+      // et ExerciseDetail (cosmétique). À ré-introduire si l'upstream Compose
+      // corrige le bug en ciblant uniquement la sous-arborescence concernée.
         NavHost(
             navController = navController,
             startDestination = if (hasProfile) Screen.Home.route else Screen.Onboarding.route,
@@ -509,8 +513,6 @@ fun ShredCoachNavigation(
                 DashboardScreen(navController = navController)
             }
         }
-        } // CompositionLocalProvider LocalSharedTransitionScope
-      } // SharedTransitionLayout
     }
 
     // Bandeau session visible meme quand la bottom bar est masquee (sauf ecran de seance)
