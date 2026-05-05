@@ -69,6 +69,23 @@ interface WorkoutLogDao {
     @Query("SELECT COUNT(DISTINCT exerciseId) FROM workout_sets WHERE workoutLogId = :logId AND completed = 1")
     suspend fun getCompletedExerciseCount(logId: Long): Int
 
+    /**
+     * Met à jour le wall-clock de l'exo courant. Update partiel (vs `updateWorkoutLog`
+     * qui réécrit toute la ligne) : appelé à chaque transition d'exo, donc on
+     * minimise le coût I/O et on évite les races avec d'autres updates concurrents
+     * de la même ligne (sets, durations).
+     */
+    @Query("UPDATE workout_logs SET currentExerciseStartedAt = :startedAt WHERE id = :logId")
+    suspend fun updateCurrentExerciseStartedAt(logId: Long, startedAt: LocalDateTime?)
+
+    /**
+     * Met à jour l'état "série en cours" : startedAt + duration cible (timed sets).
+     * Appelé sur `Démarrer la série` (set both) et sur fin/skip/redo de série
+     * (clear both → null/0).
+     */
+    @Query("UPDATE workout_logs SET currentSetStartedAt = :startedAt, currentSetTimedTotalSeconds = :timedTotal WHERE id = :logId")
+    suspend fun updateCurrentSetState(logId: Long, startedAt: LocalDateTime?, timedTotal: Int)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWorkoutLog(log: WorkoutLogEntity): Long
 

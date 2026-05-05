@@ -46,14 +46,30 @@ class ActiveSessionManager @Inject constructor(
          * Horloge murale du début de l'exo courant. Re-stampée par
          * [updateExerciseInfo] uniquement quand on change d'exo (mêmes name+index
          * → on garde le timestamp). Permet au chrono d'exo de survivre aux
-         * navigations (sortir+revenir sur l'écran session) et au process death.
+         * navigations (sortir+revenir sur l'écran session) et au process death
+         * (persistée dans `workout_logs.currentExerciseStartedAt`).
          */
         val currentExerciseStartedAt: LocalDateTime = LocalDateTime.now(),
         val currentExerciseSeconds: Long = 0,
         val totalExercises: Int = 0,
         /** True si l'état a été reconstruit depuis la DB après un cold-start. */
-        val restoredFromDb: Boolean = false
-    )
+        val restoredFromDb: Boolean = false,
+        // ─── Série en cours ──────────────────────────────────────────────
+        /**
+         * Wall-clock du `Démarrer la série`. Null = aucune série en cours.
+         * Persistée en DB → survit au cold-start. Utilisée pour calculer
+         * [currentSetSeconds] et [currentSetTimedRemaining] via le tick.
+         */
+        val currentSetStartedAt: LocalDateTime? = null,
+        /** Durée cible pour les exos chronométrés (gainage, etc.). 0 = pas timed. */
+        val currentSetTimedTotalSeconds: Int = 0,
+        /** Élapsed depuis le démarrage de la série (0 si pas en cours). */
+        val currentSetSeconds: Long = 0,
+        /** Pour les sets timed : secondes restantes avant auto-validation. */
+        val currentSetTimedRemaining: Int = 0
+    ) {
+        val isSetInProgress: Boolean get() = currentSetStartedAt != null
+    }
 
     private val _session = MutableStateFlow<ActiveSession?>(null)
     val session: StateFlow<ActiveSession?> = _session.asStateFlow()
@@ -70,18 +86,6 @@ class ActiveSessionManager @Inject constructor(
 
     val isSessionActive: Boolean get() = _session.value?.isRunning == true
 
-    fun startSession(workoutLogId: Long, totalExercises: Int) {
-        startSession(
-            workoutLogId = workoutLogId,
-            totalExercises = totalExercises,
-            startedAt = LocalDateTime.now(),
-            elapsedSeconds = 0,
-            currentExerciseName = "",
-            currentExerciseIndex = 0,
-            restoredFromDb = false
-        )
-    }
-
     /**
      * Démarre/restaure une session en spécifiant explicitement l'ancre temporelle
      * et l'élapsed initial. Utilisé par [tryRestoreFromDb] pour reprendre une
@@ -94,9 +98,18 @@ class ActiveSessionManager @Inject constructor(
         elapsedSeconds: Long,
         currentExerciseName: String,
         currentExerciseIndex: Int,
+        currentExerciseStartedAt: LocalDateTime,
+        currentSetStartedAt: LocalDateTime?,
+        currentSetTimedTotalSeconds: Int,
         restoredFromDb: Boolean
     ) {
         val now = LocalDateTime.now()
+        val initialSetSeconds = currentSetStartedAt?.let {
+            Duration.between(it, now).seconds.coerceAtLeast(0)
+        } ?: 0L
+        val initialSetRemaining = if (currentSetTimedTotalSeconds > 0 && currentSetStartedAt != null) {
+            (currentSetTimedTotalSeconds - initialSetSeconds.toInt()).coerceAtLeast(0)
+        } else 0
         _session.value = ActiveSession(
             workoutLogId = workoutLogId,
             startedAt = startedAt,
@@ -104,34 +117,119 @@ class ActiveSessionManager @Inject constructor(
             isRunning = true,
             currentExerciseName = currentExerciseName,
             currentExerciseIndex = currentExerciseIndex,
-            // Sur restore depuis DB on n'a pas le vrai startedAt de l'exo courant
-            // (la DB ne stampe pas le démarrage par exo) → on prend `now` : le
-            // chrono d'exo redémarre à 0 sur cold-start, ce qui est acceptable
-            // (le chrono global reste correct, lui).
-            currentExerciseStartedAt = now,
-            currentExerciseSeconds = 0,
+            currentExerciseStartedAt = currentExerciseStartedAt,
+            currentExerciseSeconds = Duration.between(currentExerciseStartedAt, now).seconds.coerceAtLeast(0),
             totalExercises = totalExercises,
-            restoredFromDb = restoredFromDb
+            restoredFromDb = restoredFromDb,
+            currentSetStartedAt = currentSetStartedAt,
+            currentSetTimedTotalSeconds = currentSetTimedTotalSeconds,
+            currentSetSeconds = initialSetSeconds,
+            currentSetTimedRemaining = initialSetRemaining
         )
         startChrono()
+    }
+
+    /** Surcharge "fresh start" — démarrage neuf depuis Preview/Generator. */
+    fun startSession(workoutLogId: Long, totalExercises: Int) {
+        val now = LocalDateTime.now()
+        startSession(
+            workoutLogId = workoutLogId,
+            totalExercises = totalExercises,
+            startedAt = now,
+            elapsedSeconds = 0,
+            currentExerciseName = "",
+            currentExerciseIndex = 0,
+            currentExerciseStartedAt = now,
+            currentSetStartedAt = null,
+            currentSetTimedTotalSeconds = 0,
+            restoredFromDb = false
+        )
+        // Persister l'ancre de l'exo courant pour cold-start (clear set state).
+        persistExerciseStartedAt(workoutLogId, now)
+        persistSetState(workoutLogId, null, 0)
     }
 
     /**
      * Met à jour les infos d'exo courant. Re-stampe `currentExerciseStartedAt`
      * UNIQUEMENT si l'exo change (index ou nom différent) — sinon, idempotent
      * pour préserver le chrono d'exo lors des allers-retours sur l'écran session.
+     * Sur changement d'exo, persiste le nouvel ancre en DB et clear l'état set.
      */
     fun updateExerciseInfo(name: String, index: Int) {
         val current = _session.value ?: return
         val isNewExercise = current.currentExerciseIndex != index ||
             current.currentExerciseName != name
+        val now = LocalDateTime.now()
+        val newStartedAt = if (isNewExercise) now else current.currentExerciseStartedAt
         _session.value = current.copy(
             currentExerciseName = name,
             currentExerciseIndex = index,
-            currentExerciseStartedAt = if (isNewExercise) LocalDateTime.now()
-                else current.currentExerciseStartedAt,
-            currentExerciseSeconds = if (isNewExercise) 0 else current.currentExerciseSeconds
+            currentExerciseStartedAt = newStartedAt,
+            currentExerciseSeconds = if (isNewExercise) 0 else current.currentExerciseSeconds,
+            // Une transition d'exo annule toute série en cours (cas exotique :
+            // user skip un exo en pleine série). Sécurise l'invariant set ⊂ exo.
+            currentSetStartedAt = if (isNewExercise) null else current.currentSetStartedAt,
+            currentSetTimedTotalSeconds = if (isNewExercise) 0 else current.currentSetTimedTotalSeconds,
+            currentSetSeconds = if (isNewExercise) 0 else current.currentSetSeconds,
+            currentSetTimedRemaining = if (isNewExercise) 0 else current.currentSetTimedRemaining
         )
+        if (isNewExercise) {
+            persistExerciseStartedAt(current.workoutLogId, newStartedAt)
+            persistSetState(current.workoutLogId, null, 0)
+        }
+    }
+
+    /**
+     * L'utilisateur a tapé `Démarrer la série`. Stamp wall-clock + durée cible
+     * pour les sets timed. Persiste en DB pour survie cold-start.
+     */
+    fun markSetStarted(timedTotalSeconds: Int) {
+        val current = _session.value ?: return
+        val now = LocalDateTime.now()
+        _session.value = current.copy(
+            currentSetStartedAt = now,
+            currentSetTimedTotalSeconds = timedTotalSeconds,
+            currentSetSeconds = 0,
+            currentSetTimedRemaining = timedTotalSeconds
+        )
+        persistSetState(current.workoutLogId, now, timedTotalSeconds)
+    }
+
+    /**
+     * Série terminée / skippée / annulée. Clear l'état set et persiste.
+     */
+    fun markSetCompleted() {
+        val current = _session.value ?: return
+        if (current.currentSetStartedAt == null) return // déjà clean
+        _session.value = current.copy(
+            currentSetStartedAt = null,
+            currentSetTimedTotalSeconds = 0,
+            currentSetSeconds = 0,
+            currentSetTimedRemaining = 0
+        )
+        persistSetState(current.workoutLogId, null, 0)
+    }
+
+    private fun persistExerciseStartedAt(logId: Long, startedAt: LocalDateTime?) {
+        if (logId <= 0) return
+        scope.launch {
+            try {
+                workoutRepositoryProvider.get().updateCurrentExerciseStartedAt(logId, startedAt)
+            } catch (t: Throwable) {
+                android.util.Log.w("ActiveSessionManager", "persistExerciseStartedAt failed", t)
+            }
+        }
+    }
+
+    private fun persistSetState(logId: Long, startedAt: LocalDateTime?, timedTotal: Int) {
+        if (logId <= 0) return
+        scope.launch {
+            try {
+                workoutRepositoryProvider.get().updateCurrentSetState(logId, startedAt, timedTotal)
+            } catch (t: Throwable) {
+                android.util.Log.w("ActiveSessionManager", "persistSetState failed", t)
+            }
+        }
     }
 
     fun updateTotalExercises(total: Int) {
@@ -218,6 +316,23 @@ class ActiveSessionManager @Inject constructor(
             val currentIndex = computeCurrentExerciseIndex(exercises, sets)
             val currentName = exercises.getOrNull(currentIndex)?.name ?: ""
 
+            // Wall-clock de l'exo courant : on lit la valeur persistée dans le
+            // log si elle est cohérente, sinon `now` (best-effort fallback).
+            // Cohérence : on accepte la valeur DB tant qu'elle est <= now et
+            // postérieure au démarrage de la séance.
+            val exoStartedAt = log.currentExerciseStartedAt
+                ?.takeIf { !it.isAfter(now) && !it.isBefore(log.startTime) }
+                ?: now
+
+            // Set state : on lit ce qui était en cours avant le kill. Filtre
+            // de sécurité : si setStartedAt est trop ancien (>30 min, ce qui
+            // dépasse toute durée raisonnable de série), on considère que c'est
+            // une lecture stale et on clear.
+            val setStartedAt = log.currentSetStartedAt?.takeIf {
+                !it.isAfter(now) && Duration.between(it, now).toMinutes() < 30
+            }
+            val setTimedTotal = if (setStartedAt != null) log.currentSetTimedTotalSeconds else 0
+
             startSession(
                 workoutLogId = log.id,
                 totalExercises = exercises.size,
@@ -225,6 +340,9 @@ class ActiveSessionManager @Inject constructor(
                 elapsedSeconds = elapsed.seconds.coerceAtLeast(0),
                 currentExerciseName = currentName,
                 currentExerciseIndex = currentIndex,
+                currentExerciseStartedAt = exoStartedAt,
+                currentSetStartedAt = setStartedAt,
+                currentSetTimedTotalSeconds = setTimedTotal,
                 restoredFromDb = true
             )
         } catch (t: Throwable) {
@@ -259,16 +377,27 @@ class ActiveSessionManager @Inject constructor(
                 delay(1000)
                 val current = _session.value ?: break
                 if (!current.isRunning) break
-                // Tick wall-clock : on recompute toujours depuis startedAt pour
-                // résister aux suspensions de la coroutine (background, doze, etc.)
+                // Tick wall-clock : on recompute tous les chronos depuis leur
+                // ancre temporelle pour résister aux suspensions de coroutine
+                // (background, doze, process death + restore).
                 val now = LocalDateTime.now()
                 val elapsed = Duration.between(current.startedAt, now)
                     .seconds.coerceAtLeast(current.globalChronoSeconds)
                 val exoElapsed = Duration.between(current.currentExerciseStartedAt, now)
                     .seconds.coerceAtLeast(0)
+                val setSeconds = current.currentSetStartedAt?.let {
+                    Duration.between(it, now).seconds.coerceAtLeast(0)
+                } ?: 0L
+                val setTimedRemaining = if (current.currentSetTimedTotalSeconds > 0 &&
+                    current.currentSetStartedAt != null
+                ) {
+                    (current.currentSetTimedTotalSeconds - setSeconds.toInt()).coerceAtLeast(0)
+                } else 0
                 _session.value = current.copy(
                     globalChronoSeconds = elapsed,
-                    currentExerciseSeconds = exoElapsed
+                    currentExerciseSeconds = exoElapsed,
+                    currentSetSeconds = setSeconds,
+                    currentSetTimedRemaining = setTimedRemaining
                 )
             }
         }

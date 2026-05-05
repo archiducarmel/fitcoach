@@ -70,6 +70,12 @@ class WorkoutRepository @Inject constructor(
     suspend fun updateWorkoutLog(log: WorkoutLogEntity) =
         workoutLogDao.updateWorkoutLog(log)
 
+    suspend fun updateCurrentExerciseStartedAt(logId: Long, startedAt: LocalDateTime?) =
+        workoutLogDao.updateCurrentExerciseStartedAt(logId, startedAt)
+
+    suspend fun updateCurrentSetState(logId: Long, startedAt: LocalDateTime?, timedTotal: Int) =
+        workoutLogDao.updateCurrentSetState(logId, startedAt, timedTotal)
+
     suspend fun deleteWorkoutLog(log: WorkoutLogEntity) =
         workoutLogDao.deleteWorkoutLog(log)
 

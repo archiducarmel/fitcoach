@@ -37,5 +37,16 @@ data class WorkoutLogEntity(
     val exercisesCompleted: Int = 0, // Nombre d'exercices terminés (vs skippés)
     val exercisesSkipped: Int = 0, // Nombre d'exercices skippés
     val notes: String? = null,
-    val completed: Boolean = true
+    val completed: Boolean = true,
+    // ─── Reprise robuste cross-process (v35) ─────────────────────────────
+    // Champs mis à jour pendant la séance par ActiveSessionManager. Permettent
+    // de restaurer fidèlement l'état UI (chrono d'exo + état "série en cours")
+    // après un cold-start ou un retour d'arrière-plan long. Tous null/0 quand
+    // la séance n'est pas active (séance terminée OU jamais démarrée).
+    /** Wall-clock du début de l'exo courant. Re-stampé à chaque transition. */
+    val currentExerciseStartedAt: LocalDateTime? = null,
+    /** Wall-clock du `Démarrer la série`. Null = aucune série en cours. */
+    val currentSetStartedAt: LocalDateTime? = null,
+    /** Pour les exos chronométrés (gainage…), durée cible. 0 = pas timed. */
+    val currentSetTimedTotalSeconds: Int = 0,
 )

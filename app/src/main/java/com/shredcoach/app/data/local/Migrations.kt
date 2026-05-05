@@ -50,6 +50,26 @@ object Migrations {
         }
     }
 
+    /**
+     * v34 → v35 : ajoute 3 colonnes à `workout_logs` pour persister l'état
+     * de la séance active à travers cold-start :
+     * - `currentExerciseStartedAt` : wall-clock du début de l'exo courant.
+     * - `currentSetStartedAt` : wall-clock du `Démarrer la série` (null si
+     *   aucune série en cours).
+     * - `currentSetTimedTotalSeconds` : durée cible pour les exos chronométrés
+     *   (gainage, cardio fixe). 0 = pas un set timed.
+     *
+     * Toutes nullables / DEFAULT 0 → ALTER TABLE ADD COLUMN simple, pas besoin
+     * de table-rebuild. Aucune donnée existante affectée.
+     */
+    fun migration34to35(): Migration = object : Migration(34, 35) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `workout_logs` ADD COLUMN `currentExerciseStartedAt` TEXT")
+            db.execSQL("ALTER TABLE `workout_logs` ADD COLUMN `currentSetStartedAt` TEXT")
+            db.execSQL("ALTER TABLE `workout_logs` ADD COLUMN `currentSetTimedTotalSeconds` INTEGER NOT NULL DEFAULT 0")
+        }
+    }
+
     private fun copyApiKeysToSecureStore(context: Context, db: SupportSQLiteDatabase) {
         try {
             val masterKey = MasterKey.Builder(context)

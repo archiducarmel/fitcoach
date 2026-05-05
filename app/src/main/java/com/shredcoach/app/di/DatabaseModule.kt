@@ -107,7 +107,10 @@ object DatabaseModule {
         )
             // Migrations explicites — toute évolution de schéma à partir
             // de v33 doit ajouter une Migration ici (cf. Migrations.kt).
-            .addMigrations(Migrations.migration33to34(context))
+            .addMigrations(
+                Migrations.migration33to34(context),
+                Migrations.migration34to35(),
+            )
             // Fallback uniquement en cas de **downgrade** (ex : utilisateur
             // sideload une version plus ancienne). Aucun fallback destructif
             // sur les forward migrations — on ne perd jamais les données

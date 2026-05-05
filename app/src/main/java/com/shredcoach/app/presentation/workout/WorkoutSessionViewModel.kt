@@ -227,10 +227,12 @@ class WorkoutSessionViewModel @Inject constructor(
     private val _state = MutableStateFlow(WorkoutSessionState())
     val state: StateFlow<WorkoutSessionState> = _state.asStateFlow()
 
-    // Plus de job local pour le chrono d'exo : il est géré wall-clock par
-    // ActiveSessionManager (cf. startExerciseChrono/stopExerciseChrono no-op).
+    // Plus de jobs locaux pour les chronos d'exo / de série : tout est géré
+    // wall-clock par ActiveSessionManager (cf. startExerciseChrono no-op,
+    // markSetStarted/markSetCompleted, et le tick global du manager qui
+    // recompute setSeconds/timedRemaining à chaque seconde). Persistance DB
+    // → survit aux navigations et au process death.
     private var restTimerJob: Job? = null
-    private var timedSetJob: Job? = null
 
     init {
         val workoutId = savedStateHandle.get<String>("workoutId")?.toLongOrNull()
@@ -258,19 +260,38 @@ class WorkoutSessionViewModel @Inject constructor(
             }
         }
 
-        // Observer chrono global + chrono d'exo du SessionManager. Les deux sont
-        // ancrés wall-clock dans le manager → résistent aux navigations et au
-        // process death (cf. ActiveSessionManager.startChrono).
+        // Observer tous les chronos + état "série en cours" du SessionManager.
+        // Tout est ancré wall-clock dans le manager et persisté en DB → survit
+        // aux navigations et au process death (cf. ActiveSessionManager).
         viewModelScope.launch {
             sessionManager.session.collect { session ->
-                if (session != null) {
-                    _state.update {
-                        it.copy(
-                            globalChronoSeconds = session.globalChronoSeconds,
-                            globalChronoRunning = session.isRunning,
-                            exerciseChronoSeconds = session.currentExerciseSeconds
-                        )
-                    }
+                if (session == null) return@collect
+
+                val prevTimedRemaining = _state.value.timedSetSecondsRemaining
+                val prevTimedTotal = _state.value.timedSetTotalSeconds
+                val newTimedRemaining = session.currentSetTimedRemaining
+                val newTimedTotal = session.currentSetTimedTotalSeconds
+
+                _state.update {
+                    it.copy(
+                        globalChronoSeconds = session.globalChronoSeconds,
+                        globalChronoRunning = session.isRunning,
+                        exerciseChronoSeconds = session.currentExerciseSeconds,
+                        isSetInProgress = session.isSetInProgress,
+                        setStartTime = session.currentSetStartedAt,
+                        timedSetTotalSeconds = newTimedTotal,
+                        timedSetSecondsRemaining = newTimedRemaining
+                    )
+                }
+
+                // Auto-validation des sets timed quand le décompte atteint 0
+                // (gainage : la série est validée automatiquement à la fin).
+                // Détection de la transition (>0 → 0) pour ne pas valider 2x.
+                val justExpired = prevTimedTotal > 0 && prevTimedRemaining > 0 &&
+                    newTimedTotal > 0 && newTimedRemaining == 0 &&
+                    session.isSetInProgress
+                if (justExpired) {
+                    onSetCompleted()
                 }
             }
         }
@@ -355,8 +376,15 @@ class WorkoutSessionViewModel @Inject constructor(
                                 isLoading = false
                             )
                         }
+                        // Ordre IMPORTANT : startGlobalChrono d'abord (crée la session
+                        // si elle n'existe pas, ou no-op si déjà active sur ce
+                        // workoutLogId), PUIS updateExerciseInfo (qui requiert une
+                        // session active pour effet). Sinon, sur fresh start, l'info
+                        // d'exo serait perdue avant la création de la session.
+                        startGlobalChrono()
                         sessionManager.updateExerciseInfo(currentExo.name, currentIndex)
                         startExerciseChrono()
+                        return@launch
                     }
                     startGlobalChrono()
                 } else {
@@ -720,38 +748,16 @@ class WorkoutSessionViewModel @Inject constructor(
 
     fun onSetStarted() {
         val exo = _state.value.currentExercise ?: return
-        _state.update { it.copy(isSetInProgress = true, setStartTime = LocalDateTime.now()) }
-        // Démarrer le décompte auto pour les exos chronométrés (gainage, etc.)
-        // On exclut le cardio qui utilise son propre UI (chrono montant + "TERMINER LE CARDIO"),
-        // car CardioSessionCard ne rend PAS le TimedSetCountdownHero → le décompte tournerait invisible.
-        if (exo.isTimeBased && exo.muscleGroup != MuscleGroup.CARDIO) {
-            // Fallback : exo.repsMin (qui stocke la durée cible pour les time-based) si le champ est vide
-            val duration = _state.value.currentSetReps.toIntOrNull()?.coerceAtLeast(1)
+        // Calcul de la durée pour les sets timed (gainage, etc.).
+        // Cardio exclu : utilise son propre UI (chrono montant + bouton TERMINER).
+        val timedDurationSec = if (exo.isTimeBased && exo.muscleGroup != MuscleGroup.CARDIO) {
+            _state.value.currentSetReps.toIntOrNull()?.coerceAtLeast(1)
                 ?: exo.repsMin.coerceAtLeast(1)
-            startTimedSet(duration)
-        }
-    }
-
-    /**
-     * Démarre un décompte pour une série chronométrée. Quand le décompte atteint 0,
-     * `onSetCompleted` est appelé automatiquement → la série est validée.
-     */
-    private fun startTimedSet(durationSec: Int) {
-        timedSetJob?.cancel()
-        _state.update { it.copy(
-            timedSetTotalSeconds = durationSec,
-            timedSetSecondsRemaining = durationSec
-        ) }
-        timedSetJob = viewModelScope.launch {
-            while (_state.value.timedSetSecondsRemaining > 0) {
-                delay(1000)
-                _state.update { it.copy(timedSetSecondsRemaining = (it.timedSetSecondsRemaining - 1).coerceAtLeast(0)) }
-            }
-            // Décompte terminé (secondsRemaining = 0 mais totalSeconds reste > 0 pour que
-            // onSetCompleted sache qu'on vient d'un décompte auto-validé). onSetCompleted
-            // réinitialise timedSet* à 0 lui-même dans son update de complétion.
-            onSetCompleted()
-        }
+        } else 0
+        // Délégation à ActiveSessionManager : stamp wall-clock + persist DB.
+        // L'état (isSetInProgress, setStartTime, timedSet*) est ensuite propagé
+        // via le flow `session.collect` (cf. init) → l'UI réagit naturellement.
+        sessionManager.markSetStarted(timedDurationSec)
     }
 
     fun onSetCompleted() {
@@ -760,13 +766,12 @@ class WorkoutSessionViewModel @Inject constructor(
         // Garde anti double-complétion (race auto-complete vs click user)
         if (!s.isSetInProgress) return
 
-        // Arrêter le décompte de série chronométrée s'il est actif (user a terminé manuellement
-        // ou décompte a atteint 0 et s'est auto-validé)
+        // Capture flag avant clear (utilisé plus bas pour distinguer reps réelles
+        // vs durée tenue sur les sets timed).
         val wasTimedSetRunning = s.timedSetTotalSeconds > 0
-        timedSetJob?.cancel()
-        if (wasTimedSetRunning) {
-            _state.update { it.copy(timedSetSecondsRemaining = 0, timedSetTotalSeconds = 0) }
-        }
+        // Clear l'état set côté manager (clear DB + RAM). Le flow propagera
+        // isSetInProgress=false / timedSet*=0 dans le state au prochain tick.
+        sessionManager.markSetCompleted()
 
         // Pour les exos au poids du corps : la moitié du poids du user est utilisée
         // dans le volume (l'user ne saisit pas de poids dans l'UI).
@@ -841,6 +846,9 @@ class WorkoutSessionViewModel @Inject constructor(
 
         // Annuler le repos en cours
         restTimerJob?.cancel()
+        // Clear toute série en cours côté manager (au cas où l'user redo
+        // pendant qu'une série est encore active — UI permet ce chemin).
+        sessionManager.markSetCompleted()
 
         // Retirer la dernière série
         val lastSet = s.completedSets.last()
@@ -866,11 +874,8 @@ class WorkoutSessionViewModel @Inject constructor(
     fun skipCurrentSeries() {
         val s = _state.value
         val exercise = s.currentExercise ?: return
-        // Annuler le décompte chronométré s'il est actif + reset l'état
-        timedSetJob?.cancel()
-        if (s.timedSetTotalSeconds > 0) {
-            _state.update { it.copy(timedSetSecondsRemaining = 0, timedSetTotalSeconds = 0) }
-        }
+        // Clear set state côté manager (RAM + DB) avant de logger la série skippée.
+        sessionManager.markSetCompleted()
 
         val skippedKey = "${s.currentExerciseIndex}:${s.currentSeries}"
         val setData = WorkoutSetData(
@@ -963,9 +968,10 @@ class WorkoutSessionViewModel @Inject constructor(
     ) {
         val s = _state.value
 
-        // Annuler tout repos en cours + tout décompte chronométré en cours
+        // Annuler tout repos en cours + clear série en cours (idempotent
+        // si déjà clear par onSetCompleted/skip — markSetCompleted no-op alors).
         restTimerJob?.cancel()
-        timedSetJob?.cancel()
+        sessionManager.markSetCompleted()
 
         if (s.isLastExercise) {
             if (s.isFreestyle) {
@@ -1132,7 +1138,7 @@ class WorkoutSessionViewModel @Inject constructor(
     ) {
         val s = _state.value
         restTimerJob?.cancel()
-        timedSetJob?.cancel()
+        sessionManager.markSetCompleted()
 
         // Utiliser les données pending si fournies
         val effectiveCompletedSets = pendingCompletedSets ?: s.completedSets
@@ -1434,10 +1440,10 @@ class WorkoutSessionViewModel @Inject constructor(
         if (targetIndex < 0 || targetIndex >= s.exercises.size) return
         if (targetIndex == s.currentExerciseIndex) return
 
-        // Arrêter le chrono exercice courant + repos + décompte chronométré
+        // Arrêter le chrono exercice courant + repos + série en cours
         stopExerciseChrono()
         restTimerJob?.cancel()
-        timedSetJob?.cancel()
+        sessionManager.markSetCompleted()
 
         val now = LocalDateTime.now()
         val startTimes = s.exerciseStartTimes.toMutableMap()
@@ -1576,6 +1582,6 @@ class WorkoutSessionViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         // NE PAS arrêter le SessionManager — le chrono global continue
-        restTimerJob?.cancel(); timedSetJob?.cancel()
+        restTimerJob?.cancel()
     }
 }
