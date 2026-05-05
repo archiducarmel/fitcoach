@@ -51,10 +51,19 @@ fun AnimatedCounter(
         )
     }
 
+    // **Stabilité largeur durant l'animation** :
+    //  - tnum : tous les chiffres ont la même largeur → pas de "shimmer"
+    //    horizontal pendant que la valeur interpole de 0 vers la cible.
+    //  - maxLines=1 + softWrap=false : empêche tout reflow vertical si la
+    //    valeur intermédiaire produit un texte transitoirement plus long.
+    // Note : si le formatter change drastiquement de largeur (ex: "5kg"→"1.2M"),
+    // le caller doit en plus poser un `widthIn(min=...)` sur le modifier.
     Text(
         text = formatter(animatable.value),
-        style = style,
+        style = style.copy(fontFeatureSettings = "tnum"),
         color = color,
+        maxLines = 1,
+        softWrap = false,
         modifier = modifier
     )
 }

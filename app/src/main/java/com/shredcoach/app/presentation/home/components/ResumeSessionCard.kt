@@ -146,18 +146,25 @@ fun ResumeSessionCard(
                     )
                 }
 
+                // **Stabilité layout** : weight(1f) sur chaque InfoChip → ils
+                // partagent l'espace équitablement. Sans ça, "5min" et "12/15"
+                // ont des largeurs intrinsèques différentes qui changent quand
+                // les chiffres bougent → décalage visible entre les 2 chips.
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     InfoChip(
                         label = "Écoulé",
                         value = formatElapsed(session.elapsedMinutes),
+                        modifier = Modifier.weight(1f),
                     )
                     InfoChip(
                         label = "Exercices",
                         value = if (session.isFreestyle) "${session.completedExercises}"
                         else "${session.completedExercises}/${session.totalExercises}",
+                        modifier = Modifier.weight(1f),
                     )
                 }
             }
@@ -166,19 +173,25 @@ fun ResumeSessionCard(
 }
 
 @Composable
-private fun InfoChip(label: String, value: String) {
-    Column {
+private fun InfoChip(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
         Text(
             text = label.uppercase(),
             style = MaterialTheme.typography.labelSmall,
             color = Color.White.copy(alpha = 0.7f),
             fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
         )
+        // tnum : "12min" et "59min" rendent à la même largeur, pas de jitter
+        // quand l'élapsé tic dans le LaunchedEffect parent (rafraîchi chaque min).
         Text(
             text = value,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
             color = Color.White,
             fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            softWrap = false,
         )
     }
 }

@@ -280,10 +280,14 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                     ) {
                         Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
-                                Text("GÉNÉRER UNE SÉANCE", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
+                                Text("GÉNÉRER UNE SÉANCE", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White,
+                                    maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                                 Spacer(Modifier.height(4.dp))
+                                // maxLines=1 : empêche un wrap qui ferait grandir la card sur
+                                // les écrans étroits ou avec un fontScale > 1 (accessibilité).
                                 Text("Full Body • ${userProfile?.preferredWorkoutDuration ?: 90} min • Adapté à ton niveau",
-                                    style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
+                                    style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f),
+                                    maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                             }
                             Surface(shape = CircleShape, color = Color.White.copy(alpha = 0.2f), modifier = Modifier.size(52.dp)) {
                                 Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.AutoAwesome, null, Modifier.size(28.dp), tint = Color.White) }
@@ -601,9 +605,10 @@ private fun NextSessionWidget(
                     color = OrangeVibrant
                 )
                 Text("${nextDate.dayOfMonth}",
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"),
                     fontWeight = FontWeight.ExtraBold,
-                    color = OrangeVibrant)
+                    color = OrangeVibrant,
+                    maxLines = 1, softWrap = false)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text("Prochaine séance · $relativeLabel",
@@ -617,8 +622,9 @@ private fun NextSessionWidget(
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         Icon(Icons.Default.Schedule, null, Modifier.size(12.dp),
                             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-                        Text(timeLabel, style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                        Text(timeLabel, style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            maxLines = 1, softWrap = false)
                     }
                 }
             }

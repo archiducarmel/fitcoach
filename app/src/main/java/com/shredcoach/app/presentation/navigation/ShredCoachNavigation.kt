@@ -22,6 +22,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -621,6 +623,11 @@ private fun ActiveSessionBanner(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 6.dp)
+            // Hauteur min FIXE pour empêcher la bannière de "respirer" quand le
+            // chrono passe de "MM:SS" à "H:MM:SS" ou que le nom d'exo varie en
+            // longueur. Min plutôt que height fixe → respecte le scaling
+            // accessibilité (font scale > 1.3 nécessite plus de place).
+            .heightIn(min = 64.dp)
             .hapticClickable {
                 // Navigation directe avec popUpTo Home (sans inclusive) : nettoie
                 // les sous-écrans (Exercises, MealScanner, etc.) au-dessus de Home,
@@ -641,8 +648,8 @@ private fun ActiveSessionBanner(
     ) {
         Row(
             Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .fillMaxSize()
+                .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -672,7 +679,9 @@ private fun ActiveSessionBanner(
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
-                    letterSpacing = 1.dp.value.sp
+                    letterSpacing = 1.dp.value.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 val subtitle = when {
                     session.totalExercises > 0 && session.currentExerciseName.isNotBlank() ->
@@ -682,18 +691,36 @@ private fun ActiveSessionBanner(
                 }
                 Text(
                     subtitle,
+                    // Sans maxLines=1, un nom long ("Développé incliné haltères
+                    // unilatéral") wrappe sur 2 lignes → hauteur de la bannière
+                    // qui saute à chaque transition d'exo. Ellipsis garantit
+                    // une hauteur stable sur tous les noms d'exos.
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onPrimary
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
 
-            // Chrono
+            // Chrono. **Stabilité largeur** :
+            //  - `tnum` (tabular numbers) : tous les chiffres ont la même
+            //    largeur → "11:11" et "00:00" rendent à la pixel près identique.
+            //  - `widthIn(min = 84.dp)` : réserve assez de place pour "H:MM:SS"
+            //    (~84dp en titleLarge bold), donc la transition de "59:59" à
+            //    "1:00:00" (5→7 chars) ne décale pas les éléments voisins.
+            //  - `textAlign = End` : le chrono "grandit" vers la gauche dans son
+            //    espace réservé, alignement droit cohérent avec sa fonction
+            //    "compteur" qui reste à droite des infos.
             Text(
                 formatBannerChrono(seconds),
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"),
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimary
+                color = MaterialTheme.colorScheme.onPrimary,
+                maxLines = 1,
+                softWrap = false,
+                textAlign = TextAlign.End,
+                modifier = Modifier.widthIn(min = 84.dp)
             )
 
             // Reprendre

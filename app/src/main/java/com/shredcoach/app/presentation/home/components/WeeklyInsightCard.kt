@@ -120,19 +120,25 @@ fun WeeklyInsightCard(
             }
 
             // ─── 1RM hero + delta best ───
+            // tnum sur tous les chiffres affichés : 70.5 et 102.0 alignent
+            // leurs chiffres → la hero card ne shimmer pas entre semaines.
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
                     text = formatKg(insight.progression.estimatedOneRmKg),
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = MaterialTheme.typography.headlineLarge.copy(fontFeatureSettings = "tnum"),
                     fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 36.sp,
+                    maxLines = 1,
+                    softWrap = false,
                 )
                 Text(
                     text = " kg 1RM",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 8.dp),
+                    maxLines = 1,
+                    softWrap = false,
                 )
                 Spacer(Modifier.weight(1f))
                 Column(horizontalAlignment = Alignment.End) {
@@ -143,9 +149,11 @@ fun WeeklyInsightCard(
                     )
                     Text(
                         text = "${formatKg(insight.progression.bestOneRmKg)} kg",
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"),
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        softWrap = false,
                     )
                 }
             }
@@ -162,10 +170,14 @@ fun WeeklyInsightCard(
             }
 
             // ─── Sub-line contextuelle ───
+            // maxLines=2 : les sub-lines longues ("PR sur 'Développé incliné
+            // haltères assis' (+5%)") n'explosent pas la hauteur de la card.
             Text(
                 text = subLabel(insight),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             )
         }
     }

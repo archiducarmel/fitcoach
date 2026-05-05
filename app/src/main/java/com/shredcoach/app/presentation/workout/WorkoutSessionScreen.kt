@@ -54,6 +54,7 @@ import androidx.navigation.NavController
 import com.shredcoach.app.data.local.entity.ExerciseEntity
 import com.shredcoach.app.domain.model.ExerciseVariant
 import com.shredcoach.app.domain.model.MuscleGroup
+import com.shredcoach.app.presentation.common.tabularNum
 import com.shredcoach.app.presentation.theme.BrightYellow
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
@@ -386,7 +387,15 @@ private fun SessionTopBar(
                     val a by inf.animateFloat(1f, 0.3f, infiniteRepeatable(tween(800), RepeatMode.Reverse), label = "a")
                     Box(Modifier.size(6.dp).alpha(a).clip(CircleShape).background(OrangeVibrant))
                 }
-                Text(fmtChrono(state.globalChronoSeconds), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = OrangeVibrant)
+                Text(
+                    fmtChrono(state.globalChronoSeconds),
+                    style = MaterialTheme.typography.labelLarge.tabularNum(),
+                    fontWeight = FontWeight.Bold,
+                    color = OrangeVibrant,
+                    maxLines = 1,
+                    softWrap = false,
+                    modifier = Modifier.widthIn(min = 56.dp),
+                )
             }
             IconButton(onClick = onToggleChrono, modifier = Modifier.size(36.dp)) {
                 Icon(if (state.globalChronoRunning) Icons.Default.Pause else Icons.Default.PlayArrow, null, Modifier.size(18.dp), tint = OrangeVibrant)
@@ -442,7 +451,8 @@ private fun ExerciseHeader(exercise: ExerciseEntity, chronoSec: Long, onSkip: ()
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Surface(shape = RoundedCornerShape(6.dp), color = OrangeVibrant.copy(alpha = 0.12f)) {
                     Text(fmtChrono(chronoSec), Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                        style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
+                        style = MaterialTheme.typography.labelMedium.tabularNum(), fontWeight = FontWeight.Bold, color = OrangeVibrant,
+                        maxLines = 1, softWrap = false)
                 }
                 Surface(
                     onClick = onSkip,
@@ -805,7 +815,8 @@ private fun WarmupBlockView(state: WorkoutSessionState, viewModel: WorkoutSessio
                     }
                     Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.tertiaryContainer) {
                         Text(fmtChrono(state.exerciseChronoSeconds), Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                            style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onTertiaryContainer)
+                            style = MaterialTheme.typography.labelLarge.tabularNum(), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            maxLines = 1, softWrap = false)
                     }
                 }
                 Text("Étape ${currentStep + 1} sur ${warmups.size}", style = MaterialTheme.typography.bodyMedium,
@@ -893,7 +904,8 @@ private fun WarmupStepCard(stepNumber: Int, exercise: ExerciseEntity, isComplete
                 }
             }
             duration?.let {
-                Text(fmtChrono(it), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                Text(fmtChrono(it), style = MaterialTheme.typography.labelSmall.tabularNum(), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                    maxLines = 1, softWrap = false)
             }
         }
     }
@@ -1028,11 +1040,16 @@ private fun CardioSessionCard(exercise: ExerciseEntity, state: WorkoutSessionSta
                     java.time.Duration.between(it, java.time.LocalDateTime.now()).seconds
                 } ?: state.exerciseChronoSeconds
 
+                // displayMedium = ~57sp : un seul caractère qui change est très
+                // visible. tnum est critique ici pour que le hero chrono cardio
+                // ne "shimmer" pas chaque seconde devant les yeux du user.
                 Text(
                     fmtChrono(elapsed),
-                    style = MaterialTheme.typography.displayMedium,
+                    style = MaterialTheme.typography.displayMedium.tabularNum(),
                     fontWeight = FontWeight.ExtraBold,
-                    color = NeonGreen
+                    color = NeonGreen,
+                    maxLines = 1,
+                    softWrap = false,
                 )
             }
         }
@@ -1184,9 +1201,11 @@ private fun RestTimerCard(seriesNum: Int, timeRemaining: Int, totalRest: Int, on
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         fmtChrono(timeRemaining.toLong()),
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.headlineMedium.tabularNum(),
                         fontWeight = FontWeight.Bold,
-                        color = arcColor
+                        color = arcColor,
+                        maxLines = 1,
+                        softWrap = false,
                     )
                     Text(
                         if (almost) "Go !" else "Série $seriesNum",
@@ -1341,7 +1360,8 @@ private fun ActiveSeriesCard(seriesNum: Int, totalSeries: Int, state: WorkoutSes
                         val elapsed = state.setStartTime?.let { java.time.Duration.between(it, java.time.LocalDateTime.now()).seconds } ?: tick
                         Surface(shape = RoundedCornerShape(8.dp), color = NeonGreen.copy(alpha = 0.15f)) {
                             Text(fmtChrono(elapsed), Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = NeonGreen)
+                                style = MaterialTheme.typography.titleMedium.tabularNum(), fontWeight = FontWeight.Bold, color = NeonGreen,
+                                maxLines = 1, softWrap = false)
                         }
                     }
                     // Skip série
@@ -1940,6 +1960,8 @@ private fun ExerciseTransitionOverlay(
                     TransitionStat(icon = Icons.Default.MonitorWeight, value = "%.0f kg".format(exoVolume), label = "Volume")
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    // exoDuration affiché dans la transition statique → pas de tick,
+                    // mais tnum reste cohérent avec les autres stats numériques.
                     TransitionStat(icon = Icons.Default.Timer, value = fmtChrono(exoDuration), label = "Durée")
                     if (exoSkipped > 0) {
                         TransitionStat(icon = Icons.Default.SkipNext, value = "$exoSkipped", label = "Passées")
@@ -1991,8 +2013,12 @@ private fun ExerciseTransitionOverlay(
 private fun TransitionStat(icon: androidx.compose.ui.graphics.vector.ImageVector, value: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Icon(icon, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-        Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        // tnum sur la valeur (souvent numérique : "150 kg", "1:23:45", "12") +
+        // maxLines=1 → la stat ne wrappe pas et la Column reste alignée.
+        Text(value, style = MaterialTheme.typography.titleSmall.tabularNum(), fontWeight = FontWeight.Bold,
+            maxLines = 1, softWrap = false)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
     }
 }
 

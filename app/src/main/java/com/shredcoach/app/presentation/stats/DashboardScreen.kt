@@ -38,6 +38,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import com.shredcoach.app.presentation.common.AnimatedCounter
+import com.shredcoach.app.presentation.common.tabularNum
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
 import kotlinx.coroutines.launch
@@ -633,14 +634,21 @@ private fun ComparisonSection(c: PeriodComparison) {
 @Composable
 private fun CompStat(label: String, prev: String, curr: String, delta: Float) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+            maxLines = 1, overflow = TextOverflow.Ellipsis)
+        // tnum sur les valeurs comparées : "5" vs "123" sont alignés colonne
+        // par colonne. maxLines=1 + softWrap empêche un wrap si la string est
+        // longue (ex : "1234.5kg").
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(prev, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+            Text(prev, style = MaterialTheme.typography.bodyMedium.tabularNum(), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                maxLines = 1, softWrap = false)
             Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
-            Text(curr, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(curr, style = MaterialTheme.typography.titleMedium.tabularNum(), fontWeight = FontWeight.Bold,
+                maxLines = 1, softWrap = false)
         }
         val color = if (delta >= 0) NeonGreen else Color(0xFFEF4444)
-        Text("${if (delta >= 0) "+" else ""}${delta.toInt()}%", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = color)
+        Text("${if (delta >= 0) "+" else ""}${delta.toInt()}%", style = MaterialTheme.typography.labelMedium.tabularNum(), fontWeight = FontWeight.Bold, color = color,
+            maxLines = 1, softWrap = false)
     }
 }
 

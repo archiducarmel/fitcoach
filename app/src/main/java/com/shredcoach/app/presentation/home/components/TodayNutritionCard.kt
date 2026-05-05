@@ -113,18 +113,25 @@ fun TodayNutritionCard(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
+                    // tnum sur les valeurs numériques + maxLines=1 : la card
+                    // reste à hauteur stable même quand les calories passent
+                    // de 150 à 2450 ou que le texte "Reste/Dépassement" varie.
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
                             text = nutrition.caloriesConsumed.toString(),
-                            style = MaterialTheme.typography.headlineMedium,
+                            style = MaterialTheme.typography.headlineMedium.copy(fontFeatureSettings = "tnum"),
                             fontWeight = FontWeight.Black,
                             color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            softWrap = false,
                         )
                         Text(
                             text = " / ${nutrition.caloriesTarget} kcal",
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 4.dp),
+                            maxLines = 1,
+                            softWrap = false,
                         )
                     }
                     Text(
@@ -133,9 +140,11 @@ fun TodayNutritionCard(
                         } else {
                             "Reste ${nutrition.caloriesRemaining} kcal"
                         },
-                        style = MaterialTheme.typography.labelMedium,
+                        style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
                         fontWeight = FontWeight.Medium,
                         color = if (nutrition.isCaloriesOver) Color(0xFFEF4444) else NutritionBlue,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     )
                 }
             }
@@ -148,10 +157,15 @@ fun TodayNutritionCard(
             )
 
             // ─── Macros chips ───
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                MacroChip(label = "P", grams = nutrition.proteinsConsumedGrams, color = ProteinGreen)
-                MacroChip(label = "G", grams = nutrition.carbsConsumedGrams, color = CarbsAmber)
-                MacroChip(label = "L", grams = nutrition.fatsConsumedGrams, color = FatsPurple)
+            // weight(1f) sur chacun → 3 chips de largeurs égales, indépendantes
+            // des grammes affichés (sinon "P 5g" est étroit, "G 1234g" large).
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                MacroChip(label = "P", grams = nutrition.proteinsConsumedGrams, color = ProteinGreen, modifier = Modifier.weight(1f))
+                MacroChip(label = "G", grams = nutrition.carbsConsumedGrams, color = CarbsAmber, modifier = Modifier.weight(1f))
+                MacroChip(label = "L", grams = nutrition.fatsConsumedGrams, color = FatsPurple, modifier = Modifier.weight(1f))
             }
 
             // ─── Prochain repas ───
@@ -250,9 +264,11 @@ private fun ProteinsBar(consumed: Int, target: Int, progress: Float) {
             Spacer(Modifier.weight(1f))
             Text(
                 text = "$consumed / $target g",
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
                 fontWeight = FontWeight.Bold,
                 color = ProteinGreen,
+                maxLines = 1,
+                softWrap = false,
             )
         }
         Box(
@@ -278,9 +294,9 @@ private fun ProteinsBar(consumed: Int, target: Int, progress: Float) {
 }
 
 @Composable
-private fun MacroChip(label: String, grams: Int, color: Color) {
+private fun MacroChip(label: String, grams: Int, color: Color, modifier: Modifier = Modifier) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .clip(RoundedCornerShape(10.dp))
             .background(color.copy(alpha = 0.12f))
             .padding(horizontal = 10.dp, vertical = 6.dp),
@@ -293,12 +309,17 @@ private fun MacroChip(label: String, grams: Int, color: Color) {
                 .clip(CircleShape)
                 .background(color),
         )
+        // tnum : "P 5g" et "P 1234g" rendent avec des chiffres de même
+        // largeur. Combiné au weight(1f) côté caller, les 3 chips P/G/L
+        // restent alignés et de taille identique quoi qu'affichent les chiffres.
         Text(
             text = "$label ${grams}g",
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
             fontSize = 12.sp,
+            maxLines = 1,
+            softWrap = false,
         )
     }
 }
