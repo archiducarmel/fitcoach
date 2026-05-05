@@ -45,5 +45,36 @@ abstract class ShredCoachDatabase : RoomDatabase() {
 
     companion object {
         const val DATABASE_NAME = "shredcoach_db"
+
+        /**
+         * Liste exhaustive des tables Room déclarées via [@Database.entities].
+         * Source unique de vérité pour les opérations qui doivent boucler sur
+         * toutes les tables (purge RGPD, restore backup). Ordonnée enfants → parents
+         * pour minimiser les violations FK lors d'un DELETE séquentiel (utile en
+         * cas de purge sans `defer_foreign_keys`).
+         *
+         * **À mettre à jour à chaque fois qu'une nouvelle entité est ajoutée à
+         * [@Database.entities] ci-dessus.** Une divergence = données zombies après
+         * restore ou purge incomplète.
+         */
+        val ALL_TABLES = listOf(
+            "scheduled_workouts",     // FK → workouts, workout_logs
+            "app_notifications",
+            "chat_messages",
+            "progress_photos",
+            "weight_logs",
+            "daily_checks",            // FK → nutrition_schedule
+            "meal_logs",               // FK → foods, meal_scans
+            "meal_scans",
+            "foods",
+            "nutrition_schedule",
+            "nutrition_goals",
+            "user_profile",
+            "workout_sets",            // FK → workout_logs, exercises
+            "workout_logs",
+            "workout_exercises",       // FK → workouts, exercises
+            "workouts",
+            "exercises",
+        )
     }
 }

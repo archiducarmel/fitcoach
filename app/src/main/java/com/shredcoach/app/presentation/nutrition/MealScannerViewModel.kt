@@ -1,5 +1,7 @@
-package com.shredcoach.app.presentation.nutrition
+﻿package com.shredcoach.app.presentation.nutrition
 
+
+import androidx.compose.runtime.Immutable
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
@@ -26,6 +28,7 @@ import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 
+@Immutable
 data class MealScannerState(
     val imageBitmap: Bitmap? = null,
     val isAnalyzing: Boolean = false,
@@ -323,6 +326,12 @@ class MealScannerViewModel @Inject constructor(
      * Applique une nouvelle date/heure au repas scanné.
      * Reclassifie le mealType en fonction de la nouvelle heure et propage en DB
      * (MealScanEntity + tous les MealLogEntity liés via scanId).
+     *
+     * Replanifie également le worker de débrief : un override "il y a 3 jours"
+     * doit annuler le worker prévu (sinon il enverrait une notif aberrante 45min
+     * après le scan), et un override "ce midi" doit reprogrammer le worker pour
+     * l'heure ajustée. Le worker lui-même a une garde anti-stale en doublon
+     * (cf. MealDebriefWorker.STALE_THRESHOLD).
      */
     fun applyMealDateTime(newDateTime: java.time.LocalDateTime) {
         val scanId = _state.value.savedScanId ?: return
@@ -352,6 +361,22 @@ class MealScannerViewModel @Inject constructor(
                 time = newDateTime.toLocalTime(),
                 mealType = newCategory.trackingType
             )
+
+            // F2 : replanifier le worker de débrief en fonction du nouveau datetime.
+            val profile = userRepository.getUserProfileOnce()
+            val delayMin = (profile?.mealDebriefDelayMinutes ?: 45).toLong()
+            val now = java.time.LocalDateTime.now()
+            val target = newDateTime.plusMinutes(delayMin)
+            if (target.isBefore(now)) {
+                // Repas dans le passé (ou rapproché) → on annule le worker prévu.
+                com.shredcoach.app.notification.NotificationScheduler
+                    .cancelMealDebrief(appContext, scanId)
+            } else {
+                val delayFromNow = java.time.Duration.between(now, target).toMinutes()
+                    .coerceAtLeast(1L)
+                com.shredcoach.app.notification.NotificationScheduler
+                    .scheduleMealDebrief(appContext, scanId, delayFromNow)
+            }
 
             // Update state local pour refléter immédiatement
             _state.update { it.copy(

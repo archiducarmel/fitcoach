@@ -2,13 +2,17 @@ package com.shredcoach.app.presentation.navigation
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import com.shredcoach.app.presentation.common.LocalAnimatedVisibilityScope
+import com.shredcoach.app.presentation.common.LocalSharedTransitionScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import com.shredcoach.app.presentation.common.hapticClickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -129,6 +133,23 @@ private const val TAB_COLOR_ANIM_MS = 80
 private const val TAB_ANIM_MS = 250
 private val TabEasing = FastOutSlowInEasing
 
+/**
+ * Préfixes de routes autorisés en deeplink (notif coach proactive et actions).
+ * Toute autre route est silencieusement rejetée pour empêcher l'injection
+ * d'URI exotique via Intent extra. À synchroniser avec [Screen] au fur et à
+ * mesure que de nouvelles cibles deeplink légitimes sont ajoutées.
+ */
+private val ALLOWED_DEEPLINK_PREFIXES = setOf(
+    "home",
+    "workout_generator",
+    "workout_history_detail",
+    "calendar",
+    "meal_scanner",
+    "body_scanner",
+    "stats",
+    "profile",
+)
+
 // Direction du slide entre tabs : -1 = vers la gauche, +1 = vers la droite
 private fun tabDirection(from: String?, to: String?): Int {
     val fromIdx = routeToTabIndex(from)
@@ -168,8 +189,15 @@ val LocalSnackbarHostState = compositionLocalOf<SnackbarHostState> {
 fun ShredCoachNavigation(
     sessionManager: ActiveSessionManager,
     hasProfile: Boolean = false,
-    /** Incrémenté à chaque tap sur une notification push → déclenche le deeplink. 0 = pas de deeplink. */
-    openNotificationsTrigger: Int = 0
+    /** Incrémenté à chaque tap sur une notification push (inbox fallback). 0 = pas de deeplink. */
+    openNotificationsTrigger: Int = 0,
+    /**
+     * (counter, route) — counter incrémenté à chaque deeplink demandé par
+     * MainActivity. Quand `counter > 0 && route != null`, on navigue.
+     * Le counter force la recomposition même quand la route est identique
+     * à la précédente (re-tap sur la même catégorie de notif).
+     */
+    deeplinkRoute: Pair<Int, String?> = 0 to null,
 ) {
     val navController = rememberNavController()
 
@@ -178,6 +206,25 @@ fun ShredCoachNavigation(
         if (openNotificationsTrigger > 0 && hasProfile) {
             navController.navigate(Screen.Notifications.route) {
                 launchSingleTop = true
+            }
+        }
+    }
+
+    // Deeplink route (depuis notif coach proactive ou bouton d'action).
+    LaunchedEffect(deeplinkRoute, hasProfile) {
+        val (counter, route) = deeplinkRoute
+        if (counter > 0 && route != null && hasProfile) {
+            // Sécurité : allow-list de préfixes connus (vs regex char-class).
+            // Le regex précédent rejetait `%`, `?`, `=`, ce qui faisait échouer
+            // silencieusement les routes avec args encodés (ex: `meal_detail/123`
+            // futur, ou paramètres query). Ici on valide le préfixe statique de la
+            // route (avant le premier `/`) contre une liste connue, et on laisse
+            // Compose Navigation parser la suite. Une route non listée → silent skip.
+            val prefix = route.substringBefore('/')
+            if (prefix in ALLOWED_DEEPLINK_PREFIXES) {
+                navController.navigate(route) {
+                    launchSingleTop = true
+                }
             }
         }
     }
@@ -224,6 +271,14 @@ fun ShredCoachNavigation(
             }
         }
     ) { paddingValues ->
+      // SharedTransitionLayout englobe le NavHost pour permettre aux shared
+      // element transitions (Modifier.sharedElementOptIn) de morpher entre
+      // destinations consécutives. Aucun coût quand aucun shared element n'est
+      // déclaré — c'est un simple wrapper layout.
+      @OptIn(ExperimentalSharedTransitionApi::class)
+      SharedTransitionLayout {
+        val sharedTransitionScope = this
+        CompositionLocalProvider(LocalSharedTransitionScope provides sharedTransitionScope) {
         NavHost(
             navController = navController,
             startDestination = if (hasProfile) Screen.Home.route else Screen.Onboarding.route,
@@ -268,14 +323,22 @@ fun ShredCoachNavigation(
                 popEnterTransition = { tabEnter(this) },
                 popExitTransition = { tabExit(this) }
             ) {
-                ExercisesScreen(navController = navController)
+                // Provide AnimatedVisibilityScope pour permettre aux ExerciseCard
+                // de partager leur image+nom avec ExerciseDetailScreen.
+                val animScope = this
+                CompositionLocalProvider(LocalAnimatedVisibilityScope provides animScope) {
+                    ExercisesScreen(navController = navController)
+                }
             }
 
             composable(
                 route = Screen.ExerciseDetail.route,
                 arguments = listOf(navArgument("exerciseId") { type = NavType.StringType })
             ) {
-                ExerciseDetailScreen(navController = navController)
+                val animScope = this
+                CompositionLocalProvider(LocalAnimatedVisibilityScope provides animScope) {
+                    ExerciseDetailScreen(navController = navController)
+                }
             }
 
             composable(Screen.ExerciseDbExplorer.route) {
@@ -415,6 +478,10 @@ fun ShredCoachNavigation(
                 SettingsScreen(navController = navController)
             }
 
+            composable(Screen.PrivacyPolicy.route) {
+                com.shredcoach.app.presentation.legal.PrivacyPolicyScreen(navController = navController)
+            }
+
             composable(
                 Screen.WorkoutHistory.route,
                 enterTransition = { tabEnter(this) },
@@ -442,6 +509,8 @@ fun ShredCoachNavigation(
                 DashboardScreen(navController = navController)
             }
         }
+        } // CompositionLocalProvider LocalSharedTransitionScope
+      } // SharedTransitionLayout
     }
 
     // Bandeau session visible meme quand la bottom bar est masquee (sauf ecran de seance)
@@ -496,7 +565,7 @@ private fun ShredCoachBottomBar(
                         .weight(1f)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(8.dp))
-                        .clickable {
+                        .hapticClickable {
                             // Ne rien faire UNIQUEMENT si on est déjà sur la route racine du tab
                             // (sinon on bloquerait la navigation depuis un sous-écran — ex : MealScanDetail → Historique)
                             val alreadyOnTabRoot = currentRoute == item.route
@@ -550,7 +619,7 @@ private fun ActiveSessionBanner(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 6.dp)
-            .clickable {
+            .hapticClickable {
                 // D'abord essayer de revenir à la session existante dans le back stack
                 val popped = navController.popBackStack(Screen.WorkoutSession.route, inclusive = false)
                 if (!popped) {
@@ -611,7 +680,7 @@ private fun ActiveSessionBanner(
 
             // Reprendre
             Icon(
-                Icons.Default.ArrowForward,
+                Icons.AutoMirrored.Filled.ArrowForward,
                 "Reprendre",
                 tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(20.dp)
