@@ -9,10 +9,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.TextUnit
 
 /**
  * Algorithme Nutri-Score 2023 (simplifié, aliments solides).
@@ -137,6 +142,41 @@ private fun gradeColor(grade: Char): Color = when (grade) {
 }
 
 // ═══════════════════════════════════════
+// CENTRAGE OPTIQUE DES LETTRES DANS UN BADGE
+// ═══════════════════════════════════════
+//
+// Pourquoi ce style dédié : par défaut, un `Text` Compose hérite de la
+// compatibilité Android legacy (`includeFontPadding = true`) qui ajoute
+// du padding **asymétrique** autour du glyphe (top padding ≠ bottom
+// padding selon les métriques de la font Roboto). Couplé à un line-height
+// par défaut ~1.4 × fontSize, le glyphe d'une lettre majuscule (A–E n'ont
+// pas de descendeur) se retrouve **décalé vers le bas** dans son line-box
+// quand on tente de le centrer dans un Box étroit (badge Nutri-Score
+// inactive de hauteur ≈ 0.72× la hauteur active).
+//
+// Symptôme côté user : "les lettres A/B/C/D/E sont coupées en bas".
+//
+// Fix premium :
+//  1. `includeFontPadding = false` → enlève le padding legacy asymétrique.
+//  2. `LineHeightStyle(Alignment.Center, Trim.Both)` → centre le glyphe
+//     sur sa cap-height (la zone visuelle réelle), et coupe l'espace
+//     ascender/descender inutile au-dessus/dessous.
+//  3. `lineHeight = fontSize` → line-box serré, pas d'espace en trop.
+private fun nutriBadgeLetterStyle(fontSize: TextUnit, weight: FontWeight): TextStyle =
+    TextStyle(
+        fontSize = fontSize,
+        lineHeight = fontSize,
+        fontWeight = weight,
+        color = Color.White,
+        textAlign = TextAlign.Center,
+        platformStyle = PlatformTextStyle(includeFontPadding = false),
+        lineHeightStyle = LineHeightStyle(
+            alignment = LineHeightStyle.Alignment.Center,
+            trim = LineHeightStyle.Trim.Both
+        )
+    )
+
+// ═══════════════════════════════════════
 // PICTOGRAMME NUTRI-SCORE (barre A–E)
 // ═══════════════════════════════════════
 
@@ -178,11 +218,15 @@ fun NutriScorePictogram(
                     .background(color.copy(alpha = alpha)),
                 contentAlignment = Alignment.Center
             ) {
+                // Style dédié (cf. nutriBadgeLetterStyle) : garantit un
+                // centrage optique exact du glyphe, sans coupure en bas du
+                // badge — point bloquant pour un rendu premium.
                 Text(
                     "$g",
-                    fontSize = fontSize,
-                    fontWeight = if (isActive) FontWeight.ExtraBold else FontWeight.Bold,
-                    color = Color.White
+                    style = nutriBadgeLetterStyle(
+                        fontSize = fontSize,
+                        weight = if (isActive) FontWeight.ExtraBold else FontWeight.Bold
+                    )
                 )
             }
         }
@@ -206,11 +250,11 @@ fun NutriScoreBadgeCompact(
             .background(color),
         contentAlignment = Alignment.Center
     ) {
+        // Même style dédié que le pictogramme, pour cohérence du centrage
+        // optique des lettres dans tous les badges Nutri-Score de l'app.
         Text(
             "$grade",
-            fontSize = 12.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = Color.White
+            style = nutriBadgeLetterStyle(fontSize = 12.sp, weight = FontWeight.ExtraBold)
         )
     }
 }
