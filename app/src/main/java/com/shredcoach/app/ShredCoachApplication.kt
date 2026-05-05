@@ -11,6 +11,9 @@ import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
+import coil.disk.DiskCache
+import coil.memory.MemoryCache
+import coil.request.CachePolicy
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -103,6 +106,35 @@ class ShredCoachApplication : Application(), Configuration.Provider, ImageLoader
                     add(GifDecoder.Factory())
                 }
             }
+            // Cache mémoire — bitmaps décodés. 25% de la heap = défaut Coil ;
+            // explicite ici pour signaler l'intention.
+            .memoryCache {
+                MemoryCache.Builder(this)
+                    .maxSizePercent(0.25)
+                    .build()
+            }
+            // Cache disque — GIFs téléchargés depuis GitHub Releases (cf.
+            // [GifUrlResolver]). 256MB = headroom pour ~500 GIFs × ~500KB,
+            // mais Coil purge LRU automatiquement, l'usage réel reste bas.
+            // Cache survit aux app restarts → premier load = 1 fetch réseau,
+            // ensuite tout vient du disque (offline-capable après ouverture).
+            .diskCache {
+                DiskCache.Builder()
+                    .directory(cacheDir.resolve("image_cache"))
+                    .maxSizeBytes(256L * 1024 * 1024)
+                    .build()
+            }
+            // Toujours cacher (mémoire + disque) — pas de raison de revalidate
+            // chaque GIF (le filename = identifiant unique, immuable).
+            .memoryCachePolicy(CachePolicy.ENABLED)
+            .diskCachePolicy(CachePolicy.ENABLED)
+            // Crossfade global 200ms — transitions douces sans configurer
+            // chaque AsyncImage individuellement.
+            .crossfade(true)
+            .crossfade(200)
+            // Respecter les en-têtes Cache-Control de GitHub (no-revalidate
+            // par défaut, donc on évite des HEAD inutiles).
+            .respectCacheHeaders(false)
             .build()
 
     private fun createNotificationChannels() {
