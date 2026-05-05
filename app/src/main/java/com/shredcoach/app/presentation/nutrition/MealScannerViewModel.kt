@@ -28,6 +28,16 @@ import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 
+/**
+ * Mode d'entrée du Meal Scanner :
+ *  - PHOTO : flux historique (caméra ou galerie) — analyse visuelle.
+ *  - TEXT  : l'user décrit son repas en texte (cas où il a oublié la photo).
+ *
+ * Le résultat ([MealAnalysisResult]) et le pipeline DB/UI sont identiques
+ * dans les 2 modes. Seule l'entrée et le prompt LLM diffèrent.
+ */
+enum class MealInputMode { PHOTO, TEXT }
+
 @Immutable
 data class MealScannerState(
     val imageBitmap: Bitmap? = null,
@@ -40,6 +50,10 @@ data class MealScannerState(
     // Historique
     val scanHistory: List<MealScanEntity> = emptyList(),
     val showHistory: Boolean = false,
+    // ── Mode d'entrée (photo vs description texte) ──
+    val inputMode: MealInputMode = MealInputMode.PHOTO,
+    /** Description textuelle du repas (mode TEXT). Vide en mode PHOTO. */
+    val textDescription: String = "",
     // ── Indices optionnels pour l'analyse ──
     val hintPlate: PlateType = PlateType.NONE,
     val hintBowl: BowlType = BowlType.NONE,
@@ -57,7 +71,16 @@ data class MealScannerState(
     val foodIdsPerDish: Map<Int, Long> = emptyMap(),
     /** Mapping dishIndex → mealLogId inséré en DB (pour mettre à jour MealLogEntity). */
     val mealLogIdsPerDish: Map<Int, Long> = emptyMap()
-)
+) {
+    /**
+     * Validation de la description en mode TEXT. On exige au moins quelques
+     * mots pour éviter les analyses inutilement coûteuses sur des descriptions
+     * inexploitables (le LLM échouerait ou hallucinerait des aliments).
+     */
+    val canAnalyzeText: Boolean
+        get() = inputMode == MealInputMode.TEXT &&
+            textDescription.trim().length in 10..1000
+}
 
 @HiltViewModel
 class MealScannerViewModel @Inject constructor(
@@ -94,9 +117,127 @@ class MealScannerViewModel @Inject constructor(
         _state.update { it.copy(
             imageBitmap = bitmap, result = null, error = null, savedScanId = null, addedToTracking = false,
             baselineResult = null, foodIdsPerDish = emptyMap(), mealLogIdsPerDish = emptyMap(),
+            // Charger une image bascule explicitement en mode photo (cas où l'user
+            // était en mode texte puis change d'avis).
+            inputMode = MealInputMode.PHOTO, textDescription = "",
             // Reset les indices quand on charge une nouvelle image
             hintPlate = PlateType.NONE, hintBowl = BowlType.NONE, hintDescription = "", showHintsPanel = false
         ) }
+    }
+
+    // ── Mode texte ──
+
+    /**
+     * Bascule entre les modes PHOTO / TEXT. Reset les états spécifiques à
+     * l'autre mode pour éviter les états zombies (ex: imageBitmap hérité d'un
+     * mode photo précédent qui apparaîtrait dans saveScanToDb du mode texte).
+     */
+    fun setInputMode(mode: MealInputMode) {
+        if (_state.value.inputMode == mode) return
+        _state.update { it.copy(
+            inputMode = mode,
+            // Reset état d'analyse en cours pour éviter affichage de résultat
+            // d'une analyse différente.
+            imageBitmap = if (mode == MealInputMode.TEXT) null else it.imageBitmap,
+            textDescription = if (mode == MealInputMode.PHOTO) "" else it.textDescription,
+            result = null, error = null, savedScanId = null, addedToTracking = false,
+            baselineResult = null, foodIdsPerDish = emptyMap(), mealLogIdsPerDish = emptyMap()
+        ) }
+    }
+
+    fun setTextDescription(desc: String) {
+        // Cap à 1000 chars : protection contre prompt blowup (l'API rejetterait
+        // ou tronquerait silencieusement). 1000 chars = ~250 mots, largement
+        // assez pour décrire un repas même très détaillé.
+        val capped = if (desc.length > 1000) desc.take(1000) else desc
+        _state.update { it.copy(textDescription = capped, error = null) }
+    }
+
+    /**
+     * Analyse un repas décrit en TEXTE (pas de photo).
+     *
+     * **Priorité Gemini** (cf. demande user) : on utilise Gemini si une clé est
+     * configurée, indépendamment du `mealScanProvider` choisi pour la vision.
+     * Justification :
+     *  - Gemini 2.5 Flash a la meilleure compréhension du français (CIQUAL,
+     *    plats régionaux, quantités vagues).
+     *  - L'analyse texte ne facture pas de tokens d'image → coût Gemini OK
+     *    même pour un user qui avait choisi Groq pour économiser sur la vision.
+     *  - Fallback automatique sur le provider configuré si pas de clé Gemini.
+     *
+     * Le flux DB + UI est strictement identique à [analyze] : même
+     * [MealAnalysisResult], même persistence, même auto-add au tracking,
+     * même override date/heure. Seul changement : pas de photoPath.
+     */
+    fun analyzeFromText() {
+        val s = _state.value
+        if (!s.canAnalyzeText) {
+            val msg = when {
+                s.textDescription.isBlank() -> "Décris ton repas pour pouvoir l'analyser"
+                s.textDescription.trim().length < 10 -> "Description trop courte — détaille les aliments et quantités"
+                else -> "Description invalide"
+            }
+            _state.update { it.copy(error = msg) }
+            return
+        }
+        _state.update { it.copy(isAnalyzing = true, error = null, result = null) }
+
+        viewModelScope.launch {
+            val profile = userRepository.getUserProfileOnce()
+
+            // Sélection du provider : Gemini en priorité si clé dispo, sinon
+            // fallback sur la préférence vision de l'user.
+            val hasGemini = userRepository.hasApiKey(SecureKeyStore.Provider.GEMINI)
+            val provider = if (hasGemini) "GEMINI" else (profile?.mealScanProvider ?: "GEMINI")
+            val apiKey = when (provider) {
+                "GROQ" -> userRepository.getApiKey(SecureKeyStore.Provider.GROQ_MEAL)
+                "MISTRAL" -> userRepository.getApiKey(SecureKeyStore.Provider.MISTRAL)
+                else -> userRepository.getApiKey(SecureKeyStore.Provider.GEMINI)
+            }
+            val model = profile?.geminiModel ?: "gemini-2.5-flash"
+
+            if (apiKey.isBlank()) {
+                val providerName = when (provider) { "GROQ" -> "Groq"; "MISTRAL" -> "Mistral"; else -> "Gemini" }
+                _state.update { it.copy(isAnalyzing = false, error = "Configure ta clé API $providerName dans Réglages → Meal Scanner") }
+                return@launch
+            }
+
+            val result = geminiService.analyzeMealFromText(
+                description = s.textDescription,
+                apiKey = apiKey,
+                model = model,
+                provider = provider
+            )
+
+            result.fold(
+                onSuccess = { analysis ->
+                    val scanDateTime = java.time.LocalDateTime.now()
+                    val dishKeywords = analysis.dishes.flatMap { d ->
+                        listOf(d.name) + d.ingredients.map { it.name }
+                    }
+                    val category = com.shredcoach.app.domain.nutrition.MealTypeClassifier
+                        .classify(scanDateTime.toLocalTime(), dishKeywords)
+
+                    _state.update { it.copy(
+                        isAnalyzing = false, result = analysis,
+                        baselineResult = analysis,
+                        mealDateTime = scanDateTime, mealCategory = category
+                    ) }
+
+                    // Auto-save + auto-add — même flux que l'analyse photo.
+                    // saveScanToDb gère photoPath = null pour ce mode (imageBitmap est null).
+                    val scanId = saveScanToDb(analysis, category)
+                    autoAddToTracking(analysis, scanId, category)
+
+                    val delay = (profile?.mealDebriefDelayMinutes ?: 45).toLong()
+                    com.shredcoach.app.notification.NotificationScheduler
+                        .scheduleMealDebrief(appContext, scanId, delay)
+                },
+                onFailure = { error ->
+                    _state.update { it.copy(isAnalyzing = false, error = error.message ?: "Erreur d'analyse") }
+                }
+            )
+        }
     }
 
     // ── Indices optionnels ──
@@ -309,6 +450,8 @@ class MealScannerViewModel @Inject constructor(
     fun clear() {
         _state.update { it.copy(
             imageBitmap = null, result = null, error = null, savedScanId = null, addedToTracking = false,
+            // Retour au mode photo par défaut + reset de la description texte
+            inputMode = MealInputMode.PHOTO, textDescription = "",
             hintPlate = PlateType.NONE, hintBowl = BowlType.NONE, hintDescription = "", showHintsPanel = false,
             mealDateTime = java.time.LocalDateTime.now(), mealCategory = null,
             baselineResult = null, foodIdsPerDish = emptyMap(), mealLogIdsPerDish = emptyMap()

@@ -95,6 +95,117 @@ class GeminiMealService @Inject constructor(
         private const val GROQ_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
         private const val MISTRAL_MODEL = "mistral-small-latest"
 
+        /**
+         * Prompt pour analyse d'un repas DÉCRIT EN TEXTE par l'utilisateur
+         * (cas où il a oublié de prendre la photo).
+         *
+         * **Différences vs MEAL_PROMPT (vision)** :
+         *  - Pas d'instructions visuelles (surfaces, épaisseurs, contenants).
+         *  - La description user devient AUTORITÉ ABSOLUE (aliments + quantités
+         *    explicites). Pas de "deviner ce qui est sur la photo".
+         *  - Heuristiques de conversion text→grams (œuf, tranche, cuillère…)
+         *    pour absorber les descriptions naturelles ("2 œufs", "1 bol de riz").
+         *  - Mêmes champs JSON en sortie → réutilise parseRobust + même UI.
+         *
+         * **Sécurité de parse** : `responseMimeType=application/json` côté Gemini,
+         * `response_format=json_object` côté Groq/Mistral → JSON garanti par l'API.
+         */
+        val MEAL_TEXT_PROMPT = """
+Tu es Shreddy, l'IA nutrition. L'utilisateur DÉCRIT son repas en texte (il
+n'a pas pu prendre de photo). Ta mission : extraire les ingrédients,
+estimer les quantités, calculer macros + micronutriments.
+
+JSON valide UNIQUEMENT, sans texte ni backticks.
+
+══ ÉTAPE 1 — LECTURE DE LA DESCRIPTION (AUTORITÉ ABSOLUE) ══
+Le texte de l'utilisateur PRIME sur tes hypothèses. Identifie chaque
+aliment mentionné. Si l'user dit "igname", c'est igname (pas pomme de
+terre). S'il dit "thon en boîte", c'est thon en boîte (pas thon frais).
+
+Si la description n'est PAS alimentaire (ex: "le ciel est bleu") :
+→ retourne {"error": "non_food"}
+
+Si la description est trop vague pour estimer (ex: "j'ai mangé") :
+→ retourne {"error": "too_vague"}
+
+══ ÉTAPE 2 — ESTIMATION DES QUANTITÉS ══
+
+Quand l'user donne des quantités EXPLICITES (poids, unités, contenants),
+applique-les LITTÉRALEMENT. Conversions standard :
+- 1 œuf moyen ≈ 60g | 1 gros œuf ≈ 70g
+- 1 tranche pain de mie ≈ 30g | 1 tranche pain complet ≈ 40g
+- 1 baguette ≈ 250g | 1/2 baguette ≈ 125g
+- 1 cuillère à soupe (cas) ≈ 15g (solide) ou 15ml (liquide)
+- 1 cuillère à café (cac) ≈ 5g
+- 1 verre standard ≈ 200ml | 1 mug ≈ 250ml | 1 canette ≈ 330ml
+- 1 bol ≈ 250-350ml (riz/céréales cuits ≈ 200-280g)
+- 1 yaourt ≈ 125g | 1 fromage blanc petit ≈ 100g
+- 1 banane ≈ 120g | 1 pomme ≈ 150g | 1 orange ≈ 130g
+- 1 portion riz/pâtes cuits ≈ 200-250g (≈ 80g cru)
+
+Quand la description est VAGUE, infère selon le sens commun adulte :
+- "une portion normale" → portion standard adulte
+- "un peu de" → 30-50g (protéine), 50-80g (féculent), 30g (matière grasse)
+- "beaucoup de" → +50% portion standard
+- "grosse"/"généreuse" → +30% | "petite"/"légère" → −30%
+- "1 assiette" sans détail → 400g total (féculent + protéine + légume)
+
+Si l'user mentionne un plat composé sans détailler (ex: "un couscous",
+"un burger") : décompose en ingrédients raisonnables d'une recette
+classique, en respectant les proportions standard du plat.
+
+══ ÉTAPE 3 — CALCUL DES MACROS ══
+Pour chaque ingrédient : macros = (weight_g / 100) × valeur CIQUAL/USDA
+pour 100g. Les macros du plat = somme de ses ingrédients (COHÉRENCE
+OBLIGATOIRE). Les totaux = somme des plats.
+
+Pour chaque plat, identifie le type : "petit_dejeuner", "dejeuner",
+"gouter", "diner", "collation", "shaker" ou "grignotage".
+
+JSON (mêmes champs que l'analyse photo) :
+{
+  "dishes": [
+    {
+      "name": "Nom du plat",
+      "meal_type": "dejeuner",
+      "cuisine": "Origine",
+      "weight_g": 0,
+      "calories": 0,
+      "proteins": 0.0,
+      "carbs": 0.0,
+      "carbs_sugar": 0.0,
+      "fats": 0.0,
+      "fats_saturated": 0.0,
+      "fibers": 0.0,
+      "salt": 0.0,
+      "ingredients": [
+        {"name": "Ingrédient", "weight_g": 0, "category": "Cat", "calories": 0, "proteins": 0.0, "carbs": 0.0, "fats": 0.0, "fibers": 0.0}
+      ]
+    }
+  ],
+  "totalCalories": 0,
+  "totalProteins": 0.0,
+  "totalCarbs": 0.0,
+  "totalFats": 0.0,
+  "totalFibers": 0.0,
+  "totalWeight": 0,
+  "healthScore": 7,
+  "verdict": "Analyse courte basée sur la description",
+  "allergens": [],
+  "micronutrients": [
+    {"name": "Nutriment", "quantity": "X mg", "ajr_percent": 0}
+  ]
+}
+
+Remplace tous les 0 par tes estimations RÉELLES basées sur la description.
+healthScore = note 0–10 (entier). AJR EFSA 2000kcal, 8–12 micronutriments
+> 5% AJR. Le verdict mentionne "analyse texte" pour signaler à l'user que
+les valeurs sont basées sur sa description (sans photo).
+
+══ DESCRIPTION DE L'UTILISATEUR ══
+"%s"
+""".trimIndent()
+
         val MEAL_PROMPT = """
 Analyse la photo de repas. JSON valide UNIQUEMENT, sans texte ni backticks.
 
@@ -320,6 +431,58 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         }
     }
 
+    /**
+     * Analyse un repas DÉCRIT EN TEXTE par l'utilisateur (cas où il a oublié
+     * de prendre la photo). Mêmes garanties que [analyzeMeal] (vision) :
+     * dispatch multi-provider, parsing robuste à 4 niveaux, schéma JSON
+     * identique. Le caller obtient un [MealAnalysisResult] interchangeable
+     * avec celui d'une analyse photo → la pipeline DB + UI reste la même.
+     *
+     * **Sécurité d'entrée** : la description est validée côté ViewModel
+     * (non-vide, longueur raisonnable). Ici on inject simplement dans le prompt.
+     */
+    suspend fun analyzeMealFromText(
+        description: String,
+        apiKey: String,
+        model: String = "gemini-2.5-flash",
+        provider: String = "GEMINI"
+    ): Result<MealAnalysisResult> = withContext(Dispatchers.IO) {
+        try {
+            // Le `%s` du prompt est remplacé par la description user. On passe
+            // par String.format pour éviter les bizarreries d'interpolation
+            // Kotlin avec les caractères spéciaux dans la description.
+            val finalPrompt = MEAL_TEXT_PROMPT.format(description.trim())
+
+            val rawJson = when (provider.uppercase()) {
+                "GROQ" -> callGroqTextMeal(apiKey, finalPrompt)
+                "MISTRAL" -> callMistralTextMeal(apiKey, finalPrompt)
+                else -> callGeminiTextMeal(apiKey, model, finalPrompt)
+            }
+
+            if (rawJson.isBlank()) return@withContext Result.failure(Exception("Analyse vide"))
+
+            // Cas erreurs structurées du LLM (description non alimentaire ou trop vague)
+            if (rawJson.contains("\"error\"") && rawJson.length < 200) {
+                val errMsg = when {
+                    rawJson.contains("non_food") -> "La description ne correspond pas à un aliment"
+                    rawJson.contains("too_vague") -> "Description trop vague — précise les aliments et quantités"
+                    else -> "Description non analysable"
+                }
+                return@withContext Result.failure(Exception(errMsg))
+            }
+
+            // Réutilise le pipeline de parsing robuste de l'analyse photo
+            val result = parseRobust(rawJson)
+            if (result == null) {
+                val preview = rawJson.take(300).replace("\n", "↵")
+                return@withContext Result.failure(Exception("Parsing échoué. Début réponse: $preview"))
+            }
+            Result.success(result)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun analyzeMeal(
         imageBytes: ByteArray,
         mimeType: String,
@@ -355,6 +518,115 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    // ═══════════════════════════════════════
+    // TEXT MEAL — appels API sans image
+    // ═══════════════════════════════════════
+    //
+    // Pourquoi des méthodes dédiées (vs réutiliser callTextLLM) : l'analyse
+    // d'un repas en texte produit le MÊME schéma JSON que l'analyse photo
+    // (dishes + ingredients + micronutriments) → maxTokens doit être élevé
+    // (~16k pour Gemini, 4k pour Groq/Mistral). callTextLLM utilise 2048,
+    // ce qui tronquerait souvent la réponse pour les repas riches.
+
+    private fun callGeminiTextMeal(apiKey: String, model: String, prompt: String): String {
+        val url = "$GEMINI_BASE_URL/$model:generateContent"
+        val payload = mapOf(
+            "contents" to listOf(mapOf(
+                "parts" to listOf(mapOf("text" to prompt))
+            )),
+            "generationConfig" to mapOf(
+                "temperature" to 0.3,
+                "maxOutputTokens" to 16384,
+                "responseMimeType" to "application/json"
+            )
+        )
+        val request = Request.Builder()
+            .url(url)
+            .header("Content-Type", "application/json")
+            .header("x-goog-api-key", apiKey)
+            .post(gson.toJson(payload).toRequestBody(jsonMediaType))
+            .build()
+        val response = client.newCall(request).execute()
+        val responseBody = response.body?.string() ?: throw Exception("Réponse vide")
+        if (!response.isSuccessful) {
+            val errorMsg = try {
+                JsonParser.parseString(responseBody).asJsonObject
+                    .getAsJsonObject("error")?.get("message")?.asString
+            } catch (_: Exception) { null } ?: "Erreur Gemini ${response.code}"
+            throw Exception(errorMsg)
+        }
+        val json = JsonParser.parseString(responseBody).asJsonObject
+        val candidates = json.getAsJsonArray("candidates") ?: throw Exception("Aucun résultat")
+        if (candidates.size() == 0) throw Exception("Aucun résultat Gemini")
+        val parts = candidates[0].asJsonObject.getAsJsonObject("content")?.getAsJsonArray("parts")
+        val textParts = parts?.filter { it.asJsonObject.has("text") && !it.asJsonObject.has("thought") }
+            ?.mapNotNull { it.asJsonObject.get("text")?.asString } ?: emptyList()
+        return textParts.joinToString("").trim()
+            .removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
+    }
+
+    private fun callGroqTextMeal(apiKey: String, prompt: String): String {
+        val payload = mapOf(
+            "model" to GROQ_MODEL,
+            "messages" to listOf(mapOf("role" to "user", "content" to prompt)),
+            "max_completion_tokens" to 4096,
+            "temperature" to 0.3,
+            "response_format" to mapOf("type" to "json_object")
+        )
+        val request = Request.Builder()
+            .url(GROQ_URL)
+            .header("Content-Type", "application/json")
+            .header("Authorization", "Bearer $apiKey")
+            .post(gson.toJson(payload).toRequestBody(jsonMediaType))
+            .build()
+        val response = client.newCall(request).execute()
+        val responseBody = response.body?.string() ?: throw Exception("Réponse vide")
+        if (!response.isSuccessful) {
+            val errorMsg = try {
+                val errJson = JsonParser.parseString(responseBody).asJsonObject
+                errJson.getAsJsonObject("error")?.get("message")?.asString
+                    ?: errJson.get("message")?.asString
+            } catch (_: Exception) { null } ?: "Erreur Groq ${response.code}"
+            throw Exception(errorMsg)
+        }
+        val json = JsonParser.parseString(responseBody).asJsonObject
+        val raw = json.getAsJsonArray("choices")?.get(0)?.asJsonObject
+            ?.getAsJsonObject("message")?.get("content")?.asString
+            ?: throw Exception("Réponse Groq vide")
+        return raw.removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
+    }
+
+    private fun callMistralTextMeal(apiKey: String, prompt: String): String {
+        val payload = mapOf(
+            "model" to MISTRAL_MODEL,
+            "messages" to listOf(mapOf("role" to "user", "content" to prompt)),
+            "max_tokens" to 4096,
+            "temperature" to 0.3,
+            "response_format" to mapOf("type" to "json_object")
+        )
+        val request = Request.Builder()
+            .url(MISTRAL_URL)
+            .header("Content-Type", "application/json")
+            .header("Authorization", "Bearer $apiKey")
+            .post(gson.toJson(payload).toRequestBody(jsonMediaType))
+            .build()
+        val response = client.newCall(request).execute()
+        val responseBody = response.body?.string() ?: throw Exception("Réponse vide")
+        if (!response.isSuccessful) {
+            val errorMsg = try {
+                val errJson = JsonParser.parseString(responseBody).asJsonObject
+                errJson.get("message")?.asString
+                    ?: errJson.getAsJsonObject("error")?.get("message")?.asString
+            } catch (_: Exception) { null } ?: "Erreur Mistral ${response.code}"
+            throw Exception(errorMsg)
+        }
+        val json = JsonParser.parseString(responseBody).asJsonObject
+        val raw = json.getAsJsonArray("choices")?.get(0)?.asJsonObject
+            ?.getAsJsonObject("message")?.get("content")?.asString
+            ?: throw Exception("Réponse Mistral vide")
+        return raw.removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
     }
 
     // ═══════════════════════════════════════

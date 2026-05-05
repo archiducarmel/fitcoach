@@ -146,32 +146,53 @@ fun MealScannerScreen(
 
             if (!state.showHistory) {
 
-            // ─── Photo ───
+            // ─── Zone d'entrée : Photo OU Description texte ───
+            // Trois branches mutuellement exclusives :
+            //   1. Image capturée → preview (mode PHOTO actif avec bitmap)
+            //   2. Mode TEXT actif & pas de résultat → panneau de saisie texte
+            //   3. Sinon (mode PHOTO sans bitmap) → zone de capture photo
             item {
-                if (state.imageBitmap != null) {
-                    Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp))) {
-                        Image(bitmap = state.imageBitmap!!.asImageBitmap(), contentDescription = null,
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 200.dp, max = 280.dp), contentScale = ContentScale.Crop)
-                        if (state.isAnalyzing) ScanOverlay(Modifier.matchParentSize())
-                        if (!state.isAnalyzing) {
-                            Surface(onClick = { viewModel.clear() }, shape = CircleShape,
-                                color = Color.Black.copy(alpha = 0.6f),
-                                modifier = Modifier.align(Alignment.TopEnd).padding(10.dp).size(32.dp)) {
-                                Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.Close, null, Modifier.size(16.dp), tint = Color.White) }
+                when {
+                    state.imageBitmap != null -> {
+                        Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp))) {
+                            Image(bitmap = state.imageBitmap!!.asImageBitmap(), contentDescription = null,
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 200.dp, max = 280.dp), contentScale = ContentScale.Crop)
+                            if (state.isAnalyzing) ScanOverlay(Modifier.matchParentSize())
+                            if (!state.isAnalyzing) {
+                                Surface(onClick = { viewModel.clear() }, shape = CircleShape,
+                                    color = Color.Black.copy(alpha = 0.6f),
+                                    modifier = Modifier.align(Alignment.TopEnd).padding(10.dp).size(32.dp)) {
+                                    Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.Close, null, Modifier.size(16.dp), tint = Color.White) }
+                                }
                             }
                         }
                     }
-                } else {
-                    PhotoCaptureZone(onCamera = { launchCamera() }, onGallery = { galleryLauncher.launch("image/*") })
+                    state.inputMode == MealInputMode.TEXT && state.result == null -> {
+                        TextDescriptionPanel(
+                            description = state.textDescription,
+                            isAnalyzing = state.isAnalyzing,
+                            canAnalyze = state.canAnalyzeText,
+                            onChange = { viewModel.setTextDescription(it) },
+                            onAnalyze = { viewModel.analyzeFromText() },
+                            onCancel = { viewModel.setInputMode(MealInputMode.PHOTO) },
+                        )
+                    }
+                    else -> {
+                        PhotoCaptureZone(
+                            onCamera = { launchCamera() },
+                            onGallery = { galleryLauncher.launch("image/*") },
+                            onDescribeText = { viewModel.setInputMode(MealInputMode.TEXT) }
+                        )
+                    }
                 }
             }
 
-            // ─── Panneau d'aide à l'analyse (optionnel) ───
+            // ─── Panneau d'aide à l'analyse (optionnel, mode PHOTO uniquement) ───
             if (state.imageBitmap != null && state.result == null && !state.isAnalyzing) {
                 item { HintsPanel(state, viewModel) }
             }
 
-            // ─── Bouton analyser ───
+            // ─── Bouton analyser (mode PHOTO uniquement — TEXT a son CTA dans le panel) ───
             if (state.imageBitmap != null && state.result == null && !state.isAnalyzing) {
                 item {
                     Button(onClick = { viewModel.analyze() }, modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -1172,7 +1193,11 @@ private fun ScanOverlay(modifier: Modifier = Modifier) {
 // ═══════════════════════════════════════
 
 @Composable
-private fun PhotoCaptureZone(onCamera: () -> Unit, onGallery: () -> Unit) {
+private fun PhotoCaptureZone(
+    onCamera: () -> Unit,
+    onGallery: () -> Unit,
+    onDescribeText: () -> Unit
+) {
     Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = OrangeVibrant.copy(alpha = 0.06f)),
         border = androidx.compose.foundation.BorderStroke(1.5.dp, OrangeVibrant.copy(alpha = 0.2f))) {
@@ -1180,8 +1205,8 @@ private fun PhotoCaptureZone(onCamera: () -> Unit, onGallery: () -> Unit) {
             Surface(shape = CircleShape, color = OrangeVibrant.copy(alpha = 0.12f), modifier = Modifier.size(72.dp)) {
                 Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.CameraAlt, null, Modifier.size(36.dp), tint = OrangeVibrant) }
             }
-            Text("Scanner un repas", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text("Shreddy identifie les ingrédients et calcule les macros et micronutriments",
+            Text("Analyser un repas", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text("Shreddy identifie les ingrédients et calcule macros + micronutriments. Photo ou description : même précision.",
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), textAlign = TextAlign.Center)
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button(onClick = onCamera, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(14.dp),
@@ -1194,6 +1219,130 @@ private fun PhotoCaptureZone(onCamera: () -> Unit, onGallery: () -> Unit) {
                     Icon(Icons.Default.PhotoLibrary, null, Modifier.size(20.dp), tint = OrangeVibrant); Spacer(Modifier.width(8.dp))
                     Text("Choisir depuis la galerie", fontWeight = FontWeight.Bold, color = OrangeVibrant)
                 }
+
+                // ─── Séparateur "ou" + entrée mode TEXT ───
+                // Hiérarchie : la photo reste primaire (plus précise quand
+                // disponible), mais l'option texte est explicitement offerte
+                // pour le cas "j'ai oublié de prendre la photo".
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f))
+                    Text("ou", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f))
+                }
+                TextButton(onClick = onDescribeText, modifier = Modifier.fillMaxWidth().height(48.dp), shape = RoundedCornerShape(14.dp)) {
+                    Icon(Icons.Default.Edit, null, Modifier.size(18.dp), tint = OrangeVibrant); Spacer(Modifier.width(8.dp))
+                    Text("Décrire mon repas en texte", fontWeight = FontWeight.SemiBold, color = OrangeVibrant)
+                }
+            }
+        }
+    }
+}
+
+// ═══════════════════════════════════════
+// TEXT DESCRIPTION PANEL — Mode "j'ai oublié la photo"
+// ═══════════════════════════════════════
+//
+// Pourquoi un panneau dédié et pas un simple TextField : on veut une zone
+// de saisie généreuse (multi-lignes, typo lisible) avec coaching contextuel
+// (exemples concrets, compteur de chars discret) pour aider l'user à
+// produire une description suffisamment précise pour une analyse fiable.
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TextDescriptionPanel(
+    description: String,
+    isAnalyzing: Boolean,
+    canAnalyze: Boolean,
+    onChange: (String) -> Unit,
+    onAnalyze: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    val charCount = description.length
+    val countWarning = charCount > 900 // approche du cap 1000 — alerter sans bloquer
+
+    Card(
+        Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = androidx.compose.foundation.BorderStroke(1.dp, OrangeVibrant.copy(alpha = 0.3f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            // ─── Header ───
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Surface(shape = CircleShape, color = OrangeVibrant.copy(alpha = 0.12f), modifier = Modifier.size(40.dp)) {
+                    Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.Edit, null, Modifier.size(20.dp), tint = OrangeVibrant) }
+                }
+                Column(Modifier.weight(1f)) {
+                    Text("Décris ton repas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("Sois précis sur les quantités pour une bonne estimation",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                        maxLines = 2)
+                }
+                IconButton(onClick = onCancel, enabled = !isAnalyzing) {
+                    Icon(Icons.Default.Close, "Retour", Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                }
+            }
+
+            // ─── Zone de saisie (TextField multi-lignes, hauteur min généreuse) ───
+            OutlinedTextField(
+                value = description,
+                onValueChange = onChange,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 140.dp),
+                placeholder = {
+                    Text(
+                        "Ex : 2 œufs au plat, 80g de bacon grillé, 2 tranches de pain complet beurrées, 1 verre de jus d'orange",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                    )
+                },
+                textStyle = MaterialTheme.typography.bodyMedium,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.Sentences,
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Default
+                ),
+                shape = RoundedCornerShape(12.dp),
+                enabled = !isAnalyzing,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = OrangeVibrant,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                ),
+                // maxLines élevé pour permettre la saisie de descriptions longues
+                // (repas multi-plats), sans contrainte verticale agressive.
+                maxLines = 8
+            )
+
+            // ─── Compteur + tip discret ───
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    "💡 Mentionne les quantités (grammes, unités, portions)",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    "$charCount/1000",
+                    style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
+                    color = if (countWarning) OrangeVibrant else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    fontWeight = if (countWarning) FontWeight.SemiBold else FontWeight.Normal
+                )
+            }
+
+            // ─── CTA Analyser ───
+            Button(
+                onClick = onAnalyze,
+                enabled = canAnalyze && !isAnalyzing,
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = OrangeVibrant)
+            ) {
+                Icon(Icons.Default.AutoAwesome, null, Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Analyser ma description", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
         }
     }
