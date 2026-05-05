@@ -227,7 +227,8 @@ class WorkoutSessionViewModel @Inject constructor(
     private val _state = MutableStateFlow(WorkoutSessionState())
     val state: StateFlow<WorkoutSessionState> = _state.asStateFlow()
 
-    private var exerciseChronoJob: Job? = null
+    // Plus de job local pour le chrono d'exo : il est géré wall-clock par
+    // ActiveSessionManager (cf. startExerciseChrono/stopExerciseChrono no-op).
     private var restTimerJob: Job? = null
     private var timedSetJob: Job? = null
 
@@ -257,14 +258,17 @@ class WorkoutSessionViewModel @Inject constructor(
             }
         }
 
-        // Observer le chrono global du SessionManager
+        // Observer chrono global + chrono d'exo du SessionManager. Les deux sont
+        // ancrés wall-clock dans le manager → résistent aux navigations et au
+        // process death (cf. ActiveSessionManager.startChrono).
         viewModelScope.launch {
             sessionManager.session.collect { session ->
                 if (session != null) {
                     _state.update {
                         it.copy(
                             globalChronoSeconds = session.globalChronoSeconds,
-                            globalChronoRunning = session.isRunning
+                            globalChronoRunning = session.isRunning,
+                            exerciseChronoSeconds = session.currentExerciseSeconds
                         )
                     }
                 }
@@ -399,15 +403,25 @@ class WorkoutSessionViewModel @Inject constructor(
     fun stopGlobalChrono() { sessionManager.pauseChrono() }
     fun resumeGlobalChrono() { sessionManager.resumeChrono() }
 
+    /**
+     * No-op. Le chrono d'exo est désormais ancré wall-clock dans
+     * [ActiveSessionManager] et propagé via le flow `session.currentExerciseSeconds`
+     * → il survit aux navigations (sortir+revenir sur l'écran) et au process death.
+     * Le démarrage / reset du chrono d'exo est déclenché par
+     * [ActiveSessionManager.updateExerciseInfo] uniquement quand l'exo change.
+     * Méthode conservée pour ne pas perturber les call sites existants
+     * (insertExerciseAtEnd, jumpToExercise, etc.).
+     */
     private fun startExerciseChrono() {
-        exerciseChronoJob?.cancel()
-        _state.update { it.copy(exerciseChronoSeconds = 0) }
-        exerciseChronoJob = viewModelScope.launch {
-            while (true) { delay(1000); _state.update { it.copy(exerciseChronoSeconds = it.exerciseChronoSeconds + 1) } }
-        }
+        // Intentionnellement vide — voir docstring.
     }
 
-    private fun stopExerciseChrono(): Long { exerciseChronoJob?.cancel(); return _state.value.exerciseChronoSeconds }
+    /**
+     * Retourne la valeur courante du chrono d'exo (lue depuis le state, qui est
+     * synchronisé via le flow du sessionManager). Plus besoin de cancel un job
+     * local — le tick continue dans le manager, indifférent à ce call.
+     */
+    private fun stopExerciseChrono(): Long = _state.value.exerciseChronoSeconds
 
     // ══════════════════════════════════════════
     // INPUTS
@@ -1562,6 +1576,6 @@ class WorkoutSessionViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         // NE PAS arrêter le SessionManager — le chrono global continue
-        exerciseChronoJob?.cancel(); restTimerJob?.cancel(); timedSetJob?.cancel()
+        restTimerJob?.cancel(); timedSetJob?.cancel()
     }
 }

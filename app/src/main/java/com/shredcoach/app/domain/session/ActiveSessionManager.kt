@@ -42,6 +42,14 @@ class ActiveSessionManager @Inject constructor(
         val isRunning: Boolean = false,
         val currentExerciseName: String = "",
         val currentExerciseIndex: Int = 0,
+        /**
+         * Horloge murale du début de l'exo courant. Re-stampée par
+         * [updateExerciseInfo] uniquement quand on change d'exo (mêmes name+index
+         * → on garde le timestamp). Permet au chrono d'exo de survivre aux
+         * navigations (sortir+revenir sur l'écran session) et au process death.
+         */
+        val currentExerciseStartedAt: LocalDateTime = LocalDateTime.now(),
+        val currentExerciseSeconds: Long = 0,
         val totalExercises: Int = 0,
         /** True si l'état a été reconstruit depuis la DB après un cold-start. */
         val restoredFromDb: Boolean = false
@@ -88,6 +96,7 @@ class ActiveSessionManager @Inject constructor(
         currentExerciseIndex: Int,
         restoredFromDb: Boolean
     ) {
+        val now = LocalDateTime.now()
         _session.value = ActiveSession(
             workoutLogId = workoutLogId,
             startedAt = startedAt,
@@ -95,16 +104,33 @@ class ActiveSessionManager @Inject constructor(
             isRunning = true,
             currentExerciseName = currentExerciseName,
             currentExerciseIndex = currentExerciseIndex,
+            // Sur restore depuis DB on n'a pas le vrai startedAt de l'exo courant
+            // (la DB ne stampe pas le démarrage par exo) → on prend `now` : le
+            // chrono d'exo redémarre à 0 sur cold-start, ce qui est acceptable
+            // (le chrono global reste correct, lui).
+            currentExerciseStartedAt = now,
+            currentExerciseSeconds = 0,
             totalExercises = totalExercises,
             restoredFromDb = restoredFromDb
         )
         startChrono()
     }
 
+    /**
+     * Met à jour les infos d'exo courant. Re-stampe `currentExerciseStartedAt`
+     * UNIQUEMENT si l'exo change (index ou nom différent) — sinon, idempotent
+     * pour préserver le chrono d'exo lors des allers-retours sur l'écran session.
+     */
     fun updateExerciseInfo(name: String, index: Int) {
-        _session.value = _session.value?.copy(
+        val current = _session.value ?: return
+        val isNewExercise = current.currentExerciseIndex != index ||
+            current.currentExerciseName != name
+        _session.value = current.copy(
             currentExerciseName = name,
-            currentExerciseIndex = index
+            currentExerciseIndex = index,
+            currentExerciseStartedAt = if (isNewExercise) LocalDateTime.now()
+                else current.currentExerciseStartedAt,
+            currentExerciseSeconds = if (isNewExercise) 0 else current.currentExerciseSeconds
         )
     }
 
@@ -235,9 +261,15 @@ class ActiveSessionManager @Inject constructor(
                 if (!current.isRunning) break
                 // Tick wall-clock : on recompute toujours depuis startedAt pour
                 // résister aux suspensions de la coroutine (background, doze, etc.)
-                val elapsed = Duration.between(current.startedAt, LocalDateTime.now())
+                val now = LocalDateTime.now()
+                val elapsed = Duration.between(current.startedAt, now)
                     .seconds.coerceAtLeast(current.globalChronoSeconds)
-                _session.value = current.copy(globalChronoSeconds = elapsed)
+                val exoElapsed = Duration.between(current.currentExerciseStartedAt, now)
+                    .seconds.coerceAtLeast(0)
+                _session.value = current.copy(
+                    globalChronoSeconds = elapsed,
+                    currentExerciseSeconds = exoElapsed
+                )
             }
         }
     }
