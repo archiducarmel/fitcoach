@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -98,7 +99,7 @@ fun GymScanScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour")
                     }
                 },
                 actions = {
@@ -472,7 +473,7 @@ private fun AnalysisResult(
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis)
                                 }
-                                Icon(Icons.Default.ArrowForward, null,
+                                Icon(Icons.AutoMirrored.Filled.ArrowForward, null,
                                     tint = Color.White, modifier = Modifier.size(20.dp))
                             }
                         }

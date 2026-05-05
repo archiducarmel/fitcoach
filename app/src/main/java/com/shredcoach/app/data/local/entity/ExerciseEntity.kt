@@ -1,11 +1,14 @@
-package com.shredcoach.app.data.local.entity
+﻿package com.shredcoach.app.data.local.entity
 
+
+import androidx.compose.runtime.Immutable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.shredcoach.app.domain.model.ExerciseVariant
 import com.shredcoach.app.domain.model.MuscleGroup
 
 @Entity(tableName = "exercises")
+@Immutable
 data class ExerciseEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,

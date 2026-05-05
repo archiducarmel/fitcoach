@@ -1,5 +1,7 @@
-package com.shredcoach.app.data.remote
+﻿package com.shredcoach.app.data.remote
 
+
+import androidx.compose.runtime.Immutable
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonParser
@@ -11,6 +13,7 @@ import javax.inject.Singleton
 // DTO — résultat structuré de l'analyse machine
 // ═══════════════════════════════════════
 
+@Immutable
 data class GymScanResult(
     @SerializedName("isGymEquipment") val isGymEquipment: Boolean = true,
     @SerializedName("machineName") val machineName: String = "",

@@ -44,4 +44,5 @@ sealed class Screen(val route: String) {
             return "exercise_db_detail/$encoded"
         }
     }
+    object PrivacyPolicy : Screen("privacy_policy")
 }

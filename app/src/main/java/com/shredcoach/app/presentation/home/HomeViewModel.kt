@@ -1,15 +1,20 @@
 package com.shredcoach.app.presentation.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shredcoach.app.data.local.entity.UserProfileEntity
 import com.shredcoach.app.data.repository.ExerciseRepository
 import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.data.repository.WorkoutRepository
+import com.shredcoach.app.domain.streak.StreakMilestoneStore
+import com.shredcoach.app.domain.streak.StreakService
+import com.shredcoach.app.domain.streak.StreakState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import com.shredcoach.app.data.local.entity.WorkoutEntity
 import com.shredcoach.app.data.local.entity.WorkoutLogEntity
@@ -23,14 +28,18 @@ data class GreetingInfo(
     val hasWorkedOutToday: Boolean = false,
     val lastWorkoutWasYesterday: Boolean = false,
     val lastWorkoutVolume: Double = 0.0,
-    val streakDays: Int = 0
+    val streakDays: Int = 0,
+    val bestStreakDays: Int = 0,
+    val pendingMilestone: Int? = null,
 )
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val exerciseRepository: ExerciseRepository,
-    private val workoutRepository: WorkoutRepository
+    private val workoutRepository: WorkoutRepository,
+    private val streakService: StreakService,
+    private val streakMilestoneStore: StreakMilestoneStore,
 ) : ViewModel() {
 
     private val _userProfile = MutableStateFlow<UserProfileEntity?>(null)
@@ -56,23 +65,8 @@ class HomeViewModel @Inject constructor(
     val freestyleLogId: StateFlow<Long?> = _freestyleLogId.asStateFlow()
 
     init {
-        loadUserProfile()
         loadExerciseCount()
-        observeWorkoutLogs()
-    }
-
-    private fun loadUserProfile() {
-        viewModelScope.launch {
-            userRepository.getUserProfile().collect { profile ->
-                _userProfile.value = profile
-                // Recalculer le greeting avec les nouveaux workoutDays
-                val current = _greetingInfo.value
-                val todayDayOfWeek = LocalDate.now().dayOfWeek.value
-                _greetingInfo.value = current.copy(
-                    isTodayWorkoutDay = profile?.workoutDays?.contains(todayDayOfWeek) == true
-                )
-            }
-        }
+        observeProfileAndLogs()
     }
 
     private fun loadExerciseCount() {
@@ -83,16 +77,26 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** Observer les workout logs — valeurs absolues (all time) + greeting */
-    private fun observeWorkoutLogs() {
+    /**
+     * Observe profile + logs ensemble via [combine]. Tous les writes vers
+     * [_greetingInfo] et [_userProfile] passent par UN SEUL collecteur séquentiel,
+     * éliminant la race condition possible quand profile et logs émettent en
+     * parallèle (chacun écrasait `_greetingInfo` avec un état partiel — flicker UI).
+     */
+    private fun observeProfileAndLogs() {
         viewModelScope.launch {
-            workoutRepository.getAllWorkoutLogs().collect { logs ->
-                val completed = logs.filter { it.completed }
-                _totalWorkouts.value = completed.size
-                _totalVolume.value = completed.sumOf { it.totalVolume }
-                _totalTimeMinutes.value = (completed.sumOf { it.actualDurationSeconds } / 60).toInt()
-                updateGreeting(completed)
-            }
+            combine(
+                userRepository.getUserProfile(),
+                workoutRepository.getAllWorkoutLogs(),
+            ) { profile, logs -> profile to logs }
+                .collect { (profile, logs) ->
+                    _userProfile.value = profile
+                    val completed = logs.filter { it.completed }
+                    _totalWorkouts.value = completed.size
+                    _totalVolume.value = completed.sumOf { it.totalVolume }
+                    _totalTimeMinutes.value = (completed.sumOf { it.actualDurationSeconds } / 60).toInt()
+                    updateGreeting(profile, completed)
+                }
         }
     }
 
@@ -120,10 +124,17 @@ class HomeViewModel @Inject constructor(
 
     fun clearFreestyleLogId() { _freestyleLogId.value = null }
 
-    private fun updateGreeting(completedLogs: List<com.shredcoach.app.data.local.entity.WorkoutLogEntity>) {
+    /**
+     * Suspend pour pouvoir lire `streakMilestoneStore.snapshot()` séquentiellement
+     * (au lieu d'un launch séparé qui ouvrait une race). Appelée depuis le
+     * collecteur unique [observeProfileAndLogs].
+     */
+    private suspend fun updateGreeting(
+        profile: UserProfileEntity?,
+        completedLogs: List<WorkoutLogEntity>,
+    ) {
         val today = LocalDate.now()
         val yesterday = today.minusDays(1)
-        val profile = _userProfile.value
 
         // Jour de seance planifie ? (workoutDays : 1=Lundi ... 7=Dimanche en Java DayOfWeek)
         val todayDayOfWeek = today.dayOfWeek.value
@@ -135,22 +146,40 @@ class HomeViewModel @Inject constructor(
         val lastWorkoutWasYesterday = lastDate == yesterday
         val lastVolume = lastLog?.totalVolume ?: 0.0
 
-        // Streak : nombre de jours consecutifs avec au moins 1 seance (en remontant depuis aujourd'hui ou hier)
-        val datesWithWorkout = completedLogs.map { it.date.toLocalDate() }.toSet()
-        val hasWorkedOutToday = datesWithWorkout.contains(today)
-        var streak = 0
-        var cursor = if (hasWorkedOutToday) today else yesterday
-        while (datesWithWorkout.contains(cursor)) {
-            streak++
-            cursor = cursor.minusDays(1)
-        }
+        // Streak : délégué à StreakService (source unique de vérité partagée
+        // avec StreakUpdateWorker, CoachTriggerEngine, WorkoutDebriefWorker).
+        val streakState = streakService.compute(completedLogs, today)
+        val celebrated = streakMilestoneStore.snapshot()
+        val nextToCelebrate = streakService.nextMilestoneToCelebrate(
+            currentDays = streakState.currentDays,
+            alreadyCelebrated = celebrated,
+        )
 
         _greetingInfo.value = GreetingInfo(
             isTodayWorkoutDay = isTodayWorkoutDay,
-            hasWorkedOutToday = hasWorkedOutToday,
+            hasWorkedOutToday = streakState.hasWorkedOutToday,
             lastWorkoutWasYesterday = lastWorkoutWasYesterday,
             lastWorkoutVolume = lastVolume,
-            streakDays = streak
+            streakDays = streakState.currentDays,
+            bestStreakDays = streakState.bestDays,
+            pendingMilestone = nextToCelebrate,
         )
+        Log.i(
+            TAG,
+            "greeting: streak=${streakState.currentDays}/${streakState.bestDays} " +
+                "today=${streakState.hasWorkedOutToday} pendingMilestone=$nextToCelebrate"
+        )
+    }
+
+    /** Marque le palier comme célébré (l'UI a fermé la dialog). */
+    fun acknowledgeMilestone(milestone: Int) {
+        viewModelScope.launch {
+            streakMilestoneStore.markCelebrated(milestone)
+            _greetingInfo.value = _greetingInfo.value.copy(pendingMilestone = null)
+        }
+    }
+
+    private companion object {
+        const val TAG = "HomeViewModel"
     }
 }

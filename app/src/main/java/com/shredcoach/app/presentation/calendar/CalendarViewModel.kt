@@ -1,5 +1,7 @@
-package com.shredcoach.app.presentation.calendar
+﻿package com.shredcoach.app.presentation.calendar
 
+
+import androidx.compose.runtime.Immutable
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -28,6 +30,7 @@ import javax.inject.Inject
 /**
  * State global du calendrier.
  */
+@Immutable
 data class CalendarState(
     val currentMonth: YearMonth = YearMonth.now(),
     val selectedDate: LocalDate? = LocalDate.now(),

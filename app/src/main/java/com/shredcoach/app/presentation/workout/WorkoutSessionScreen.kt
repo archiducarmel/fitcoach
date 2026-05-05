@@ -1,4 +1,4 @@
-package com.shredcoach.app.presentation.workout
+﻿package com.shredcoach.app.presentation.workout
 
 import android.content.Context
 import android.os.Build
@@ -25,6 +25,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -41,7 +42,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import coil.compose.SubcomposeAsyncImage
-import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -310,7 +310,7 @@ fun WorkoutSessionScreen(
                         // ─── 3. Session view : exercice courant ───
                         exercise != null -> {
                             Column(Modifier.fillMaxSize()) {
-                                LinearProgressIndicator(progress = state.progressPercentage, Modifier.fillMaxWidth().height(4.dp), color = OrangeVibrant)
+                                LinearProgressIndicator(progress = { state.progressPercentage }, modifier = Modifier.fillMaxWidth().height(4.dp), color = OrangeVibrant)
 
                                 if (state.isInWarmupBlock) {
                                     WarmupBlockView(state, viewModel)
@@ -453,7 +453,6 @@ private fun ExerciseGif(gifUrl: String, modifier: Modifier = Modifier) {
     SubcomposeAsyncImage(
         model = ImageRequest.Builder(context)
             .data(gifUrl)
-            .decoderFactory(ImageDecoderDecoder.Factory())
             .crossfade(true)
             .build(),
         contentDescription = "Démonstration exercice",
@@ -549,7 +548,7 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (state.addExerciseStep == 1) {
                     IconButton(onClick = { viewModel.backToMuscleGroupStep() }, Modifier.size(32.dp)) {
-                        Icon(Icons.Default.ArrowBack, "Retour", Modifier.size(18.dp))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour", Modifier.size(18.dp))
                     }
                 }
                 Column {
@@ -723,7 +722,7 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
                                         colors = ButtonDefaults.buttonColors(containerColor = OrangeVibrant),
                                         contentPadding = PaddingValues(horizontal = 8.dp)
                                     ) {
-                                        Icon(Icons.Default.DirectionsRun, null, Modifier.size(14.dp))
+                                        Icon(Icons.AutoMirrored.Filled.DirectionsRun, null, Modifier.size(14.dp))
                                         Spacer(Modifier.width(4.dp))
                                         Text("Ajouter en fin de séance", style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.Bold, maxLines = 1)
@@ -737,7 +736,7 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
                                             colors = ButtonDefaults.buttonColors(containerColor = OrangeVibrant),
                                             contentPadding = PaddingValues(horizontal = 8.dp)
                                         ) {
-                                            Icon(Icons.Default.ArrowForward, null, Modifier.size(14.dp))
+                                            Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(14.dp))
                                             Spacer(Modifier.width(4.dp))
                                             Text("Après celui-ci", style = MaterialTheme.typography.labelSmall,
                                                 fontWeight = FontWeight.Bold, maxLines = 1)
@@ -748,7 +747,7 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
                                             shape = RoundedCornerShape(10.dp),
                                             contentPadding = PaddingValues(horizontal = 8.dp)
                                         ) {
-                                            Icon(Icons.Default.LastPage, null, Modifier.size(14.dp))
+                                            Icon(Icons.AutoMirrored.Filled.LastPage, null, Modifier.size(14.dp))
                                             Spacer(Modifier.width(4.dp))
                                             Text("En fin", style = MaterialTheme.typography.labelSmall,
                                                 fontWeight = FontWeight.Bold, maxLines = 1)
@@ -1000,7 +999,7 @@ private fun CardioSessionCard(exercise: ExerciseEntity, state: WorkoutSessionSta
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(Icons.Default.DirectionsRun, null, Modifier.size(32.dp), tint = NeonGreen)
+                Icon(Icons.AutoMirrored.Filled.DirectionsRun, null, Modifier.size(32.dp), tint = NeonGreen)
                 Text("Session cardio", style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold, color = NeonGreen)
 
@@ -1379,14 +1378,14 @@ private fun ActiveSeriesCard(seriesNum: Int, totalSeries: Int, state: WorkoutSes
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                             modifier = Modifier.heightIn(min = 32.dp)
                         ) {
-                            Icon(Icons.Default.TrendingUp, null, Modifier.size(14.dp))
+                            Icon(Icons.AutoMirrored.Filled.TrendingUp, null, Modifier.size(14.dp))
                             Spacer(Modifier.width(4.dp))
                             Text("+5 kg", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }
             }
-            Divider(color = MaterialTheme.colorScheme.outlineVariant)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             // Poids, Reps ET Repos côte à côte avec steppers verticaux
             Row(
                 Modifier.fillMaxWidth().height(IntrinsicSize.Min),
@@ -1500,7 +1499,7 @@ private fun PostLastSetPromptCard(onAddSeries: () -> Unit, onContinue: () -> Uni
                 ) {
                     Text(continueLabel, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.width(6.dp))
-                    Icon(Icons.Default.ArrowForward, null, Modifier.size(18.dp))
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(18.dp))
                 }
             }
         }
@@ -1561,7 +1560,7 @@ private fun ExerciseOverviewPanel(state: WorkoutSessionState, viewModel: Workout
                 val canGoBack = !(state.isFreestyle && currentExoDone)
                 if (canGoBack) {
                     FilledTonalButton(onClick = { viewModel.toggleExerciseOverview() }) {
-                        Icon(Icons.Default.ArrowBack, null, Modifier.size(16.dp))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
                         Text("Retour", fontWeight = FontWeight.Bold)
                     }
@@ -1943,8 +1942,8 @@ private fun ExerciseTransitionOverlay(
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("$exercisesDone / $totalExercises exercices", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
             LinearProgressIndicator(
-                progress = exercisesDone.toFloat() / totalExercises.coerceAtLeast(1),
-                Modifier.fillMaxWidth(0.7f).height(8.dp).clip(RoundedCornerShape(4.dp)),
+                progress = { exercisesDone.toFloat() / totalExercises.coerceAtLeast(1) },
+                modifier = Modifier.fillMaxWidth(0.7f).height(8.dp).clip(RoundedCornerShape(4.dp)),
                 color = NeonGreen
             )
         }

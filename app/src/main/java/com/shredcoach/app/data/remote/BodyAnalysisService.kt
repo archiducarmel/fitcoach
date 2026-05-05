@@ -1,5 +1,7 @@
-package com.shredcoach.app.data.remote
+﻿package com.shredcoach.app.data.remote
 
+
+import androidx.compose.runtime.Immutable
 import android.util.Base64
 import com.google.gson.Gson
 import com.google.gson.JsonParser
@@ -18,6 +20,7 @@ import javax.inject.Singleton
 // RÉSULTAT DE L'ANALYSE CORPORELLE
 // ═══════════════════════════════════════════════════════════════
 
+@Immutable
 data class BodyAnalysisResult(
     val sex: String = "M",                           // "M" ou "F"
     @SerializedName("height_cm") val heightCm: Int = 0,

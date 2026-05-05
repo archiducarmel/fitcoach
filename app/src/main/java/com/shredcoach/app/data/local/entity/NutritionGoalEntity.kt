@@ -1,9 +1,12 @@
-package com.shredcoach.app.data.local.entity
+﻿package com.shredcoach.app.data.local.entity
 
+
+import androidx.compose.runtime.Immutable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "nutrition_goals")
+@Immutable
 data class NutritionGoalEntity(
     @PrimaryKey val id: Long = 1, // Singleton
     val targetCalories: Int = 2200,

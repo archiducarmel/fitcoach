@@ -14,6 +14,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,6 +31,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.shredcoach.app.data.local.dao.ConversationSummary
 import com.shredcoach.app.data.local.entity.ChatMessageEntity
+import com.shredcoach.app.presentation.common.EmptyState
 import com.shredcoach.app.presentation.common.MarkdownText
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
@@ -74,7 +76,7 @@ fun ChatScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour")
                     }
                 },
                 actions = {
@@ -196,14 +198,14 @@ private fun ConversationListPanel(
         }
 
         if (conversations.isEmpty()) {
-            Box(Modifier.fillMaxSize(), Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(Icons.Default.Forum, null, Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
-                    Text("Aucune conversation", style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
-                }
-            }
+            EmptyState(
+                icon = Icons.Default.Forum,
+                title = "Aucune conversation",
+                description = "Démarre une nouvelle conversation avec Shreddy pour des conseils nutrition et muscu.",
+                ctaLabel = "Nouvelle conversation",
+                ctaIcon = Icons.Default.Add,
+                onCtaClick = onNewConversation
+            )
         } else {
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -267,9 +269,10 @@ private fun ConversationCard(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f))
                 }
             }
-            // Delete
-            IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-                Icon(Icons.Default.Close, "Supprimer", Modifier.size(16.dp),
+            // Delete — IconButton garde sa taille default 48dp pour respecter
+            // le min touch target WCAG AA. L'icône reste petite (16dp) au centre.
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.Close, "Supprimer la conversation", Modifier.size(16.dp),
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
             }
         }

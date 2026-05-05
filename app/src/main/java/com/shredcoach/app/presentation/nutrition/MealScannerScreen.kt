@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -108,7 +109,7 @@ fun MealScannerScreen(
                         }
                     }
                 },
-                navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.Default.ArrowBack, "Retour") } },
+                navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour") } },
                 actions = {
                     IconButton(onClick = { viewModel.toggleHistory() }) {
                         Icon(Icons.Default.History, "Historique",
@@ -321,7 +322,7 @@ private fun HintsPanel(state: MealScannerState, viewModel: MealScannerViewModel)
                 Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)) {
 
-                    Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
 
                     // ─── Assiettes ───
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -582,7 +583,7 @@ internal fun MacrosCard(result: MealAnalysisResult) {
                 MacroRing("Fibres", result.totalFibers, fAjr, NeonGreen, Modifier.weight(1f))
             }
 
-            Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
 
             // ═══ SECTION 2 : Donut répartition calorique (centré) ═══
             Text("Répartition calorique", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)

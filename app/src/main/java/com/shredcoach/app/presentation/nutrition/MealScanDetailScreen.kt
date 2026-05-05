@@ -1,10 +1,13 @@
-package com.shredcoach.app.presentation.nutrition
+﻿package com.shredcoach.app.presentation.nutrition
 
+
+import androidx.compose.runtime.Immutable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,6 +30,7 @@ import javax.inject.Inject
 
 // ── ViewModel inline (petit, spécifique à cet écran) ──
 
+@Immutable
 data class MealScanDetailState(
     val result: MealAnalysisResult? = null,
     val scanName: String = "",
@@ -80,7 +84,7 @@ fun MealScanDetailScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
@@ -105,7 +109,7 @@ fun MealScanDetailScreen(
                                 model = coil.request.ImageRequest.Builder(
                                     androidx.compose.ui.platform.LocalContext.current
                                 ).data(java.io.File(state.photoPath!!)).crossfade(true).build(),
-                                contentDescription = null,
+                                contentDescription = "Photo du repas analysé",
                                 modifier = Modifier.fillMaxWidth().heightIn(min = 180.dp, max = 260.dp)
                                     .clip(androidx.compose.foundation.shape.RoundedCornerShape(20.dp)),
                                 contentScale = androidx.compose.ui.layout.ContentScale.Crop

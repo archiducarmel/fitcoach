@@ -1,5 +1,7 @@
-package com.shredcoach.app.presentation.onboarding
+﻿package com.shredcoach.app.presentation.onboarding
 
+
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shredcoach.app.data.local.entity.*
@@ -11,6 +13,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@Immutable
 data class OnboardingState(
     val currentPage: Int = 0,
     val firstName: String = "",

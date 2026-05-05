@@ -1,5 +1,7 @@
-package com.shredcoach.app.data.remote
+﻿package com.shredcoach.app.data.remote
 
+
+import androidx.compose.runtime.Immutable
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
@@ -37,6 +39,7 @@ import javax.inject.Singleton
  * @property images    Chemins relatifs (ex: ["3_4_Sit-Up/0.jpg", "3_4_Sit-Up/1.jpg"])
  *                     URL absolue construite via [imageUrl].
  */
+@Immutable
 data class ExerciseDbExercise(
     @SerializedName("id") val id: String = "",
     @SerializedName("name") val name: String = "",
@@ -62,6 +65,7 @@ data class ExerciseDbExercise(
 }
 
 /** Listes de filtres dynamiques (extraites du dataset à l'init). */
+@Immutable
 data class ExerciseDbMeta(
     val muscles: List<String> = emptyList(),
     val equipments: List<String> = emptyList(),

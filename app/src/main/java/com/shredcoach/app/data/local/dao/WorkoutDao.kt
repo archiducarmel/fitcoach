@@ -10,6 +10,10 @@ interface WorkoutDao {
     @Query("SELECT * FROM workouts WHERE isTemplate = 1 ORDER BY createdAt DESC")
     fun getWorkoutTemplates(): Flow<List<WorkoutEntity>>
 
+    /** Snapshot global, utilisé par le moteur de backup (export). */
+    @Query("SELECT * FROM workouts ORDER BY id ASC")
+    suspend fun getAllWorkoutsOnce(): List<WorkoutEntity>
+
     @Query("SELECT * FROM workouts WHERE id = :id")
     suspend fun getWorkoutById(id: Long): WorkoutEntity?
 
@@ -25,6 +29,10 @@ interface WorkoutDao {
     // WorkoutExercise operations
     @Query("SELECT * FROM workout_exercises WHERE workoutId = :workoutId ORDER BY orderIndex ASC")
     suspend fun getWorkoutExercises(workoutId: Long): List<WorkoutExerciseEntity>
+
+    /** Snapshot global de la table de jonction, utilisé par le backup. */
+    @Query("SELECT * FROM workout_exercises ORDER BY workoutId ASC, orderIndex ASC")
+    suspend fun getAllWorkoutExercisesOnce(): List<WorkoutExerciseEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWorkoutExercise(workoutExercise: WorkoutExerciseEntity)

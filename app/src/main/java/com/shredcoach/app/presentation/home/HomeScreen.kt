@@ -9,11 +9,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,6 +30,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.shredcoach.app.presentation.common.AnimatedCounter
+import com.shredcoach.app.presentation.common.StaggeredAppear
 import com.shredcoach.app.presentation.navigation.Screen
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
@@ -134,22 +140,38 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // ─── Hero de salutation (full width, pas tronqué par les actions) ───
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    "$timeGreeting, $firstName",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                    lineHeight = 30.sp
-                )
-                Text(
-                    subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                    lineHeight = 18.sp
+            StaggeredAppear(index = 0) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "$timeGreeting, $firstName",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        lineHeight = 30.sp
+                    )
+                    Text(
+                        subtitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        lineHeight = 18.sp
+                    )
+                    if (greetingInfo.streakDays >= 1) {
+                        com.shredcoach.app.presentation.common.StreakHeroBadge(
+                            days = greetingInfo.streakDays,
+                            bestDays = greetingInfo.bestStreakDays,
+                        )
+                    }
+                }
+            }
+
+            // Dialog célébration palier streak (3/7/14/30/60/100j)
+            greetingInfo.pendingMilestone?.let { milestone ->
+                com.shredcoach.app.presentation.common.StreakMilestoneDialog(
+                    days = milestone,
+                    onDismiss = { viewModel.acknowledgeMilestone(milestone) },
                 )
             }
 
@@ -162,33 +184,39 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             val calendarVm: com.shredcoach.app.presentation.calendar.CalendarViewModel = hiltViewModel()
             val calendarState by calendarVm.state.collectAsState()
             calendarState.nextUpcoming?.let { next ->
-                NextSessionWidget(
-                    nextDate = next.date,
-                    nextTime = next.time,
-                    title = next.title.ifBlank { "Séance planifiée" },
-                    onClick = { navController.navigate(Screen.Calendar.route) }
-                )
+                StaggeredAppear(index = 1) {
+                    NextSessionWidget(
+                        nextDate = next.date,
+                        nextTime = next.time,
+                        title = next.title.ifBlank { "Séance planifiée" },
+                        onClick = { navController.navigate(Screen.Calendar.route) }
+                    )
+                }
             }
 
-            Text("S'entraîner", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+            StaggeredAppear(index = 2) {
+                Text("S'entraîner", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+            }
 
             // CTA #1 : Générer (action principale, la plus fréquente)
-            Card(
-                onClick = { navController.switchTo(Screen.WorkoutGenerator.route) },
-                colors = CardDefaults.cardColors(containerColor = OrangeVibrant),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text("GÉNÉRER UNE SÉANCE", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
-                        Spacer(Modifier.height(4.dp))
-                        Text("Full Body • ${userProfile?.preferredWorkoutDuration ?: 90} min • Adapté à ton niveau",
-                            style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
-                    }
-                    Surface(shape = CircleShape, color = Color.White.copy(alpha = 0.2f), modifier = Modifier.size(52.dp)) {
-                        Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.AutoAwesome, null, Modifier.size(28.dp), tint = Color.White) }
+            StaggeredAppear(index = 3) {
+                Card(
+                    onClick = { navController.switchTo(Screen.WorkoutGenerator.route) },
+                    colors = CardDefaults.cardColors(containerColor = OrangeVibrant),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("GÉNÉRER UNE SÉANCE", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
+                            Spacer(Modifier.height(4.dp))
+                            Text("Full Body • ${userProfile?.preferredWorkoutDuration ?: 90} min • Adapté à ton niveau",
+                                style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
+                        }
+                        Surface(shape = CircleShape, color = Color.White.copy(alpha = 0.2f), modifier = Modifier.size(52.dp)) {
+                            Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.AutoAwesome, null, Modifier.size(28.dp), tint = Color.White) }
+                        }
                     }
                 }
             }
@@ -203,27 +231,30 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                 }
             }
 
-            Card(
-                onClick = { viewModel.startFreestyleWorkout() },
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Surface(shape = RoundedCornerShape(12.dp), color = NeonGreen.copy(alpha = 0.12f), modifier = Modifier.size(44.dp)) {
-                        Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.FlashOn, null, Modifier.size(24.dp), tint = NeonGreen) }
+            StaggeredAppear(index = 4) {
+                Card(
+                    onClick = { viewModel.startFreestyleWorkout() },
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Surface(shape = RoundedCornerShape(12.dp), color = NeonGreen.copy(alpha = 0.12f), modifier = Modifier.size(44.dp)) {
+                            Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.FlashOn, null, Modifier.size(24.dp), tint = NeonGreen) }
+                        }
+                        Spacer(Modifier.width(14.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("Séance libre", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            Text("Compose ta séance au feeling, exercice par exercice", style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), maxLines = 2, lineHeight = 16.sp)
+                        }
+                        Icon(Icons.Default.ChevronRight, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
                     }
-                    Spacer(Modifier.width(14.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text("Séance libre", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        Text("Compose ta séance au feeling, exercice par exercice", style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), maxLines = 2, lineHeight = 16.sp)
-                    }
-                    Icon(Icons.Default.ChevronRight, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
                 }
             }
 
             // CTA #3 et #4 côte à côte : Favoris + Créer
+            StaggeredAppear(index = 5) {
             Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 // Favoris
                 Card(
@@ -261,47 +292,52 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                     }
                 }
             }
+            } // fin StaggeredAppear index=5
 
             // ═══════════════════════════════════════
             // SECTION 2 : PROGRESSION
             // ═══════════════════════════════════════
 
-            Text("Ma progression", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+            StaggeredAppear(index = 6) {
+                Text("Ma progression", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+            }
 
-            if (totalWorkouts == 0) {
-                // Nouvel utilisateur : card motivationnelle
-                Card(
-                    onClick = { navController.switchTo(Screen.WorkoutGenerator.route) },
-                    colors = CardDefaults.cardColors(containerColor = NeonGreen.copy(alpha = 0.08f)),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                ) {
-                    Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Box(Modifier.size(48.dp).clip(CircleShape).background(NeonGreen.copy(alpha = 0.18f)),
-                            contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.EmojiEvents, null, Modifier.size(28.dp), tint = NeonGreen)
+            StaggeredAppear(index = 7) {
+                if (totalWorkouts == 0) {
+                    // Nouvel utilisateur : card motivationnelle
+                    Card(
+                        onClick = { navController.switchTo(Screen.WorkoutGenerator.route) },
+                        colors = CardDefaults.cardColors(containerColor = NeonGreen.copy(alpha = 0.08f)),
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Box(Modifier.size(48.dp).clip(CircleShape).background(NeonGreen.copy(alpha = 0.18f)),
+                                contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.EmojiEvents, null, Modifier.size(28.dp), tint = NeonGreen)
+                            }
+                            Column(Modifier.weight(1f)) {
+                                Text("Ta première séance t'attend !", style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                Text("Débloque tes stats de progression.", style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = NeonGreen, modifier = Modifier.size(20.dp))
                         }
-                        Column(Modifier.weight(1f)) {
-                            Text("Ta première séance t'attend !", style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                            Text("Débloque tes stats de progression.", style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                } else {
+                    // Utilisateur actif : stats avec compteurs animés (count-up depuis 0)
+                    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        AnimatedStatCard(Modifier.weight(1f).fillMaxHeight(), totalWorkouts, "Séances", OrangeVibrant) {
+                            navController.switchTo(Screen.Stats.route)
                         }
-                        Icon(Icons.Default.ArrowForward, null, tint = NeonGreen, modifier = Modifier.size(20.dp))
-                    }
-                }
-            } else {
-                // Utilisateur actif : stats avec animation
-                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    AnimatedStatCard(Modifier.weight(1f).fillMaxHeight(), "$totalWorkouts", "Séances", OrangeVibrant) {
-                        navController.switchTo(Screen.Stats.route)
-                    }
-                    AnimatedStatCard(Modifier.weight(1f).fillMaxHeight(), fmtVol(totalVolume), "Volume", NeonGreen) {
-                        navController.switchTo(Screen.Stats.route)
-                    }
-                    AnimatedStatCard(Modifier.weight(1f).fillMaxHeight(), fmtTime(totalTimeMinutes), "Temps", Color(0xFF3B82F6)) {
-                        navController.switchTo(Screen.Stats.route)
+                        AnimatedStatCard(Modifier.weight(1f).fillMaxHeight(), totalVolume, "Volume", NeonGreen, formatter = { fmtVol(it.toDouble()) }) {
+                            navController.switchTo(Screen.Stats.route)
+                        }
+                        AnimatedStatCard(Modifier.weight(1f).fillMaxHeight(), totalTimeMinutes, "Temps", Color(0xFF3B82F6), formatter = { fmtTime(it.toInt()) }) {
+                            navController.switchTo(Screen.Stats.route)
+                        }
                     }
                 }
             }
@@ -310,25 +346,32 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             // SECTION 3 : EXPLORER
             // ═══════════════════════════════════════
 
-            Text("Explorer", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+            StaggeredAppear(index = 8) {
+                Text("Explorer", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+            }
 
-            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                ActionCard(Modifier.weight(1f).fillMaxHeight(), "Exercices", Icons.Default.FitnessCenter, OrangeVibrant) {
-                    navController.switchTo(Screen.Exercises.route)
-                }
-                ActionCard(Modifier.weight(1f).fillMaxHeight(), "Mes Stats", Icons.Default.Analytics, NeonGreen) {
-                    navController.switchTo(Screen.Stats.route)
+            StaggeredAppear(index = 9) {
+                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    ActionCard(Modifier.weight(1f).fillMaxHeight(), "Exercices", Icons.Default.FitnessCenter, OrangeVibrant) {
+                        navController.switchTo(Screen.Exercises.route)
+                    }
+                    ActionCard(Modifier.weight(1f).fillMaxHeight(), "Mes Stats", Icons.Default.Analytics, NeonGreen) {
+                        navController.switchTo(Screen.Stats.route)
+                    }
                 }
             }
 
-            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                SmallCard(Modifier.weight(1f).fillMaxHeight(), "Nutrition", Icons.Default.Restaurant) { navController.switchTo(Screen.Nutrition.route) }
-                SmallCard(Modifier.weight(1f).fillMaxHeight(), "Profil", Icons.Default.Person) { navController.switchTo(Screen.Profile.route) }
-                SmallCard(Modifier.weight(1f).fillMaxHeight(), "Photos", Icons.Default.CameraAlt) { navController.switchTo(Screen.ProgressPhotos.route) }
+            StaggeredAppear(index = 10) {
+                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SmallCard(Modifier.weight(1f).fillMaxHeight(), "Nutrition", Icons.Default.Restaurant) { navController.switchTo(Screen.Nutrition.route) }
+                    SmallCard(Modifier.weight(1f).fillMaxHeight(), "Profil", Icons.Default.Person) { navController.switchTo(Screen.Profile.route) }
+                    SmallCard(Modifier.weight(1f).fillMaxHeight(), "Photos", Icons.Default.CameraAlt) { navController.switchTo(Screen.ProgressPhotos.route) }
+                }
             }
 
             // ─── Meal Scanner — accès rapide ───
+            StaggeredAppear(index = 11) {
             Card(
                 onClick = { navController.navigate(Screen.MealScanner.route) },
                 modifier = Modifier.fillMaxWidth(),
@@ -365,11 +408,12 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.White.copy(alpha = 0.8f))
                         }
-                        Icon(Icons.Default.ArrowForward, null, Modifier.size(20.dp),
+                        Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(20.dp),
                             tint = Color.White.copy(alpha = 0.7f))
                     }
                 }
             }
+            } // fin StaggeredAppear index=11
 
             Spacer(Modifier.height(60.dp))
         }
@@ -382,20 +426,35 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AnimatedStatCard(modifier: Modifier, value: String, label: String, color: Color, onClick: () -> Unit) {
+private fun AnimatedStatCard(
+    modifier: Modifier,
+    targetValue: Number,
+    label: String,
+    color: Color,
+    formatter: (Float) -> String = { it.toInt().toString() },
+    onClick: () -> Unit
+) {
+    // Description TalkBack agrégée : valeur + label dans un seul focus.
+    // L'AnimatedCounter (texte qui se déroule) ne serait jamais lu en
+    // entier — on remplace par la valeur finale stable.
+    val a11y = remember(targetValue, label) {
+        val finalText = formatter(targetValue.toFloat())
+        "$label : $finalText"
+    }
     Card(
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier.semantics(mergeDescendants = true) {
+            contentDescription = a11y
+        },
         colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f))
     ) {
         Column(Modifier.fillMaxWidth().padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            androidx.compose.animation.Crossfade(
-                targetState = value,
-                animationSpec = androidx.compose.animation.core.tween(400),
-                label = "statValue"
-            ) { v ->
-                Text(v, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = color)
-            }
+            AnimatedCounter(
+                targetValue = targetValue,
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                color = color,
+                formatter = formatter
+            )
             Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         }
     }

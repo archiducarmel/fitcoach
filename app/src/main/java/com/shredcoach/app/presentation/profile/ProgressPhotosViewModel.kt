@@ -1,5 +1,7 @@
-package com.shredcoach.app.presentation.profile
+﻿package com.shredcoach.app.presentation.profile
 
+
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shredcoach.app.data.local.entity.PhotoType
@@ -12,6 +14,7 @@ import java.io.File
 import java.time.LocalDate
 import javax.inject.Inject
 
+@Immutable
 data class ProgressPhotosState(
     val photos: List<ProgressPhotoEntity> = emptyList(),
     val viewingPhoto: ProgressPhotoEntity? = null,

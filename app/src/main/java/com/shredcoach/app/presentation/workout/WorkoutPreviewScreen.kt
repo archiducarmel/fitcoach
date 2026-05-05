@@ -1,4 +1,4 @@
-package com.shredcoach.app.presentation.workout
+﻿package com.shredcoach.app.presentation.workout
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,7 +26,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
-import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import coil.size.Size
 import kotlinx.coroutines.launch
@@ -33,6 +33,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.shredcoach.app.data.local.entity.ExerciseEntity
 import com.shredcoach.app.domain.model.MuscleGroup
+import com.shredcoach.app.presentation.common.EmptyState
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
 
@@ -84,7 +85,7 @@ fun WorkoutPreviewScreen(
                         viewModel.clearWorkout()
                         navController.navigateUp()
                     }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour")
                     }
                 },
                 actions = {
@@ -114,10 +115,13 @@ fun WorkoutPreviewScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
+                    .padding(paddingValues)
             ) {
-                Text("Aucune séance générée")
+                EmptyState(
+                    icon = Icons.Default.FitnessCenter,
+                    title = "Aucune séance générée",
+                    description = "Lance la génération d'une séance full body adaptée à ta durée disponible."
+                )
             }
         } else {
             val workout = generatedWorkout!!
@@ -238,7 +242,7 @@ fun WorkoutPreviewScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 modifier = Modifier.padding(vertical = 8.dp)
                             ) {
-                                Icon(Icons.Default.DirectionsRun, null, Modifier.size(20.dp), tint = NeonGreen)
+                                Icon(Icons.AutoMirrored.Filled.DirectionsRun, null, Modifier.size(20.dp), tint = NeonGreen)
                                 Text(
                                     "Cardio (${workout.cardioMinutes} min)",
                                     style = MaterialTheme.typography.titleMedium,
@@ -400,11 +404,11 @@ fun WorkoutSummaryCard(
                     Icon(Icons.Default.FitnessCenter, null, Modifier.size(32.dp), tint = Color.White.copy(alpha = 0.6f))
                 }
                 Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), verticalAlignment = Alignment.CenterVertically) {
-                    BreakdownMini(icon = Icons.Default.DirectionsRun, value = "${warmupMinutes}min", label = "Échauff.", modifier = Modifier.weight(1f))
+                    BreakdownMini(icon = Icons.AutoMirrored.Filled.DirectionsRun, value = "${warmupMinutes}min", label = "Échauff.", modifier = Modifier.weight(1f))
                     Box(Modifier.width(1.dp).fillMaxHeight().background(Color.White.copy(alpha = 0.3f)))
                     BreakdownMini(icon = Icons.Default.FitnessCenter, value = "$exerciseCount", label = "exos", modifier = Modifier.weight(1f))
                     Box(Modifier.width(1.dp).fillMaxHeight().background(Color.White.copy(alpha = 0.3f)))
-                    BreakdownMini(icon = Icons.Default.DirectionsWalk, value = "${cardioMinutes}min", label = "Cardio", modifier = Modifier.weight(1f))
+                    BreakdownMini(icon = Icons.AutoMirrored.Filled.DirectionsWalk, value = "${cardioMinutes}min", label = "Cardio", modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -496,7 +500,7 @@ fun ExercisePreviewCard(
                         if (exercise.gifUrl != null) {
                             SubcomposeAsyncImage(
                                 model = ImageRequest.Builder(ctx).data(exercise.gifUrl)
-                                    .decoderFactory(ImageDecoderDecoder.Factory()).size(Size(128, 128)).crossfade(true).build(),
+                                    .size(Size(128, 128)).crossfade(true).build(),
                                 contentDescription = exercise.name, modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop,
                                 error = { Icon(Icons.Default.FitnessCenter, null, Modifier.size(26.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)) }
@@ -549,7 +553,7 @@ fun ExercisePreviewCard(
             // ─── Panneau de réglages inline (expanded) ───
             androidx.compose.animation.AnimatedVisibility(visible = expanded && canExpand) {
                 Column(Modifier.fillMaxWidth()) {
-                    Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                     Row(
                         Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceEvenly,
@@ -625,13 +629,13 @@ fun CardioExerciseCard(
                 if (exercise.gifUrl != null) {
                     SubcomposeAsyncImage(
                         model = ImageRequest.Builder(ctx).data(exercise.gifUrl)
-                            .decoderFactory(ImageDecoderDecoder.Factory()).size(Size(128, 128)).crossfade(true).build(),
+                            .size(Size(128, 128)).crossfade(true).build(),
                         contentDescription = exercise.name, modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,
-                        error = { Icon(Icons.Default.DirectionsRun, null, Modifier.size(28.dp), tint = NeonGreen) }
+                        error = { Icon(Icons.AutoMirrored.Filled.DirectionsRun, null, Modifier.size(28.dp), tint = NeonGreen) }
                     )
                 } else {
-                    Icon(Icons.Default.DirectionsRun, null, Modifier.size(28.dp), tint = NeonGreen)
+                    Icon(Icons.AutoMirrored.Filled.DirectionsRun, null, Modifier.size(28.dp), tint = NeonGreen)
                 }
             }
 
@@ -713,7 +717,7 @@ fun SwapExerciseDialog(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
 
-                Divider(modifier = Modifier.padding(vertical = 4.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
                 if (alternatives.isEmpty()) {
                     Text(
@@ -749,7 +753,7 @@ fun SwapExerciseDialog(
                                         if (alt.gifUrl != null) {
                                             SubcomposeAsyncImage(
                                                 model = ImageRequest.Builder(ctx).data(alt.gifUrl)
-                                                    .decoderFactory(ImageDecoderDecoder.Factory()).size(Size(112, 112)).crossfade(true).build(),
+                                                    .size(Size(112, 112)).crossfade(true).build(),
                                                 contentDescription = alt.name, modifier = Modifier.fillMaxSize(),
                                                 contentScale = ContentScale.Crop,
                                                 error = { Icon(Icons.Default.FitnessCenter, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)) }

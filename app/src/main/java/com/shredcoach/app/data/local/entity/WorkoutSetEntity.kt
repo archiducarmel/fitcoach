@@ -1,5 +1,7 @@
-package com.shredcoach.app.data.local.entity
+﻿package com.shredcoach.app.data.local.entity
 
+
+import androidx.compose.runtime.Immutable
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -23,6 +25,7 @@ import androidx.room.PrimaryKey
     ],
     indices = [Index("workoutLogId"), Index("exerciseId")]
 )
+@Immutable
 data class WorkoutSetEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,

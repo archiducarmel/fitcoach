@@ -144,8 +144,8 @@ fun QuickScheduleSheet(
                             )
                         }
                         if (selectedTime != null) {
-                            IconButton(onClick = { selectedTime = null }, Modifier.size(20.dp)) {
-                                Icon(Icons.Default.Close, "Effacer", Modifier.size(14.dp),
+                            IconButton(onClick = { selectedTime = null }) {
+                                Icon(Icons.Default.Close, "Effacer l'heure", Modifier.size(14.dp),
                                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                             }
                         }

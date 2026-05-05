@@ -1,5 +1,7 @@
-package com.shredcoach.app.data.remote
+﻿package com.shredcoach.app.data.remote
 
+
+import androidx.compose.runtime.Immutable
 import android.util.Base64
 import android.util.Log
 import com.google.gson.Gson
@@ -19,6 +21,7 @@ import javax.inject.Singleton
 // DATA CLASSES — résultat structuré
 // ═══════════════════════════════════════
 
+@Immutable
 data class MealAnalysisResult(
     val dishes: List<AnalyzedDish> = emptyList(),
     val totalCalories: Int = 0,
@@ -33,6 +36,7 @@ data class MealAnalysisResult(
     val micronutrients: List<Micronutrient> = emptyList()
 )
 
+@Immutable
 data class AnalyzedDish(
     val name: String = "",
     @SerializedName("meal_type") val mealType: String = "dejeuner",

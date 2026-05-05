@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "ShredCoach"
 include(":app")
+include(":baselineprofile")

@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -81,7 +82,7 @@ fun CalendarScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour")
                     }
                 },
                 actions = {
@@ -593,11 +594,11 @@ private fun ScheduleCard(
                         }
                         OutlinedButton(
                             onClick = onDelete,
-                            modifier = Modifier.height(32.dp),
+                            modifier = Modifier.height(40.dp),
                             contentPadding = PaddingValues(horizontal = 10.dp),
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f))
                         ) {
-                            Icon(Icons.Default.Delete, null, Modifier.size(14.dp),
+                            Icon(Icons.Default.Delete, "Supprimer la séance planifiée", Modifier.size(14.dp),
                                 tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f))
                         }
                     }

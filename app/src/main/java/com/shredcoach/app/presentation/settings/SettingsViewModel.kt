@@ -1,5 +1,7 @@
-package com.shredcoach.app.presentation.settings
+﻿package com.shredcoach.app.presentation.settings
 
+
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shredcoach.app.data.local.entity.*
@@ -10,6 +12,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@Immutable
 data class SettingsState(
     val profile: UserProfileEntity? = null,
     val isLoading: Boolean = true,

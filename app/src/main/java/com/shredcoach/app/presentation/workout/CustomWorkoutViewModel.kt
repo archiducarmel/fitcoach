@@ -1,5 +1,7 @@
-package com.shredcoach.app.presentation.workout
+﻿package com.shredcoach.app.presentation.workout
 
+
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shredcoach.app.data.local.entity.*
@@ -27,6 +29,7 @@ data class CustomExerciseSlot(
     val durationMinutes: Int? = null
 )
 
+@Immutable
 data class CustomWorkoutState(
     val name: String = "Ma séance du ${java.time.LocalDate.now().let { "${it.dayOfMonth}/${it.monthValue}" }}",
     val durationMinutes: Int = 90,

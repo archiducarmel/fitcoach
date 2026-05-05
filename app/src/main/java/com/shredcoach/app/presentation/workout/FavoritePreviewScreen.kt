@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.shredcoach.app.presentation.common.EmptyState
 import com.shredcoach.app.presentation.navigation.Screen
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
@@ -50,7 +52,7 @@ fun FavoritePreviewScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour")
                     }
                 }
             )
@@ -76,8 +78,12 @@ fun FavoritePreviewScreen(
             state.isLoading -> Box(Modifier.fillMaxSize().padding(pad), Alignment.Center) {
                 CircularProgressIndicator()
             }
-            state.exercises.isEmpty() -> Box(Modifier.fillMaxSize().padding(pad), Alignment.Center) {
-                Text("Aucun exercice", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+            state.exercises.isEmpty() -> Box(Modifier.fillMaxSize().padding(pad)) {
+                EmptyState(
+                    icon = Icons.Default.FitnessCenter,
+                    title = "Aucun exercice",
+                    description = "Ce favori ne contient pas d'exercices. Crée un nouveau favori depuis l'onglet séances."
+                )
             }
             else -> {
                 LazyColumn(

@@ -1,4 +1,4 @@
-package com.shredcoach.app.presentation.workout
+﻿package com.shredcoach.app.presentation.workout
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,7 +34,6 @@ import com.shredcoach.app.presentation.navigation.Screen
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
 import coil.compose.SubcomposeAsyncImage
-import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import coil.size.Size
 import kotlinx.coroutines.launch
@@ -92,7 +92,7 @@ fun CustomWorkoutScreen(navController: NavController, viewModel: CustomWorkoutVi
         topBar = {
             TopAppBar(
                 title = { Text("Créer ma séance", fontWeight = FontWeight.Bold) },
-                navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.Default.ArrowBack, "Retour") } },
+                navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour") } },
                 actions = {
                     IconButton(onClick = { viewModel.toggleFavorite() }) {
                         Icon(
@@ -254,7 +254,7 @@ private fun ExerciseSlotCard(
                             if (slot.selectedExercise.gifUrl != null) {
                                 SubcomposeAsyncImage(
                                     model = ImageRequest.Builder(ctx).data(slot.selectedExercise.gifUrl)
-                                        .decoderFactory(ImageDecoderDecoder.Factory()).size(Size(112, 112)).crossfade(true).build(),
+                                        .size(Size(112, 112)).crossfade(true).build(),
                                     contentDescription = slot.selectedExercise.name, modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Crop,
                                     error = { Icon(Icons.Default.FitnessCenter, null, Modifier.size(24.dp), tint = mgColor.copy(alpha = 0.5f)) }
@@ -287,7 +287,7 @@ private fun ExerciseSlotCard(
 
             // Paramètres ajustables (seulement pour muscu)
             if (!isWarmupOrCardio && slot.selectedExercise != null) {
-                Divider(color = MaterialTheme.colorScheme.outlineVariant)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Row(
                     Modifier.fillMaxWidth().height(IntrinsicSize.Min),
                     verticalAlignment = Alignment.CenterVertically
@@ -314,7 +314,7 @@ private fun ExerciseSlotCard(
 
             // Durée ajustable (warmup / cardio)
             if (isWarmupOrCardio && slot.selectedExercise != null) {
-                Divider(color = MaterialTheme.colorScheme.outlineVariant)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     VerticalStepper("Durée", "${slot.durationMinutes ?: if (slot.muscleGroup == MuscleGroup.WARMUP) 3 else 15} min",
                         vibrationEnabled) { onUpdateDuration(it) }
@@ -397,7 +397,7 @@ private fun ExercisePickerDialog(
                                 if (exercise.gifUrl != null) {
                                     SubcomposeAsyncImage(
                                         model = ImageRequest.Builder(ctx).data(exercise.gifUrl)
-                                            .decoderFactory(ImageDecoderDecoder.Factory()).size(Size(96, 96)).crossfade(true).build(),
+                                            .size(Size(96, 96)).crossfade(true).build(),
                                         contentDescription = exercise.name, modifier = Modifier.fillMaxSize(),
                                         contentScale = ContentScale.Crop,
                                         error = { Icon(Icons.Default.FitnessCenter, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)) }
@@ -727,7 +727,7 @@ private fun SectionHeader(
     val (icon, color) = when (section) {
         WorkoutSection.WARMUP -> Icons.Default.LocalFireDepartment to OrangeVibrant
         WorkoutSection.STRENGTH -> Icons.Default.FitnessCenter to MaterialTheme.colorScheme.onSurface
-        WorkoutSection.CARDIO -> Icons.Default.DirectionsRun to NeonGreen
+        WorkoutSection.CARDIO -> Icons.AutoMirrored.Filled.DirectionsRun to NeonGreen
     }
     Row(
         Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 2.dp),

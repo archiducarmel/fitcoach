@@ -1,5 +1,7 @@
-package com.shredcoach.app.data.local.entity
+﻿package com.shredcoach.app.data.local.entity
 
+
+import androidx.compose.runtime.Immutable
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -13,6 +15,7 @@ import java.time.LocalDateTime
     tableName = "app_notifications",
     indices = [Index("timestamp"), Index("isRead")]
 )
+@Immutable
 data class AppNotificationEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val type: String, // NotifType.name
@@ -33,5 +36,9 @@ enum class NotifType(val displayName: String, val icon: String) {
     BEDTIME_REMINDER("Rappel coucher", "😴"),
     WORKOUT_REMINDER("Rappel séance", "🏋"),
     MOTIVATION("Motivation", "🔥"),
+    /** Notification proactive du coach IA (catégorie dédiée pour analytics + canal). */
+    COACH_PROACTIVE("Coach Shreddy", "🧠"),
+    /** Récap hebdomadaire (dimanche soir). */
+    WEEKLY_RECAP("Récap de la semaine", "📊"),
     OTHER("Info", "ℹ")
 }

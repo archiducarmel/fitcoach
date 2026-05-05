@@ -1,5 +1,7 @@
-package com.shredcoach.app.presentation.chat
+﻿package com.shredcoach.app.presentation.chat
 
+
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shredcoach.app.data.local.dao.ConversationSummary
@@ -16,6 +18,7 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
+@Immutable
 data class ChatState(
     val messages: List<ChatMessageEntity> = emptyList(),
     val conversations: List<ConversationSummary> = emptyList(),

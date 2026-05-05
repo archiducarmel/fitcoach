@@ -17,6 +17,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -162,12 +163,12 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
     Scaffold(topBar = {
         TopAppBar(
             title = { Text("Mon Profil", fontWeight = FontWeight.Bold) },
-            navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.Default.ArrowBack, "Retour") } },
+            navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour") } },
             actions = {
                 IconButton(onClick = { navController.navigate(com.shredcoach.app.presentation.navigation.Screen.Settings.route) }) { Icon(Icons.Default.Settings, "Paramètres") }
                 // Menu overflow : Photos + Danger zone + Export
                 var menuExpanded by remember { mutableStateOf(false) }
-                IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Default.MoreVert, "Plus") }
+                IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Default.MoreVert, "Plus d'options") }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     DropdownMenuItem(text = { Text("Photos progression") }, onClick = {
                         menuExpanded = false
@@ -176,7 +177,7 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
                     DropdownMenuItem(text = { Text("Exporter / Sauvegarder") }, onClick = {
                         menuExpanded = false; viewModel.exportBackup(context); snack("Données exportées")
                     }, leadingIcon = { Icon(Icons.Default.Backup, null) })
-                    Divider()
+                    HorizontalDivider()
                     DropdownMenuItem(text = { Text("Supprimer les données", color = Color(0xFFEF4444)) }, onClick = {
                         menuExpanded = false; viewModel.showDeleteConfirm()
                     }, leadingIcon = { Icon(Icons.Default.DeleteForever, null, tint = Color(0xFFEF4444)) })
@@ -345,7 +346,7 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
                                 if (abs(wc) > 0.01) {
                                     Surface(shape = RoundedCornerShape(8.dp), color = (if (wc < 0) NeonGreen else Color(0xFFEF4444)).copy(alpha = 0.1f), modifier = Modifier.fillMaxWidth()) {
                                         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            Icon(if (wc < 0) Icons.Default.TrendingDown else Icons.Default.TrendingUp, null, tint = if (wc < 0) NeonGreen else Color(0xFFEF4444))
+                                            Icon(if (wc < 0) Icons.Default.TrendingDown else Icons.AutoMirrored.Filled.TrendingUp, null, tint = if (wc < 0) NeonGreen else Color(0xFFEF4444))
                                             Text("${if (wc > 0) "+" else ""}${String.format(java.util.Locale.US, "%.2f", wc)} kg/semaine", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                                         }
                                     }

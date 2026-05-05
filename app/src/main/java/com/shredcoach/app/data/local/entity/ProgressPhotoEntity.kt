@@ -1,5 +1,7 @@
-package com.shredcoach.app.data.local.entity
+﻿package com.shredcoach.app.data.local.entity
 
+
+import androidx.compose.runtime.Immutable
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -12,6 +14,7 @@ enum class PhotoType(val displayName: String) {
 }
 
 @Entity(tableName = "progress_photos", indices = [Index("date")])
+@Immutable
 data class ProgressPhotoEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val date: LocalDate,

@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -33,7 +34,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import android.os.Build
 import com.shredcoach.app.presentation.theme.OrangeVibrant
+import com.shredcoach.app.presentation.theme.SYSTEM_PALETTE_KEY
+import com.shredcoach.app.presentation.theme.ShredPalette
+import com.shredcoach.app.presentation.theme.ShredPalettes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -162,7 +167,7 @@ fun SettingsScreen(
                         profile.notificationsEnabled) { viewModel.updateNotificationsEnabled(it); applyNotifications() }
 
                     if (profile.notificationsEnabled) {
-                        Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                         Text("Repas", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 8.dp), color = OrangeVibrant)
                         SwitchSetting("Petit-déjeuner", "Rappel à ${profile.breakfastTime}",
@@ -174,13 +179,13 @@ fun SettingsScreen(
                         SwitchSetting("Dîner", "Rappel à ${profile.dinnerTime}",
                             profile.notifDinner) { viewModel.updateNotifDinner(it); applyNotifications() }
 
-                        Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                         Text("Shakers protéines", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 8.dp), color = OrangeVibrant)
                         SwitchSetting("Shakers matin & soir", "Matin ${profile.shakerMorningTime} / Soir ${profile.shakerEveningTime}",
                             profile.notifShaker) { viewModel.updateNotifShaker(it); applyNotifications() }
 
-                        Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                         Text("Autres", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 8.dp), color = OrangeVibrant)
                         SwitchSetting("Rappel coucher", "30 min avant l'heure cible",
@@ -188,7 +193,7 @@ fun SettingsScreen(
                         SwitchSetting("Motivation", "Rappel si pas de séance depuis 3 jours",
                             profile.notifMotivation) { viewModel.updateNotifMotivation(it); applyNotifications() }
 
-                        Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                         Text("Débriefs IA Shreddy", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 8.dp), color = OrangeVibrant)
                         SwitchSetting("Débrief repas", "Après chaque scan repas · humoristique & personnalisé",
@@ -245,6 +250,18 @@ fun SettingsScreen(
                     Spacer(Modifier.height(4.dp))
                     SwitchSetting("Unités impériales", "Utiliser lbs/inches au lieu de kg/cm",
                         profile.useImperial) { viewModel.updateUseImperial(it) }
+                }
+
+                // ═══ SAUVEGARDE LOCALE (Drive / OneDrive / Dropbox / local) ═══
+                SettingsSection("Sauvegarde", Icons.Default.CloudSync) {
+                    com.shredcoach.app.presentation.settings.backup.BackupSettingsSection(
+                        snackbar = snackbarHostState
+                    )
+                }
+
+                // ═══ COACH PROACTIF IA (gated on LLM consent) ═══
+                SettingsSection("Coach proactif", Icons.Default.AutoAwesome) {
+                    com.shredcoach.app.presentation.settings.coach.CoachSettingsSection()
                 }
 
                 // ═══ MEAL SCANNER ═══
@@ -435,6 +452,14 @@ fun SettingsScreen(
                             Text("Défaut : $defaultModel", style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                         }
+                    )
+                }
+
+                // ═══ CONFIDENTIALITÉ & DONNÉES (RGPD) ═══
+                SettingsSection("Confidentialité & données", Icons.Default.PrivacyTip) {
+                    com.shredcoach.app.presentation.legal.LegalSettingsSection(
+                        navController = navController,
+                        snackbar = snackbarHostState
                     )
                 }
 
@@ -631,7 +656,7 @@ private fun SettingsSection(title: String, icon: androidx.compose.ui.graphics.ve
             }
             // Contenu collapsible
             if (expanded) {
-                Divider(Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                HorizontalDivider(Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                 Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 20.dp, top = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     content()
@@ -717,8 +742,41 @@ private fun PalettePicker(
     isDark: Boolean,
     onSelected: (String) -> Unit
 ) {
-    val palettes = com.shredcoach.app.presentation.theme.ShredPalettes.all.map { (light, dark) ->
-        if (isDark) dark else light
+    val context = LocalContext.current
+    val supportsDynamic = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+
+    // Sur Android 12+, on prepend une carte "Système" qui reflète live les
+    // couleurs Material You extraites du wallpaper. Preview immédiat de l'effet
+    // dynamic. Sur API < 31, l'option n'est pas affichée (Theme.kt fallback
+    // déjà sunset si la clé "system" arrive sur un OS trop vieux).
+    val systemPalette: ShredPalette? = if (supportsDynamic) {
+        val dyn = if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        ShredPalette(
+            key = SYSTEM_PALETTE_KEY,
+            displayName = "Système",
+            icon = "✨",
+            primary = dyn.primary,
+            primaryContainer = dyn.primaryContainer,
+            secondary = dyn.secondary,
+            secondaryContainer = dyn.secondaryContainer,
+            success = ShredPalettes.SemanticSuccess,
+            warning = ShredPalettes.SemanticWarning,
+            info = ShredPalettes.SemanticInfo,
+            error = if (isDark) ShredPalettes.SemanticErrorDark
+                else ShredPalettes.SemanticErrorLight,
+            background = dyn.background,
+            surface = dyn.surface,
+            surfaceVariant = dyn.surfaceVariant,
+            onBackground = dyn.onBackground,
+            onSurface = dyn.onSurface,
+            onSurfaceVariant = dyn.onSurfaceVariant,
+            isDark = isDark
+        )
+    } else null
+
+    val palettes = buildList {
+        systemPalette?.let { add(it) }
+        addAll(ShredPalettes.all.map { (light, dark) -> if (isDark) dark else light })
     }
 
     LazyRow(

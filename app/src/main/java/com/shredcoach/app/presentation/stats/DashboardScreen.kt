@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,6 +25,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -31,6 +34,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import com.shredcoach.app.presentation.common.AnimatedCounter
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
 import kotlinx.coroutines.launch
@@ -98,7 +105,7 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
         } else if (state.allTimeWorkouts == 0) {
             Box(Modifier.fillMaxSize()) {
                 com.shredcoach.app.presentation.common.EmptyState(
-                    icon = Icons.Default.TrendingUp,
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
                     title = "Ta première séance sera ta référence !",
                     description = "Complète ta première séance pour débloquer tes statistiques, records personnels et graphiques de progression.",
                     ctaLabel = "Commencer une séance",
@@ -154,6 +161,12 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
                 if (state.personalRecords.isNotEmpty()) {
                     stickyHeader { StickyTitle("Records") }
                     item { sectionIndices["Records"] = sectionIndices.size + 4; PersonalRecordsSection(state.personalRecords) }
+                }
+
+                // ── 1RM + plateau par exercice ──
+                if (state.exerciseProgressions.isNotEmpty()) {
+                    stickyHeader { StickyTitle("Progression par exercice") }
+                    item { ExerciseProgressionsSection(state.exerciseProgressions) }
                 }
 
                 // ── Graphiques ──
@@ -254,7 +267,7 @@ private fun NutritionDashboard(stats: NutritionStatsData) {
                     }
                     // Protéines par kg
                     if (stats.protPerKg > 0) {
-                        Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Text("Protéines / kg", style = MaterialTheme.typography.bodyMedium)
                             val protColor = when { stats.protPerKg >= 1.6 -> NeonGreen; stats.protPerKg >= 1.2 -> OrangeVibrant; else -> Color(0xFFEF4444) }
@@ -319,15 +332,42 @@ private fun NutriHeroDivider() {
 
 @Composable
 private fun NutriMacroRing(label: String, current: Double, target: Int, color: Color) {
-    val fraction = (current / target.coerceAtLeast(1)).toFloat().coerceIn(0f, 1f)
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    val finalFraction = (current / target.coerceAtLeast(1)).toFloat().coerceIn(0f, 1f)
+    // Anime fraction de 0 vers la cible au mount (1.5s, ease-out)
+    val animatedFraction = remember { Animatable(0f) }
+    LaunchedEffect(finalFraction) {
+        animatedFraction.animateTo(
+            targetValue = finalFraction,
+            animationSpec = tween(durationMillis = 1500, easing = FastOutSlowInEasing)
+        )
+    }
+    // Description TalkBack consolidée : un seul focus pour le ring entier
+    // au lieu de 3 focus séparés (chiffre central + label + objectif).
+    // Format : "Protéines : 87g consommés sur 120g objectif, 73 pourcent"
+    val a11yDesc = remember(current, target, label) {
+        val pct = (finalFraction * 100).toInt()
+        "$label : ${current.toInt()}g consommés sur $target g objectif, $pct pourcent"
+    }
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = Modifier.semantics(mergeDescendants = true) {
+            contentDescription = a11yDesc
+        }
+    ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(72.dp)) {
             Canvas(Modifier.fillMaxSize()) {
                 val s = Stroke(width = 7.dp.toPx(), cap = StrokeCap.Round)
                 drawArc(color.copy(alpha = 0.12f), -90f, 360f, false, style = s)
-                drawArc(color, -90f, fraction * 360f, false, style = s)
+                drawArc(color, -90f, animatedFraction.value * 360f, false, style = s)
             }
-            Text("${current.toInt()}g", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = color)
+            // Le chiffre central se déroule en parallèle
+            AnimatedCounter(
+                targetValue = current,
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.ExtraBold),
+                color = color,
+                formatter = { "${it.toInt()}g" }
+            )
         }
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         Text("/ ${target}g", style = MaterialTheme.typography.labelSmall, fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
@@ -338,8 +378,24 @@ private fun NutriMacroRing(label: String, current: Double, target: Int, color: C
 private fun WeeklyCaloriesChart(data: List<Pair<String, Int>>, target: Int) {
     val maxCal = (data.maxOfOrNull { it.second } ?: target).coerceAtLeast(target).toFloat()
 
-    Row(Modifier.fillMaxWidth().height(120.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.Bottom) {
-        data.forEach { (day, cal) ->
+    // Description TalkBack du graphe entier : on lit chaque jour avec ses
+    // calories, puis l'objectif. L'utilisateur entend une description
+    // intelligible au lieu de "Lundi", "Mardi"... séparés par bar.
+    val chartDesc = remember(data, target) {
+        val days = data.joinToString(", ") { (day, cal) ->
+            if (cal == 0) "$day rien" else "$day $cal calories"
+        }
+        "Graphique calories de la semaine : $days. Objectif quotidien $target calories."
+    }
+
+    Row(
+        Modifier.fillMaxWidth().height(120.dp).semantics(mergeDescendants = true) {
+            contentDescription = chartDesc
+        },
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.Bottom
+    ) {
+        data.forEachIndexed { idx, (day, cal) ->
             val fraction = (cal / maxCal).coerceIn(0f, 1f)
             val barColor = when {
                 cal == 0 -> MaterialTheme.colorScheme.surfaceVariant
@@ -347,10 +403,20 @@ private fun WeeklyCaloriesChart(data: List<Pair<String, Int>>, target: Int) {
                 cal >= target * 0.9 -> NeonGreen
                 else -> OrangeVibrant
             }
+            // Animation d'entrée : la barre pousse depuis 0 vers sa hauteur finale,
+            // avec un délai indexé pour créer une cascade gauche→droite (50ms par barre).
+            val animatedHeight = remember(day, fraction) { Animatable(0f) }
+            LaunchedEffect(fraction) {
+                kotlinx.coroutines.delay((idx * 50).toLong())
+                animatedHeight.animateTo(
+                    targetValue = fraction.coerceAtLeast(0.05f),
+                    animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing)
+                )
+            }
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (cal > 0) Text("$cal", style = MaterialTheme.typography.labelSmall, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = barColor)
                 Box(
-                    Modifier.width(28.dp).fillMaxHeight(fraction.coerceAtLeast(0.05f))
+                    Modifier.width(28.dp).fillMaxHeight(animatedHeight.value)
                         .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
                         .background(barColor)
                 )
@@ -361,7 +427,7 @@ private fun WeeklyCaloriesChart(data: List<Pair<String, Int>>, target: Int) {
     }
     // Ligne objectif
     Box(Modifier.fillMaxWidth().padding(top = 4.dp)) {
-        Divider(color = OrangeVibrant.copy(alpha = 0.3f), thickness = 1.dp)
+        HorizontalDivider(color = OrangeVibrant.copy(alpha = 0.3f), thickness = 1.dp)
         Text("Objectif : $target kcal", modifier = Modifier.align(Alignment.CenterEnd),
             style = MaterialTheme.typography.labelSmall, fontSize = 8.sp, color = OrangeVibrant.copy(alpha = 0.6f))
     }
@@ -389,18 +455,18 @@ private fun SummarySection(s: StatsState) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         // Période
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.FitnessCenter, "${s.workoutCount}", "Séances (${s.selectedPeriod.label})", OrangeVibrant)
-            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.MonitorWeight, fmtVol(s.totalVolume), "Volume", NeonGreen)
+            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.FitnessCenter, s.workoutCount, "Séances (${s.selectedPeriod.label})", OrangeVibrant)
+            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.MonitorWeight, s.totalVolume, "Volume", NeonGreen, formatter = { fmtVol(it.toDouble()) })
         }
         // Ce mois
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.CalendarMonth, "${s.monthWorkouts}", "Ce mois", Color(0xFF8B5CF6))
-            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.LocalFireDepartment, "${s.estimatedCalories}", "Calories (est.)", Color(0xFFEF4444))
+            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.CalendarMonth, s.monthWorkouts, "Ce mois", Color(0xFF8B5CF6))
+            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.LocalFireDepartment, s.estimatedCalories, "Calories (est.)", Color(0xFFEF4444))
         }
         // All time
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.EmojiEvents, "${s.allTimeWorkouts}", "Total séances", Color(0xFF3B82F6))
-            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.Timer, fmtDur(s.allTimeDuration), "Temps total", Color(0xFF14B8A6))
+            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.EmojiEvents, s.allTimeWorkouts, "Total séances", Color(0xFF3B82F6))
+            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.Timer, s.allTimeDuration, "Temps total", Color(0xFF14B8A6), formatter = { fmtDur(it.toLong()) })
         }
     // Extra
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))) {
@@ -462,7 +528,7 @@ private fun SummarySection(s: StatsState) {
                     Box(Modifier.width(1.dp).fillMaxHeight().background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)))
                     TimeBreakdownMini(
                         modifier = Modifier.weight(1f),
-                        icon = Icons.Default.DirectionsRun,
+                        icon = Icons.AutoMirrored.Filled.DirectionsRun,
                         label = "Cardio",
                         value = fmtDur(s.cardioSeconds),
                         color = NeonGreen
@@ -495,7 +561,14 @@ private fun TimeBreakdownMini(
 }
 
 @Composable
-private fun SCard(mod: Modifier, icon: androidx.compose.ui.graphics.vector.ImageVector, value: String, label: String, color: Color) {
+private fun SCard(
+    mod: Modifier,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    targetValue: Number,
+    label: String,
+    color: Color,
+    formatter: (Float) -> String = { it.toInt().toString() }
+) {
     Card(
         mod,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -517,15 +590,13 @@ private fun SCard(mod: Modifier, icon: androidx.compose.ui.graphics.vector.Image
                         Icon(icon, null, Modifier.size(18.dp), tint = color)
                     }
                 }
-                // Valeur animée via Crossfade
-                androidx.compose.animation.Crossfade(
-                    targetState = value,
-                    animationSpec = androidx.compose.animation.core.tween(400),
-                    label = "statVal"
-                ) { v ->
-                    Text(v, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = color,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
+                // Valeur animée : compteur qui se déroule de 0 vers la cible
+                AnimatedCounter(
+                    targetValue = targetValue,
+                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                    color = color,
+                    formatter = formatter
+                )
                 Text(label, style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
                     maxLines = 2, lineHeight = 14.sp, overflow = TextOverflow.Ellipsis)
@@ -545,7 +616,7 @@ private fun ComparisonSection(c: PeriodComparison) {
             // Insight
             Card(colors = CardDefaults.cardColors(containerColor = if (c.volumeDelta >= 0) NeonGreen.copy(alpha = 0.1f) else Color(0xFFEF4444).copy(alpha = 0.1f))) {
                 Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Icon(if (c.volumeDelta >= 0) Icons.Default.TrendingUp else Icons.Default.TrendingDown, null,
+                    Icon(if (c.volumeDelta >= 0) Icons.AutoMirrored.Filled.TrendingUp else Icons.Default.TrendingDown, null,
                         tint = if (c.volumeDelta >= 0) NeonGreen else Color(0xFFEF4444))
                     Text(c.insight, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                 }
@@ -565,7 +636,7 @@ private fun CompStat(label: String, prev: String, curr: String, delta: Float) {
         Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(prev, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
-            Icon(Icons.Default.ArrowForward, null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
             Text(curr, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
         val color = if (delta >= 0) NeonGreen else Color(0xFFEF4444)
@@ -601,11 +672,39 @@ private fun PersonalRecordsSection(records: List<PRDisplay>) {
 }
 
 // ═══════════════════════════════════════
+// PROGRESSION 1RM + PLATEAU PAR EXERCICE
+// ═══════════════════════════════════════
+/**
+ * Carrousel horizontal des top exercices : 1RM estimé, état (progression/
+ * stable/plateau), sparkline des N dernières séances, badge PR si récent.
+ *
+ * Le scroll horizontal est délibéré (vs grid 2 colonnes) : il met l'accent
+ * sur la lecture séquentielle "comment je vais sur tel exo, puis tel autre"
+ * plutôt qu'une comparaison brute. Inspiré des "Now Playing" et "Up Next"
+ * d'Apple Music — efficace pour engager.
+ */
+@Composable
+private fun ExerciseProgressionsSection(entries: List<ExerciseProgressionEntry>) {
+    SecTitle("Progression par exercice", Icons.AutoMirrored.Filled.TrendingUp)
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(horizontal = 4.dp),
+    ) {
+        items(entries) { entry ->
+            com.shredcoach.app.presentation.stats.components.ExerciseProgressionCard(
+                exerciseName = entry.exerciseName,
+                progression = entry.progression,
+            )
+        }
+    }
+}
+
+// ═══════════════════════════════════════
 // ÉVOLUTION POIDS
 // ═══════════════════════════════════════
 @Composable
 private fun WeightProgressionSection(state: StatsState, viewModel: StatsViewModel) {
-    SecTitle("Évolution Poids", Icons.Default.TrendingUp)
+    SecTitle("Évolution Poids", Icons.AutoMirrored.Filled.TrendingUp)
     var expanded by remember { mutableStateOf(false) }
     @OptIn(ExperimentalMaterial3Api::class)
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
@@ -681,7 +780,7 @@ private fun WeeklyVolumeSection(state: StatsState) {
     if (abs(state.volumeChangePercent) > 0.1f) {
         val color = if (state.volumeChangePercent >= 0) NeonGreen else Color(0xFFEF4444)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Icon(if (state.volumeChangePercent >= 0) Icons.Default.TrendingUp else Icons.Default.TrendingDown, null, Modifier.size(18.dp), tint = color)
+            Icon(if (state.volumeChangePercent >= 0) Icons.AutoMirrored.Filled.TrendingUp else Icons.Default.TrendingDown, null, Modifier.size(18.dp), tint = color)
             Text("${if (state.volumeChangePercent >= 0) "+" else ""}${state.volumeChangePercent.toInt()}% vs semaine précédente",
                 style = MaterialTheme.typography.labelMedium, color = color, fontWeight = FontWeight.SemiBold)
         }
@@ -748,7 +847,7 @@ private fun TrainingFrequencySection(state: StatsState) {
         )
         FrequencyCard(
             modifier = Modifier.weight(1f).fillMaxHeight(),
-            icon = Icons.Default.TrendingUp,
+            icon = Icons.AutoMirrored.Filled.TrendingUp,
             value = "${state.weeklyCompliance.toInt()}",
             unit = "%",
             label = "Compliance",

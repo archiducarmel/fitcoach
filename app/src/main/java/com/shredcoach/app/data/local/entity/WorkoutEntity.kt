@@ -1,10 +1,13 @@
-package com.shredcoach.app.data.local.entity
+﻿package com.shredcoach.app.data.local.entity
 
+
+import androidx.compose.runtime.Immutable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 
 @Entity(tableName = "workouts")
+@Immutable
 data class WorkoutEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,

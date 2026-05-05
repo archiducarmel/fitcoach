@@ -9,6 +9,7 @@ import com.shredcoach.app.data.local.ShredCoachDatabase
 import com.shredcoach.app.data.local.secure.SecureKeyStore
 import com.shredcoach.app.domain.coach.CoachHistoryStore
 import com.shredcoach.app.domain.coach.CoachSettingsStore
+import com.shredcoach.app.domain.streak.StreakMilestoneStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
 import java.io.File
@@ -50,6 +51,7 @@ class DataPurger @Inject constructor(
     private val backupSettings: BackupSettingsStore,
     private val coachSettings: CoachSettingsStore,
     private val coachHistory: CoachHistoryStore,
+    private val streakMilestoneStore: StreakMilestoneStore,
 ) {
     suspend fun purgeAll() {
         Log.i(TAG, "Début purge totale (RGPD right-to-be-forgotten)")
@@ -91,6 +93,7 @@ class DataPurger @Inject constructor(
         runCatching { backupSettings.reset() }.onFailure { Log.w(TAG, "Reset backup settings échoué", it) }
         runCatching { coachSettings.reset() }.onFailure { Log.w(TAG, "Reset coach settings échoué", it) }
         runCatching { coachHistory.reset() }.onFailure { Log.w(TAG, "Reset coach history échoué", it) }
+        runCatching { streakMilestoneStore.reset() }.onFailure { Log.w(TAG, "Reset streak milestones échoué", it) }
 
         // 5. Wipe fichiers photos. On commence par les paths spécifiques
         //    (capturés en étape 1), puis on supprime les dirs en bloc pour

@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -52,7 +53,7 @@ fun NutritionScreen(navController: NavController, viewModel: NutritionViewModel 
         topBar = {
             TopAppBar(
                 title = { Text("Nutrition", fontWeight = FontWeight.Bold) },
-                navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.Default.ArrowBack, "Retour") } }
+                navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour") } }
             )
         },
         floatingActionButton = {
@@ -331,8 +332,8 @@ private fun MealCard(mwf: MealWithFood, onDelete: () -> Unit) {
                         Text("${mwf.meal.calories.toInt()} kcal", modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
                     }
-                    IconButton(onClick = onDelete, Modifier.size(32.dp)) {
-                        Icon(Icons.Default.Close, "Supprimer", Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
+                    IconButton(onClick = onDelete) {
+                        Icon(Icons.Default.Close, "Supprimer ce repas", Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
                     }
                 }
                 // Ligne 2 : PICTOGRAMME NUTRI-SCORE (toujours visible)
@@ -357,7 +358,7 @@ private fun TopFoodsCard(foods: List<TopFoodDisplay>) {
             // Header
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(Icons.Default.TrendingUp, null, Modifier.size(20.dp), tint = OrangeVibrant)
+                    Icon(Icons.AutoMirrored.Filled.TrendingUp, null, Modifier.size(20.dp), tint = OrangeVibrant)
                     Text("Top aliments", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
                 Surface(shape = RoundedCornerShape(6.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
@@ -457,7 +458,7 @@ private fun AddMealBottomSheet(state: NutritionState, viewModel: NutritionViewMo
                                 }
                                 if (food.isFavorite) Icon(Icons.Default.Star, null, Modifier.size(16.dp), tint = CarbColor)
                             }
-                            Divider()
+                            HorizontalDivider()
                         }
                     }
                 }

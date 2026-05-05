@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -110,7 +111,7 @@ fun ProgressPhotosScreen(navController: NavController, viewModel: ProgressPhotos
     Scaffold(topBar = {
         TopAppBar(
             title = { Text("Photos Progression", fontWeight = FontWeight.Bold) },
-            navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.Default.ArrowBack, "Retour") } })
+            navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour") } })
     }) { pad ->
         LazyColumn(Modifier.fillMaxSize().padding(pad), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
 
@@ -233,7 +234,7 @@ private fun ComparisonSection(photos: List<ProgressPhotoEntity>) {
                         style = MaterialTheme.typography.labelSmall, color = Color.White)
                 }
             }
-            Divider(Modifier.width(2.dp).fillMaxHeight(), color = OrangeVibrant)
+            HorizontalDivider(Modifier.width(2.dp).fillMaxHeight(), color = OrangeVibrant)
             // Après
             Box(Modifier.weight(1f).fillMaxHeight()) {
                 SubcomposeAsyncImage(

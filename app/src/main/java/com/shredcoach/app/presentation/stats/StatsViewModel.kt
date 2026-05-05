@@ -1,5 +1,7 @@
-package com.shredcoach.app.presentation.stats
+﻿package com.shredcoach.app.presentation.stats
 
+
+import androidx.compose.runtime.Immutable
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
@@ -45,6 +47,7 @@ data class TrendData(
 )
 
 // ── État ──
+@Immutable
 data class StatsState(
     val isLoading: Boolean = true,
     val selectedPeriod: TimePeriod = TimePeriod.MONTH,
@@ -99,7 +102,20 @@ data class StatsState(
     val comparison: PeriodComparison? = null,
 
     // Tendances
-    val trend: TrendData? = null
+    val trend: TrendData? = null,
+
+    // 1RM + plateau par exercice (top 5 par nombre de sessions)
+    val exerciseProgressions: List<ExerciseProgressionEntry> = emptyList(),
+)
+
+/**
+ * Tuple UI-friendly pour la section "Progression par exercice" de [DashboardScreen].
+ * Le nom est dénormalisé (résolu via ExerciseDao en amont) pour éviter une lookup
+ * dans le composable.
+ */
+data class ExerciseProgressionEntry(
+    val exerciseName: String,
+    val progression: com.shredcoach.app.domain.training.ExerciseProgression,
 )
 
 data class NutritionStatsData(
@@ -123,7 +139,9 @@ class StatsViewModel @Inject constructor(
     private val statsRepository: StatsRepository,
     private val nutritionRepository: com.shredcoach.app.data.repository.NutritionRepository,
     private val mealScanDao: com.shredcoach.app.data.local.dao.MealScanDao,
-    private val userRepository: com.shredcoach.app.data.repository.UserRepository
+    private val userRepository: com.shredcoach.app.data.repository.UserRepository,
+    private val workoutLogDao: WorkoutLogDao,
+    private val plateauDetector: com.shredcoach.app.domain.training.PlateauDetector,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(StatsState())
@@ -185,6 +203,11 @@ class StatsViewModel @Inject constructor(
                 // PRs
                 val prs = loadPersonalRecords()
 
+                // Top exercices : 5 plus pratiqués (par count de sets), suivis par
+                // PlateauDetector. On reste sur 5 pour ne pas faire 30 queries
+                // sur cold start si l'utilisateur a un grand catalogue d'exos.
+                val exerciseProgressions = loadExerciseProgressions(top = 5)
+
                 // Volume hebdo + moyenne mobile + delta
                 val dailyVolumes = statsRepository.getDailyVolume(startDate)
                 val weeklyVolume = aggregateWeeklyVolume(dailyVolumes)
@@ -235,7 +258,8 @@ class StatsViewModel @Inject constructor(
                         muscleDistribution = muscleDistribution,
                         trainingDays = trainingDays, currentStreak = current, longestStreak = longest,
                         weeklyCompliance = compliance, comparison = comparison,
-                        warmupSeconds = warmupSeconds, cardioSeconds = cardioSeconds, strengthSeconds = strengthSeconds
+                        warmupSeconds = warmupSeconds, cardioSeconds = cardioSeconds, strengthSeconds = strengthSeconds,
+                        exerciseProgressions = exerciseProgressions,
                     )
                 }
             } catch (_: Exception) { _state.update { it.copy(isLoading = false) } }
@@ -371,6 +395,40 @@ class StatsViewModel @Inject constructor(
     // ══════════════════════════════════════════
     // UTILITAIRES
     // ══════════════════════════════════════════
+
+    /**
+     * Identifie les top exercices par nombre de sets (proxy de "exercices les
+     * plus pratiqués"), puis lance [PlateauDetector] sur chacun.
+     *
+     * Stratégie : on lit getAllWorkoutSetsOnce() (ALL sets, qu'on filtre
+     * sur weight > 0 pour ne pas remonter du cardio), on group-by exerciseId,
+     * trie par count desc, on garde les [top] premiers. Coût : 1 query DB +
+     * O(N) en mémoire. Ensuite N appels PlateauDetector → N queries indexées
+     * (rapides, ~5ms chacune).
+     */
+    private suspend fun loadExerciseProgressions(top: Int): List<ExerciseProgressionEntry> {
+        return try {
+            val allSets = workoutLogDao.getAllWorkoutSetsOnce()
+                .filter { it.completed && it.weightKg > 0 }
+            if (allSets.isEmpty()) return emptyList()
+
+            val exerciseSetCounts = allSets.groupingBy { it.exerciseId }.eachCount()
+                .toList()
+                .sortedByDescending { it.second }
+                .take(top)
+
+            // Lookup one-shot des noms d'exercices (vs N requêtes en boucle).
+            val exercisesById = statsRepository.getAllExercisesOnce().associateBy { it.id }
+
+            exerciseSetCounts.mapNotNull { (exerciseId, _) ->
+                val progression = plateauDetector.analyze(exerciseId) ?: return@mapNotNull null
+                val name = exercisesById[exerciseId]?.name ?: return@mapNotNull null
+                ExerciseProgressionEntry(exerciseName = name, progression = progression)
+            }.sortedByDescending { it.progression.sessionsCount }
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
 
     private suspend fun loadPersonalRecords(): List<PRDisplay> {
         return statsRepository.getPersonalRecords().take(10).mapNotNull { pr ->

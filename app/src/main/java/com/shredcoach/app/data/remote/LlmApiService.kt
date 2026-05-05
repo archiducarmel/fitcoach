@@ -1,5 +1,7 @@
-package com.shredcoach.app.data.remote
+﻿package com.shredcoach.app.data.remote
 
+
+import androidx.compose.runtime.Immutable
 import com.google.gson.Gson
 import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
@@ -51,6 +53,7 @@ enum class LlmProvider(
 // REQUEST / RESPONSE DATA CLASSES
 // ══════════════════════════════════════════
 
+@Immutable
 data class ChatMessage(val role: String, val content: String)
 
 private data class OpenAiRequest(

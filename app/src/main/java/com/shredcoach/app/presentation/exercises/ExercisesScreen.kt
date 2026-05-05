@@ -1,4 +1,4 @@
-package com.shredcoach.app.presentation.exercises
+﻿package com.shredcoach.app.presentation.exercises
 
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.background
@@ -8,8 +8,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterListOff
@@ -26,7 +26,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
-import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import coil.size.Size
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -34,6 +33,10 @@ import androidx.navigation.NavController
 import com.shredcoach.app.data.local.entity.ExerciseEntity
 import com.shredcoach.app.domain.model.ExerciseVariant
 import com.shredcoach.app.domain.model.MuscleGroup
+import com.shredcoach.app.presentation.common.ShimmerBox
+import com.shredcoach.app.presentation.common.ShimmerText
+import com.shredcoach.app.presentation.common.sharedBoundsOptIn
+import com.shredcoach.app.presentation.common.sharedElementOptIn
 import com.shredcoach.app.presentation.navigation.Screen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
 
@@ -118,29 +121,24 @@ fun ExercisesScreen(
 
             // Exercise List
             if (isLoading) {
-                Box(
+                // Shimmer skeleton — anticipe la forme des ExerciseCard pour
+                // créer une perception de "déjà là" plutôt qu'un vide tournant.
+                LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    CircularProgressIndicator()
+                    items(6) { ExerciseCardSkeleton() }
                 }
             } else if (exercises.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            "Aucun exercice trouvé",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        TextButton(onClick = { viewModel.clearFilters() }) {
-                            Text("Réinitialiser les filtres")
-                        }
-                    }
-                }
+                com.shredcoach.app.presentation.common.EmptyState(
+                    icon = Icons.Default.Search,
+                    title = "Aucun exercice trouvé",
+                    description = "Affine ta recherche ou réinitialise tes filtres.",
+                    ctaLabel = "Réinitialiser les filtres",
+                    ctaIcon = Icons.Default.FilterListOff,
+                    onCtaClick = { viewModel.clearFilters() }
+                )
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -240,9 +238,12 @@ fun ExerciseCard(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Thumbnail GIF
+            // Thumbnail GIF — partagé avec ExerciseDetailScreen via shared element
             Box(
-                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(12.dp))
+                modifier = Modifier
+                    .sharedElementOptIn(key = "exercise-image-${exercise.id}")
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
@@ -250,7 +251,6 @@ fun ExerciseCard(
                     SubcomposeAsyncImage(
                         model = ImageRequest.Builder(context)
                             .data(exercise.gifUrl)
-                            .decoderFactory(ImageDecoderDecoder.Factory())
                             .size(Size(128, 128))
                             .crossfade(true)
                             .build(),
@@ -275,7 +275,9 @@ fun ExerciseCard(
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text(exercise.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold,
-                        modifier = Modifier.weight(1f, fill = false))
+                        modifier = Modifier
+                            .sharedBoundsOptIn(key = "exercise-name-${exercise.id}")
+                            .weight(1f, fill = false))
                     Spacer(Modifier.width(8.dp))
                     Surface(shape = RoundedCornerShape(6.dp), color = variantColor.copy(alpha = 0.2f)) {
                         Text(exercise.variant.displayName, Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
@@ -287,6 +289,50 @@ fun ExerciseCard(
                     ExerciseStat(label = "Séries", value = "${exercise.series}")
                     ExerciseStat(label = "Reps", value = "${exercise.repsMin}-${exercise.repsMax}")
                     ExerciseStat(label = "Repos", value = "${exercise.restSeconds}s")
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Skeleton placeholder qui mime la forme d'une [ExerciseCard].
+ * À utiliser pendant le loading initial — donne une lecture immédiate de
+ * "ce qui va arriver" plutôt qu'un spinner indéterminé.
+ */
+@Composable
+private fun ExerciseCardSkeleton(modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ShimmerBox(
+                modifier = Modifier.size(64.dp),
+                shape = RoundedCornerShape(12.dp)
+            )
+            // Spacing 4dp + tag variant à droite du nom : on mime exactement
+            // la disposition d'ExerciseCard pour zéro saut visuel au moment
+            // où la donnée arrive et remplace les skeletons.
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    ShimmerText(width = 140.dp, height = 16.dp)
+                    ShimmerBox(
+                        modifier = Modifier.size(width = 48.dp, height = 16.dp),
+                        shape = RoundedCornerShape(6.dp)
+                    )
+                }
+                ShimmerText(width = 100.dp, height = 12.dp)
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    repeat(3) { ShimmerText(width = 40.dp, height = 12.dp) }
                 }
             }
         }
@@ -408,7 +454,7 @@ private fun ExerciseDbExplorerCta(onClick: () -> Unit) {
                         color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.85f))
                 }
                 Icon(
-                    Icons.Default.ArrowForward, null,
+                    Icons.AutoMirrored.Filled.ArrowForward, null,
                     tint = androidx.compose.ui.graphics.Color.White,
                     modifier = Modifier.size(24.dp)
                 )
@@ -493,7 +539,7 @@ private fun GymScanCta(onClick: () -> Unit) {
                         color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.85f))
                 }
                 Icon(
-                    Icons.Default.ArrowForward, null,
+                    Icons.AutoMirrored.Filled.ArrowForward, null,
                     tint = androidx.compose.ui.graphics.Color.White,
                     modifier = Modifier.size(24.dp)
                 )

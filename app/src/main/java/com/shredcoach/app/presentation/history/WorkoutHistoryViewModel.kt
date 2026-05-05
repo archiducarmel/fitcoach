@@ -1,5 +1,7 @@
-package com.shredcoach.app.presentation.history
+﻿package com.shredcoach.app.presentation.history
 
+
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shredcoach.app.data.local.dao.MealScanDao
@@ -24,6 +26,7 @@ enum class HistoryFilter(val displayName: String) {
     ALL("Toutes"), COMPLETED("Terminées"), ABANDONED("Abandonnées")
 }
 
+@Immutable
 data class WorkoutHistoryState(
     val items: List<HistoryListItem> = emptyList(),
     val filter: HistoryFilter = HistoryFilter.ALL,

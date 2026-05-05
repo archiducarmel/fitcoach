@@ -11,6 +11,7 @@ import com.shredcoach.app.data.remote.LlmProvider
 import com.shredcoach.app.data.repository.ChatRepository
 import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.data.repository.WorkoutRepository
+import com.shredcoach.app.domain.streak.StreakService
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
@@ -30,7 +31,8 @@ class WorkoutDebriefWorker @AssistedInject constructor(
     private val userRepository: UserRepository,
     private val workoutRepository: WorkoutRepository,
     private val chatRepository: ChatRepository,
-    private val dispatcher: AppNotificationDispatcher
+    private val dispatcher: AppNotificationDispatcher,
+    private val streakService: StreakService,
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
@@ -55,14 +57,8 @@ class WorkoutDebriefWorker @AssistedInject constructor(
             rLog.completed && !rLog.date.toLocalDate().isBefore(mondayThisWeek)
         }
 
-        // Streak calculé depuis les logs
-        val completedDates = recentLogs.filter { it.completed }.map { it.date.toLocalDate() }.toSet()
-        var streak = 0
-        var cursor = if (completedDates.contains(today)) today else today.minusDays(1)
-        while (completedDates.contains(cursor)) {
-            streak++
-            cursor = cursor.minusDays(1)
-        }
+        // Streak via le service unique (cohérent avec HomeViewModel et CoachTriggerEngine).
+        val streak = streakService.compute(recentLogs.filter { it.completed }, today).currentDays
 
         val prompt = DebriefPrompts.buildWorkoutDebriefPrompt(
             firstName = profile.firstName.ifBlank { "toi" },

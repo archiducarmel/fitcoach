@@ -94,17 +94,12 @@ fun NotificationsScreen(
                 CircularProgressIndicator(color = OrangeVibrant)
             }
         } else if (state.notifications.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(pad), Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Icon(Icons.Default.NotificationsNone, null,
-                        Modifier.size(64.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
-                    Text("Aucune notification", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("Shreddy t'enverra des débriefs ici après tes repas et séances.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 48.dp))
-                }
+            Box(Modifier.fillMaxSize().padding(pad)) {
+                com.shredcoach.app.presentation.common.EmptyState(
+                    icon = Icons.Default.NotificationsNone,
+                    title = "Aucune notification",
+                    description = "Shreddy t'enverra des débriefs ici après tes repas et séances."
+                )
             }
         } else {
             LazyColumn(

@@ -3,16 +3,18 @@ package com.shredcoach.app.presentation.workout
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -20,9 +22,14 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.shredcoach.app.domain.session.ActiveSessionManager
+import com.shredcoach.app.presentation.common.AnimatedCounter
+import com.shredcoach.app.presentation.common.CelebrationTrophy
+import com.shredcoach.app.presentation.common.ShredButton
+import com.shredcoach.app.presentation.common.ShredButtonVariant
+import com.shredcoach.app.presentation.common.StaggeredAppear
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
-import java.time.Duration
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,6 +45,14 @@ fun WorkoutSummaryScreen(
     val totalRest = sessionManager.lastSessionRestSeconds
     val skipped = sessionManager.lastSessionSkipped
 
+    // Haptic celebration au mount : double pulse "victory" (150ms entre chaque)
+    val haptic = LocalHapticFeedback.current
+    LaunchedEffect(Unit) {
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        delay(150)
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -45,32 +60,44 @@ fun WorkoutSummaryScreen(
             )
         }
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(paddingValues),
-            contentPadding = PaddingValues(16.dp),
+        // Column scrollable plutôt que LazyColumn : le contenu est fixe et court
+        // (4 sections), pas de listage dynamique. Avec une Column, StaggeredAppear
+        // joue son anim une seule fois au mount et ne risque jamais de se rejouer
+        // sur un recyclage d'item — contrat respecté.
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Congratulations card
-            item {
-                val shreddyMsg = sessionManager.lastShreddyMessage
+            // ─── Hero card : trophée animé + message Shreddy ───
+            StaggeredAppear(index = 0, delayPerItemMs = 0) {
                 Card(colors = CardDefaults.cardColors(containerColor = NeonGreen.copy(alpha = 0.15f))) {
                     Column(
                         Modifier.fillMaxWidth().padding(32.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
                     ) {
-                        Icon(Icons.Default.EmojiEvents, null, Modifier.size(72.dp), tint = NeonGreen)
-                        Text("Séance terminée !", style = MaterialTheme.typography.headlineLarge,
-                            fontWeight = FontWeight.Bold, color = NeonGreen)
+                        CelebrationTrophy(size = 80.dp, accentColor = NeonGreen)
+                        Text(
+                            "Séance terminée !",
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = NeonGreen,
+                            textAlign = TextAlign.Center
+                        )
 
                         // Message personnalisé de Shreddy
+                        val shreddyMsg = sessionManager.lastShreddyMessage
                         if (shreddyMsg.isNotBlank()) {
                             Row(
                                 Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                                 verticalAlignment = Alignment.Top
                             ) {
-                                androidx.compose.material3.Surface(
+                                Surface(
                                     shape = androidx.compose.foundation.shape.CircleShape,
                                     color = OrangeVibrant.copy(alpha = 0.12f),
                                     modifier = Modifier.size(28.dp)
@@ -79,70 +106,105 @@ fun WorkoutSummaryScreen(
                                         com.shredcoach.app.presentation.common.ShredCoachLogo(size = 16.dp)
                                     }
                                 }
-                                Text(shreddyMsg, style = MaterialTheme.typography.bodyLarge,
+                                Text(
+                                    shreddyMsg,
+                                    style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
-                                    fontWeight = FontWeight.Medium, textAlign = TextAlign.Start,
-                                    lineHeight = 22.sp)
+                                    fontWeight = FontWeight.Medium,
+                                    textAlign = TextAlign.Start,
+                                    lineHeight = 22.sp
+                                )
                             }
                         } else {
-                            Text("Bien joué !", style = MaterialTheme.typography.titleMedium,
-                                textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
+                            Text(
+                                "Bien joué !",
+                                style = MaterialTheme.typography.titleMedium,
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                            )
                         }
                     }
                 }
             }
 
-            // Stats
-            item {
+            // ─── Stats animées (compteurs qui se déroulent) ───
+            StaggeredAppear(index = 1, delayPerItemMs = 200) {
                 Card {
                     Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         Text("Statistiques", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
 
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-                            StatColumn(Icons.Default.Timer, fmtDuration(duration), "Durée réelle")
-                            StatColumn(Icons.Default.FitnessCenter, "$totalSets", "Séries")
-                            StatColumn(Icons.Default.MonitorWeight, fmtVolume(totalVolume), "Volume total")
+                            AnimatedStatColumn(
+                                icon = Icons.Default.Timer,
+                                targetValue = duration,
+                                label = "Durée réelle",
+                                formatter = { fmtDuration(it.toLong()) }
+                            )
+                            AnimatedStatColumn(
+                                icon = Icons.Default.FitnessCenter,
+                                targetValue = totalSets,
+                                label = "Séries"
+                            )
+                            AnimatedStatColumn(
+                                icon = Icons.Default.MonitorWeight,
+                                targetValue = totalVolume,
+                                label = "Volume total",
+                                formatter = { fmtVolume(it.toDouble()) }
+                            )
                         }
 
-                        Divider()
+                        HorizontalDivider()
 
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-                            StatColumn(Icons.Default.RepeatOne, "$totalReps", "Reps totales")
-                            StatColumn(Icons.Default.Pause, fmtDuration(totalRest), "Repos total")
+                            AnimatedStatColumn(
+                                icon = Icons.Default.RepeatOne,
+                                targetValue = totalReps,
+                                label = "Reps totales"
+                            )
+                            AnimatedStatColumn(
+                                icon = Icons.Default.Pause,
+                                targetValue = totalRest,
+                                label = "Repos total",
+                                formatter = { fmtDuration(it.toLong()) }
+                            )
                             if (skipped > 0) {
-                                StatColumn(Icons.Default.SkipNext, "$skipped", "Skippés")
+                                AnimatedStatColumn(
+                                    icon = Icons.Default.SkipNext,
+                                    targetValue = skipped,
+                                    label = "Skippés"
+                                )
                             }
                         }
                     }
                 }
             }
 
-            // CTAs secondaires
-            item {
+            // ─── CTAs secondaires ───
+            StaggeredAppear(index = 2, delayPerItemMs = 200) {
                 Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedButton(
+                    ShredButton(
                         onClick = { navController.navigate(com.shredcoach.app.presentation.navigation.Screen.Stats.route) },
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
-                        shape = RoundedCornerShape(12.dp)
+                        variant = ShredButtonVariant.Tertiary,
+                        modifier = Modifier.weight(1f).fillMaxHeight()
                     ) {
                         Icon(Icons.Default.Analytics, null, Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Voir stats")
+                        Text("Voir stats", fontWeight = FontWeight.SemiBold)
                     }
-                    OutlinedButton(
+                    ShredButton(
                         onClick = { navController.navigate(com.shredcoach.app.presentation.navigation.Screen.WorkoutGenerator.route) },
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
-                        shape = RoundedCornerShape(12.dp)
+                        variant = ShredButtonVariant.Tertiary,
+                        modifier = Modifier.weight(1f).fillMaxHeight()
                     ) {
                         Icon(Icons.Default.Replay, null, Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Nouvelle séance")
+                        Text("Nouvelle séance", fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
 
             // ─── Réserver la prochaine séance (Calendar integration) ───
-            item {
+            StaggeredAppear(index = 3, delayPerItemMs = 200) {
                 Card(
                     onClick = { navController.navigate(com.shredcoach.app.presentation.navigation.Screen.Calendar.route) },
                     modifier = Modifier.fillMaxWidth(),
@@ -164,31 +226,36 @@ fun WorkoutSummaryScreen(
                             Icon(Icons.Default.EventAvailable, null, Modifier.size(22.dp), tint = OrangeVibrant)
                         }
                         Column(Modifier.weight(1f)) {
-                            Text("Réserver la prochaine séance",
-                                style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                            Text("Planifie-la maintenant pour rester régulier",
+                            Text(
+                                "Réserver la prochaine séance",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                "Planifie-la maintenant pour rester régulier",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f))
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
+                            )
                         }
                         Icon(Icons.Default.ChevronRight, null, tint = OrangeVibrant)
                     }
                 }
             }
 
-            item { Spacer(Modifier.height(80.dp)) }
+            // Spacer pour laisser de la place au bouton "TERMINER" en overlay bottom
+            Spacer(Modifier.height(80.dp))
         }
 
-        // Bouton terminer
+        // Bouton terminer (en overlay bottom)
         Box(Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.BottomCenter) {
-            Button(
+            ShredButton(
                 onClick = {
                     navController.navigate(com.shredcoach.app.presentation.navigation.Screen.Home.route) {
                         popUpTo(com.shredcoach.app.presentation.navigation.Screen.Home.route) { inclusive = false }
                     }
                 },
-                modifier = Modifier.fillMaxWidth().padding(16.dp).height(60.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = NeonGreen),
-                shape = RoundedCornerShape(12.dp)
+                variant = ShredButtonVariant.Primary,
+                modifier = Modifier.fillMaxWidth().padding(16.dp).height(60.dp)
             ) {
                 Icon(Icons.Default.Home, null, Modifier.size(24.dp))
                 Spacer(Modifier.width(8.dp))
@@ -198,11 +265,24 @@ fun WorkoutSummaryScreen(
     }
 }
 
+/**
+ * StatColumn avec compteur animé : la valeur se déroule de 0 vers la cible
+ * sur 1.5s. À utiliser pour les hero stats (post-séance, achievements).
+ */
 @Composable
-private fun StatColumn(icon: androidx.compose.ui.graphics.vector.ImageVector, value: String, label: String) {
+private fun AnimatedStatColumn(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    targetValue: Number,
+    label: String,
+    formatter: (Float) -> String = { it.toInt().toString() }
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Icon(icon, null, Modifier.size(32.dp), tint = OrangeVibrant)
-        Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        AnimatedCounter(
+            targetValue = targetValue,
+            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+            formatter = formatter
+        )
         Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
     }
 }
@@ -217,6 +297,6 @@ private fun fmtDuration(seconds: Long): String {
 }
 
 private fun fmtVolume(v: Double): String = when {
-    v >= 1000 -> String.format(java.util.Locale.US, "%.1fk kg",v / 1000)
+    v >= 1000 -> String.format(java.util.Locale.US, "%.1fk kg", v / 1000)
     else -> "%.0f kg".format(v)
 }

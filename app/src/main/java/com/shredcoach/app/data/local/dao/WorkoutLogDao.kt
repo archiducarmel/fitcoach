@@ -1,5 +1,7 @@
-package com.shredcoach.app.data.local.dao
+﻿package com.shredcoach.app.data.local.dao
 
+
+import androidx.compose.runtime.Immutable
 import androidx.room.*
 import com.shredcoach.app.data.local.entity.WorkoutLogEntity
 import com.shredcoach.app.data.local.entity.WorkoutSetEntity
@@ -9,28 +11,33 @@ import java.time.LocalDateTime
 
 data class SetWithDate(
     val exerciseId: Long,
+    val workoutLogId: Long,
     val weightKg: Double,
     val reps: Int,
     val setNumber: Int,
     val date: LocalDateTime
 )
 
+@Immutable
 data class DailyVolume(
     val day: String,
     val volume: Double
 )
 
+@Immutable
 data class DailyCount(
     val day: String,
     val count: Int
 )
 
+@Immutable
 data class PersonalRecord(
     val exerciseId: Long,
     val maxWeight: Double,
     val reps: Int
 )
 
+@Immutable
 data class MuscleGroupSets(
     val muscleGroup: String,
     val setCount: Int
@@ -59,9 +66,17 @@ interface WorkoutLogDao {
     @Delete
     suspend fun deleteWorkoutLog(log: WorkoutLogEntity)
 
+    /** Snapshot global, utilisé par le moteur de backup. */
+    @Query("SELECT * FROM workout_logs ORDER BY id ASC")
+    suspend fun getAllWorkoutLogsOnce(): List<WorkoutLogEntity>
+
     // WorkoutSet operations
     @Query("SELECT * FROM workout_sets WHERE workoutLogId = :workoutLogId ORDER BY exerciseId, setNumber ASC")
     suspend fun getWorkoutSets(workoutLogId: Long): List<WorkoutSetEntity>
+
+    /** Snapshot global de toutes les séries, utilisé par le backup. */
+    @Query("SELECT * FROM workout_sets ORDER BY workoutLogId ASC, exerciseId ASC, setNumber ASC")
+    suspend fun getAllWorkoutSetsOnce(): List<WorkoutSetEntity>
 
     @Query("SELECT * FROM workout_sets WHERE workoutLogId = :workoutLogId AND exerciseId = :exerciseId ORDER BY setNumber ASC")
     suspend fun getWorkoutSetsByExercise(workoutLogId: Long, exerciseId: Long): List<WorkoutSetEntity>
@@ -102,7 +117,7 @@ interface WorkoutLogDao {
     // ── Stats Dashboard queries ──
 
     @Query("""
-        SELECT ws.exerciseId, ws.weightKg, ws.reps, ws.setNumber, wl.date
+        SELECT ws.exerciseId, ws.workoutLogId, ws.weightKg, ws.reps, ws.setNumber, wl.date
         FROM workout_sets ws
         INNER JOIN workout_logs wl ON ws.workoutLogId = wl.id
         WHERE ws.exerciseId = :exerciseId AND ws.completed = 1 AND wl.completed = 1
@@ -173,6 +188,7 @@ interface WorkoutLogDao {
     suspend fun getDurationByMuscleGroup(): List<MuscleGroupDuration>
 }
 
+@Immutable
 data class MuscleGroupDuration(
     val muscleGroup: String,
     val totalSeconds: Long

@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.runtime.*
@@ -68,8 +69,8 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
         // Progress
         if (state.currentPage > 0) {
             LinearProgressIndicator(
-                progress = state.currentPage.toFloat() / (TOTAL_PAGES - 1),
-                Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
+                progress = { state.currentPage.toFloat() / (TOTAL_PAGES - 1) },
+                modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
                 color = OrangeVibrant
             )
             Spacer(Modifier.height(16.dp))
@@ -96,7 +97,7 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
         Row(Modifier.fillMaxWidth().padding(top = 16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             if (state.currentPage > 0) {
                 TextButton(onClick = { viewModel.prevPage() }) {
-                    Icon(Icons.Default.ArrowBack, null, Modifier.size(18.dp))
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, null, Modifier.size(18.dp))
                     Spacer(Modifier.width(4.dp))
                     Text("Retour")
                 }
@@ -111,7 +112,7 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
                 ) {
                     Text("Suivant", fontWeight = FontWeight.Bold)
                     Spacer(Modifier.width(4.dp))
-                    Icon(Icons.Default.ArrowForward, null, Modifier.size(18.dp))
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(18.dp))
                 }
             } else {
                 Button(

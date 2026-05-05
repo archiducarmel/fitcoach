@@ -1,5 +1,7 @@
-package com.shredcoach.app.presentation.workout
+﻿package com.shredcoach.app.presentation.workout
 
+
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,6 +13,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
 
+@Immutable
 data class FavoritePreviewState(
     val workout: WorkoutEntity? = null,
     val exercises: List<ExerciseEntity> = emptyList(),

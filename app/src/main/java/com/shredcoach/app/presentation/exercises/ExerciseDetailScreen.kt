@@ -1,4 +1,4 @@
-package com.shredcoach.app.presentation.exercises
+﻿package com.shredcoach.app.presentation.exercises
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,9 +23,10 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.SubcomposeAsyncImage
-import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import com.shredcoach.app.data.local.entity.ExerciseEntity
+import com.shredcoach.app.presentation.common.sharedBoundsOptIn
+import com.shredcoach.app.presentation.common.sharedElementOptIn
 import com.shredcoach.app.presentation.theme.OrangeVibrant
 import com.shredcoach.app.presentation.theme.NeonGreen
 
@@ -43,7 +45,7 @@ fun ExerciseDetailScreen(
                 title = { Text(exercise?.name ?: "Détail", fontWeight = FontWeight.Bold, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour")
                     }
                 }
             )
@@ -70,15 +72,19 @@ private fun ExerciseDetailContent(exercise: ExerciseEntity, modifier: Modifier) 
 
     Column(modifier.verticalScroll(rememberScrollState())) {
         // ── GIF animé (plein écran en haut) ──
+        // Partage l'image avec la card de la liste via shared element transition.
         Box(
-            Modifier.fillMaxWidth().height(280.dp).background(MaterialTheme.colorScheme.surfaceVariant),
+            Modifier
+                .sharedElementOptIn(key = "exercise-image-${exercise.id}")
+                .fillMaxWidth()
+                .height(280.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
             if (exercise.gifUrl != null) {
                 SubcomposeAsyncImage(
                     model = ImageRequest.Builder(context)
                         .data(exercise.gifUrl)
-                        .decoderFactory(ImageDecoderDecoder.Factory())
                         .crossfade(true)
                         .build(),
                     contentDescription = exercise.name,
@@ -98,7 +104,12 @@ private fun ExerciseDetailContent(exercise: ExerciseEntity, modifier: Modifier) 
 
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             // ── Header : Nom + badges ──
-            Text(exercise.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(
+                exercise.name,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.sharedBoundsOptIn(key = "exercise-name-${exercise.id}")
+            )
 
             @OptIn(ExperimentalLayoutApi::class)
             FlowRow(
@@ -135,7 +146,7 @@ private fun ExerciseDetailContent(exercise: ExerciseEntity, modifier: Modifier) 
                         ParamStat(Icons.Default.Timer, "${exercise.restSeconds}s", "Repos")
                     }
 
-                    Divider()
+                    HorizontalDivider()
 
                     ParamRow(Icons.Default.MonitorWeight, "Poids de départ", exercise.startingWeight)
                     if (exercise.tempo != "N/A") ParamRow(Icons.Default.Speed, "Tempo", exercise.tempo)

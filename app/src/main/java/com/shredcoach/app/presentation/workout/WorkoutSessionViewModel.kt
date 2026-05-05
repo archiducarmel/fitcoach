@@ -1,5 +1,7 @@
-package com.shredcoach.app.presentation.workout
+﻿package com.shredcoach.app.presentation.workout
 
+
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -40,6 +42,7 @@ data class WorkoutSetData(
 )
 
 // ── État complet de la séance ──
+@Immutable
 data class WorkoutSessionState(
     val workoutLogId: Long? = null,
     val exercises: List<ExerciseEntity> = emptyList(),

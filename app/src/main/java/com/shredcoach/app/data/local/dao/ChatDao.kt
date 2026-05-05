@@ -1,9 +1,12 @@
-package com.shredcoach.app.data.local.dao
+﻿package com.shredcoach.app.data.local.dao
 
+
+import androidx.compose.runtime.Immutable
 import androidx.room.*
 import com.shredcoach.app.data.local.entity.ChatMessageEntity
 import kotlinx.coroutines.flow.Flow
 
+@Immutable
 data class ConversationSummary(
     val conversationId: String,
     val firstUserMessage: String?, // Peut être null si seul message est du bot
@@ -15,6 +18,10 @@ data class ConversationSummary(
 interface ChatDao {
     @Query("SELECT * FROM chat_messages WHERE conversationId = :conversationId ORDER BY timestamp ASC")
     fun getMessagesForConversation(conversationId: String): Flow<List<ChatMessageEntity>>
+
+    /** Snapshot global de toutes les conversations, utilisé par le backup. */
+    @Query("SELECT * FROM chat_messages ORDER BY conversationId ASC, timestamp ASC")
+    suspend fun getAllMessagesOnce(): List<ChatMessageEntity>
 
     @Query("SELECT * FROM chat_messages WHERE conversationId = :conversationId ORDER BY timestamp DESC LIMIT :limit")
     suspend fun getRecentMessages(conversationId: String, limit: Int): List<ChatMessageEntity>

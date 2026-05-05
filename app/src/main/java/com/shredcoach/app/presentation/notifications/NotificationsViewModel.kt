@@ -1,5 +1,7 @@
-package com.shredcoach.app.presentation.notifications
+﻿package com.shredcoach.app.presentation.notifications
 
+
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shredcoach.app.data.local.entity.AppNotificationEntity
@@ -9,6 +11,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@Immutable
 data class NotificationsState(
     val notifications: List<AppNotificationEntity> = emptyList(),
     val unreadCount: Int = 0,

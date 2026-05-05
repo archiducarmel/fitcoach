@@ -1,5 +1,7 @@
-package com.shredcoach.app.data.local.entity
+﻿package com.shredcoach.app.data.local.entity
 
+
+import androidx.compose.runtime.Immutable
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -25,6 +27,7 @@ enum class MealType(val displayName: String, val icon: String) {
     ],
     indices = [Index("foodId"), Index("date"), Index("scanId")]
 )
+@Immutable
 data class MealLogEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val foodId: Long,

@@ -1,5 +1,7 @@
-package com.shredcoach.app.data.local.entity
+﻿package com.shredcoach.app.data.local.entity
 
+
+import androidx.compose.runtime.Immutable
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -23,6 +25,7 @@ import java.time.LocalTime
     tableName = "scheduled_workouts",
     indices = [Index("date"), Index("status")]
 )
+@Immutable
 data class ScheduledWorkoutEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val date: LocalDate,

@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -75,7 +76,7 @@ fun ExerciseDbExplorerScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour")
                     }
                 },
                 actions = {
@@ -147,7 +148,7 @@ fun ExerciseDbExplorerScreen(
                 )
             }
             item(span = { GridItemSpan(maxLineSpan) }, key = "divider") {
-                Divider(
+                HorizontalDivider(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                 )
@@ -369,8 +370,8 @@ private fun FilterChipsRow(
                         style = MaterialTheme.typography.labelSmall,
                         color = chipColor, fontWeight = FontWeight.Bold)
                 }
-                IconButton(onClick = { onSelect(null) }, modifier = Modifier.size(20.dp)) {
-                    Icon(Icons.Default.Close, "Retirer", modifier = Modifier.size(12.dp), tint = chipColor)
+                IconButton(onClick = { onSelect(null) }) {
+                    Icon(Icons.Default.Close, "Retirer le filtre $label", modifier = Modifier.size(12.dp), tint = chipColor)
                 }
             }
         }
@@ -630,7 +631,7 @@ private fun EmptyView() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(Icons.Default.SearchOff, null, modifier = Modifier.size(56.dp),
+        Icon(Icons.Default.Search, null, modifier = Modifier.size(56.dp),
             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
         Spacer(Modifier.height(12.dp))
         Text("Aucun exercice trouvé", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)

@@ -1,5 +1,7 @@
-package com.shredcoach.app.data.local.dao
+﻿package com.shredcoach.app.data.local.dao
 
+
+import androidx.compose.runtime.Immutable
 import androidx.room.*
 import com.shredcoach.app.data.local.entity.DailyCheckEntity
 import com.shredcoach.app.data.local.entity.FoodEntity
@@ -11,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 import java.time.LocalTime
 
+@Immutable
 data class DailyMacros(
     val date: String,
     val totalCalories: Double,
@@ -19,6 +22,7 @@ data class DailyMacros(
     val totalFats: Double
 )
 
+@Immutable
 data class DayTotals(
     val totalCalories: Double,
     val totalProteins: Double,
@@ -26,6 +30,7 @@ data class DayTotals(
     val totalFats: Double
 )
 
+@Immutable
 data class FoodFrequency(
     val foodId: Long,
     val name: String,
@@ -101,9 +106,17 @@ interface NutritionDao {
     @Query("SELECT COUNT(*) FROM foods")
     suspend fun getFoodCount(): Int
 
+    /** Snapshot global pour le backup. */
+    @Query("SELECT * FROM daily_checks ORDER BY date DESC")
+    suspend fun getAllDailyChecksOnce(): List<DailyCheckEntity>
+
     // ── Meal Logs ──
     @Query("SELECT * FROM meal_logs WHERE date = :date ORDER BY mealType ASC, time ASC")
     fun getMealsForDate(date: LocalDate): Flow<List<MealLogEntity>>
+
+    /** Snapshot global de tous les meal logs, utilisé par le backup. */
+    @Query("SELECT * FROM meal_logs ORDER BY date DESC, time DESC")
+    suspend fun getAllMealLogsOnce(): List<MealLogEntity>
 
     @Query("SELECT * FROM meal_logs WHERE date = :date ORDER BY mealType ASC")
     suspend fun getMealsForDateOnce(date: LocalDate): List<MealLogEntity>

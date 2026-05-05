@@ -1,5 +1,7 @@
-package com.shredcoach.app.presentation.explorer
+﻿package com.shredcoach.app.presentation.explorer
 
+
+import androidx.compose.runtime.Immutable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -8,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -50,6 +53,7 @@ import javax.inject.Inject
 // VIEWMODEL DÉTAIL
 // ═══════════════════════════════════════
 
+@Immutable
 data class ExerciseDbDetailState(
     val exercise: ExerciseDbExercise? = null,
     val isLoading: Boolean = true,
@@ -230,7 +234,7 @@ fun ExerciseDbDetailScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour")
                     }
                 }
             )

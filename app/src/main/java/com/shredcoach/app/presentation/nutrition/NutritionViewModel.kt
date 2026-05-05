@@ -1,5 +1,7 @@
-package com.shredcoach.app.presentation.nutrition
+﻿package com.shredcoach.app.presentation.nutrition
 
+
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shredcoach.app.data.local.dao.MealScanDao
@@ -21,6 +23,7 @@ data class MealWithFood(
     val photoPath: String? = null // Photo du scan (si repas issu d'un scan)
 )
 
+@Immutable
 data class NutritionState(
     val selectedDate: LocalDate = LocalDate.now(),
     val meals: List<MealWithFood> = emptyList(),

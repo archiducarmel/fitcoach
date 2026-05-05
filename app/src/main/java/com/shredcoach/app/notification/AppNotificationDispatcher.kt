@@ -20,10 +20,19 @@ import javax.inject.Singleton
 /**
  * Point d'entrée unique pour poster une notification :
  *   1. Sauvegarde en DB (visible dans l'inbox)
- *   2. Poste la push system
+ *   2. Poste la push system avec deeplink + actions optionnels
  *
  * Tous les Workers passent par ici pour garantir que l'inbox reste synchronisée
  * avec les notifications réellement envoyées.
+ *
+ * **Deeplinks** : si [dispatch] reçoit un `deeplink` non null, le tap sur la
+ * notif ouvre directement la route Compose correspondante (ex: "workout_session/42")
+ * via [MainActivity] qui lit [EXTRA_DEEPLINK_ROUTE]. Sinon, fallback sur l'inbox.
+ *
+ * **Actions** : jusqu'à 3 boutons via [NotificationAction]. Android limite à 3
+ * actions visibles avant collapse. Chaque action ouvre une route comme un
+ * deeplink — pas de BroadcastReceiver, ce qui garde l'app comme source de vérité
+ * pour la navigation et évite des classes Receiver à enregistrer au manifest.
  */
 @Singleton
 class AppNotificationDispatcher @Inject constructor(
@@ -32,12 +41,20 @@ class AppNotificationDispatcher @Inject constructor(
 ) {
 
     /**
+     * Une action affichée sur la notification (bouton).
+     * @param label Texte du bouton (max ~25 chars affichés selon launcher)
+     * @param deeplinkRoute Route Compose ouverte au tap (ex: "workout_generator")
+     * @param iconRes Drawable optionnel ; null = pas d'icône (système met le
+     *   placeholder par défaut, OK sur Android 12+).
+     */
+    data class NotificationAction(
+        val label: String,
+        val deeplinkRoute: String,
+        val iconRes: Int? = null,
+    )
+
+    /**
      * Sauvegarde + poste une notification.
-     * @param type Type de notification (pour le canal + icône + groupement)
-     * @param title Titre affiché
-     * @param body Corps du message
-     * @param channelId ID du canal Android (voir ShredCoachApplication.CHANNEL_*)
-     * @param source "llm" si généré par IA, "local" sinon
      */
     suspend fun dispatch(
         type: NotifType,
@@ -45,7 +62,8 @@ class AppNotificationDispatcher @Inject constructor(
         body: String,
         channelId: String,
         source: String = "local",
-        deeplink: String? = null
+        deeplink: String? = null,
+        actions: List<NotificationAction> = emptyList(),
     ) {
         // 1. Sauver en DB (→ inbox)
         val entity = AppNotificationEntity(
@@ -62,42 +80,89 @@ class AppNotificationDispatcher @Inject constructor(
             channelId = channelId,
             notifId = (id.toInt().coerceAtLeast(1)).let { it + BASE_NOTIF_ID },
             title = title,
-            body = body
+            body = body,
+            deeplink = deeplink,
+            actions = actions,
         )
     }
 
-    private fun postSystemNotification(channelId: String, notifId: Int, title: String, body: String) {
+    private fun postSystemNotification(
+        channelId: String,
+        notifId: Int,
+        title: String,
+        body: String,
+        deeplink: String?,
+        actions: List<NotificationAction>,
+    ) {
         // Vérifier la permission POST_NOTIFICATIONS (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
                 != PackageManager.PERMISSION_GRANTED) return
         }
 
-        // Intent qui ouvre MainActivity → route Notifications
-        val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra(EXTRA_OPEN_NOTIFICATIONS, true)
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            context, notifId, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val notification = NotificationCompat.Builder(context, channelId)
+        val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(pendingIntent)
+            .setContentIntent(buildContentIntent(notifId, deeplink))
             .setAutoCancel(true)
-            .build()
 
-        NotificationManagerCompat.from(context).notify(notifId, notification)
+        // Ajouter les boutons d'action (max 3 sont affichés par Android avant collapse)
+        actions.take(3).forEachIndexed { index, action ->
+            builder.addAction(
+                action.iconRes ?: 0,
+                action.label,
+                buildActionPendingIntent(notifId, index, action.deeplinkRoute),
+            )
+        }
+
+        NotificationManagerCompat.from(context).notify(notifId, builder.build())
+    }
+
+    /**
+     * Intent du tap principal — soit deeplink direct, soit fallback inbox.
+     * Le requestCode = notifId garantit l'unicité (sinon Android réutiliserait
+     * le PendingIntent et le `extra` ne serait pas mis à jour).
+     */
+    private fun buildContentIntent(notifId: Int, deeplink: String?): PendingIntent {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            if (deeplink != null) {
+                putExtra(EXTRA_DEEPLINK_ROUTE, deeplink)
+            } else {
+                putExtra(EXTRA_OPEN_NOTIFICATIONS, true)
+            }
+        }
+        return PendingIntent.getActivity(
+            context, notifId, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    /**
+     * Intent d'un bouton d'action — chaque bouton ouvre une route distincte.
+     * RequestCode unique par (notifId, index) pour ne pas écraser les autres boutons.
+     */
+    private fun buildActionPendingIntent(notifId: Int, actionIndex: Int, route: String): PendingIntent {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(EXTRA_DEEPLINK_ROUTE, route)
+        }
+        // requestCode unique : notifId * 10 + actionIndex permet 10 actions max
+        // par notif (largement plus que les 3 visibles).
+        val requestCode = notifId * 10 + actionIndex
+        return PendingIntent.getActivity(
+            context, requestCode, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
     }
 
     companion object {
         const val EXTRA_OPEN_NOTIFICATIONS = "open_notifications"
+        /** Route Compose à ouvrir au tap (notif principale ou bouton d'action). */
+        const val EXTRA_DEEPLINK_ROUTE = "deeplink_route"
         /** Offset pour éviter les collisions avec les IDs hardcodés de l'ancien worker (1001-1010). */
         private const val BASE_NOTIF_ID = 2000
     }

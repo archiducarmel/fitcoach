@@ -32,12 +32,27 @@ class MainActivity : ComponentActivity() {
     // State observé par Compose : bump à chaque nouveau tap notif (onCreate + onNewIntent)
     private val openNotificationsState = mutableStateOf(0)
 
+    // Deeplink route demandé par une notif (ou bouton d'action). Format :
+    // (counter, route) — counter pour forcer la recomposition même si la
+    // route est la même que la précédente. Route null = pas de deeplink.
+    private val deeplinkRouteState = mutableStateOf<Pair<Int, String?>>(0 to null)
+
+    // Le splash reste affiché tant que ce flag est false. Évite le flash
+    // splash → spinner → Home en gardant le splash pendant que le profile
+    // initial est chargé. @Volatile : le splashscreen lit ce flag depuis
+    // sa boucle de frame, on garantit la visibilité cross-thread.
+    @Volatile private var splashKeptForProfile: Boolean = true
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        val splashScreen = installSplashScreen()
+        splashScreen.setKeepOnScreenCondition { splashKeptForProfile }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         if (intent?.getBooleanExtra(AppNotificationDispatcher.EXTRA_OPEN_NOTIFICATIONS, false) == true) {
             openNotificationsState.value = openNotificationsState.value + 1
+        }
+        intent?.getStringExtra(AppNotificationDispatcher.EXTRA_DEEPLINK_ROUTE)?.let { route ->
+            deeplinkRouteState.value = (deeplinkRouteState.value.first + 1) to route
         }
 
         setContent {
@@ -46,14 +61,25 @@ class MainActivity : ComponentActivity() {
                 .collectAsState(initial = null)
             val hasProfile = profile != null // null = loading au premier affichage
 
-            // Premier chargement strict (blocking) pour savoir si on route vers onboarding
+            // Premier chargement strict (blocking) pour savoir si on route vers onboarding.
+            // try/finally OBLIGATOIRE : si la lecture profil throw (DB corrompue,
+            // migration foirée, etc.), il faut TOUT DE MÊME libérer la splash et
+            // marquer le profil "chargé" — sinon l'app reste gelée à vie sur la
+            // splash screen, sans aucun moyen de récupération côté utilisateur.
             var profileLoaded by remember { mutableStateOf(false) }
             LaunchedEffect(Unit) {
-                userRepository.getUserProfileOnce()
-                profileLoaded = true
+                try {
+                    userRepository.getUserProfileOnce()
+                } catch (t: Throwable) {
+                    android.util.Log.e("MainActivity", "Initial profile load failed", t)
+                } finally {
+                    profileLoaded = true
+                    splashKeptForProfile = false
+                }
             }
 
             val openNotifsTrigger by openNotificationsState
+            val deeplinkPair by deeplinkRouteState
 
             val darkMode = profile?.darkMode ?: "auto"
             val paletteKey = profile?.themePalette ?: "sunset"
@@ -71,7 +97,12 @@ class MainActivity : ComponentActivity() {
                 ) {
                     when {
                         !profileLoaded -> Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
-                        else -> ShredCoachNavigation(sessionManager, hasProfile, openNotifsTrigger)
+                        else -> ShredCoachNavigation(
+                            sessionManager = sessionManager,
+                            hasProfile = hasProfile,
+                            openNotificationsTrigger = openNotifsTrigger,
+                            deeplinkRoute = deeplinkPair,
+                        )
                     }
                 }
             }
@@ -84,6 +115,9 @@ class MainActivity : ComponentActivity() {
         if (intent.getBooleanExtra(AppNotificationDispatcher.EXTRA_OPEN_NOTIFICATIONS, false)) {
             // Bump le state observé par Compose → LaunchedEffect dans ShredCoachNavigation réagit
             openNotificationsState.value = openNotificationsState.value + 1
+        }
+        intent.getStringExtra(AppNotificationDispatcher.EXTRA_DEEPLINK_ROUTE)?.let { route ->
+            deeplinkRouteState.value = (deeplinkRouteState.value.first + 1) to route
         }
     }
 }

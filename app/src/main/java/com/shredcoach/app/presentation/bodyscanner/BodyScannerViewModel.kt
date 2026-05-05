@@ -1,5 +1,7 @@
-package com.shredcoach.app.presentation.bodyscanner
+﻿package com.shredcoach.app.presentation.bodyscanner
 
+
+import androidx.compose.runtime.Immutable
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
@@ -26,6 +28,7 @@ import javax.inject.Inject
  *  3. result != null → affichage résultat éditable
  *  4. meshBitmap != null → cta vers BodyMeshScreen
  */
+@Immutable
 data class BodyScannerState(
     val imageBitmap: Bitmap? = null,
     val isAnalyzing: Boolean = false,

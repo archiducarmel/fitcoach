@@ -1,5 +1,7 @@
-package com.shredcoach.app.presentation.gymscan
+﻿package com.shredcoach.app.presentation.gymscan
 
+
+import androidx.compose.runtime.Immutable
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -20,6 +22,7 @@ import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 
+@Immutable
 data class GymScanState(
     val imageBitmap: Bitmap? = null,
     val isLoadingDataset: Boolean = false,

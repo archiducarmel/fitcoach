@@ -1,5 +1,7 @@
-package com.shredcoach.app.presentation.explorer
+﻿package com.shredcoach.app.presentation.explorer
 
+
+import androidx.compose.runtime.Immutable
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,6 +18,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@Immutable
 data class ExerciseDbExplorerState(
     // Filtres
     val searchQuery: String = "",

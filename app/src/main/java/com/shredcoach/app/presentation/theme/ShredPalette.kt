@@ -76,6 +76,14 @@ object ShredPalettes {
     private val ErrorL = Color(0xFFDC2626)
     private val ErrorD = Color(0xFFEF4444)
 
+    // Couleurs sémantiques exposées (utilisées en mode "system" / Material You,
+    // où les couleurs viennent du wallpaper mais on garde notre sémantique stable).
+    internal val SemanticSuccess: Color = Success
+    internal val SemanticWarning: Color = Warning
+    internal val SemanticInfo: Color = Info
+    internal val SemanticErrorLight: Color = ErrorL
+    internal val SemanticErrorDark: Color = ErrorD
+
     // ───────────────────────────────────────────────
     // 1. SUNSET 🔥 — Orange & Red (palette par défaut)
     // ───────────────────────────────────────────────
@@ -227,10 +235,25 @@ object ShredPalettes {
 
 val LocalShredPalette = staticCompositionLocalOf<ShredPalette> { ShredPalettes.Default }
 
-/** Accesseur pratique : `ShredTheme.palette.primary`, `ShredTheme.palette.success`... */
+/**
+ * Accesseur pratique pour le design system :
+ *   ShredTheme.palette.primary
+ *   ShredTheme.spacing.md
+ *   ShredTheme.elevation.level2
+ */
 object ShredTheme {
     val palette: ShredPalette
         @Composable
         @ReadOnlyComposable
         get() = LocalShredPalette.current
+
+    val spacing: ShredSpacing
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalShredSpacing.current
+
+    val elevation: ShredElevation
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalShredElevation.current
 }

@@ -1,5 +1,7 @@
-package com.shredcoach.app.presentation.profile
+﻿package com.shredcoach.app.presentation.profile
 
+
+import androidx.compose.runtime.Immutable
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
@@ -17,6 +19,7 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
+@Immutable
 data class ProfileState(
     val profile: UserProfileEntity? = null,
     val weightLogs: List<WeightLogEntity> = emptyList(),

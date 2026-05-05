@@ -9,6 +9,7 @@ import com.shredcoach.app.data.local.dao.WorkoutLogDao
 import com.shredcoach.app.data.local.entity.UserProfileEntity
 import com.shredcoach.app.data.local.entity.WeightLogEntity
 import com.shredcoach.app.data.local.entity.WorkoutLogEntity
+import com.shredcoach.app.domain.streak.StreakService
 import kotlinx.coroutines.flow.first
 import java.time.Duration
 import java.time.Instant
@@ -45,6 +46,7 @@ class CoachTriggerEngine @Inject constructor(
     private val exerciseDao: ExerciseDao,
     private val historyStore: CoachHistoryStore,
     private val settingsStore: CoachSettingsStore,
+    private val streakService: StreakService,
 ) {
     /**
      * @return liste filtrée et triée. Vide = ne pas envoyer de notif aujourd'hui.
@@ -121,16 +123,15 @@ class CoachTriggerEngine @Inject constructor(
         recentLogs: List<WorkoutLogEntity>,
         today: LocalDate,
     ): CoachTrigger.StreakAtRisk? {
-        val completedDates = recentLogs.filter { it.completed }
-            .map { it.date.toLocalDate() }.toSet()
-        if (completedDates.isEmpty()) return null
+        val completedLogs = recentLogs.filter { it.completed }
+        if (completedLogs.isEmpty()) return null
 
-        var streak = 0
-        var cursor = if (today in completedDates) today else today.minusDays(1)
-        while (cursor in completedDates) { streak++; cursor = cursor.minusDays(1) }
+        // Streak via le service unique (cohérent avec HomeViewModel,
+        // StreakUpdateWorker, WorkoutDebriefWorker — pas de divergence).
+        val streak = streakService.compute(completedLogs, today).currentDays
         if (streak < 2) return null
 
-        val lastWorkout = completedDates.max()
+        val lastWorkout = completedLogs.maxOf { it.date.toLocalDate() }
         val daysSince = ChronoUnit.DAYS.between(lastWorkout, today).toInt()
         val plannedDays = profile.workoutDays.size.coerceAtLeast(1)
         val maxGap = (7.0 / plannedDays).toInt() + 1

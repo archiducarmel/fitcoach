@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -54,7 +55,7 @@ fun WorkoutHistoryDetailScreen(
                 title = { Text("Détails", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour")
                     }
                 },
                 actions = {
@@ -216,7 +217,7 @@ private fun GlobalStatsGrid(state: HistoryDetailState) {
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             StatTile(Icons.Default.LocalFireDepartment, "Repos total", formatSeconds(log.totalRestSeconds), Modifier.weight(1f).fillMaxHeight())
             val effectiveSec = (log.actualDurationSeconds - log.totalRestSeconds).coerceAtLeast(0)
-            StatTile(Icons.Default.DirectionsRun, "Temps actif", formatSeconds(effectiveSec), Modifier.weight(1f).fillMaxHeight())
+            StatTile(Icons.AutoMirrored.Filled.DirectionsRun, "Temps actif", formatSeconds(effectiveSec), Modifier.weight(1f).fillMaxHeight())
         }
     }
 }
