@@ -1,6 +1,11 @@
 package com.shredcoach.app.presentation.home
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -15,7 +20,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.Alignment
@@ -48,11 +56,12 @@ private fun NavController.switchTo(route: String) {
 @Composable
 fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltViewModel()) {
     val userProfile by viewModel.userProfile.collectAsState()
-    val exerciseCount by viewModel.exerciseCount.collectAsState()
     val totalWorkouts by viewModel.totalWorkouts.collectAsState()
     val totalVolume by viewModel.totalVolume.collectAsState()
     val totalTimeMinutes by viewModel.totalTimeMinutes.collectAsState()
     val greetingInfo by viewModel.greetingInfo.collectAsState()
+    val todayNutrition by viewModel.todayNutrition.collectAsState()
+    val resumableSession by viewModel.resumableSession.collectAsState()
 
     // Demander la permission POST_NOTIFICATIONS (Android 13+) une seule fois
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -199,29 +208,9 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
             }
 
-            // CTA #1 : Générer (action principale, la plus fréquente)
-            StaggeredAppear(index = 3) {
-                Card(
-                    onClick = { navController.switchTo(Screen.WorkoutGenerator.route) },
-                    colors = CardDefaults.cardColors(containerColor = OrangeVibrant),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                ) {
-                    Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            Text("GÉNÉRER UNE SÉANCE", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
-                            Spacer(Modifier.height(4.dp))
-                            Text("Full Body • ${userProfile?.preferredWorkoutDuration ?: 90} min • Adapté à ton niveau",
-                                style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
-                        }
-                        Surface(shape = CircleShape, color = Color.White.copy(alpha = 0.2f), modifier = Modifier.size(52.dp)) {
-                            Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.AutoAwesome, null, Modifier.size(28.dp), tint = Color.White) }
-                        }
-                    }
-                }
-            }
-
-            // CTA #2 : Séance Libre (freestyle)
+            // CTA principal — Reprendre (si session <24h) OU Générer.
+            // On utilise le même slot car les 2 sont mutuellement exclusifs : si une
+            // séance est en cours, l'utilisateur veut la finir avant d'en générer une autre.
             val freestyleLogId by viewModel.freestyleLogId.collectAsState()
             LaunchedEffect(freestyleLogId) {
                 val id = freestyleLogId
@@ -231,68 +220,127 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                 }
             }
 
+            StaggeredAppear(index = 3) {
+                val resumable = resumableSession
+                if (resumable != null) {
+                    com.shredcoach.app.presentation.home.components.ResumeSessionCard(
+                        session = resumable,
+                        onClick = {
+                            navController.navigate(Screen.WorkoutSession.createRoute(resumable.workoutLogId))
+                        },
+                    )
+                } else {
+                    Card(
+                        onClick = { navController.switchTo(Screen.WorkoutGenerator.route) },
+                        colors = CardDefaults.cardColors(containerColor = OrangeVibrant),
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text("GÉNÉRER UNE SÉANCE", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
+                                Spacer(Modifier.height(4.dp))
+                                Text("Full Body • ${userProfile?.preferredWorkoutDuration ?: 90} min • Adapté à ton niveau",
+                                    style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
+                            }
+                            Surface(shape = CircleShape, color = Color.White.copy(alpha = 0.2f), modifier = Modifier.size(52.dp)) {
+                                Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.AutoAwesome, null, Modifier.size(28.dp), tint = Color.White) }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ─── "Autres options" — collapsible (power-user moves) ───
+            // Pourquoi collapsible : 80% des sessions utilisent Générer/Reprendre.
+            // Libre/Favoris/Créer sont des chemins de power-user à reléguer en
+            // 2e tier visuel — éviter la décision paralysie sur la home.
+            var otherOptionsExpanded by rememberSaveable { mutableStateOf(false) }
             StaggeredAppear(index = 4) {
-                Card(
-                    onClick = { viewModel.startFreestyleWorkout() },
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Surface(shape = RoundedCornerShape(12.dp), color = NeonGreen.copy(alpha = 0.12f), modifier = Modifier.size(44.dp)) {
-                            Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.FlashOn, null, Modifier.size(24.dp), tint = NeonGreen) }
+                OtherOptionsHeader(
+                    expanded = otherOptionsExpanded,
+                    onToggle = { otherOptionsExpanded = !otherOptionsExpanded },
+                )
+            }
+
+            AnimatedVisibility(
+                visible = otherOptionsExpanded,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // Séance Libre
+                    Card(
+                        onClick = { viewModel.startFreestyleWorkout() },
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Surface(shape = RoundedCornerShape(12.dp), color = NeonGreen.copy(alpha = 0.12f), modifier = Modifier.size(44.dp)) {
+                                Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.FlashOn, null, Modifier.size(24.dp), tint = NeonGreen) }
+                            }
+                            Spacer(Modifier.width(14.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text("Séance libre", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                Text("Compose ta séance au feeling, exercice par exercice", style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), maxLines = 2, lineHeight = 16.sp)
+                            }
+                            Icon(Icons.Default.ChevronRight, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
                         }
-                        Spacer(Modifier.width(14.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text("Séance libre", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                            Text("Compose ta séance au feeling, exercice par exercice", style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), maxLines = 2, lineHeight = 16.sp)
+                    }
+
+                    // Favoris + Créer côte à côte
+                    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Card(
+                            onClick = { navController.switchTo(Screen.FavoriteWorkouts.route) },
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Icon(Icons.Default.Favorite, null, Modifier.size(22.dp), tint = Color(0xFFEF4444))
+                                    Text("Mes favoris", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                }
+                                Text("Relancer une séance", style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                    maxLines = 2, lineHeight = 16.sp)
+                            }
                         }
-                        Icon(Icons.Default.ChevronRight, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
+                        Card(
+                            onClick = { navController.switchTo(Screen.CustomWorkout.route) },
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Icon(Icons.Default.Build, null, Modifier.size(22.dp), tint = Color(0xFF3B82F6))
+                                    Text("Créer", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                }
+                                Text("Composer ma séance", style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                    maxLines = 2, lineHeight = 16.sp)
+                            }
+                        }
                     }
                 }
             }
 
-            // CTA #3 et #4 côte à côte : Favoris + Créer
-            StaggeredAppear(index = 5) {
-            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                // Favoris
-                Card(
-                    onClick = { navController.switchTo(Screen.FavoriteWorkouts.route) },
-                    modifier = Modifier.weight(1f).fillMaxHeight(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Icon(Icons.Default.Favorite, null, Modifier.size(22.dp), tint = Color(0xFFEF4444))
-                            Text("Mes favoris", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        }
-                        Text("Relancer une séance", style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                            maxLines = 2, lineHeight = 16.sp)
-                    }
-                }
-
-                // Créer
-                Card(
-                    onClick = { navController.switchTo(Screen.CustomWorkout.route) },
-                    modifier = Modifier.weight(1f).fillMaxHeight(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Icon(Icons.Default.Build, null, Modifier.size(22.dp), tint = Color(0xFF3B82F6))
-                            Text("Créer", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        }
-                        Text("Composer ma séance", style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                            maxLines = 2, lineHeight = 16.sp)
-                    }
+            // ═══════════════════════════════════════
+            // SECTION TODAY NUTRITION (H1)
+            // Calories + protéines + macros + prochain repas
+            // ═══════════════════════════════════════
+            todayNutrition?.let { nutrition ->
+                StaggeredAppear(index = 5) {
+                    com.shredcoach.app.presentation.home.components.TodayNutritionCard(
+                        nutrition = nutrition,
+                        onScanMeal = { navController.navigate(Screen.MealScanner.route) },
+                        onAddManual = { navController.switchTo(Screen.Nutrition.route) },
+                    )
                 }
             }
-            } // fin StaggeredAppear index=5
 
             // ═══════════════════════════════════════
             // SECTION 2 : PROGRESSION
@@ -370,52 +418,56 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                 }
             }
 
-            // ─── Meal Scanner — accès rapide ───
-            StaggeredAppear(index = 11) {
-            Card(
-                onClick = { navController.navigate(Screen.MealScanner.route) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Box(
-                    Modifier.fillMaxWidth().background(
-                        Brush.linearGradient(listOf(
-                            Color(0xFF8B5CF6).copy(alpha = 0.9f),
-                            Color(0xFF6D28D9).copy(alpha = 0.85f)
-                        ))
-                    ).padding(18.dp)
-                ) {
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        Surface(
-                            shape = RoundedCornerShape(14.dp),
-                            color = Color.White.copy(alpha = 0.18f),
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(Icons.Default.CameraAlt, null, Modifier.size(24.dp), tint = Color.White)
-                            }
-                        }
-                        Column(Modifier.weight(1f)) {
-                            Text("Meal Scanner", style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold, color = Color.White)
-                            Text("Scanne ton repas, Shreddy analyse les macros",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.White.copy(alpha = 0.8f))
-                        }
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(20.dp),
-                            tint = Color.White.copy(alpha = 0.7f))
-                    }
-                }
-            }
-            } // fin StaggeredAppear index=11
+            // (Card "Meal Scanner" supprimée : actionnable depuis le bouton "Scanner"
+            //  du TodayNutritionCard — évite le doublon visuel.)
 
             Spacer(Modifier.height(60.dp))
+        }
+    }
+}
+
+/**
+ * Header cliquable de la section "Autres options" (Libre/Favoris/Créer).
+ * Chevron qui pivote selon l'état expanded — feedback visuel immédiat.
+ */
+@Composable
+private fun OtherOptionsHeader(expanded: Boolean, onToggle: () -> Unit) {
+    val rotation by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (expanded) 90f else 0f,
+        animationSpec = androidx.compose.animation.core.tween(220),
+        label = "chevronRotation",
+    )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.0f))
+            .padding(vertical = 4.dp)
+            .let {
+                // clic sans ripple inutile pour ne pas dénaturer le header de section
+                it.then(Modifier)
+            },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        TextButton(
+            onClick = onToggle,
+            contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
+        ) {
+            Text(
+                text = if (expanded) "Moins d'options" else "Autres options",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            )
+            Spacer(Modifier.width(4.dp))
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(18.dp)
+                    .graphicsLayer { rotationZ = rotation },
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+            )
         }
     }
 }

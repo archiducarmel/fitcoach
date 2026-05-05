@@ -57,6 +57,18 @@ interface WorkoutLogDao {
     @Query("SELECT * FROM workout_logs ORDER BY date DESC LIMIT :limit")
     fun getRecentWorkoutLogs(limit: Int): Flow<List<WorkoutLogEntity>>
 
+    /**
+     * Dernière séance non terminée — utilisée pour proposer "Reprendre" sur la home.
+     * Le filtre <24h est appliqué côté ViewModel pour éviter de remonter des sessions
+     * abandonnées (cf. règle auto-clean au-delà de 24h).
+     */
+    @Query("SELECT * FROM workout_logs WHERE completed = 0 ORDER BY date DESC LIMIT 1")
+    fun observeLatestUncompletedLog(): Flow<WorkoutLogEntity?>
+
+    /** Nombre d'exercices distincts loggés dans une séance (= progression %). */
+    @Query("SELECT COUNT(DISTINCT exerciseId) FROM workout_sets WHERE workoutLogId = :logId AND completed = 1")
+    suspend fun getCompletedExerciseCount(logId: Long): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWorkoutLog(log: WorkoutLogEntity): Long
 

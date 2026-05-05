@@ -58,6 +58,12 @@ class WorkoutRepository @Inject constructor(
     fun getRecentWorkoutLogs(limit: Int): Flow<List<WorkoutLogEntity>> =
         workoutLogDao.getRecentWorkoutLogs(limit)
 
+    fun observeLatestUncompletedLog(): Flow<WorkoutLogEntity?> =
+        workoutLogDao.observeLatestUncompletedLog()
+
+    suspend fun getCompletedExerciseCount(logId: Long): Int =
+        workoutLogDao.getCompletedExerciseCount(logId)
+
     suspend fun insertWorkoutLog(log: WorkoutLogEntity): Long =
         workoutLogDao.insertWorkoutLog(log)
 

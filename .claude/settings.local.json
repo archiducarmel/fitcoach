@@ -79,7 +79,11 @@
       "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; .\\\\gradlew.bat :app:compileDebugKotlin --console=plain 2>&1 | Select-Object -Last 100)",
       "Bash(git commit *)",
       "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; .\\\\gradlew.bat :app:compileDebugKotlin --console=plain 2>&1 | Select-Object -Last 80)",
-      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; .\\\\gradlew.bat :app:compileDebugKotlin :app:testDebugUnitTest --console=plain --tests \"com.shredcoach.app.domain.training.OneRepMaxCalculatorTest\" --tests \"com.shredcoach.app.domain.streak.StreakServiceTest\" --tests \"com.shredcoach.app.domain.training.PlateauDetectorTest\" 2>&1 | Select-Object -Last 80)"
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; .\\\\gradlew.bat :app:compileDebugKotlin :app:testDebugUnitTest --console=plain --tests \"com.shredcoach.app.domain.training.OneRepMaxCalculatorTest\" --tests \"com.shredcoach.app.domain.streak.StreakServiceTest\" --tests \"com.shredcoach.app.domain.training.PlateauDetectorTest\" 2>&1 | Select-Object -Last 80)",
+      "Bash(.\\\\gradlew.bat :app:compileDebugKotlin --console=plain)",
+      "PowerShell(.\\\\gradlew.bat :app:compileDebugKotlin --console=plain 2>&1 | Select-Object -Last 100)",
+      "PowerShell($env:JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:Path=\"$env:JAVA_HOME\\\\bin;$env:Path\"; .\\\\gradlew.bat :app:compileDebugKotlin --console=plain 2>&1 | Select-Object -Last 80)",
+      "PowerShell($env:JAVA_HOME=\"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:Path=\"$env:JAVA_HOME\\\\bin;$env:Path\"; .\\\\gradlew.bat :app:compileDebugKotlin :app:testDebugUnitTest --console=plain 2>&1 | Select-Object -Last 30)"
     ]
   }
 }
