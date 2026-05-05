@@ -230,7 +230,8 @@ class HomeViewModel @Inject constructor(
                 durationMinutes = 0,
                 exerciseCount = 0,
                 createdAt = LocalDateTime.now(),
-                isCustom = true
+                isCustom = true,
+                isFreestyle = true
             )
             val workoutId = workoutRepository.insertWorkout(workout)
             val log = WorkoutLogEntity(

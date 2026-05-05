@@ -49,4 +49,20 @@ data class WorkoutLogEntity(
     val currentSetStartedAt: LocalDateTime? = null,
     /** Pour les exos chronométrés (gainage…), durée cible. 0 = pas timed. */
     val currentSetTimedTotalSeconds: Int = 0,
+    // ─── Reprise robuste — v36 ───────────────────────────────────────────
+    /**
+     * Wall-clock cible de fin du repos en cours. Null = pas de repos actif.
+     * `restRemaining = max(0, endsAt - now)`, `restElapsed = totalSec - remaining`.
+     * Permet au décompte de continuer correctement après navigation/cold-start.
+     */
+    val currentRestEndsAt: LocalDateTime? = null,
+    /** Durée totale du repos en cours (pour calculer elapsed). 0 = pas de repos. */
+    val currentRestTotalSeconds: Int = 0,
+    /**
+     * JSON du Map<exerciseIndex, extraSeriesCount> pour les séries bonus
+     * ajoutées à la volée pendant la séance. Format : `{"0":1,"2":2}` =
+     * exo 0 a +1 série, exo 2 a +2 séries. Vide = `{}`. Persisté pour ne
+     * pas perdre le slot bonus au retour sur l'écran.
+     */
+    val extraSeriesJson: String = "{}",
 )

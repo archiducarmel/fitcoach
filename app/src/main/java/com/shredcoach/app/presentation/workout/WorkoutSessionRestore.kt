@@ -51,7 +51,8 @@ internal data class RestoredProgress(
 internal fun rebuildProgressFromSets(
     exercises: List<ExerciseEntity>,
     sets: List<WorkoutSetEntity>,
-    nowProvider: () -> LocalDateTime = { LocalDateTime.now() }
+    nowProvider: () -> LocalDateTime = { LocalDateTime.now() },
+    extraSeriesMap: Map<Int, Int> = emptyMap()
 ): RestoredProgress {
     require(exercises.isNotEmpty()) { "rebuildProgressFromSets ne doit pas être appelé sur une liste d'exos vide" }
 
@@ -74,14 +75,24 @@ internal fun rebuildProgressFromSets(
 
     // Index : 1er exo non-fini. Les skips comptent dans le total — un set
     // skippé occupe un slot, donc la prochaine série démarre au n+1.
+    // **Bonus series** : on inclut les séries bonus (extraSeriesMap) dans le
+    // total cible par exo. Sans ça, restaurer une séance où l'user avait
+    // ajouté +1 série à l'exo 0 nous ferait croire qu'il est déjà passé à
+    // l'exo suivant alors qu'il a juste fait sa série bonus.
     val countByExoId = sets.groupingBy { it.exerciseId }.eachCount()
-    var currentIndex = exercises.indexOfFirst { exo ->
-        (countByExoId[exo.id] ?: 0) < exo.series
+    var currentIndex = -1
+    for ((idx, exo) in exercises.withIndex()) {
+        val target = exo.series + (extraSeriesMap[idx] ?: 0)
+        if ((countByExoId[exo.id] ?: 0) < target) {
+            currentIndex = idx
+            break
+        }
     }
     if (currentIndex < 0) currentIndex = exercises.size - 1
     val currentExo = exercises[currentIndex]
+    val currentTarget = currentExo.series + (extraSeriesMap[currentIndex] ?: 0)
     val currentSeries = ((countByExoId[currentExo.id] ?: 0) + 1)
-        .coerceAtMost(currentExo.series)
+        .coerceAtMost(currentTarget.coerceAtLeast(1))
 
     // exerciseDurations : depuis les sets qui ont stampé exerciseDurationSeconds
     // (= dernière série d'un exo terminé). Mappé par exoId → idx dans la liste.

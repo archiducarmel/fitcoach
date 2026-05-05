@@ -86,6 +86,14 @@ interface WorkoutLogDao {
     @Query("UPDATE workout_logs SET currentSetStartedAt = :startedAt, currentSetTimedTotalSeconds = :timedTotal WHERE id = :logId")
     suspend fun updateCurrentSetState(logId: Long, startedAt: LocalDateTime?, timedTotal: Int)
 
+    /** Met à jour l'ancre wall-clock du décompte de repos (null = pas de repos). */
+    @Query("UPDATE workout_logs SET currentRestEndsAt = :endsAt, currentRestTotalSeconds = :totalSec WHERE id = :logId")
+    suspend fun updateCurrentRestState(logId: Long, endsAt: LocalDateTime?, totalSec: Int)
+
+    /** Met à jour le JSON des séries bonus à la volée. */
+    @Query("UPDATE workout_logs SET extraSeriesJson = :json WHERE id = :logId")
+    suspend fun updateExtraSeriesJson(logId: Long, json: String)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWorkoutLog(log: WorkoutLogEntity): Long
 

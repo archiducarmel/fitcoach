@@ -110,6 +110,7 @@ object DatabaseModule {
             .addMigrations(
                 Migrations.migration33to34(context),
                 Migrations.migration34to35(),
+                Migrations.migration35to36(),
             )
             // Fallback uniquement en cas de **downgrade** (ex : utilisateur
             // sideload une version plus ancienne). Aucun fallback destructif

@@ -260,17 +260,22 @@ class WorkoutSessionViewModel @Inject constructor(
             }
         }
 
-        // Observer tous les chronos + état "série en cours" du SessionManager.
+        // Observer tous les chronos + états (set, rest) du SessionManager.
         // Tout est ancré wall-clock dans le manager et persisté en DB → survit
         // aux navigations et au process death (cf. ActiveSessionManager).
         viewModelScope.launch {
             sessionManager.session.collect { session ->
                 if (session == null) return@collect
 
-                val prevTimedRemaining = _state.value.timedSetSecondsRemaining
-                val prevTimedTotal = _state.value.timedSetTotalSeconds
+                val prev = _state.value
+                val prevTimedRemaining = prev.timedSetSecondsRemaining
+                val prevTimedTotal = prev.timedSetTotalSeconds
                 val newTimedRemaining = session.currentSetTimedRemaining
                 val newTimedTotal = session.currentSetTimedTotalSeconds
+                val prevRestActive = prev.isRestTimerActive
+                val prevRestRemaining = prev.restTimeRemaining
+                val newRestActive = session.isRestInProgress
+                val newRestRemaining = session.currentRestRemaining
 
                 _state.update {
                     it.copy(
@@ -280,20 +285,54 @@ class WorkoutSessionViewModel @Inject constructor(
                         isSetInProgress = session.isSetInProgress,
                         setStartTime = session.currentSetStartedAt,
                         timedSetTotalSeconds = newTimedTotal,
-                        timedSetSecondsRemaining = newTimedRemaining
+                        timedSetSecondsRemaining = newTimedRemaining,
+                        isRestTimerActive = newRestActive,
+                        restTimeRemaining = newRestRemaining,
+                        restTimeElapsed = session.currentRestElapsed
                     )
                 }
 
                 // Auto-validation des sets timed quand le décompte atteint 0
                 // (gainage : la série est validée automatiquement à la fin).
                 // Détection de la transition (>0 → 0) pour ne pas valider 2x.
-                val justExpired = prevTimedTotal > 0 && prevTimedRemaining > 0 &&
+                val setJustExpired = prevTimedTotal > 0 && prevTimedRemaining > 0 &&
                     newTimedTotal > 0 && newTimedRemaining == 0 &&
                     session.isSetInProgress
-                if (justExpired) {
+                if (setJustExpired) {
                     onSetCompleted()
                 }
+
+                // Fin NATURELLE du repos : on détecte le tick où le décompte
+                // atteint 0 alors que le manager le considère encore actif.
+                // 2 sous-cas :
+                //  (a) tick normal : prev>0 → new=0 (rest a expiré pendant
+                //      qu'on regardait l'écran).
+                //  (b) restore après navigation/cold-start où le repos a déjà
+                //      expiré pendant qu'on était parti : prev=inactive
+                //      (initial state) → new=active+remaining=0 (le manager a
+                //      gardé l'endsAt mais la tick l'a déjà mis à 0). Sans ce
+                //      cas, le user reviendrait sur un repos figé à 0s sans
+                //      auto-start de la série suivante.
+                // Cas pause/skip user : markRestCompleted clear endsAt côté
+                // manager → newRestActive=false → cette détection ne fire pas
+                // (voulu, pour ne pas auto-start dans ces cas-là).
+                val restEnded = newRestActive && newRestRemaining == 0 &&
+                    (prevRestRemaining > 0 || !prevRestActive)
+                if (restEnded) {
+                    handleRestEnded()
+                }
             }
+        }
+    }
+
+    /** Side-effects à la fin d'un repos (déclenché par le flow ou par skipRestTimer). */
+    private fun handleRestEnded() {
+        saveActualRest()
+        // Clear côté manager pour que isRestInProgress devienne false. Idempotent
+        // si déjà cleared (ex. skipRestTimer a déjà appelé markRestCompleted).
+        sessionManager.markRestCompleted()
+        if (_state.value.autoStartAfterRest) {
+            onSetStarted()
         }
     }
 
@@ -309,11 +348,25 @@ class WorkoutSessionViewModel @Inject constructor(
                 if (workoutLog != null) {
                     val exercises = workoutRepository.getExercisesForWorkoutLog(workoutLogId)
                     val now = LocalDateTime.now()
-                    val freestyle = exercises.isEmpty()
+                    // ── Détection freestyle FIABLE via WorkoutEntity.isFreestyle ──
+                    // **Pourquoi pas exercises.isEmpty()** : une séance freestyle dont
+                    // l'user a déjà ajouté des exos avant de quitter aurait
+                    // exercises.isNotEmpty() → on tomberait dans la branche "mode
+                    // normal" qui ne set PAS isFreestyle=true → fin du dernier exo
+                    // appellerait completeWorkout() au lieu de
+                    // showFreestyleOverviewAfterExercise() → user ne peut plus
+                    // ajouter d'exos après retour. Lecture de l'entity = source de
+                    // vérité robuste, indépendante du contenu courant.
+                    val workoutEntity = workoutLog.workoutId?.let { workoutRepository.getWorkoutById(it) }
+                    val isFreestyleSession = workoutEntity?.isFreestyle == true
+                    val openEmptyFreestyleDialog = isFreestyleSession && exercises.isEmpty()
 
                     // Poids du corps pour exos time-based
                     val profile = userRepository.getUserProfileOnce()
                     val bodyWeight = profile?.currentWeightKg ?: 75.0
+
+                    // Désérialisation des séries bonus persistées (v36).
+                    val restoredExtras = parseExtraSeriesJson(workoutLog.extraSeriesJson)
 
                     // ── Restauration progression depuis la DB ──
                     // **Pourquoi** : sans cela, ouvrir une séance déjà commencée
@@ -327,9 +380,9 @@ class WorkoutSessionViewModel @Inject constructor(
                         workoutRepository.getWorkoutSets(workoutLogId)
                     }.getOrDefault(emptyList())
                     val restored = if (existingSets.isNotEmpty() && exercises.isNotEmpty())
-                        rebuildProgressFromSets(exercises, existingSets) else null
+                        rebuildProgressFromSets(exercises, existingSets, extraSeriesMap = restoredExtras) else null
 
-                    if (freestyle) {
+                    if (openEmptyFreestyleDialog) {
                         // Mode Freestyle : séance vide, l'utilisateur ajoute les exercices au fur et à mesure
                         _state.update {
                             it.copy(
@@ -338,6 +391,7 @@ class WorkoutSessionViewModel @Inject constructor(
                                 sessionStartTime = workoutLog.startTime,
                                 userBodyWeightKg = bodyWeight,
                                 isFreestyle = true,
+                                extraSeriesMap = restoredExtras,
                                 isLoading = false,
                                 showAddExerciseDialog = true, // Ouvrir le picker directement
                                 addExerciseStep = 0
@@ -360,6 +414,12 @@ class WorkoutSessionViewModel @Inject constructor(
                                 // sessionStartTime ancré sur startTime du log → durée
                                 // cohérente même après cold-start.
                                 sessionStartTime = workoutLog.startTime,
+                                // **Critique pour Bug C** : restaure le flag même quand
+                                // exercises.isNotEmpty() (séance libre avec des exos déjà
+                                // ajoutés). Sans ça, la fin du dernier exo court-circuite
+                                // l'overview et termine la séance prématurément.
+                                isFreestyle = isFreestyleSession,
+                                extraSeriesMap = restoredExtras,
                                 exerciseStartTimes = restored?.exerciseStartTimes
                                     ?: mapOf(0 to now),
                                 exerciseDurations = restored?.exerciseDurations ?: emptyMap(),
@@ -582,6 +642,7 @@ class WorkoutSessionViewModel @Inject constructor(
         }
         sessionManager.updateTotalExercises(newExercises.size)
         persistAddedExercise(exercise, 0)
+        persistExtraSeries(newExtraSeriesMap)
     }
 
     /** Insère un exercice APRÈS l'exercice courant dans la liste de la séance. */
@@ -620,6 +681,7 @@ class WorkoutSessionViewModel @Inject constructor(
         }
         sessionManager.updateTotalExercises(newExercises.size)
         persistAddedExercise(exercise, insertAt)
+        persistExtraSeries(newExtraSeriesMap)
     }
 
     /** Insère un exercice à la fin de la séance (après tous les exos restants). */
@@ -733,6 +795,7 @@ class WorkoutSessionViewModel @Inject constructor(
             showPostLastSetPrompt = false,
             currentSeries = newCurrentSeries
         ) }
+        persistExtraSeries(extras)
     }
 
     /** L'utilisateur confirme qu'il ne veut pas ajouter de série → passer à l'exo suivant. */
@@ -906,37 +969,37 @@ class WorkoutSessionViewModel @Inject constructor(
     // REPOS
     // ══════════════════════════════════════════
 
+    /**
+     * Démarre le décompte de repos. Délègue à ActiveSessionManager qui ancre
+     * le `endsAt` wall-clock et persiste en DB → le décompte continue
+     * correctement après navigation/cold-start. Le tick global du manager met
+     * à jour `restRemaining` chaque seconde, et le flow collector déclenche
+     * [handleRestEnded] quand le décompte atteint 0.
+     */
     private fun startRestTimer() {
-        restTimerJob?.cancel()
-        restTimerJob = viewModelScope.launch {
-            while (_state.value.restTimeRemaining > 0) {
-                delay(1000)
-                _state.update { it.copy(restTimeRemaining = it.restTimeRemaining - 1, restTimeElapsed = it.restTimeElapsed + 1) }
-            }
-            // Repos terminé
-            saveActualRest()
-            _state.update { it.copy(isRestTimerActive = false) }
-            // Auto-start série suivante si config activée
-            if (_state.value.autoStartAfterRest) {
-                onSetStarted()
-            }
-        }
+        sessionManager.markRestStarted(_state.value.restTimeRemaining.coerceAtLeast(1))
     }
 
     fun skipRestTimer() {
-        restTimerJob?.cancel()
-        saveActualRest()
-        _state.update { it.copy(isRestTimerActive = false, restTimeRemaining = 0) }
-        // Auto-start
-        if (_state.value.autoStartAfterRest) {
-            onSetStarted()
-        }
+        // L'user skip avant la fin → on traite comme une fin de repos normale
+        // (capture l'elapsed pour la stat, clear côté manager, auto-start).
+        handleRestEnded()
     }
 
-    fun pauseRestTimer() { restTimerJob?.cancel() }
+    /**
+     * Pause/resume "soft" : on annule simplement le repos côté manager (le
+     * flow rendra isRestTimerActive=false, l'UI cachera le décompte) et l'user
+     * peut redémarrer une autre série quand il veut. La pause stricte (geler
+     * le décompte) n'est plus supportée — moins critique que la robustesse
+     * cross-process. Côté UX : pause = "j'arrête le repos manuellement".
+     */
+    fun pauseRestTimer() { sessionManager.markRestCompleted() }
 
     fun resumeRestTimer() {
-        if (_state.value.restTimeRemaining > 0) startRestTimer()
+        // No-op : si le repos est encore actif côté manager, le tick continue
+        // tout seul. Si l'user a fait pauseRestTimer, c'est qu'il a délibérément
+        // sauté le repos → resume ne devrait pas le ressusciter. L'UI bouton
+        // "resume" ne fait donc rien.
     }
 
     fun onRestComplete() { saveActualRest() }
@@ -1519,6 +1582,7 @@ class WorkoutSessionViewModel @Inject constructor(
             )
         }
         sessionManager.updateTotalExercises(newExercises.size)
+        persistExtraSeries(newExtras)
     }
 
     fun toggleExerciseOverview() {
@@ -1577,6 +1641,63 @@ class WorkoutSessionViewModel @Inject constructor(
         if (exercise == null) return ""
         val match = Regex("\\d+\\.?\\d*").find(exercise.startingWeight)
         return match?.value ?: "0"
+    }
+
+    // ══════════════════════════════════════════
+    // PERSISTANCE EXTRA SERIES (séries bonus à la volée)
+    // ══════════════════════════════════════════
+
+    /**
+     * Sérialise [Map]<exerciseIndex, extraCount> en JSON pour persistance.
+     * Format : `{"0":1,"2":2}`. Les clés Int sont stringifiées (contrainte JSON).
+     * org.json est suffisant : pas de dépendance externe, et la map est petite
+     * (typiquement <10 entrées par séance).
+     */
+    private fun serializeExtraSeries(map: Map<Int, Int>): String {
+        if (map.isEmpty()) return "{}"
+        val obj = org.json.JSONObject()
+        for ((idx, count) in map) {
+            if (count > 0) obj.put(idx.toString(), count)
+        }
+        return obj.toString()
+    }
+
+    /**
+     * Reconstitue le [Map] à partir du JSON persisté. Tolérant aux entrées
+     * malformées (best-effort) — un JSON corrompu donne une map vide plutôt
+     * qu'un crash, pour ne jamais bloquer le restore d'une séance.
+     */
+    private fun parseExtraSeriesJson(json: String): Map<Int, Int> {
+        if (json.isBlank() || json == "{}") return emptyMap()
+        return try {
+            val obj = org.json.JSONObject(json)
+            val result = mutableMapOf<Int, Int>()
+            val keys = obj.keys()
+            while (keys.hasNext()) {
+                val k = keys.next()
+                val idx = k.toIntOrNull() ?: continue
+                val count = obj.optInt(k, 0)
+                if (count > 0) result[idx] = count
+            }
+            result
+        } catch (_: Exception) { emptyMap() }
+    }
+
+    /**
+     * Persiste le [Map] courant en DB de manière fire-and-forget. Appelé après
+     * toute mutation de `state.extraSeriesMap` pour que le retour sur l'écran
+     * (banner, navigation) reflète fidèlement les séries bonus ajoutées.
+     */
+    private fun persistExtraSeries(map: Map<Int, Int>) {
+        val workoutLogId = _state.value.workoutLogId ?: return
+        val json = serializeExtraSeries(map)
+        viewModelScope.launch {
+            try {
+                workoutRepository.updateExtraSeriesJson(workoutLogId, json)
+            } catch (t: Throwable) {
+                android.util.Log.w("WorkoutSessionVM", "persistExtraSeries failed", t)
+            }
+        }
     }
 
     override fun onCleared() {

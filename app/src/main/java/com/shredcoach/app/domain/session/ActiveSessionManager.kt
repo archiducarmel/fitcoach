@@ -66,9 +66,23 @@ class ActiveSessionManager @Inject constructor(
         /** Élapsed depuis le démarrage de la série (0 si pas en cours). */
         val currentSetSeconds: Long = 0,
         /** Pour les sets timed : secondes restantes avant auto-validation. */
-        val currentSetTimedRemaining: Int = 0
+        val currentSetTimedRemaining: Int = 0,
+        // ─── Repos entre séries ───────────────────────────────────────────
+        /**
+         * Wall-clock cible de fin du repos. Null = pas de repos en cours.
+         * Persisté en DB → le décompte continue correctement après navigation
+         * et cold-start (`remaining = max(0, endsAt - now)`).
+         */
+        val currentRestEndsAt: LocalDateTime? = null,
+        /** Durée totale du repos (pour calculer elapsed = total - remaining). */
+        val currentRestTotalSeconds: Int = 0,
+        /** Secondes restantes du décompte de repos (computed via tick). */
+        val currentRestRemaining: Int = 0,
+        /** Secondes écoulées du repos (= total - remaining, clamp ≥ 0). */
+        val currentRestElapsed: Int = 0
     ) {
         val isSetInProgress: Boolean get() = currentSetStartedAt != null
+        val isRestInProgress: Boolean get() = currentRestEndsAt != null
     }
 
     private val _session = MutableStateFlow<ActiveSession?>(null)
@@ -101,6 +115,8 @@ class ActiveSessionManager @Inject constructor(
         currentExerciseStartedAt: LocalDateTime,
         currentSetStartedAt: LocalDateTime?,
         currentSetTimedTotalSeconds: Int,
+        currentRestEndsAt: LocalDateTime?,
+        currentRestTotalSeconds: Int,
         restoredFromDb: Boolean
     ) {
         val now = LocalDateTime.now()
@@ -109,6 +125,12 @@ class ActiveSessionManager @Inject constructor(
         } ?: 0L
         val initialSetRemaining = if (currentSetTimedTotalSeconds > 0 && currentSetStartedAt != null) {
             (currentSetTimedTotalSeconds - initialSetSeconds.toInt()).coerceAtLeast(0)
+        } else 0
+        val initialRestRemaining = currentRestEndsAt?.let {
+            Duration.between(now, it).seconds.toInt().coerceAtLeast(0)
+        } ?: 0
+        val initialRestElapsed = if (currentRestEndsAt != null && currentRestTotalSeconds > 0) {
+            (currentRestTotalSeconds - initialRestRemaining).coerceAtLeast(0)
         } else 0
         _session.value = ActiveSession(
             workoutLogId = workoutLogId,
@@ -124,7 +146,15 @@ class ActiveSessionManager @Inject constructor(
             currentSetStartedAt = currentSetStartedAt,
             currentSetTimedTotalSeconds = currentSetTimedTotalSeconds,
             currentSetSeconds = initialSetSeconds,
-            currentSetTimedRemaining = initialSetRemaining
+            currentSetTimedRemaining = initialSetRemaining,
+            // Si le repos a déjà expiré au moment du restore (remaining=0), on
+            // clear endsAt — sinon le tick continuerait à le voir actif et
+            // l'auto-start spam ne serait jamais armé. Permet aussi à l'UI de
+            // cacher proprement le décompte.
+            currentRestEndsAt = if (initialRestRemaining > 0) currentRestEndsAt else null,
+            currentRestTotalSeconds = if (initialRestRemaining > 0) currentRestTotalSeconds else 0,
+            currentRestRemaining = initialRestRemaining,
+            currentRestElapsed = initialRestElapsed
         )
         startChrono()
     }
@@ -142,11 +172,14 @@ class ActiveSessionManager @Inject constructor(
             currentExerciseStartedAt = now,
             currentSetStartedAt = null,
             currentSetTimedTotalSeconds = 0,
+            currentRestEndsAt = null,
+            currentRestTotalSeconds = 0,
             restoredFromDb = false
         )
-        // Persister l'ancre de l'exo courant pour cold-start (clear set state).
+        // Persister l'ancre de l'exo courant pour cold-start (clear set + rest).
         persistExerciseStartedAt(workoutLogId, now)
         persistSetState(workoutLogId, null, 0)
+        persistRestState(workoutLogId, null, 0)
     }
 
     /**
@@ -166,16 +199,21 @@ class ActiveSessionManager @Inject constructor(
             currentExerciseIndex = index,
             currentExerciseStartedAt = newStartedAt,
             currentExerciseSeconds = if (isNewExercise) 0 else current.currentExerciseSeconds,
-            // Une transition d'exo annule toute série en cours (cas exotique :
+            // Une transition d'exo annule toute série/repos en cours (cas exotique :
             // user skip un exo en pleine série). Sécurise l'invariant set ⊂ exo.
             currentSetStartedAt = if (isNewExercise) null else current.currentSetStartedAt,
             currentSetTimedTotalSeconds = if (isNewExercise) 0 else current.currentSetTimedTotalSeconds,
             currentSetSeconds = if (isNewExercise) 0 else current.currentSetSeconds,
-            currentSetTimedRemaining = if (isNewExercise) 0 else current.currentSetTimedRemaining
+            currentSetTimedRemaining = if (isNewExercise) 0 else current.currentSetTimedRemaining,
+            currentRestEndsAt = if (isNewExercise) null else current.currentRestEndsAt,
+            currentRestTotalSeconds = if (isNewExercise) 0 else current.currentRestTotalSeconds,
+            currentRestRemaining = if (isNewExercise) 0 else current.currentRestRemaining,
+            currentRestElapsed = if (isNewExercise) 0 else current.currentRestElapsed
         )
         if (isNewExercise) {
             persistExerciseStartedAt(current.workoutLogId, newStartedAt)
             persistSetState(current.workoutLogId, null, 0)
+            persistRestState(current.workoutLogId, null, 0)
         }
     }
 
@@ -210,6 +248,40 @@ class ActiveSessionManager @Inject constructor(
         persistSetState(current.workoutLogId, null, 0)
     }
 
+    /**
+     * Démarre/redémarre le décompte de repos avec [durationSec] secondes.
+     * Stamp wall-clock + persiste pour survie navigation/cold-start. Le tick
+     * mettra à jour `currentRestRemaining` chaque seconde, et le caller détecte
+     * le passage à 0 pour déclencher l'auto-start de la série suivante.
+     */
+    fun markRestStarted(durationSec: Int) {
+        val current = _session.value ?: return
+        val now = LocalDateTime.now()
+        val endsAt = now.plusSeconds(durationSec.toLong())
+        _session.value = current.copy(
+            currentRestEndsAt = endsAt,
+            currentRestTotalSeconds = durationSec,
+            currentRestRemaining = durationSec,
+            currentRestElapsed = 0
+        )
+        persistRestState(current.workoutLogId, endsAt, durationSec)
+    }
+
+    /**
+     * Repos terminé / skippé / annulé. Clear l'état rest et persiste.
+     */
+    fun markRestCompleted() {
+        val current = _session.value ?: return
+        if (current.currentRestEndsAt == null) return
+        _session.value = current.copy(
+            currentRestEndsAt = null,
+            currentRestTotalSeconds = 0,
+            currentRestRemaining = 0,
+            currentRestElapsed = 0
+        )
+        persistRestState(current.workoutLogId, null, 0)
+    }
+
     private fun persistExerciseStartedAt(logId: Long, startedAt: LocalDateTime?) {
         if (logId <= 0) return
         scope.launch {
@@ -228,6 +300,17 @@ class ActiveSessionManager @Inject constructor(
                 workoutRepositoryProvider.get().updateCurrentSetState(logId, startedAt, timedTotal)
             } catch (t: Throwable) {
                 android.util.Log.w("ActiveSessionManager", "persistSetState failed", t)
+            }
+        }
+    }
+
+    private fun persistRestState(logId: Long, endsAt: LocalDateTime?, totalSec: Int) {
+        if (logId <= 0) return
+        scope.launch {
+            try {
+                workoutRepositoryProvider.get().updateCurrentRestState(logId, endsAt, totalSec)
+            } catch (t: Throwable) {
+                android.util.Log.w("ActiveSessionManager", "persistRestState failed", t)
             }
         }
     }
@@ -333,6 +416,19 @@ class ActiveSessionManager @Inject constructor(
             }
             val setTimedTotal = if (setStartedAt != null) log.currentSetTimedTotalSeconds else 0
 
+            // Repos en cours : on accepte la valeur DB si endsAt est dans une
+            // fenêtre raisonnable (pas dans le futur lointain, pas trop ancien).
+            // Si endsAt est passé (remaining ≤ 0), on traite comme "repos
+            // terminé" et on ne propage pas — l'auto-start sera cancellé.
+            val restEndsAt = log.currentRestEndsAt?.takeIf { endsAt ->
+                val remaining = Duration.between(now, endsAt).seconds
+                // Garde-fou : un endsAt > 10 min dans le futur depuis startTime
+                // est probablement un état corrompu. La fenêtre des reps utiles
+                // est typiquement 15-300s.
+                remaining > 0 && remaining < 600
+            }
+            val restTotalSec = if (restEndsAt != null) log.currentRestTotalSeconds else 0
+
             startSession(
                 workoutLogId = log.id,
                 totalExercises = exercises.size,
@@ -343,6 +439,8 @@ class ActiveSessionManager @Inject constructor(
                 currentExerciseStartedAt = exoStartedAt,
                 currentSetStartedAt = setStartedAt,
                 currentSetTimedTotalSeconds = setTimedTotal,
+                currentRestEndsAt = restEndsAt,
+                currentRestTotalSeconds = restTotalSec,
                 restoredFromDb = true
             )
         } catch (t: Throwable) {
@@ -393,11 +491,18 @@ class ActiveSessionManager @Inject constructor(
                 ) {
                     (current.currentSetTimedTotalSeconds - setSeconds.toInt()).coerceAtLeast(0)
                 } else 0
+                val (restRemaining, restElapsed) = current.currentRestEndsAt?.let { endsAt ->
+                    val remaining = Duration.between(now, endsAt).seconds.toInt().coerceAtLeast(0)
+                    val elapsedRest = (current.currentRestTotalSeconds - remaining).coerceAtLeast(0)
+                    remaining to elapsedRest
+                } ?: (0 to 0)
                 _session.value = current.copy(
                     globalChronoSeconds = elapsed,
                     currentExerciseSeconds = exoElapsed,
                     currentSetSeconds = setSeconds,
-                    currentSetTimedRemaining = setTimedRemaining
+                    currentSetTimedRemaining = setTimedRemaining,
+                    currentRestRemaining = restRemaining,
+                    currentRestElapsed = restElapsed
                 )
             }
         }

@@ -70,6 +70,34 @@ object Migrations {
         }
     }
 
+    /**
+     * v35 → v36 : 3 ajouts pour fiabiliser la reprise de séance après
+     * navigation / process death.
+     *
+     * - `workouts.isFreestyle` : marque les séances libres (créées via Home →
+     *   "Séance libre"). Détection robuste pour ne pas forcer la fin de séance
+     *   au lieu de proposer la vue d'ensemble quand l'user revient en cours.
+     * - `workout_logs.currentRestEndsAt` + `currentRestTotalSeconds` : ancre
+     *   wall-clock du décompte de repos pour qu'il continue correctement entre
+     *   navigations.
+     * - `workout_logs.extraSeriesJson` : Map<exoIdx, +N séries bonus> persisté
+     *   pour ne pas perdre les séries bonus ajoutées à la volée.
+     *
+     * Backfill `workouts.isFreestyle = 1` pour les workouts existants qui ont
+     * `name = "Séance libre"` (utilisateurs déjà en cours sur une telle séance).
+     */
+    fun migration35to36(): Migration = object : Migration(35, 36) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `workouts` ADD COLUMN `isFreestyle` INTEGER NOT NULL DEFAULT 0")
+            // Backfill : marque les freestyles existants (créés avant v36).
+            db.execSQL("UPDATE `workouts` SET `isFreestyle` = 1 WHERE `name` = 'Séance libre'")
+
+            db.execSQL("ALTER TABLE `workout_logs` ADD COLUMN `currentRestEndsAt` TEXT")
+            db.execSQL("ALTER TABLE `workout_logs` ADD COLUMN `currentRestTotalSeconds` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `workout_logs` ADD COLUMN `extraSeriesJson` TEXT NOT NULL DEFAULT '{}'")
+        }
+    }
+
     private fun copyApiKeysToSecureStore(context: Context, db: SupportSQLiteDatabase) {
         try {
             val masterKey = MasterKey.Builder(context)

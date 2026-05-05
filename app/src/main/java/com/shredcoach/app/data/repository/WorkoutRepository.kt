@@ -76,6 +76,12 @@ class WorkoutRepository @Inject constructor(
     suspend fun updateCurrentSetState(logId: Long, startedAt: LocalDateTime?, timedTotal: Int) =
         workoutLogDao.updateCurrentSetState(logId, startedAt, timedTotal)
 
+    suspend fun updateCurrentRestState(logId: Long, endsAt: LocalDateTime?, totalSec: Int) =
+        workoutLogDao.updateCurrentRestState(logId, endsAt, totalSec)
+
+    suspend fun updateExtraSeriesJson(logId: Long, json: String) =
+        workoutLogDao.updateExtraSeriesJson(logId, json)
+
     suspend fun deleteWorkoutLog(log: WorkoutLogEntity) =
         workoutLogDao.deleteWorkoutLog(log)
 
