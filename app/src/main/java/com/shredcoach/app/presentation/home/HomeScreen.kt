@@ -85,14 +85,14 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
         else -> "Bonsoir"
     }
     val firstName = userProfile?.firstName?.takeIf { it.isNotBlank() } ?: "Champion"
+    // Subtitle : on retire toute référence au streak (la card streak a été
+    // supprimée de la home) — sinon dissonance entre "X jours de suite"
+    // affiché en sous-titre et l'absence de visualisation associée.
     val subtitle = when {
-        greetingInfo.hasWorkedOutToday && greetingInfo.streakDays > 1 ->
-            "Bravo ! ${greetingInfo.streakDays} jours de suite"
         greetingInfo.hasWorkedOutToday -> "Bien joué aujourd'hui !"
         greetingInfo.isTodayWorkoutDay -> "C'est jour de séance !"
         greetingInfo.lastWorkoutWasYesterday && greetingInfo.lastWorkoutVolume > 0 ->
             "Super séance hier, ${greetingInfo.lastWorkoutVolume.toInt()} kg soulevés"
-        greetingInfo.streakDays > 1 -> "${greetingInfo.streakDays} jours de suite, continue !"
         else -> "On s'y met ?"
     }
 
@@ -202,12 +202,9 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         lineHeight = 18.sp
                     )
-                    if (greetingInfo.streakDays >= 1) {
-                        com.shredcoach.app.presentation.common.StreakHeroBadge(
-                            days = greetingInfo.streakDays,
-                            bestDays = greetingInfo.bestStreakDays,
-                        )
-                    }
+                    // StreakHeroBadge retiré : la card streak n'a plus sa
+                    // place sur la home. Le streak reste visible sur le
+                    // dashboard "Mes Stats".
                 }
             }
 
@@ -220,6 +217,22 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             }
 
             // ═══════════════════════════════════════
+            // SECTION OUTILS IA — accès rapide premium
+            // ═══════════════════════════════════════
+            // Les 4 outils AI-powered (Shreddy, Meal/Body/Gym Scan) sont
+            // remontés en hero just après le titre — c'est la valeur n°1
+            // différenciante de l'app, ils ne doivent pas être enterrés
+            // dans la section "Plus" collapsible.
+            StaggeredAppear(index = 1) {
+                com.shredcoach.app.presentation.home.components.AiToolsSection(
+                    onShreddyClick = { navController.navigate(Screen.Chat.route) },
+                    onMealScanClick = { navController.navigate(Screen.MealScanner.route) },
+                    onBodyScanClick = { navController.navigate(Screen.BodyScanner.route) },
+                    onGymScanClick = { navController.navigate(Screen.GymScan.route) },
+                )
+            }
+
+            // ═══════════════════════════════════════
             // SECTION 1 : DÉMARRER UN ENTRAÎNEMENT
             // Les 3 entry points, hiérarchisés
             // ═══════════════════════════════════════
@@ -228,7 +241,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             val calendarVm: com.shredcoach.app.presentation.calendar.CalendarViewModel = hiltViewModel()
             val calendarState by calendarVm.state.collectAsState()
             calendarState.nextUpcoming?.let { next ->
-                StaggeredAppear(index = 1) {
+                StaggeredAppear(index = 2) {
                     NextSessionWidget(
                         nextDate = next.date,
                         nextTime = next.time,
@@ -238,7 +251,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                 }
             }
 
-            StaggeredAppear(index = 2) {
+            StaggeredAppear(index = 3) {
                 Text("S'entraîner", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
             }
@@ -255,7 +268,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                 }
             }
 
-            StaggeredAppear(index = 3) {
+            StaggeredAppear(index = 4) {
                 val resumable = resumableSession
                 if (resumable != null) {
                     com.shredcoach.app.presentation.home.components.ResumeSessionCard(
@@ -305,7 +318,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             // Libre/Favoris/Créer sont des chemins de power-user à reléguer en
             // 2e tier visuel — éviter la décision paralysie sur la home.
             var otherOptionsExpanded by rememberSaveable { mutableStateOf(false) }
-            StaggeredAppear(index = 4) {
+            StaggeredAppear(index = 5) {
                 OtherOptionsHeader(
                     expanded = otherOptionsExpanded,
                     onToggle = { otherOptionsExpanded = !otherOptionsExpanded },
@@ -382,7 +395,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             // Calories + protéines + macros + prochain repas
             // ═══════════════════════════════════════
             todayNutrition?.let { nutrition ->
-                StaggeredAppear(index = 5) {
+                StaggeredAppear(index = 6) {
                     com.shredcoach.app.presentation.home.components.TodayNutritionCard(
                         nutrition = nutrition,
                         onScanMeal = { navController.navigate(Screen.MealScanner.route) },
@@ -396,7 +409,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             // PR récent / Progression / Plateau — un seul highlight
             // ═══════════════════════════════════════
             weeklyInsight?.let { insight ->
-                StaggeredAppear(index = 6) {
+                StaggeredAppear(index = 7) {
                     com.shredcoach.app.presentation.home.components.WeeklyInsightCard(
                         insight = insight,
                         onClick = { navController.switchTo(Screen.Stats.route) },
@@ -409,7 +422,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             // 5 emojis 1-tap, affiché tant que mood d'aujourd'hui pas tapé
             // ═══════════════════════════════════════
             if (todayMood == null) {
-                StaggeredAppear(index = 7) {
+                StaggeredAppear(index = 8) {
                     com.shredcoach.app.presentation.home.components.DailyCheckInCard(
                         onMoodSelected = { viewModel.saveMood(it) },
                     )
@@ -429,7 +442,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             // sont accessibles partout via la nav globale, pas besoin qu'elles
             // occupent 3 rangées en permanence sur la home.
             var moreExpanded by rememberSaveable { mutableStateOf(false) }
-            StaggeredAppear(index = 8) {
+            StaggeredAppear(index = 9) {
                 MoreSectionHeader(
                     expanded = moreExpanded,
                     onToggle = { moreExpanded = !moreExpanded },
