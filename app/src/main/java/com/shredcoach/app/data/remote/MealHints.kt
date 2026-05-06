@@ -64,3 +64,48 @@ ${parts.joinToString("\n")}
 4. Recalcule les macros en cohérence avec les poids estimés (weight_g/100 × valeur pour 100g).
 """.trimIndent()
 }
+
+/**
+ * Variante adaptée au mode TEXTE (pas de photo) : le LLM ne voit rien, donc
+ * les indices servent à dimensionner les portions à partir d'un référentiel
+ * de contenant. Les références à "ce que tu vois" sont retirées et
+ * remplacées par des règles d'estimation de remplissage standard.
+ */
+fun buildMealHintBlockForText(
+    plate: PlateType = PlateType.NONE,
+    bowl: BowlType = BowlType.NONE
+): String {
+    val parts = mutableListOf<String>()
+
+    if (plate != PlateType.NONE) {
+        val avgDiameter = plate.diameterCm.split("-").let {
+            ((it.first().trim().toIntOrNull() ?: 25) + (it.last().trim().toIntOrNull() ?: 27)) / 2
+        }
+        parts += """- CONTENANT UTILISÉ : ${plate.label.lowercase()}, diamètre ${plate.diameterCm} cm (${plate.usage.lowercase()}).
+  → Surface utile ≈ π×(${avgDiameter}/2)² ≈ ${(Math.PI * (avgDiameter / 2.0) * (avgDiameter / 2.0)).toInt()} cm².
+  → Référentiel de portion typique : assiette plate bien remplie ≈ 350-500 g, demi-remplie ≈ 200-300 g, simple accompagnement ≈ 100-150 g."""
+    }
+    if (bowl != BowlType.NONE) {
+        val capacityDesc = if (bowl == BowlType.SALADIER)
+            "saladier de grande contenance (1.5 à 3 L, soit 1500-3000 ml)"
+        else
+            "${bowl.label.lowercase()} de capacité ${bowl.volumeMl} ml"
+        val refPasta = if (bowl == BowlType.SALADIER) 1500 else (bowl.volumeMl * 0.8 * 0.8).toInt()
+        parts += """- CONTENANT UTILISÉ : $capacityDesc.
+  → Référentiel de remplissage : 80% rempli en pâtes/riz cuits ≈ ${refPasta} g, en soupe ≈ ${(bowl.volumeMl * 0.8).toInt()} g, en salade ≈ ${(bowl.volumeMl * 0.8 * 0.3).toInt()} g.
+  → Si l'utilisateur dit "1 bol" sans préciser, suppose un remplissage standard à 75-85%."""
+    }
+
+    if (parts.isEmpty()) return ""
+
+    return """
+
+═══ INDICES SUR LE CONTENANT (calibrent les portions) ═══
+${parts.joinToString("\n")}
+
+⚠️ RÈGLES :
+1. Les quantités EXPLICITES de la description (g, unités, "2 œufs") priment toujours sur ces indices.
+2. Quand la description est vague ("1 portion", "1 assiette"), utilise ces indices pour dimensionner.
+3. Recalcule les macros en cohérence (weight_g/100 × valeur pour 100g).
+""".trimIndent()
+}

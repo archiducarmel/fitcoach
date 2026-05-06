@@ -445,7 +445,8 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         description: String,
         apiKey: String,
         model: String = "gemini-2.5-flash",
-        provider: String = "GEMINI"
+        provider: String = "GEMINI",
+        hintBlock: String = ""
     ): Result<MealAnalysisResult> = withContext(Dispatchers.IO) {
         try {
             // Substitution simple via `replace` (PAS String.format) : le prompt
@@ -454,7 +455,9 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
             // utilisait String.format. `replace(CharSequence, CharSequence)`
             // n'interprète aucun caractère spécial → safe pour toute
             // description (y compris avec `$`, `\`, `%`, accents, emojis).
-            val finalPrompt = MEAL_TEXT_PROMPT.replace("{{USER_DESCRIPTION}}", description.trim())
+            val basePrompt = MEAL_TEXT_PROMPT.replace("{{USER_DESCRIPTION}}", description.trim())
+            // Append du bloc d'indices contenant (assiette/bol) si l'user en a renseigné.
+            val finalPrompt = if (hintBlock.isBlank()) basePrompt else basePrompt + "\n" + hintBlock
 
             val rawJson = when (provider.uppercase()) {
                 "GROQ" -> callGroqTextMeal(apiKey, finalPrompt)

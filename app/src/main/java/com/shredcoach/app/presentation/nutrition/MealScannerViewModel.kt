@@ -18,6 +18,7 @@ import com.shredcoach.app.data.remote.GeminiMealService
 import com.shredcoach.app.data.remote.MealAnalysisResult
 import com.shredcoach.app.data.remote.PlateType
 import com.shredcoach.app.data.remote.buildMealHintBlock
+import com.shredcoach.app.data.remote.buildMealHintBlockForText
 import com.shredcoach.app.data.repository.NutritionRepository
 import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.domain.nutrition.NutriScoreCalculator
@@ -202,11 +203,22 @@ class MealScannerViewModel @Inject constructor(
                 return@launch
             }
 
+            // Bloc d'indices contenant (assiette/bol) — variante texte
+            // (pas d'expressions "ce que tu vois", références adaptées
+            // au cas sans photo). hintDescription du HintsPanel n'est
+            // PAS injectée ici car en mode TEXT la description principale
+            // joue déjà ce rôle (le HintsPanel cache cette section).
+            val hintBlock = buildMealHintBlockForText(
+                plate = s.hintPlate,
+                bowl = s.hintBowl
+            )
+
             val result = geminiService.analyzeMealFromText(
                 description = s.textDescription,
                 apiKey = apiKey,
                 model = model,
-                provider = provider
+                provider = provider,
+                hintBlock = hintBlock
             )
 
             result.fold(

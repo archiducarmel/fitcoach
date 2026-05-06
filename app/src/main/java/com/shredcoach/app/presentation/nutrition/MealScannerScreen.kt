@@ -171,9 +171,7 @@ fun MealScannerScreen(
                         TextDescriptionPanel(
                             description = state.textDescription,
                             isAnalyzing = state.isAnalyzing,
-                            canAnalyze = state.canAnalyzeText,
                             onChange = { viewModel.setTextDescription(it) },
-                            onAnalyze = { viewModel.analyzeFromText() },
                             onCancel = { viewModel.setInputMode(MealInputMode.PHOTO) },
                         )
                     }
@@ -187,18 +185,43 @@ fun MealScannerScreen(
                 }
             }
 
-            // ─── Panneau d'aide à l'analyse (optionnel, mode PHOTO uniquement) ───
-            if (state.imageBitmap != null && state.result == null && !state.isAnalyzing) {
-                item { HintsPanel(state, viewModel) }
-            }
+            // ─── Panneau d'aide + bouton "Analyser ce repas" — partagés
+            //     entre les deux modes (PHOTO + TEXT) pour cohérence UX ───
+            // Affichage si : pas encore de résultat, pas en cours d'analyse,
+            // ET on est dans un état où l'analyse est possible (image chargée
+            // ou description texte).
+            val canShowAnalyzeFlow = state.result == null && !state.isAnalyzing &&
+                (state.imageBitmap != null || state.inputMode == MealInputMode.TEXT)
 
-            // ─── Bouton analyser (mode PHOTO uniquement — TEXT a son CTA dans le panel) ───
-            if (state.imageBitmap != null && state.result == null && !state.isAnalyzing) {
+            if (canShowAnalyzeFlow) {
+                item { HintsPanel(state, viewModel) }
+
                 item {
-                    Button(onClick = { viewModel.analyze() }, modifier = Modifier.fillMaxWidth().height(56.dp),
-                        shape = RoundedCornerShape(16.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangeVibrant)) {
-                        Icon(Icons.Default.AutoAwesome, null, Modifier.size(22.dp)); Spacer(Modifier.width(8.dp))
-                        Text("Analyser ce repas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    // En mode TEXT : bouton actif seulement si description valide.
+                    // En mode PHOTO : toujours actif (l'image a été chargée).
+                    val analyzeEnabled = state.imageBitmap != null || state.canAnalyzeText
+                    Button(
+                        onClick = {
+                            if (state.inputMode == MealInputMode.TEXT) viewModel.analyzeFromText()
+                            else viewModel.analyze()
+                        },
+                        enabled = analyzeEnabled,
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = OrangeVibrant)
+                    ) {
+                        Icon(Icons.Default.AutoAwesome, null, Modifier.size(22.dp))
+                        Spacer(Modifier.width(8.dp))
+                        // Texte identique aux 2 modes : maxLines=1 + softWrap=false
+                        // garantit aucun retour à la ligne ni troncature étrange
+                        // (typo titleMedium passe largement à 17 chars).
+                        Text(
+                            "Analyser ce repas",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            softWrap = false
+                        )
                     }
                 }
             }
@@ -298,7 +321,13 @@ fun MealScannerScreen(
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun HintsPanel(state: MealScannerState, viewModel: MealScannerViewModel) {
-    val hasAnyHint = state.hintPlate != PlateType.NONE || state.hintBowl != BowlType.NONE || state.hintDescription.isNotBlank()
+    // En mode TEXT, la description libre du HintsPanel ferait doublon avec
+    // la zone de saisie principale → on l'omet ; seuls plate/bowl pèsent dans
+    // `hasAnyHint` pour cohérence du badge "Indices renseignés".
+    val isTextMode = state.inputMode == MealInputMode.TEXT
+    val hasAnyHint = state.hintPlate != PlateType.NONE ||
+        state.hintBowl != BowlType.NONE ||
+        (!isTextMode && state.hintDescription.isNotBlank())
 
     Card(
         Modifier.fillMaxWidth(),
@@ -351,7 +380,9 @@ private fun HintsPanel(state: MealScannerState, viewModel: MealScannerViewModel)
                             Icon(Icons.Default.RadioButtonUnchecked, null, Modifier.size(16.dp), tint = OrangeVibrant)
                             Text("Type d'assiette", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                         }
-                        Text("Aide à estimer le poids de la nourriture via le diamètre",
+                        Text(
+                            if (isTextMode) "Aide à dimensionner ta portion à partir du contenant utilisé"
+                            else "Aide à estimer le poids de la nourriture via le diamètre",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -372,7 +403,9 @@ private fun HintsPanel(state: MealScannerState, viewModel: MealScannerViewModel)
                             Icon(Icons.Default.Circle, null, Modifier.size(16.dp), tint = OrangeVibrant)
                             Text("Type de bol", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                         }
-                        Text("Aide à estimer le poids via le volume",
+                        Text(
+                            if (isTextMode) "Aide à dimensionner ta portion à partir du volume du bol"
+                            else "Aide à estimer le poids via le volume",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -388,32 +421,35 @@ private fun HintsPanel(state: MealScannerState, viewModel: MealScannerViewModel)
                         }
                     }
 
-                    // ─── Description libre ───
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Icon(Icons.Default.Edit, null, Modifier.size(16.dp), tint = OrangeVibrant)
-                            Text("Précisions (facultatif)", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                    // ─── Description libre (mode PHOTO uniquement — en mode TEXT
+                    //     la description principale joue ce rôle) ───
+                    if (!isTextMode) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Icon(Icons.Default.Edit, null, Modifier.size(16.dp), tint = OrangeVibrant)
+                                Text("Précisions (facultatif)", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                            }
+                            Text("Lève les ambiguïtés visuelles (ex: frite igname vs pomme de terre, haricot niébé, fromage blanc)",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                            OutlinedTextField(
+                                value = state.hintDescription,
+                                onValueChange = { viewModel.setHintDescription(it.take(300)) },
+                                placeholder = { Text("Ex: frites d'igname, haricots niébé, fromage blanc 0%...",
+                                    style = MaterialTheme.typography.bodySmall) },
+                                modifier = Modifier.fillMaxWidth(),
+                                minLines = 2,
+                                maxLines = 4,
+                                shape = RoundedCornerShape(12.dp),
+                                textStyle = MaterialTheme.typography.bodyMedium,
+                                keyboardOptions = KeyboardOptions.Default
+                            )
+                            Text("${state.hintDescription.length}/300",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.End)
                         }
-                        Text("Lève les ambiguïtés visuelles (ex: frite igname vs pomme de terre, haricot niébé, fromage blanc)",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-                        OutlinedTextField(
-                            value = state.hintDescription,
-                            onValueChange = { viewModel.setHintDescription(it.take(300)) },
-                            placeholder = { Text("Ex: frites d'igname, haricots niébé, fromage blanc 0%...",
-                                style = MaterialTheme.typography.bodySmall) },
-                            modifier = Modifier.fillMaxWidth(),
-                            minLines = 2,
-                            maxLines = 4,
-                            shape = RoundedCornerShape(12.dp),
-                            textStyle = MaterialTheme.typography.bodyMedium,
-                            keyboardOptions = KeyboardOptions.Default
-                        )
-                        Text("${state.hintDescription.length}/300",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.End)
                     }
 
                     // ─── Bouton reset ───
@@ -1253,9 +1289,7 @@ private fun PhotoCaptureZone(
 private fun TextDescriptionPanel(
     description: String,
     isAnalyzing: Boolean,
-    canAnalyze: Boolean,
     onChange: (String) -> Unit,
-    onAnalyze: () -> Unit,
     onCancel: () -> Unit,
 ) {
     val charCount = description.length
@@ -1276,10 +1310,11 @@ private fun TextDescriptionPanel(
                 }
                 Column(Modifier.weight(1f)) {
                     Text("Décris ton repas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    // Sous-titre : on laisse wrap libre — pas de maxLines, sinon
+                    // troncature sur écrans étroits + fontScale élevé.
                     Text("Sois précis sur les quantités pour une bonne estimation",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                        maxLines = 2)
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                 }
                 IconButton(onClick = onCancel, enabled = !isAnalyzing) {
                     Icon(Icons.Default.Close, "Retour", Modifier.size(20.dp),
@@ -1331,19 +1366,9 @@ private fun TextDescriptionPanel(
                     fontWeight = if (countWarning) FontWeight.SemiBold else FontWeight.Normal
                 )
             }
-
-            // ─── CTA Analyser ───
-            Button(
-                onClick = onAnalyze,
-                enabled = canAnalyze && !isAnalyzing,
-                modifier = Modifier.fillMaxWidth().height(52.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = OrangeVibrant)
-            ) {
-                Icon(Icons.Default.AutoAwesome, null, Modifier.size(20.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Analyser ma description", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            }
+            // CTA externalisé : un seul bouton "Analyser ce repas" partagé
+            // entre les modes PHOTO et TEXT (cohérence UI + même typo, même
+            // hauteur). Cf. LazyColumn parent.
         }
     }
 }
