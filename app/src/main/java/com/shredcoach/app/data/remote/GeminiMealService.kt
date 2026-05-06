@@ -203,7 +203,7 @@ healthScore = note 0–10 (entier). AJR EFSA 2000kcal, 8–12 micronutriments
 les valeurs sont basées sur sa description (sans photo).
 
 ══ DESCRIPTION DE L'UTILISATEUR ══
-"%s"
+"{{USER_DESCRIPTION}}"
 """.trimIndent()
 
         val MEAL_PROMPT = """
@@ -448,10 +448,13 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         provider: String = "GEMINI"
     ): Result<MealAnalysisResult> = withContext(Dispatchers.IO) {
         try {
-            // Le `%s` du prompt est remplacé par la description user. On passe
-            // par String.format pour éviter les bizarreries d'interpolation
-            // Kotlin avec les caractères spéciaux dans la description.
-            val finalPrompt = MEAL_TEXT_PROMPT.format(description.trim())
+            // Substitution simple via `replace` (PAS String.format) : le prompt
+            // contient des `%` littéraux ("+50% portion", "5% AJR"…) qui
+            // déclencheraient un IllegalFormatConversionException si on
+            // utilisait String.format. `replace(CharSequence, CharSequence)`
+            // n'interprète aucun caractère spécial → safe pour toute
+            // description (y compris avec `$`, `\`, `%`, accents, emojis).
+            val finalPrompt = MEAL_TEXT_PROMPT.replace("{{USER_DESCRIPTION}}", description.trim())
 
             val rawJson = when (provider.uppercase()) {
                 "GROQ" -> callGroqTextMeal(apiKey, finalPrompt)
