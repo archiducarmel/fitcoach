@@ -328,51 +328,8 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
                                 }
                             }
                         }
-                        1 -> { // Poids
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                Text("Suivi du poids", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                FilledTonalButton(onClick = { viewModel.showAddWeight() }) {
-                                    Icon(Icons.Default.Add, null, Modifier.size(18.dp)); Spacer(Modifier.width(4.dp)); Text("Peser")
-                                }
-                            }
-                            state.profile?.let { p ->
-                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-                                    WStat("Actuel", String.format(java.util.Locale.US, "%.1f kg", p.currentWeightKg), OrangeVibrant)
-                                    WStat("Objectif", String.format(java.util.Locale.US, "%.1f kg", p.targetWeightKg), NeonGreen)
-                                    WStat("Reste", String.format(java.util.Locale.US, "%.1f kg", abs(p.currentWeightKg - p.targetWeightKg)),
-                                        if (p.currentWeightKg > p.targetWeightKg) Color(0xFFEF4444) else NeonGreen)
-                                }
-                                val wc = state.weeklyChange
-                                if (abs(wc) > 0.01) {
-                                    Surface(shape = RoundedCornerShape(8.dp), color = (if (wc < 0) NeonGreen else Color(0xFFEF4444)).copy(alpha = 0.1f), modifier = Modifier.fillMaxWidth()) {
-                                        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            Icon(if (wc < 0) Icons.Default.TrendingDown else Icons.AutoMirrored.Filled.TrendingUp, null, tint = if (wc < 0) NeonGreen else Color(0xFFEF4444))
-                                            Text("${if (wc > 0) "+" else ""}${String.format(java.util.Locale.US, "%.2f", wc)} kg/semaine", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-                                        }
-                                    }
-                                }
-                                OutlinedTextField(state.editTargetWeight, { viewModel.onTargetWeightChanged(it) }, label = { Text("Objectif poids (kg)") },
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth(), singleLine = true)
-                            }
-                            if (state.weightLogs.size >= 2) {
-                                WChart(state.weightLogs.sortedBy { it.date }.map { it.weightKg.toFloat() }, Modifier.fillMaxWidth().height(160.dp))
-                            } else {
-                                Card(colors = CardDefaults.cardColors(containerColor = OrangeVibrant.copy(alpha = 0.06f))) {
-                                    Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        Icon(Icons.Default.ShowChart, null, Modifier.size(32.dp), tint = OrangeVibrant.copy(alpha = 0.4f))
-                                        Text("Pèse-toi pour commencer le suivi !", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                                        FilledTonalButton(onClick = { viewModel.showAddWeight() }) {
-                                            Icon(Icons.Default.Add, null, Modifier.size(18.dp)); Spacer(Modifier.width(4.dp)); Text("Ma première pesée")
-                                        }
-                                    }
-                                }
-                            }
-                            state.weightLogs.take(5).forEach { log ->
-                                Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text(log.date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), style = MaterialTheme.typography.bodyMedium)
-                                    Text("${log.weightKg} kg", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
-                                }
-                            }
+                        1 -> { // Poids — refonte premium dans WeightTrackingWidgets
+                            WeightTrackingTab(state = state, viewModel = viewModel)
                         }
                         2 -> { // Mesures
                             // ─── CTA Body Scanner (premium IA) ───
@@ -462,37 +419,7 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
     }
 }
 
-@Composable private fun WStat(label: String, value: String, color: Color) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = color)
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-    }
-}
-
 @Composable private fun MField(label: String, value: String, onChange: (String) -> Unit, modifier: Modifier) {
     OutlinedTextField(value, onChange, label = { Text(label) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         modifier = modifier, singleLine = true, suffix = { Text("cm", style = MaterialTheme.typography.labelSmall) })
-}
-
-@Composable private fun WChart(points: List<Float>, modifier: Modifier) {
-    val lineColor = OrangeVibrant
-    androidx.compose.foundation.Canvas(modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)).padding(8.dp)) {
-        if (points.size < 2) return@Canvas
-        val maxV = points.maxOrNull() ?: return@Canvas; val minV = points.minOrNull() ?: return@Canvas
-        val range = (maxV - minV).coerceAtLeast(0.5f)
-        val pL = 50f; val pT = 12f; val pB = 12f; val pR = 12f
-        val cW = size.width - pL - pR; val cH = size.height - pT - pB
-        val stepX = cW / (points.size - 1).coerceAtLeast(1)
-        for (i in 0..3) {
-            val y = pT + cH * (1f - i / 3f)
-            drawLine(Color.White.copy(alpha = 0.08f), Offset(pL, y), Offset(size.width - pR, y))
-            drawContext.canvas.nativeCanvas.drawText(String.format(java.util.Locale.US, "%.1f",minV + range * i / 3f), 2f, y + 4f,
-                android.graphics.Paint().apply { color = 0x99FFFFFF.toInt(); textSize = 18f })
-        }
-        val path = Path()
-        points.forEachIndexed { i, v -> val x = pL + i * stepX; val y = pT + cH * (1f - (v - minV) / range); if (i == 0) path.moveTo(x, y) else path.lineTo(x, y) }
-        drawPath(path, lineColor, style = Stroke(3f, cap = StrokeCap.Round))
-        points.forEachIndexed { i, v -> val x = pL + i * stepX; val y = pT + cH * (1f - (v - minV) / range)
-            drawCircle(lineColor, 5f, Offset(x, y)); drawCircle(Color.White, 2.5f, Offset(x, y)) }
-    }
 }

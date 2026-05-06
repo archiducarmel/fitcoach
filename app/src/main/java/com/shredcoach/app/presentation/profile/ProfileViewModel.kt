@@ -12,6 +12,8 @@ import com.shredcoach.app.data.repository.NutritionRepository
 import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.domain.nutrition.TdeeCalculator
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.io.File
@@ -40,7 +42,15 @@ data class ProfileState(
     val newWeight: String = "",
     // Calculs
     val weeklyChange: Double = 0.0, // kg/semaine (négatif = perte)
-    val showDeleteConfirm: Boolean = false
+    val showDeleteConfirm: Boolean = false,
+    // ── État UI de sauvegarde de l'objectif (auto-save debounced) ──
+    /** True pendant les ~700ms de debounce + écriture DB du nouvel objectif. */
+    val targetSaving: Boolean = false,
+    /**
+     * Timestamp de la dernière sauvegarde réussie de l'objectif (ms epoch).
+     * Permet d'afficher un mini "Sauvegardé ✓" éphémère côté UI.
+     */
+    val targetSavedAt: Long = 0L
 )
 
 @HiltViewModel
@@ -51,6 +61,13 @@ class ProfileViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(ProfileState())
     val state: StateFlow<ProfileState> = _state.asStateFlow()
+
+    /**
+     * Job de debounce pour la sauvegarde de l'objectif (target weight).
+     * Annulé puis relancé à chaque keystroke → la DB n'est touchée qu'après
+     * une période d'inactivité, évitant un write par caractère tapé.
+     */
+    private var targetSaveJob: Job? = null
 
     init { loadProfile(); loadWeightLogs() }
 
@@ -105,7 +122,61 @@ class ProfileViewModel @Inject constructor(
     fun onAgeChanged(v: String) { if (v.isEmpty() || v.matches(Regex("^\\d+$"))) _state.update { it.copy(editAge = v) } }
     fun onHeightChanged(v: String) { if (v.isEmpty() || v.matches(Regex("^\\d+$"))) _state.update { it.copy(editHeight = v) } }
     fun onWeightChanged(v: String) { if (v.isEmpty() || v.matches(Regex("^\\d*\\.?\\d*$"))) _state.update { it.copy(editWeight = v) } }
-    fun onTargetWeightChanged(v: String) { if (v.isEmpty() || v.matches(Regex("^\\d*\\.?\\d*$"))) _state.update { it.copy(editTargetWeight = v) } }
+    fun onTargetWeightChanged(v: String) {
+        if (v.isNotEmpty() && !v.matches(Regex("^\\d*\\.?\\d*$"))) return
+        _state.update { it.copy(editTargetWeight = v, targetSaving = v.isNotBlank()) }
+        scheduleTargetSave()
+    }
+
+    /**
+     * Sauvegarde immédiate de l'objectif, sans debounce. Appelée par les
+     * presets/steppers du BottomSheet où chaque action est intentionnelle.
+     */
+    fun setTargetWeightImmediate(value: Double) {
+        val rounded = (Math.round(value * 10) / 10.0).coerceIn(20.0, 300.0)
+        _state.update { it.copy(editTargetWeight = String.format(java.util.Locale.US, "%.1f", rounded), targetSaving = true) }
+        targetSaveJob?.cancel()
+        targetSaveJob = viewModelScope.launch {
+            persistTargetWeight(rounded)
+        }
+    }
+
+    /**
+     * Démarre/relance le debounce de sauvegarde de l'objectif.
+     *
+     * Pourquoi 700ms : compromis entre réactivité (l'user voit "Sauvegardé"
+     * vite) et économie d'écritures (un user qui tape "75.5" ne déclenche
+     * qu'un seul save, pas 4). Inférieur à 500ms = trop nerveux ; supérieur
+     * à 1000ms = l'user a le temps de douter "est-ce que ça a été pris en
+     * compte ?". 700ms = sweet spot validé sur apps fitness.
+     */
+    private fun scheduleTargetSave() {
+        targetSaveJob?.cancel()
+        targetSaveJob = viewModelScope.launch {
+            delay(700)
+            val raw = _state.value.editTargetWeight
+            val parsed = raw.toDoubleOrNull() ?: run {
+                _state.update { it.copy(targetSaving = false) }
+                return@launch
+            }
+            val sane = parsed.coerceIn(20.0, 300.0)
+            persistTargetWeight(sane)
+        }
+    }
+
+    private suspend fun persistTargetWeight(weightKg: Double) {
+        val p = _state.value.profile ?: return
+        if (kotlin.math.abs(p.targetWeightKg - weightKg) < 0.01) {
+            // Même valeur déjà en DB → on évite un write inutile mais on
+            // signale visuellement la "validation" pour rassurer l'user.
+            _state.update { it.copy(targetSaving = false, targetSavedAt = System.currentTimeMillis()) }
+            return
+        }
+        userRepository.updateUserProfile(p.copy(targetWeightKg = weightKg))
+        // recalculateTDEE pull le profil à jour depuis la DB → cohérence garantie.
+        recalculateTDEE()
+        _state.update { it.copy(targetSaving = false, targetSavedAt = System.currentTimeMillis()) }
+    }
     fun onSexChanged(v: String) { _state.update { it.copy(editSex = v) } }
     fun onMeasureChanged(field: String, v: String) {
         if (v.isNotEmpty() && !v.matches(Regex("^\\d*\\.?\\d*$"))) return
