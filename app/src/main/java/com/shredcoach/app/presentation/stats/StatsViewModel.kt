@@ -118,21 +118,83 @@ data class ExerciseProgressionEntry(
     val progression: com.shredcoach.app.domain.training.ExerciseProgression,
 )
 
+/**
+ * Tranches horaires utilisées pour la timeline "Quand tu manges".
+ * Bornes inclusives sur start, exclusives sur end (sauf NUIT qui boucle).
+ */
+enum class MealHourBucket(val label: String, val emoji: String, val startHour: Int, val endHour: Int) {
+    MORNING("Matin", "🌅", 6, 11),       // 06:00 - 10:59
+    LUNCH("Midi", "☀️", 11, 15),               // 11:00 - 14:59
+    AFTERNOON("Après-midi", "🍎", 15, 19),// 15:00 - 18:59
+    DINNER("Soir", "🌙", 19, 23),         // 19:00 - 22:59
+    NIGHT("Nuit", "🌛", 23, 6);           // 23:00 - 05:59 (wrap)
+
+    fun contains(hour: Int): Boolean = if (this == NIGHT) hour >= 23 || hour < 6
+        else hour in startHour until endHour
+}
+
 data class NutritionStatsData(
+    // ── Période sélectionnée (7j / 30j / 90j) ──
+    val period: TimePeriod = TimePeriod.WEEK,
+
+    // ── Moyennes sur la période courante ──
     val avgCalories: Int = 0,
     val avgProteins: Int = 0,
     val avgCarbs: Int = 0,
     val avgFats: Int = 0,
     val daysTracked: Int = 0,
+    val daysInPeriod: Int = 7,
     val targetCalories: Int = 2200,
     val targetProteins: Int = 180,
     val complianceDays: Int = 0,
     val totalScans: Int = 0,
     val avgHealthScore: Int = 0,
-    val weeklyCalories: List<Pair<String, Int>> = emptyList(),
     val protPerKg: Double = 0.0,
+
+    // ── Graphique calories sur la période ──
+    /** Pour 7j : (jourCourt, kcal). Pour 30j+ : (date ISO, kcal). */
+    val weeklyCalories: List<Pair<String, Int>> = emptyList(),
+    /** Calories quotidiennes brutes triées chronologiquement (pour smooth curve). */
+    val dailyCaloriesSeries: List<Pair<LocalDate, Int>> = emptyList(),
+
+    // ── Macro split % du total kcal ──
+    /** % du total kcal apportés par les protéines (1g prot = 4 kcal). */
+    val proteinKcalPct: Float = 0f,
+    val carbsKcalPct: Float = 0f,
+    val fatsKcalPct: Float = 0f,
+    /** Verdict qualitatif sur le split (ex: "Split optimal pour la sèche"). */
+    val macroSplitVerdict: String = "",
+
+    // ── Distribution Nutri-Score sur la période (depuis MealScanEntity) ──
+    val nutriCountA: Int = 0,
+    val nutriCountB: Int = 0,
+    val nutriCountC: Int = 0,
+    val nutriCountD: Int = 0,
+    val nutriCountE: Int = 0,
+
+    // ── Comparaison vs période précédente ──
+    val prevAvgCalories: Int = 0,
+    val caloriesDelta: Int = 0,
+    val prevAvgProteins: Int = 0,
+    val proteinsDelta: Int = 0,
+    val prevComplianceDays: Int = 0,
+    val complianceDelta: Int = 0,
+
+    // ── Timeline heures de repas (5 buckets sur la période) ──
+    val mealsByHourBucket: Map<MealHourBucket, Int> = emptyMap(),
+
+    // ── Insights auto-générés (2-3 phrases coachées) ──
+    val insights: List<String> = emptyList(),
+
+    // ── Streak de tracking (jours consécutifs avec ≥1 repas) ──
+    val trackingStreak: Int = 0,
+
     val isLoading: Boolean = true
-)
+) {
+    val nutriTotal: Int get() = nutriCountA + nutriCountB + nutriCountC + nutriCountD + nutriCountE
+    val nutriHighQualityShare: Float
+        get() = if (nutriTotal == 0) 0f else (nutriCountA + nutriCountB).toFloat() / nutriTotal
+}
 
 @HiltViewModel
 class StatsViewModel @Inject constructor(
@@ -157,6 +219,18 @@ class StatsViewModel @Inject constructor(
     fun selectPeriod(period: TimePeriod) {
         _state.update { it.copy(selectedPeriod = period) }
         loadStats()
+    }
+
+    /**
+     * Sélection de la période pour les stats nutrition (indépendante des stats sport).
+     * Limitée à 7j / 30j / 90j — au-delà la lecture des MealLog devient lourde
+     * et l'insight perd en pertinence (régime "actuel" plus tendance long-terme).
+     */
+    fun selectNutritionPeriod(period: TimePeriod) {
+        if (period !in listOf(TimePeriod.WEEK, TimePeriod.MONTH, TimePeriod.QUARTER)) return
+        if (_nutritionStats.value.period == period) return
+        _nutritionStats.update { it.copy(period = period, isLoading = true) }
+        loadNutritionStats()
     }
 
     fun selectExercise(exerciseId: Long, name: String) {
@@ -491,49 +565,267 @@ class StatsViewModel @Inject constructor(
                 val targetCal = goal?.targetCalories ?: 2200
                 val targetProt = goal?.targetProteins ?: 180
                 val bodyWeight = profile?.currentWeightKg ?: 80.0
-                val today = java.time.LocalDate.now()
-
-                // Moyennes 7 jours
-                var totalCal = 0.0; var totalProt = 0.0; var totalCarbs = 0.0; var totalFats = 0.0
-                var daysTracked = 0; var complianceDays = 0
-                val weeklyData = mutableListOf<Pair<String, Int>>()
-                val dayFmt = java.time.format.DateTimeFormatter.ofPattern("EEE", java.util.Locale.FRANCE)
-
-                for (d in 6 downTo 0) {
-                    val date = today.minusDays(d.toLong())
-                    val totals = nutritionRepository.getDayTotals(date)
-                    val dayCal = totals.totalCalories.toInt()
-                    weeklyData.add(date.format(dayFmt).replaceFirstChar { it.uppercase() } to dayCal)
-                    if (totals.totalCalories > 0) {
-                        totalCal += totals.totalCalories; totalProt += totals.totalProteins
-                        totalCarbs += totals.totalCarbs; totalFats += totals.totalFats
-                        daysTracked++
-                        if (totals.totalCalories >= targetCal * 0.9 && totals.totalCalories <= targetCal * 1.1) complianceDays++
-                    }
+                val today = LocalDate.now()
+                val period = _nutritionStats.value.period
+                val daysInPeriod = when (period) {
+                    TimePeriod.WEEK -> 7
+                    TimePeriod.MONTH -> 30
+                    TimePeriod.QUARTER -> 90
+                    else -> 7
                 }
 
-                // Scans
-                val scans = mealScanDao.getAllScans().first()
-                val avgScore = if (scans.isNotEmpty()) scans.sumOf { it.healthScore } / scans.size else 0
+                // ─── Période courante : agrégation jour par jour ───
+                val current = aggregatePeriod(today.minusDays((daysInPeriod - 1).toLong()), today, targetCal)
+                // ─── Période précédente (pour la comparaison) ───
+                val prevEnd = today.minusDays(daysInPeriod.toLong())
+                val prevStart = prevEnd.minusDays((daysInPeriod - 1).toLong())
+                val previous = aggregatePeriod(prevStart, prevEnd, targetCal)
 
-                val avgCal = if (daysTracked > 0) (totalCal / daysTracked).toInt() else 0
-                val avgProt = if (daysTracked > 0) (totalProt / daysTracked).toInt() else 0
-                val protKg = if (bodyWeight > 0 && daysTracked > 0) totalProt / daysTracked / bodyWeight else 0.0
+                // ─── Macro split % en calories (4/4/9 kcal/g) ───
+                val (protPct, carbPct, fatPct) = computeMacroSplit(
+                    current.totalProt, current.totalCarbs, current.totalFats
+                )
+                val macroVerdict = computeMacroVerdict(protPct, carbPct, fatPct, profile?.goal)
+
+                // ─── Heures de repas (timeline buckets) ───
+                val mealsByBucket = computeMealHourBuckets(today.minusDays((daysInPeriod - 1).toLong()), today)
+
+                // ─── Distribution Nutri-Score sur la période ───
+                val scansAll = mealScanDao.getAllScans().first()
+                val sinceCutoff = today.minusDays((daysInPeriod - 1).toLong())
+                val scansInPeriod = scansAll.filter { it.timestamp.toLocalDate() >= sinceCutoff }
+                var nA = 0; var nB = 0; var nC = 0; var nD = 0; var nE = 0
+                for (scan in scansInPeriod) {
+                    when (scan.nutriScoreGrade.firstOrNull()) {
+                        'A' -> nA++; 'B' -> nB++; 'C' -> nC++; 'D' -> nD++; 'E' -> nE++
+                    }
+                }
+                val avgScore = if (scansInPeriod.isNotEmpty()) scansInPeriod.sumOf { it.healthScore } / scansInPeriod.size else 0
+
+                // ─── Streak tracking (jours consécutifs avec ≥1 repas, en remontant depuis aujourd'hui) ───
+                var streak = 0
+                var cursor = today
+                while (true) {
+                    val dt = nutritionRepository.getDayTotals(cursor)
+                    if (dt.totalCalories > 0) { streak++; cursor = cursor.minusDays(1) }
+                    else break
+                }
+
+                // ─── Calculs agrégés ───
+                val avgCal = if (current.daysTracked > 0) (current.totalCal / current.daysTracked).toInt() else 0
+                val avgProt = if (current.daysTracked > 0) (current.totalProt / current.daysTracked).toInt() else 0
+                val avgCarbs = if (current.daysTracked > 0) (current.totalCarbs / current.daysTracked).toInt() else 0
+                val avgFats = if (current.daysTracked > 0) (current.totalFats / current.daysTracked).toInt() else 0
+                val protKg = if (bodyWeight > 0 && current.daysTracked > 0) current.totalProt / current.daysTracked / bodyWeight else 0.0
+
+                val prevAvgCal = if (previous.daysTracked > 0) (previous.totalCal / previous.daysTracked).toInt() else 0
+                val prevAvgProt = if (previous.daysTracked > 0) (previous.totalProt / previous.daysTracked).toInt() else 0
+
+                // ─── Insights auto ───
+                val insights = generateInsights(
+                    avgCal = avgCal, targetCal = targetCal,
+                    daysTracked = current.daysTracked, daysInPeriod = daysInPeriod,
+                    complianceDays = current.complianceDays,
+                    protKg = protKg, profileGoal = profile?.goal,
+                    nutriHighShare = if (scansInPeriod.isNotEmpty()) (nA + nB).toFloat() / scansInPeriod.size else 0f,
+                    caloriesDelta = avgCal - prevAvgCal, proteinsDelta = avgProt - prevAvgProt,
+                    streak = streak
+                )
 
                 _nutritionStats.update {
                     NutritionStatsData(
+                        period = period,
                         avgCalories = avgCal, avgProteins = avgProt,
-                        avgCarbs = if (daysTracked > 0) (totalCarbs / daysTracked).toInt() else 0,
-                        avgFats = if (daysTracked > 0) (totalFats / daysTracked).toInt() else 0,
-                        daysTracked = daysTracked, targetCalories = targetCal, targetProteins = targetProt,
-                        complianceDays = complianceDays, totalScans = scans.size,
-                        avgHealthScore = avgScore, weeklyCalories = weeklyData,
-                        protPerKg = protKg, isLoading = false
+                        avgCarbs = avgCarbs, avgFats = avgFats,
+                        daysTracked = current.daysTracked, daysInPeriod = daysInPeriod,
+                        targetCalories = targetCal, targetProteins = targetProt,
+                        complianceDays = current.complianceDays, totalScans = scansInPeriod.size,
+                        avgHealthScore = avgScore,
+                        weeklyCalories = current.dailyForBars,
+                        dailyCaloriesSeries = current.dailySeries,
+                        protPerKg = protKg,
+                        proteinKcalPct = protPct, carbsKcalPct = carbPct, fatsKcalPct = fatPct,
+                        macroSplitVerdict = macroVerdict,
+                        nutriCountA = nA, nutriCountB = nB, nutriCountC = nC, nutriCountD = nD, nutriCountE = nE,
+                        prevAvgCalories = prevAvgCal,
+                        caloriesDelta = avgCal - prevAvgCal,
+                        prevAvgProteins = prevAvgProt,
+                        proteinsDelta = avgProt - prevAvgProt,
+                        prevComplianceDays = previous.complianceDays,
+                        complianceDelta = current.complianceDays - previous.complianceDays,
+                        mealsByHourBucket = mealsByBucket,
+                        insights = insights,
+                        trackingStreak = streak,
+                        isLoading = false
                     )
                 }
             } catch (_: Exception) {
                 _nutritionStats.update { it.copy(isLoading = false) }
             }
         }
+    }
+
+    /**
+     * Snapshot agrégé d'une fenêtre de jours (pour stats courantes ET précédentes).
+     */
+    private data class PeriodAggregate(
+        val totalCal: Double,
+        val totalProt: Double,
+        val totalCarbs: Double,
+        val totalFats: Double,
+        val daysTracked: Int,
+        val complianceDays: Int,
+        /** Liste pour le graphe à barres (label court "Lun 12"). */
+        val dailyForBars: List<Pair<String, Int>>,
+        /** Liste pour smooth curve (date, kcal). */
+        val dailySeries: List<Pair<LocalDate, Int>>,
+    )
+
+    private suspend fun aggregatePeriod(start: LocalDate, end: LocalDate, targetCal: Int): PeriodAggregate {
+        var totalCal = 0.0; var totalProt = 0.0; var totalCarbs = 0.0; var totalFats = 0.0
+        var daysTracked = 0; var complianceDays = 0
+        val barFmt = DateTimeFormatter.ofPattern("EEE", java.util.Locale.FRANCE)
+        val barFmtLong = DateTimeFormatter.ofPattern("d/M", java.util.Locale.FRANCE)
+        val barData = mutableListOf<Pair<String, Int>>()
+        val series = mutableListOf<Pair<LocalDate, Int>>()
+        val days = ChronoUnit.DAYS.between(start, end).toInt() + 1
+        val useShortDay = days <= 7
+
+        var d = start
+        while (!d.isAfter(end)) {
+            val totals = nutritionRepository.getDayTotals(d)
+            val dayCal = totals.totalCalories.toInt()
+            val label = if (useShortDay) d.format(barFmt).replaceFirstChar { it.uppercase() }
+                else d.format(barFmtLong)
+            barData += label to dayCal
+            series += d to dayCal
+            if (totals.totalCalories > 0) {
+                totalCal += totals.totalCalories; totalProt += totals.totalProteins
+                totalCarbs += totals.totalCarbs; totalFats += totals.totalFats
+                daysTracked++
+                if (totals.totalCalories >= targetCal * 0.9 && totals.totalCalories <= targetCal * 1.1) {
+                    complianceDays++
+                }
+            }
+            d = d.plusDays(1)
+        }
+        return PeriodAggregate(
+            totalCal, totalProt, totalCarbs, totalFats,
+            daysTracked, complianceDays, barData, series
+        )
+    }
+
+    /** Split macro en % du total kcal (4 kcal/g pour P et G, 9 kcal/g pour L). */
+    private fun computeMacroSplit(totalProt: Double, totalCarbs: Double, totalFats: Double): Triple<Float, Float, Float> {
+        val protKcal = totalProt * 4
+        val carbKcal = totalCarbs * 4
+        val fatKcal = totalFats * 9
+        val total = (protKcal + carbKcal + fatKcal).coerceAtLeast(1.0)
+        return Triple(
+            (protKcal / total).toFloat(),
+            (carbKcal / total).toFloat(),
+            (fatKcal / total).toFloat()
+        )
+    }
+
+    /**
+     * Verdict qualitatif sur la répartition macro selon l'objectif fitness.
+     *  - Sèche : vise 35-40% prot, 30-40% carb, 20-30% lip
+     *  - Prise de masse : 25-30% prot, 45-55% carb, 20-25% lip
+     *  - Maintien : 25-30% prot, 40-50% carb, 25-30% lip
+     */
+    private fun computeMacroVerdict(
+        protPct: Float, carbPct: Float, fatPct: Float,
+        goal: com.shredcoach.app.data.local.entity.FitnessGoal?
+    ): String {
+        if (protPct + carbPct + fatPct < 0.5f) return ""  // pas assez de données
+        return when (goal) {
+            com.shredcoach.app.data.local.entity.FitnessGoal.SHRED -> when {
+                protPct < 0.30f -> "Pas assez de protéines pour la sèche"
+                fatPct > 0.40f -> "Trop de lipides — réduis pour creuser le déficit"
+                carbPct > 0.50f -> "Glucides un peu hauts — module-les autour des séances"
+                protPct >= 0.35f && fatPct <= 0.30f -> "Split optimal pour la sèche"
+                else -> "Bon équilibre, marge de progression"
+            }
+            com.shredcoach.app.data.local.entity.FitnessGoal.BULK -> when {
+                carbPct < 0.40f -> "Manque de glucides pour soutenir la prise de masse"
+                protPct < 0.20f -> "Plus de protéines pour la synthèse musculaire"
+                else -> "Split adapté à la prise de masse"
+            }
+            else -> when {
+                protPct < 0.20f -> "Plus de protéines pour la satiété et le muscle"
+                fatPct > 0.40f -> "Lipides un peu hauts — diversifie les sources"
+                else -> "Équilibre macro correct"
+            }
+        }
+    }
+
+    /**
+     * Compte les MealLogEntity de la période bucketés par tranche horaire.
+     * Permet la timeline "Quand tu manges" — révèle les patterns (skipping
+     * petit-déj, grignotage soir, etc.).
+     */
+    private suspend fun computeMealHourBuckets(start: LocalDate, end: LocalDate): Map<MealHourBucket, Int> {
+        val counts = MealHourBucket.values().associateWith { 0 }.toMutableMap()
+        var d = start
+        while (!d.isAfter(end)) {
+            val meals = try {
+                nutritionRepository.getMealsForDate(d).first()
+            } catch (_: Exception) { emptyList() }
+            for (meal in meals) {
+                val hour = meal.time?.hour ?: continue
+                val bucket = MealHourBucket.values().firstOrNull { it.contains(hour) }
+                if (bucket != null) counts[bucket] = (counts[bucket] ?: 0) + 1
+            }
+            d = d.plusDays(1)
+        }
+        return counts
+    }
+
+    /**
+     * Génère 2-4 insights coachés en français, courts et actionnables.
+     * Priorisés par sévérité : alerte protéines/déficit avant félicitations.
+     */
+    private fun generateInsights(
+        avgCal: Int, targetCal: Int,
+        daysTracked: Int, daysInPeriod: Int,
+        complianceDays: Int,
+        protKg: Double, profileGoal: com.shredcoach.app.data.local.entity.FitnessGoal?,
+        nutriHighShare: Float,
+        caloriesDelta: Int, proteinsDelta: Int,
+        streak: Int
+    ): List<String> {
+        if (daysTracked == 0) return listOf("Suis tes repas pour débloquer des insights personnalisés")
+        val list = mutableListOf<String>()
+
+        // 1. Alertes protéines (priorité haute en sèche)
+        if (profileGoal == com.shredcoach.app.data.local.entity.FitnessGoal.SHRED && protKg in 0.01..1.4) {
+            list += "🍗 Sous l'objectif protéines (${"%.1f".format(protKg)} g/kg) — vise ≥ 1.6 g/kg"
+        }
+
+        // 2. Compliance / trends calories
+        val complianceShare = if (daysInPeriod > 0) complianceDays.toFloat() / daysInPeriod else 0f
+        when {
+            complianceShare >= 0.7f -> list += "🎯 $complianceDays/$daysInPeriod jours dans ta cible — excellente régularité"
+            complianceShare >= 0.4f -> list += "📈 $complianceDays/$daysInPeriod jours dans la cible — continue comme ça"
+            avgCal < targetCal * 0.8 -> list += "⚠️ Déficit moyen ${targetCal - avgCal} kcal/jour — risque de perte musculaire"
+            avgCal > targetCal * 1.2 -> list += "⚠️ ${avgCal - targetCal} kcal au-dessus de la cible en moyenne"
+        }
+
+        // 3. Comparaison vs période précédente
+        if (kotlin.math.abs(caloriesDelta) > 50) {
+            val sign = if (caloriesDelta >= 0) "+" else ""
+            list += "📊 ${sign}$caloriesDelta kcal/jour vs période précédente"
+        }
+        if (proteinsDelta >= 15) list += "💪 +${proteinsDelta}g protéines/jour vs période précédente"
+
+        // 4. Qualité Nutri-Score
+        if (nutriHighShare >= 0.7f) list += "✨ ${(nutriHighShare * 100).toInt()}% de tes repas notés A ou B"
+        else if (nutriHighShare in 0.01f..0.3f) list += "🥗 Vise plus d'aliments notés A et B (légumes, fruits, légumineuses)"
+
+        // 5. Streak
+        if (streak >= 7) list += "🔥 $streak jours d'affilée à tracker tes repas"
+
+        return list.take(4)
     }
 }

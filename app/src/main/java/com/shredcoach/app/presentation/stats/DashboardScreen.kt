@@ -95,7 +95,7 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
 
         if (selectedTab == 1) {
             // ═══ NUTRITION STATS ═══
-            NutritionDashboard(nutritionStats)
+            NutritionDashboard(nutritionStats, viewModel)
         } else {
         // ═══ SPORT STATS (existant) ═══
       com.shredcoach.app.presentation.common.PullToRefreshBox(
@@ -208,7 +208,7 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
 // ═══════════════════════════════════════
 
 @Composable
-private fun NutritionDashboard(stats: NutritionStatsData) {
+private fun NutritionDashboard(stats: NutritionStatsData, viewModel: StatsViewModel) {
     if (stats.isLoading) {
         Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
         return
@@ -219,7 +219,20 @@ private fun NutritionDashboard(stats: NutritionStatsData) {
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // ─── Hero calories moyenne ───
+        // ─── Tabs période 7j / 30j / 90j ───
+        item {
+            NutritionPeriodTabs(
+                selected = stats.period,
+                onSelect = { viewModel.selectNutritionPeriod(it) }
+            )
+        }
+
+        // ─── Insights coaching auto-générés (top de page, premier impact) ───
+        if (stats.insights.isNotEmpty()) {
+            item { InsightsPanelCard(stats.insights) }
+        }
+
+        // ─── Hero calories moyenne (existant) ───
         item {
             val delta = stats.avgCalories - stats.targetCalories
             val heroColor = when { abs(delta) <= stats.targetCalories * 0.1 -> NeonGreen; else -> OrangeVibrant }
@@ -230,7 +243,7 @@ private fun NutritionDashboard(stats: NutritionStatsData) {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Icon(Icons.Default.Restaurant, null, Modifier.size(22.dp), tint = Color.White)
-                            Text("Moyenne quotidienne (7j)", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f))
+                            Text("Moyenne quotidienne (${stats.period.label})", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f))
                         }
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
                             Column {
@@ -245,9 +258,9 @@ private fun NutritionDashboard(stats: NutritionStatsData) {
                             }
                         }
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                            NutriHeroStat("${stats.daysTracked}/7", "jours suivis")
+                            NutriHeroStat("${stats.daysTracked}/${stats.daysInPeriod}", "jours suivis")
                             NutriHeroDivider()
-                            NutriHeroStat("${stats.complianceDays}/7", "dans la cible")
+                            NutriHeroStat("${stats.complianceDays}/${stats.daysInPeriod}", "dans la cible")
                             NutriHeroDivider()
                             NutriHeroStat("${stats.totalScans}", "scans repas")
                         }
@@ -256,7 +269,10 @@ private fun NutritionDashboard(stats: NutritionStatsData) {
             }
         }
 
-        // ─── Macros moyennes ───
+        // ─── Comparaison vs période précédente (NEW) ───
+        item { PeriodComparisonStrip(stats) }
+
+        // ─── Macros moyennes (existant) ───
         item {
             Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
                 Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -281,19 +297,25 @@ private fun NutritionDashboard(stats: NutritionStatsData) {
             }
         }
 
-        // ─── Graphique calories semaine ───
-        if (stats.weeklyCalories.isNotEmpty()) {
-            item {
-                Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
-                    Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("Calories cette semaine", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        WeeklyCaloriesChart(stats.weeklyCalories, stats.targetCalories)
-                    }
-                }
-            }
+        // ─── Graphique calories premium (barres si 7j, courbe lissée si 30j+) ───
+        if (stats.dailyCaloriesSeries.isNotEmpty()) {
+            item { CaloriesPremiumChart(stats) }
         }
 
-        // ─── Score santé moyen ───
+        // ─── Donut macro split % (NEW) ───
+        item { MacroSplitDonutCard(stats) }
+
+        // ─── Distribution Nutri-Score sur la période (NEW) ───
+        if (stats.nutriTotal > 0) {
+            item { NutriDistributionCard(stats) }
+        }
+
+        // ─── Timeline heures de repas (NEW) ───
+        if (stats.mealsByHourBucket.values.sum() > 0) {
+            item { MealHoursTimelineCard(stats.mealsByHourBucket) }
+        }
+
+        // ─── Score santé moyen (existant) ───
         if (stats.totalScans > 0) {
             item {
                 val scoreColor = when { stats.avgHealthScore >= 8 -> NeonGreen; stats.avgHealthScore >= 5 -> OrangeVibrant; else -> Color(0xFFEF4444) }
