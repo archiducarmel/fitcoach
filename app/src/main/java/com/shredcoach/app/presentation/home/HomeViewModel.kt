@@ -11,6 +11,7 @@ import com.shredcoach.app.data.repository.NutritionRepository
 import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.data.repository.WorkoutRepository
 import com.shredcoach.app.data.local.dao.WorkoutLogDao
+import com.shredcoach.app.domain.nutrition.TdeeCalculator
 import com.shredcoach.app.domain.streak.StreakMilestoneStore
 import com.shredcoach.app.domain.streak.StreakService
 import com.shredcoach.app.domain.training.PlateauDetector
@@ -127,8 +128,16 @@ class HomeViewModel @Inject constructor(
             nutritionRepository.getMealsForDate(date),
             nutritionRepository.getNutritionGoal(),
             nutritionRepository.getEnabledSchedules(),
-        ) { meals, goal, schedules ->
-            buildTodayNutrition(meals.map { Triple(it.calories, it.proteins, Pair(it.carbs, it.fats)) }, goal, schedules)
+            workoutLogDao.getWorkoutLogsBetween(date, date),
+            _userProfile,
+        ) { meals, goal, schedules, workouts, profile ->
+            buildTodayNutrition(
+                consumedMacros = meals.map { Triple(it.calories, it.proteins, Pair(it.carbs, it.fats)) },
+                goal = goal,
+                schedules = schedules,
+                completedWorkoutsToday = workouts.filter { it.completed },
+                profile = profile,
+            )
         }
     }.stateIn(
         scope = viewModelScope,
@@ -324,18 +333,25 @@ class HomeViewModel @Inject constructor(
         consumedMacros: List<Triple<Double, Double, Pair<Double, Double>>>,
         goal: NutritionGoalEntity?,
         schedules: List<NutritionScheduleEntity>,
+        completedWorkoutsToday: List<WorkoutLogEntity>,
+        profile: UserProfileEntity?,
     ): TodayNutrition {
         val cal = consumedMacros.sumOf { it.first }
         val prot = consumedMacros.sumOf { it.second }
         val carbs = consumedMacros.sumOf { it.third.first }
         val fats = consumedMacros.sumOf { it.third.second }
-        // Cible par défaut si pas de goal en base — l'user peut quand même utiliser l'app.
         val goalSafe = goal ?: NutritionGoalEntity()
 
+        // Cible adaptative : base sédentaire (déjà stockée dans goalSafe.targetCalories)
+        // + bonus kcal réellement brûlées par les séances complétées aujourd'hui.
+        // Aligne la valeur affichée sur la home avec celle de NutritionScreen pour
+        // éviter le mismatch entre pages (cf. NutritionViewModel.recalcDailyTarget).
+        val workoutBonus = if (profile != null && completedWorkoutsToday.isNotEmpty()) {
+            TdeeCalculator.totalWorkoutKcalForDay(completedWorkoutsToday, profile.currentWeightKg)
+        } else 0
+        val adaptiveTarget = TdeeCalculator.adaptiveDailyTarget(goalSafe.targetCalories, workoutBonus)
+
         val now = LocalTime.now()
-        // Prochain item du planning : premier dont l'heure est > maintenant.
-        // Si tout le planning est passé (fin de journée), on retourne null —
-        // l'UI affichera "Plus rien de prévu aujourd'hui".
         val next = schedules
             .filter { it.time.isAfter(now) }
             .minByOrNull { it.time }
@@ -343,7 +359,7 @@ class HomeViewModel @Inject constructor(
 
         return TodayNutrition(
             caloriesConsumed = cal.toInt(),
-            caloriesTarget = goalSafe.targetCalories,
+            caloriesTarget = adaptiveTarget,
             proteinsConsumedGrams = prot.toInt(),
             proteinsTargetGrams = goalSafe.targetProteins,
             carbsConsumedGrams = carbs.toInt(),

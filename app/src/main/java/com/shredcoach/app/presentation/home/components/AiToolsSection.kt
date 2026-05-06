@@ -41,24 +41,25 @@ import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
 
 /**
- * Section "Outils IA" — point d'entrée premium vers les 4 features
+ * Section "Tes assistants" — point d'entrée premium vers les 4 features
  * AI-powered de l'app : Shreddy chat, Meal Analyser, Body Scanner, Gym Scan.
  *
- * Pourquoi cette refonte : la home actuelle dilue les outils IA dans la
- * section "Plus" collapsible (mêmes cards que Photos / Catalogue), alors
- * que ce sont les features les plus différenciantes de ShredCoach. Les
- * remonter dans une section dédiée avec un traitement visuel premium
- * (gradients vifs, icône AutoAwesome, badge "AI") les positionne comme
- * la valeur n°1 du produit — cf. Spotify "AI DJ", Notion "AI", Apple
- * Intelligence : les apps premium 2025 mettent leur IA en hero.
+ * Pourquoi le terme "assistants" plutôt que "Outils IA" : le mot "IA"
+ * évoque pour beaucoup d'utilisateurs des connotations défensives
+ * (vie privée, remplacement humain, gadget). "Tes assistants" personnifie
+ * et humanise les features — chacune est un coach spécialisé dédié à
+ * l'user, pas un outil froid. Cf. Apple "Intelligence", Google "Magic
+ * Eraser", Spotify "AI DJ" : les apps premium positionnent l'IA comme
+ * un service personnel, pas une étiquette technique.
  *
  * Layout :
- *  - Header avec icône ✨ + titre + badge "AI"
+ *  - Header avec icône ✨ + titre + badge "Premium"
  *  - Tagline coachée 1 ligne
- *  - Grille 2×2 de [AiToolCard], chaque outil avec sa palette dédiée
+ *  - Grille 2×2 de [AiToolCard], chaque assistant avec sa palette dédiée
  *
- * Les couleurs sont distinctes pour différencier les 4 outils visuellement
- * (mémorisable : "le chat violet" = Shreddy, "le scan vert" = Gym).
+ * Les couleurs sont distinctes pour différencier les 4 assistants
+ * visuellement (mémorisable : "Shreddy violet", "scan repas orange",
+ * "scan corps cyan", "scan salle vert").
  */
 @Composable
 fun AiToolsSection(
@@ -89,25 +90,25 @@ fun AiToolsSection(
                 },
                 tint = OrangeVibrant
             )
-            Text("Outils IA", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            // Badge "AI" — petit accent premium
+            Text("Tes assistants", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            // Badge "Premium" — accent valorisant qui dédramatise vs "AI"
             Surface(
                 shape = RoundedCornerShape(6.dp),
                 color = OrangeVibrant.copy(alpha = 0.15f)
             ) {
                 Text(
-                    "AI",
+                    "PREMIUM",
                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.ExtraBold,
                     color = OrangeVibrant,
-                    fontSize = 10.sp
+                    fontSize = 9.sp
                 )
             }
         }
 
         Text(
-            "Coach conversationnel, scan photo, mesures par IA — directement dans ta poche",
+            "Quatre coachs experts dédiés pour t'accompagner au quotidien",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             maxLines = 2,
@@ -122,7 +123,7 @@ fun AiToolsSection(
             AiToolCard(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
                 title = "Shreddy",
-                subtitle = "Ton coach IA conversationnel",
+                subtitle = "Ton coach perso, dispo 24/7",
                 icon = Icons.AutoMirrored.Filled.Chat,
                 gradient = listOf(Color(0xFF8B5CF6), Color(0xFFEC4899)), // violet → rose
                 onClick = onShreddyClick
@@ -130,7 +131,7 @@ fun AiToolsSection(
             AiToolCard(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
                 title = "Meal Scan",
-                subtitle = "Photo → macros & micros",
+                subtitle = "Photographie un repas, on s'occupe du reste",
                 icon = Icons.Default.PhotoCamera,
                 gradient = listOf(OrangeVibrant, Color(0xFFEF4444)), // orange → rouge
                 onClick = onMealScanClick
@@ -143,7 +144,7 @@ fun AiToolsSection(
             AiToolCard(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
                 title = "Body Scan",
-                subtitle = "Mesures auto + visualisation 3D",
+                subtitle = "Tes mesures précises en une photo",
                 icon = Icons.Default.Accessibility,
                 gradient = listOf(Color(0xFF06B6D4), Color(0xFF3B82F6)), // cyan → blue
                 onClick = onBodyScanClick

@@ -36,6 +36,25 @@ data class TodayNutrition(
         else (proteinsConsumedGrams.toFloat() / proteinsTargetGrams).coerceIn(0f, 1f)
 
     val isCaloriesOver: Boolean get() = caloriesConsumed > caloriesTarget && caloriesTarget > 0
+
+    // ─── Cibles dérivées pour les mini-pies macros ───
+    //
+    // NutritionGoalEntity ne stocke pas de cibles glucides/lipides explicites
+    // (seulement protéines). On dérive donc des cibles de référence depuis le
+    // total kcal cible avec un split classique sèche/maintien :
+    //   - Glucides : ~45% du total kcal (4 kcal/g)
+    //   - Lipides : ~25% du total kcal (9 kcal/g)
+    // Ces valeurs servent uniquement de RÉFÉRENCE VISUELLE pour le ring, pas
+    // d'objectif absolu — l'user n'est pas pénalisé s'il s'écarte.
+    val carbsTargetGrams: Int get() = ((caloriesTarget * 0.45) / 4).toInt()
+    val fatsTargetGrams: Int get() = ((caloriesTarget * 0.25) / 9).toInt()
+
+    val carbsProgress: Float
+        get() = if (carbsTargetGrams <= 0) 0f
+        else (carbsConsumedGrams.toFloat() / carbsTargetGrams).coerceIn(0f, 1f)
+    val fatsProgress: Float
+        get() = if (fatsTargetGrams <= 0) 0f
+        else (fatsConsumedGrams.toFloat() / fatsTargetGrams).coerceIn(0f, 1f)
 }
 
 data class NextScheduleItem(

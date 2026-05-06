@@ -149,23 +149,38 @@ fun TodayNutritionCard(
                 }
             }
 
-            // ─── Barre protéines ───
-            ProteinsBar(
-                consumed = nutrition.proteinsConsumedGrams,
-                target = nutrition.proteinsTargetGrams,
-                progress = nutrition.proteinsProgress,
-            )
-
-            // ─── Macros chips ───
-            // weight(1f) sur chacun → 3 chips de largeurs égales, indépendantes
-            // des grammes affichés (sinon "P 5g" est étroit, "G 1234g" large).
+            // ─── 3 mini-pies macros (Protéines / Glucides / Lipides) ───
+            // weight(1f) sur chaque colonne → 3 macros de largeur égale,
+            // indépendantes des grammes affichés (responsive, pas de shimmer).
+            // Mots entiers (pas d'initiales P/G/L) pour clarté UX premium.
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                MacroChip(label = "P", grams = nutrition.proteinsConsumedGrams, color = ProteinGreen, modifier = Modifier.weight(1f))
-                MacroChip(label = "G", grams = nutrition.carbsConsumedGrams, color = CarbsAmber, modifier = Modifier.weight(1f))
-                MacroChip(label = "L", grams = nutrition.fatsConsumedGrams, color = FatsPurple, modifier = Modifier.weight(1f))
+                MacroPie(
+                    label = "Protéines",
+                    consumed = nutrition.proteinsConsumedGrams,
+                    target = nutrition.proteinsTargetGrams,
+                    progress = nutrition.proteinsProgress,
+                    color = ProteinGreen,
+                    modifier = Modifier.weight(1f),
+                )
+                MacroPie(
+                    label = "Glucides",
+                    consumed = nutrition.carbsConsumedGrams,
+                    target = nutrition.carbsTargetGrams,
+                    progress = nutrition.carbsProgress,
+                    color = CarbsAmber,
+                    modifier = Modifier.weight(1f),
+                )
+                MacroPie(
+                    label = "Lipides",
+                    consumed = nutrition.fatsConsumedGrams,
+                    target = nutrition.fatsTargetGrams,
+                    progress = nutrition.fatsProgress,
+                    color = FatsPurple,
+                    modifier = Modifier.weight(1f),
+                )
             }
 
             // ─── Prochain repas ───
@@ -246,78 +261,85 @@ private fun CaloriesRing(
     }
 }
 
+/**
+ * Mini-pie macro : anneau circulaire (% consommé / cible) + nom complet
+ * en dessous + valeur absolue. Format colonne, weight(1f) côté caller pour
+ * largeur responsive uniforme.
+ *
+ * Pourquoi un anneau plutôt qu'une barre : le Today Nutrition utilise déjà
+ * un ring pour les calories en hero. Garder le même langage visuel pour
+ * les macros donne une cohérence de "constellation de progrès" — chaque
+ * macro a son propre indicateur circulaire, lisible d'un coup d'œil.
+ */
 @Composable
-private fun ProteinsBar(consumed: Int, target: Int, progress: Float) {
+private fun MacroPie(
+    label: String,
+    consumed: Int,
+    target: Int,
+    progress: Float,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
     val animated by animateFloatAsState(
         targetValue = progress,
         animationSpec = tween(durationMillis = 900),
-        label = "proteinsBar",
+        label = "macroPie-$label",
     )
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        // Anneau circulaire avec valeur en grammes au centre
+        Box(modifier = Modifier.size(54.dp), contentAlignment = Alignment.Center) {
+            Canvas(modifier = Modifier.size(54.dp)) {
+                val stroke = 5.dp.toPx()
+                drawArc(
+                    color = color.copy(alpha = 0.14f),
+                    startAngle = -90f,
+                    sweepAngle = 360f,
+                    useCenter = false,
+                    style = Stroke(width = stroke, cap = StrokeCap.Round),
+                )
+                drawArc(
+                    brush = Brush.sweepGradient(
+                        colors = listOf(color.copy(alpha = 0.7f), color),
+                    ),
+                    startAngle = -90f,
+                    sweepAngle = 360f * animated,
+                    useCenter = false,
+                    style = Stroke(width = stroke, cap = StrokeCap.Round),
+                )
+            }
+            // tnum sur la valeur centrale → la pie reste stable visuellement
+            // entre 5g et 145g (chiffres de largeur uniforme).
             Text(
-                text = "Protéines",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-            )
-            Spacer(Modifier.weight(1f))
-            Text(
-                text = "$consumed / $target g",
-                style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
-                fontWeight = FontWeight.Bold,
-                color = ProteinGreen,
+                text = "${consumed}g",
+                style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
+                fontWeight = FontWeight.ExtraBold,
+                color = color,
+                fontSize = 13.sp,
                 maxLines = 1,
                 softWrap = false,
             )
         }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(animated)
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(ProteinGreen.copy(alpha = 0.7f), ProteinGreen),
-                        )
-                    ),
-            )
-        }
-    }
-}
-
-@Composable
-private fun MacroChip(label: String, grams: Int, color: Color, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(color.copy(alpha = 0.12f))
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(8.dp)
-                .clip(CircleShape)
-                .background(color),
-        )
-        // tnum : "P 5g" et "P 1234g" rendent avec des chiffres de même
-        // largeur. Combiné au weight(1f) côté caller, les 3 chips P/G/L
-        // restent alignés et de taille identique quoi qu'affichent les chiffres.
+        // Nom complet (Protéines / Glucides / Lipides) — pas d'initiale.
+        // maxLines=1 + softWrap pour éviter wrap "Pro-\ntéines" sur petit écran.
         Text(
-            text = "$label ${grams}g",
-            style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
+            maxLines = 1,
+            softWrap = false,
+            fontSize = 11.5.sp,
+        )
+        // Sub-line cible — discrète, ne mange pas la hiérarchie visuelle.
+        Text(
+            text = "/ ${target}g",
+            style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+            fontSize = 10.sp,
             maxLines = 1,
             softWrap = false,
         )

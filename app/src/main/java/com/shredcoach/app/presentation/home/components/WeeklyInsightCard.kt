@@ -97,7 +97,7 @@ fun WeeklyInsightCard(
                 Spacer(Modifier.size(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Insight de la semaine",
+                        text = "Ton highlight de la semaine",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                         fontWeight = FontWeight.Medium,
@@ -119,31 +119,42 @@ fun WeeklyInsightCard(
                 )
             }
 
-            // ─── 1RM hero + delta best ───
-            // tnum sur tous les chiffres affichés : 70.5 et 102.0 alignent
-            // leurs chiffres → la hero card ne shimmer pas entre semaines.
+            // ─── Force max estimée + record ───
+            // "Force max" remplace "1RM" : terme compréhensible par tout user
+            // (le 1RM = poids qu'on pourrait soulever 1 fois max — jargon pro).
+            // Sub-line "estimée" en dessous pour rappeler que c'est un calcul
+            // basé sur les séries (formule Epley) et non un test maximal réel.
             Row(verticalAlignment = Alignment.Bottom) {
-                Text(
-                    text = formatKg(insight.progression.estimatedOneRmKg),
-                    style = MaterialTheme.typography.headlineLarge.copy(fontFeatureSettings = "tnum"),
-                    fontWeight = FontWeight.Black,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 36.sp,
-                    maxLines = 1,
-                    softWrap = false,
-                )
-                Text(
-                    text = " kg 1RM",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 8.dp),
-                    maxLines = 1,
-                    softWrap = false,
-                )
-                Spacer(Modifier.weight(1f))
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            text = formatKg(insight.progression.estimatedOneRmKg),
+                            style = MaterialTheme.typography.headlineLarge.copy(fontFeatureSettings = "tnum"),
+                            fontWeight = FontWeight.Black,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = 36.sp,
+                            maxLines = 1,
+                            softWrap = false,
+                        )
+                        Text(
+                            text = " kg",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 8.dp),
+                            maxLines = 1,
+                            softWrap = false,
+                        )
+                    }
+                    Text(
+                        text = "Force max estimée",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "best",
+                        text = "Ton record",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                     )
@@ -170,16 +181,89 @@ fun WeeklyInsightCard(
             }
 
             // ─── Sub-line contextuelle ───
-            // maxLines=2 : les sub-lines longues ("PR sur 'Développé incliné
-            // haltères assis' (+5%)") n'explosent pas la hauteur de la card.
             Text(
                 text = subLabel(insight),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
+                maxLines = 3,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             )
+
+            // ─── Footer stats parlantes ───
+            // Donne du contexte concret au-delà du highlight principal :
+            //  - Nb de séances analysées (= profondeur de l'analyse)
+            //  - Évolution mensuelle estimée (= projection de la tendance)
+            // Ces 2 stats clarifient à l'user POURQUOI on lui montre ce highlight,
+            // et lui donnent un sentiment de progression sur le long terme.
+            androidx.compose.material3.HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                thickness = 1.dp,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                FooterStat(
+                    label = "Séances analysées",
+                    value = insight.progression.sessionsCount.toString(),
+                    color = palette.color,
+                )
+                Box(
+                    modifier = Modifier
+                        .size(width = 1.dp, height = 28.dp)
+                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                )
+                FooterStat(
+                    label = "Tendance estimée",
+                    value = formatMonthlyTrend(insight.progression.weeklySlopeKg),
+                    color = trendColor(insight.progression.weeklySlopeKg, palette.color),
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun FooterStat(label: String, value: String, color: Color) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"),
+            fontWeight = FontWeight.Bold,
+            color = color,
+            maxLines = 1,
+            softWrap = false,
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+            fontSize = 10.sp,
+            maxLines = 1,
+        )
+    }
+}
+
+/** "+1.5 kg/mois", "−0.5 kg/mois", "stable" — slope hebdo × 4 ≈ progression mensuelle. */
+private fun formatMonthlyTrend(weeklySlopeKg: Double): String {
+    val monthly = weeklySlopeKg * 4
+    return when {
+        kotlin.math.abs(monthly) < 0.3 -> "stable"
+        monthly > 0 -> "+${"%.1f".format(monthly)} kg/mois"
+        else -> "${"%.1f".format(monthly)} kg/mois"
+    }
+}
+
+private fun trendColor(weeklySlopeKg: Double, fallback: Color): Color {
+    val monthly = weeklySlopeKg * 4
+    return when {
+        kotlin.math.abs(monthly) < 0.3 -> fallback
+        monthly > 0 -> Color(0xFF10B981)  // NeonGreen
+        else -> Color(0xFFEF4444)         // ErrorRed
     }
 }
 
@@ -245,24 +329,25 @@ private fun tonePalette(tone: InsightTone): TonePalette = when (tone) {
 }
 
 private fun toneTitle(insight: WeeklyInsight): String = when (insight.tone) {
-    InsightTone.PR -> "🏆 PR sur ${insight.exerciseName}"
-    InsightTone.PROGRESS -> "📈 Progression sur ${insight.exerciseName}"
-    InsightTone.PLATEAU -> "⚠️ Plateau sur ${insight.exerciseName}"
+    InsightTone.PR -> "🏆 Nouveau record sur ${insight.exerciseName}"
+    InsightTone.PROGRESS -> "📈 Tu progresses sur ${insight.exerciseName}"
+    InsightTone.PLATEAU -> "🎯 ${insight.exerciseName} stagne"
 }
 
 private fun subLabel(insight: WeeklyInsight): String = when (insight.tone) {
     InsightTone.PR -> {
         val prev = insight.progression.previousBestKg
-        if (prev != null) "Tu viens de battre ton record (${formatKg(prev)} kg). Continue !"
-        else "Tu viens d'établir ton record perso. Continue sur cette lancée !"
+        if (prev != null) "Tu viens de battre ton record (${formatKg(prev)} kg). Belle progression !"
+        else "Tu viens d'établir ton record personnel. Continue sur cette lancée !"
     }
     InsightTone.PROGRESS -> {
         val slope = insight.progression.weeklySlopeKg
-        "+${"%.1f".format(slope)} kg/semaine sur les ${insight.progression.sessionsCount} dernières séances"
+        val sessions = insight.progression.sessionsCount
+        "Tu gagnes en moyenne +${"%.1f".format(slope)} kg par semaine sur tes $sessions dernières séances"
     }
     InsightTone.PLATEAU -> {
         val weeks = (insight.progression.status as? ProgressStatus.Plateau)?.weeksFlat ?: 3
-        "$weeks semaines sans nouveau best. Essaie de varier reps, repos ou tempo."
+        "$weeks semaines sans progresser. Essaie de varier les reps, le tempo ou le temps de repos pour relancer la progression."
     }
 }
 
