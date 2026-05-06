@@ -11,7 +11,7 @@ import com.shredcoach.app.data.repository.NutritionRepository
 import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.data.repository.WorkoutRepository
 import com.shredcoach.app.data.local.dao.WorkoutLogDao
-import com.shredcoach.app.domain.nutrition.TdeeCalculator
+import com.shredcoach.app.domain.nutrition.DailyCalorieTargetCalculator
 import com.shredcoach.app.domain.streak.StreakMilestoneStore
 import com.shredcoach.app.domain.streak.StreakService
 import com.shredcoach.app.domain.training.PlateauDetector
@@ -198,6 +198,42 @@ class HomeViewModel @Inject constructor(
     init {
         loadExerciseCount()
         observeProfileAndLogs()
+        // Sync silencieux : si la valeur stockée en DB diverge de ce que
+        // calcule la nouvelle formule sédentaire, on rafraîchit la DB. Comme
+        // ça les pages qui lisent `goal.targetCalories` direct (Stats) voient
+        // une valeur cohérente avec Home/Nutrition.
+        viewModelScope.launch { syncGoalCacheWithProfile() }
+    }
+
+    /**
+     * Aligne `NutritionGoalEntity.targetCalories` (cache DB) avec ce que
+     * calcule [DailyCalorieTargetCalculator] depuis le profil actuel.
+     *
+     * Pourquoi : un user qui était sur une ancienne version (multiplicateur
+     * d'activité fixe ×1.55) avait une valeur DB ~2980 kcal. Après le passage
+     * au modèle sédentaire, la valeur correcte est ~2230 kcal. Tant que
+     * l'user n'avait pas modifié son profil, la DB restait stale → la page
+     * Stats affichait 2980 alors que Home/Nutrition affichaient 2230.
+     *
+     * On corrige ça en rafraîchissant silencieusement à chaque ouverture
+     * de la home (idempotent : no-op si déjà à jour).
+     */
+    private suspend fun syncGoalCacheWithProfile() {
+        val profile = userRepository.getUserProfileOnce() ?: return
+        val existing = nutritionRepository.getNutritionGoalOnce() ?: return
+        val expected = DailyCalorieTargetCalculator.sedentaryBaseTarget(profile)
+        if (existing.targetCalories != expected) {
+            nutritionRepository.saveNutritionGoal(
+                existing.copy(
+                    targetCalories = expected,
+                    weight = profile.currentWeightKg,
+                    height = profile.heightCm,
+                    age = profile.age,
+                    sex = profile.sex,
+                    goal = profile.goal.name,
+                )
+            )
+        }
     }
 
     private fun loadExerciseCount() {
@@ -342,14 +378,19 @@ class HomeViewModel @Inject constructor(
         val fats = consumedMacros.sumOf { it.third.second }
         val goalSafe = goal ?: NutritionGoalEntity()
 
-        // Cible adaptative : base sédentaire (déjà stockée dans goalSafe.targetCalories)
-        // + bonus kcal réellement brûlées par les séances complétées aujourd'hui.
-        // Aligne la valeur affichée sur la home avec celle de NutritionScreen pour
-        // éviter le mismatch entre pages (cf. NutritionViewModel.recalcDailyTarget).
-        val workoutBonus = if (profile != null && completedWorkoutsToday.isNotEmpty()) {
-            TdeeCalculator.totalWorkoutKcalForDay(completedWorkoutsToday, profile.currentWeightKg)
-        } else 0
-        val adaptiveTarget = TdeeCalculator.adaptiveDailyTarget(goalSafe.targetCalories, workoutBonus)
+        // Cible adaptative — calculée via le helper UNIQUE
+        // [DailyCalorieTargetCalculator]. Garantit la cohérence avec la
+        // page Nutrition (NutritionViewModel.recalcDailyTarget utilise le
+        // même helper). Plus de mismatch possible entre les 2 pages.
+        //
+        // Fallback si profil pas encore chargé : on utilise la base DB
+        // (goalSafe.targetCalories) — valeur certes stale mais évite
+        // d'afficher 0 le temps du premier emit.
+        val adaptiveTarget = if (profile != null) {
+            DailyCalorieTargetCalculator.adaptiveTarget(profile, completedWorkoutsToday)
+        } else {
+            goalSafe.targetCalories
+        }
 
         val now = LocalTime.now()
         val next = schedules

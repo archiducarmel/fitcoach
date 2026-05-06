@@ -123,7 +123,7 @@ fun AiToolsSection(
             AiToolCard(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
                 title = "Shreddy",
-                subtitle = "Ton coach perso, dispo 24/7",
+                subtitle = "Coach perso 24/7",
                 icon = Icons.AutoMirrored.Filled.Chat,
                 gradient = listOf(Color(0xFF8B5CF6), Color(0xFFEC4899)), // violet → rose
                 onClick = onShreddyClick
@@ -131,7 +131,7 @@ fun AiToolsSection(
             AiToolCard(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
                 title = "Meal Scan",
-                subtitle = "Photographie un repas, on s'occupe du reste",
+                subtitle = "Photo → macros",
                 icon = Icons.Default.PhotoCamera,
                 gradient = listOf(OrangeVibrant, Color(0xFFEF4444)), // orange → rouge
                 onClick = onMealScanClick
@@ -144,7 +144,7 @@ fun AiToolsSection(
             AiToolCard(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
                 title = "Body Scan",
-                subtitle = "Tes mesures précises en une photo",
+                subtitle = "Mesures par photo",
                 icon = Icons.Default.Accessibility,
                 gradient = listOf(Color(0xFF06B6D4), Color(0xFF3B82F6)), // cyan → blue
                 onClick = onBodyScanClick
@@ -152,7 +152,7 @@ fun AiToolsSection(
             AiToolCard(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
                 title = "Gym Scan",
-                subtitle = "Identifie les machines de ta salle",
+                subtitle = "Reconnaît les machines",
                 icon = Icons.Default.QrCodeScanner,
                 gradient = listOf(NeonGreen, Color(0xFF14B8A6)), // green → teal
                 onClick = onGymScanClick
@@ -219,7 +219,9 @@ private fun AiToolCard(
                         tint = Color.White.copy(alpha = 0.85f)
                     )
                 }
-                // Footer : titre + subtitle
+                // Footer : titre + subtitle.
+                // Sous-titres délibérément < 23 chars pour tenir sur 1 ligne
+                // sur petit écran, max 2 lignes sur fontScale élevé.
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
                         title,
@@ -231,11 +233,12 @@ private fun AiToolCard(
                     )
                     Text(
                         subtitle,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White.copy(alpha = 0.85f),
+                        color = Color.White.copy(alpha = 0.9f),
                         maxLines = 2,
-                        lineHeight = 13.sp,
-                        fontSize = 10.5.sp
+                        overflow = TextOverflow.Ellipsis,
+                        lineHeight = 14.sp,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
                     )
                 }
             }

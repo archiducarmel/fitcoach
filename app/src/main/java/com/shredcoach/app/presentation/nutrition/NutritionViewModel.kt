@@ -11,6 +11,7 @@ import com.shredcoach.app.data.repository.NutritionRepository
 import com.shredcoach.app.data.repository.ScheduledWorkoutRepository
 import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.domain.nutrition.DailyActivityState
+import com.shredcoach.app.domain.nutrition.DailyCalorieTargetCalculator
 import com.shredcoach.app.domain.nutrition.IngredientAggregator
 import com.shredcoach.app.domain.nutrition.NutritionInsights
 import com.shredcoach.app.domain.nutrition.TdeeCalculator
@@ -203,24 +204,19 @@ class NutritionViewModel @Inject constructor(
      */
     private fun recalcDailyTarget(date: LocalDate) {
         viewModelScope.launch {
-            val profile = userRepository.getUserProfileOnce()
-            if (profile == null) return@launch
+            val profile = userRepository.getUserProfileOnce() ?: return@launch
+            val completedLogs = workoutLogDao.getCompletedLogsOnDateOnce(date)
 
-            // 1. Base sédentaire fixe (ne dépend que des données morphologiques + objectif)
-            val sedentaryBase = TdeeCalculator.targetCaloriesSedentaryBase(
-                sex = profile.sex,
-                weightKg = profile.currentWeightKg,
-                heightCm = profile.heightCm,
-                age = profile.age,
-                goal = profile.goal
-            )
+            // Cible adaptative — helper UNIQUE partagé avec HomeViewModel
+            // → garantit que les 2 pages affichent strictement la même
+            // valeur. Cf. [DailyCalorieTargetCalculator].
+            val adjusted = DailyCalorieTargetCalculator.adaptiveTarget(profile, completedLogs)
+
+            // Décomposition pour l'UI (transparence : montrer base + bonus)
             val sedentaryMaintenance = TdeeCalculator.sedentaryMaintenance(
                 profile.sex, profile.currentWeightKg, profile.heightCm, profile.age
             )
             val goalDelta = TdeeCalculator.goalAdjustment(profile.goal)
-
-            // 2. Bonus = somme kcal brûlées par séances complétées de [date]
-            val completedLogs = workoutLogDao.getCompletedLogsOnDateOnce(date)
             val workoutBonus = TdeeCalculator.totalWorkoutKcalForDay(
                 completedLogs = completedLogs,
                 userWeightKg = profile.currentWeightKg
@@ -230,13 +226,8 @@ class NutritionViewModel @Inject constructor(
                 else log.durationMinutes
             }
 
-            // 3. Cible adaptative finale
-            val adjusted = TdeeCalculator.adaptiveDailyTarget(sedentaryBase, workoutBonus)
-
-            // 4. État réel (jamais le calendrier prévu)
             val state = computeActivityState(date, completedLogs.isNotEmpty())
 
-            // 5. Décomposition prête pour l'UI
             val breakdown = EnergyBreakdown(
                 sedentaryMaintenance = sedentaryMaintenance,
                 goalDelta = goalDelta,
@@ -250,7 +241,7 @@ class NutritionViewModel @Inject constructor(
                 adjustedTargetCalories = adjusted,
                 activityState = state,
                 energyBreakdown = breakdown,
-                isTrainingDay = state == DailyActivityState.TRAINED  // legacy compat
+                isTrainingDay = state == DailyActivityState.TRAINED
             ) }
         }
     }

@@ -253,13 +253,9 @@ class ProfileViewModel @Inject constructor(
     private suspend fun recalculateTDEE() {
         val profile = userRepository.getUserProfileOnce() ?: return
         val existing = nutritionRepository.getNutritionGoalOnce() ?: NutritionGoalEntity()
-        val sedentaryBase = TdeeCalculator.targetCaloriesSedentaryBase(
-            sex = profile.sex,
-            weightKg = profile.currentWeightKg,
-            heightCm = profile.heightCm,
-            age = profile.age,
-            goal = profile.goal
-        )
+        // Source UNIQUE de calcul partagée avec HomeViewModel et NutritionViewModel.
+        val sedentaryBase = com.shredcoach.app.domain.nutrition.DailyCalorieTargetCalculator
+            .sedentaryBaseTarget(profile)
         nutritionRepository.saveNutritionGoal(
             existing.copy(
                 targetCalories = sedentaryBase,
