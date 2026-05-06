@@ -22,6 +22,7 @@ class NutritionRepository @Inject constructor(
 
     // ── Meal Logs ──
     fun getMealsForDate(date: LocalDate) = nutritionDao.getMealsForDate(date)
+    suspend fun getMealsForDateOnce(date: LocalDate) = nutritionDao.getMealsForDateOnce(date)
     suspend fun insertMealLog(meal: MealLogEntity) = nutritionDao.insertMealLog(meal)
     suspend fun deleteMealLog(id: Long) = nutritionDao.deleteMealLogById(id)
     suspend fun getFoodIdsByScanId(scanId: Long) = nutritionDao.getFoodIdsByScanId(scanId)

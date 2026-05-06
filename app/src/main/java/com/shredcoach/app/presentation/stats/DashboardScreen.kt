@@ -315,6 +315,11 @@ private fun NutritionDashboard(stats: NutritionStatsData, viewModel: StatsViewMo
             item { MealHoursTimelineCard(stats.mealsByHourBucket) }
         }
 
+        // ─── Jeûne intermittent (cadran 24h) — NEW ───
+        if (!stats.fasting.isEmpty && stats.fasting.daysMeasured >= 2) {
+            item { FastingWindowCard(stats.fasting) }
+        }
+
         // ─── Score santé moyen (existant) ───
         if (stats.totalScans > 0) {
             item {

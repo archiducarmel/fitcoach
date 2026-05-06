@@ -96,11 +96,18 @@ class WeeklyRecapWorker @AssistedInject constructor(
         val totalVolume = workoutLogDao.getTotalVolumeInPeriod(monday, sunday) ?: 0.0
         val proteinAdherence = computeProteinAdherence(monday, sunday)
 
+        // Jeûne intermittent moyen sur la semaine (depuis MealLogEntity)
+        val fasting = com.shredcoach.app.domain.nutrition.FastingWindowCalculator.aggregate(
+            start = monday, end = sunday,
+        ) { date -> nutritionDao.getMealsForDateOnce(date) }
+
         val trigger = CoachTrigger.WeeklyRecap(
             workoutsThisWeek = workoutCount,
             targetWorkouts = profile.workoutDays.size,
             totalVolumeKg = totalVolume.toInt(),
             proteinAdherence = proteinAdherence,
+            avgFastingHours = fasting.averageHours,
+            daysWith16hFasting = fasting.daysWith16h,
         )
 
         // Contexte multi-canal — important pour le récap (peut référencer
@@ -176,8 +183,15 @@ class WeeklyRecapWorker @AssistedInject constructor(
 
     private fun fallbackRecap(trigger: CoachTrigger.WeeklyRecap, firstName: String): String {
         val name = if (firstName.isNotBlank()) " $firstName" else ""
+        val fastingFragment = if (trigger.avgFastingHours > 0) {
+            val h = trigger.avgFastingHours.toInt()
+            val m = ((trigger.avgFastingHours - h) * 60).toInt()
+            val avg = if (m < 5) "${h}h" else "${h}h${m.toString().padStart(2, '0')}"
+            ", jeûne moyen $avg"
+        } else ""
         return "Semaine bouclée$name : ${trigger.workoutsThisWeek}/${trigger.targetWorkouts} séances, " +
-            "${trigger.totalVolumeKg}kg cumulés, prot ${trigger.proteinAdherence}%. Cap sur la suivante !"
+            "${trigger.totalVolumeKg}kg cumulés, prot ${trigger.proteinAdherence}%$fastingFragment. " +
+            "Cap sur la suivante !"
     }
 
     companion object {

@@ -189,6 +189,15 @@ data class NutritionStatsData(
     // ── Streak de tracking (jours consécutifs avec ≥1 repas) ──
     val trackingStreak: Int = 0,
 
+    // ── Fenêtre de jeûne intermittent (16-8, 14-10) ──
+    val fasting: com.shredcoach.app.domain.nutrition.FastingStats =
+        com.shredcoach.app.domain.nutrition.FastingStats(
+            averageHours = 0.0, bestHours = 0.0,
+            daysWith16h = 0, daysWith14h = 0,
+            daysMeasured = 0, series = emptyList(),
+            averageEatingStartHour = null, averageEatingEndHour = null,
+        ),
+
     val isLoading: Boolean = true
 ) {
     val nutriTotal: Int get() = nutriCountA + nutriCountB + nutriCountC + nutriCountD + nutriCountE
@@ -611,6 +620,13 @@ class StatsViewModel @Inject constructor(
                     else break
                 }
 
+                // ─── Fenêtre de jeûne intermittent ───
+                val fastingStart = today.minusDays((daysInPeriod - 1).toLong())
+                val fasting = com.shredcoach.app.domain.nutrition.FastingWindowCalculator.aggregate(
+                    start = fastingStart,
+                    end = today,
+                ) { date -> nutritionRepository.getMealsForDateOnce(date) }
+
                 // ─── Calculs agrégés ───
                 val avgCal = if (current.daysTracked > 0) (current.totalCal / current.daysTracked).toInt() else 0
                 val avgProt = if (current.daysTracked > 0) (current.totalProt / current.daysTracked).toInt() else 0
@@ -629,7 +645,8 @@ class StatsViewModel @Inject constructor(
                     protKg = protKg, profileGoal = profile?.goal,
                     nutriHighShare = if (scansInPeriod.isNotEmpty()) (nA + nB).toFloat() / scansInPeriod.size else 0f,
                     caloriesDelta = avgCal - prevAvgCal, proteinsDelta = avgProt - prevAvgProt,
-                    streak = streak
+                    streak = streak,
+                    fasting = fasting,
                 )
 
                 _nutritionStats.update {
@@ -656,6 +673,7 @@ class StatsViewModel @Inject constructor(
                         mealsByHourBucket = mealsByBucket,
                         insights = insights,
                         trackingStreak = streak,
+                        fasting = fasting,
                         isLoading = false
                     )
                 }
@@ -793,7 +811,8 @@ class StatsViewModel @Inject constructor(
         protKg: Double, profileGoal: com.shredcoach.app.data.local.entity.FitnessGoal?,
         nutriHighShare: Float,
         caloriesDelta: Int, proteinsDelta: Int,
-        streak: Int
+        streak: Int,
+        fasting: com.shredcoach.app.domain.nutrition.FastingStats,
     ): List<String> {
         if (daysTracked == 0) return listOf("Suis tes repas pour débloquer des insights personnalisés")
         val list = mutableListOf<String>()
@@ -826,6 +845,23 @@ class StatsViewModel @Inject constructor(
         // 5. Streak
         if (streak >= 7) list += "🔥 $streak jours d'affilée à tracker tes repas"
 
+        // 6. Jeûne intermittent
+        if (!fasting.isEmpty && fasting.daysMeasured >= 3) {
+            val avg = fasting.averageHours
+            when {
+                avg >= 16.0 -> list += "🌙 Jeûne moyen ${formatHours(avg)} — format 16-8 atteint"
+                avg >= 14.0 && fasting.daysWith16h >= 1 -> list += "🌙 Jeûne moyen ${formatHours(avg)} (${fasting.daysWith16h}j ≥ 16h)"
+                avg >= 14.0 -> list += "🌙 Jeûne moyen ${formatHours(avg)} — vise 16h+ pour le 16-8"
+                avg < 12.0 -> list += "🌙 Jeûne ${formatHours(avg)}/jour — ouvre une fenêtre de jeûne plus large"
+            }
+        }
+
         return list.take(4)
+    }
+
+    private fun formatHours(hours: Double): String {
+        val h = hours.toInt()
+        val m = ((hours - h) * 60).toInt()
+        return if (m < 5) "${h}h" else "${h}h${m.toString().padStart(2, '0')}"
     }
 }

@@ -13,6 +13,7 @@ import androidx.compose.material.icons.automirrored.filled.TrendingFlat
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.NightsStay
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Star
@@ -710,6 +711,217 @@ private fun CaloriesSmoothChart(state: NutritionStatsData) {
         val tlT = textMeasurer.measure(targetLabel, labelStyle.copy(color = targetColor))
         drawText(tlT, topLeft = Offset(w - padR - tlT.size.width, yTarget - tlT.size.height - 2f))
     }
+}
+
+// ═══════════════════════════════════════
+// 8. FASTING WINDOW CARD — cadran 24h jeûne intermittent
+// ═══════════════════════════════════════
+//
+// Visualisation premium du jeûne intermittent (16-8, 14-10).
+// Cadran 24h avec :
+//  - Arc orange : fenêtre alimentation (de avgFirstMeal à avgLastMeal)
+//  - Arc gris doux : fenêtre jeûne (le reste)
+//  - Heures repères 0/6/12/18 en marges
+//  - Au centre : durée moyenne en grand + verdict
+// Stats secondaires : meilleur, jours ≥ 16h, jours ≥ 14h.
+
+@Composable
+fun FastingWindowCard(stats: com.shredcoach.app.domain.nutrition.FastingStats) {
+    if (stats.isEmpty || stats.daysMeasured < 2) return
+
+    Card(
+        Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Default.NightsStay, null, Modifier.size(20.dp), tint = OrangeVibrant)
+                Column(Modifier.weight(1f)) {
+                    Text("Jeûne intermittent", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text(stats.verdictText, style = MaterialTheme.typography.labelSmall,
+                        color = fastingVerdictColor(stats.averageHours))
+                }
+                if (stats.daysWith16h > 0) {
+                    Surface(shape = RoundedCornerShape(6.dp), color = NeonGreen.copy(alpha = 0.15f)) {
+                        Text("${stats.daysWith16h}j · 16-8",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
+                            fontWeight = FontWeight.Bold,
+                            color = NeonGreen)
+                    }
+                }
+            }
+
+            // Cadran + métriques
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Box(Modifier.size(150.dp), contentAlignment = Alignment.Center) {
+                    FastingDial24h(
+                        eatingStartHour = stats.averageEatingStartHour,
+                        eatingEndHour = stats.averageEatingEndHour,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            formatFastingHours(stats.averageHours),
+                            style = MaterialTheme.typography.headlineSmall.copy(fontFeatureSettings = "tnum"),
+                            fontWeight = FontWeight.ExtraBold,
+                            color = OrangeVibrant
+                        )
+                        Text("jeûne moyen",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f))
+                    }
+                }
+
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    FastingStatRow(
+                        label = "Meilleur",
+                        value = formatFastingHours(stats.bestHours),
+                        color = NeonGreen
+                    )
+                    FastingStatRow(
+                        label = "Jours ≥ 16h",
+                        value = "${stats.daysWith16h}/${stats.daysMeasured}",
+                        color = OrangeVibrant
+                    )
+                    FastingStatRow(
+                        label = "Jours ≥ 14h",
+                        value = "${stats.daysWith14h}/${stats.daysMeasured}",
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
+                    )
+                    if (stats.averageEatingStartHour != null && stats.averageEatingEndHour != null) {
+                        FastingStatRow(
+                            label = "Fenêtre repas",
+                            value = "${formatClock(stats.averageEatingStartHour)} → ${formatClock(stats.averageEatingEndHour)}",
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FastingStatRow(label: String, value: String, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(label, style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+            modifier = Modifier.weight(1f))
+        Text(value, style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
+            fontWeight = FontWeight.Bold, color = color, maxLines = 1, softWrap = false)
+    }
+}
+
+/**
+ * Cadran 24h avec arc fenêtre alimentaire (orange) et arc jeûne (gris clair).
+ * Les heures 0 / 6 / 12 / 18 sont marquées par 4 traits courts en périphérie.
+ *
+ * Convention : 0h en haut (12h au sud, 6h à droite, 18h à gauche). On
+ * convertit donc heures décimales en angles : `angle = (hour / 24) × 360 − 90`.
+ *
+ * Si une seule des 2 bornes de la fenêtre alimentaire est connue, on
+ * dégrade gracieusement vers un cadran "vide" (pas d'arc orange) plutôt
+ * que de poser une fenêtre arbitraire.
+ */
+@Composable
+private fun FastingDial24h(
+    eatingStartHour: Double?,
+    eatingEndHour: Double?,
+    modifier: Modifier
+) {
+    val trackColor = MaterialTheme.colorScheme.surfaceVariant
+    val fastingColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.18f)
+    val eatingColor = OrangeVibrant
+    val labelStyle = TextStyle(
+        fontSize = 9.sp,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+        fontFeatureSettings = "tnum"
+    )
+    val tm = rememberTextMeasurer()
+
+    val animation = remember { Animatable(0f) }
+    LaunchedEffect(eatingStartHour, eatingEndHour) {
+        animation.snapTo(0f)
+        animation.animateTo(1f, tween(900, easing = FastOutSlowInEasing))
+    }
+
+    Canvas(modifier = modifier) {
+        val w = size.width; val h = size.height
+        val padding = 14f
+        val stroke = 18f
+        val arcSize = Size(w - padding * 2, h - padding * 2)
+        val topLeft = Offset(padding, padding)
+
+        // Track de fond (cercle complet — fenêtre jeûne par défaut)
+        drawArc(
+            color = fastingColor,
+            startAngle = -90f,
+            sweepAngle = 360f,
+            useCenter = false,
+            topLeft = topLeft,
+            size = arcSize,
+            style = Stroke(width = stroke, cap = StrokeCap.Round)
+        )
+
+        // Arc fenêtre alimentaire (si on a les 2 heures moyennes)
+        if (eatingStartHour != null && eatingEndHour != null) {
+            val startAngle = hoursToAngle(eatingStartHour)
+            val endAngle = hoursToAngle(eatingEndHour)
+            val sweep = ((endAngle - startAngle) + 360f) % 360f
+            val animSweep = sweep * animation.value
+            drawArc(
+                brush = Brush.sweepGradient(
+                    colors = listOf(eatingColor.copy(alpha = 0.7f), eatingColor)
+                ),
+                startAngle = startAngle,
+                sweepAngle = animSweep.coerceAtLeast(0.5f),
+                useCenter = false,
+                topLeft = topLeft,
+                size = arcSize,
+                style = Stroke(width = stroke, cap = StrokeCap.Round)
+            )
+        }
+
+        // Repères horaires : 0 / 6 / 12 / 18
+        val cx = w / 2f; val cy = h / 2f
+        val radius = (arcSize.width / 2f) + 12f
+        val labels = listOf(0 to "0h", 6 to "6h", 12 to "12h", 18 to "18h")
+        labels.forEach { (hour, text) ->
+            val angleRad = Math.toRadians((hour / 24.0 * 360.0 - 90.0))
+            val x = cx + radius * kotlin.math.cos(angleRad).toFloat()
+            val y = cy + radius * kotlin.math.sin(angleRad).toFloat()
+            val tl = tm.measure(text, labelStyle)
+            drawText(tl, topLeft = Offset(x - tl.size.width / 2f, y - tl.size.height / 2f))
+        }
+    }
+}
+
+/** Heures décimales [0..24[ → angle Compose [-90..270[. 0h en haut, 6h à droite. */
+private fun hoursToAngle(hours: Double): Float =
+    ((hours / 24.0 * 360.0 - 90.0).toFloat() + 360f) % 360f
+
+@Composable
+private fun fastingVerdictColor(avgHours: Double): Color = when {
+    avgHours >= 16.0 -> NeonGreen
+    avgHours >= 14.0 -> NeonGreen.copy(alpha = 0.85f)
+    avgHours >= 12.0 -> OrangeVibrant
+    else -> ErrorRed
+}
+
+/** "14h30" / "16h" — format compact. */
+private fun formatFastingHours(hours: Double): String {
+    val h = hours.toInt()
+    val m = ((hours - h) * 60).toInt()
+    return if (m < 5) "${h}h" else "${h}h${m.toString().padStart(2, '0')}"
+}
+
+/** Heure décimale → "20:30". */
+private fun formatClock(hours: Double): String {
+    val h = hours.toInt()
+    val m = ((hours - h) * 60).toInt()
+    return "%02d:%02d".format(h, m)
 }
 
 private fun buildSmoothPath(pts: List<Offset>): Path {

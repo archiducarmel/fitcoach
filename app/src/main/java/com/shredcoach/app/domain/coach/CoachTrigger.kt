@@ -161,14 +161,25 @@ sealed interface CoachTrigger {
         val targetWorkouts: Int,
         val totalVolumeKg: Int,
         val proteinAdherence: Int,    // 0-100% moyenne sur la semaine
+        /** Moyenne hebdo des heures de jeûne nocturne (0.0 si non mesuré). */
+        val avgFastingHours: Double = 0.0,
+        /** Nb de jours sur la semaine où le jeûne ≥ 16h (format 16-8). */
+        val daysWith16hFasting: Int = 0,
     ) : CoachTrigger {
         override val score: Int = 90
         override val category: String = "weekly_recap"
         override val cooldown: Duration = Duration.ofDays(6)  // 6 pour permettre le dimanche suivant
-        override val context: String =
-            "Récap de la semaine : $workoutsThisWeek séances sur $targetWorkouts prévues. " +
-                "Volume total ${totalVolumeKg}kg. Adhérence protéique moyenne $proteinAdherence%. " +
-                "Dimanche soir = moment de réflexion, ton bilan + cap sur la semaine suivante."
+        override val context: String = buildString {
+            append("Récap de la semaine : $workoutsThisWeek séances sur $targetWorkouts prévues. ")
+            append("Volume total ${totalVolumeKg}kg. Adhérence protéique moyenne $proteinAdherence%. ")
+            if (avgFastingHours > 0) {
+                val h = avgFastingHours.toInt()
+                val m = ((avgFastingHours - h) * 60).toInt()
+                val str = if (m < 5) "${h}h" else "${h}h${m.toString().padStart(2, '0')}"
+                append("Jeûne nocturne moyen $str (${daysWith16hFasting}j ≥ 16h). ")
+            }
+            append("Dimanche soir = moment de réflexion, ton bilan + cap sur la semaine suivante.")
+        }
         override val primaryDeeplink: String? = "stats"
         override val primaryActionLabel: String? = "Voir les stats"
     }
