@@ -29,4 +29,11 @@ interface MealScanDao {
 
     @Query("SELECT * FROM meal_scans WHERE date(timestamp) = date(:date) AND addedToTracking = 1 ORDER BY timestamp ASC")
     suspend fun getScansForDate(date: String): List<MealScanEntity>
+
+    /**
+     * Récupère tous les scans postérieurs à [since] (format ISO date `YYYY-MM-DD`).
+     * Utilisé par l'agrégation des insights nutrition (fenêtre glissante 30 j).
+     */
+    @Query("SELECT * FROM meal_scans WHERE date(timestamp) >= date(:since) ORDER BY timestamp DESC")
+    suspend fun getScansSince(since: String): List<MealScanEntity>
 }

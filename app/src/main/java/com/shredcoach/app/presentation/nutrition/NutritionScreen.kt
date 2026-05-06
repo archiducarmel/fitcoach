@@ -154,9 +154,14 @@ fun NutritionScreen(navController: NavController, viewModel: NutritionViewModel 
                 }
             }
 
-            // ── Top aliments (30 derniers jours) ──
-            if (state.topFoods.isNotEmpty()) {
-                item { TopFoodsCard(state.topFoods) }
+            // ── Insights nutrition (30 derniers jours) ──
+            // Refonte complète de l'ancien "Top aliments" : agrège par
+            // ingrédient normalisé (lemmatisé), pas par foodId — le foodId
+            // d'un plat scanné n'étant jamais réutilisé. Cf. InsightsSection.
+            state.insights?.let { ins ->
+                if (!ins.isEmpty) {
+                    item { InsightsSection(ins) }
+                }
             }
 
             item { Spacer(Modifier.height(80.dp)) }
@@ -343,70 +348,6 @@ private fun MealCard(mwf: MealWithFood, onDelete: () -> Unit) {
                     NutritionMealMacro("Protéines", mwf.meal.proteins, ProteinColor, Modifier.weight(1f))
                     NutritionMealMacro("Glucides", mwf.meal.carbs, CarbColor, Modifier.weight(1f))
                     NutritionMealMacro("Lipides", mwf.meal.fats, FatColor, Modifier.weight(1f))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun TopFoodsCard(foods: List<TopFoodDisplay>) {
-    val maxCount = foods.maxOfOrNull { it.count } ?: 1
-
-    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
-        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            // Header
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(Icons.AutoMirrored.Filled.TrendingUp, null, Modifier.size(20.dp), tint = OrangeVibrant)
-                    Text("Top aliments", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                }
-                Surface(shape = RoundedCornerShape(6.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
-                    Text("30 jours", modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                        style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-                }
-            }
-
-            // Liste avec podium visuel
-            foods.forEachIndexed { index, food ->
-                val fraction = (food.count.toFloat() / maxCount).coerceIn(0f, 1f)
-                val medal = when (index) { 0 -> "🥇"; 1 -> "🥈"; 2 -> "🥉"; else -> null }
-
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    // Rang
-                    if (medal != null) {
-                        Text(medal, fontSize = 18.sp)
-                    } else {
-                        Box(Modifier.size(28.dp), contentAlignment = Alignment.Center) {
-                            Text("${index + 1}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f))
-                        }
-                    }
-
-                    // Nom + barre + stats
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(food.name, style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = if (index < 3) FontWeight.Bold else FontWeight.Medium,
-                                maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-                            Spacer(Modifier.width(8.dp))
-                            Text("${food.count}× · ${food.totalGrams}g", style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.SemiBold, color = OrangeVibrant)
-                        }
-                        // Barre de fréquence
-                        Box(Modifier.fillMaxWidth().height(5.dp).clip(RoundedCornerShape(3.dp))
-                            .background(OrangeVibrant.copy(alpha = 0.08f))) {
-                            Box(Modifier.fillMaxWidth(fraction).fillMaxHeight().clip(RoundedCornerShape(3.dp))
-                                .background(
-                                    when (index) {
-                                        0 -> OrangeVibrant
-                                        1 -> OrangeVibrant.copy(alpha = 0.7f)
-                                        2 -> OrangeVibrant.copy(alpha = 0.5f)
-                                        else -> OrangeVibrant.copy(alpha = 0.3f)
-                                    }
-                                ))
-                        }
-                    }
                 }
             }
         }

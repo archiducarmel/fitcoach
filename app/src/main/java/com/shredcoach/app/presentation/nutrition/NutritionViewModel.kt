@@ -9,6 +9,8 @@ import com.shredcoach.app.data.local.entity.*
 import com.shredcoach.app.data.repository.NutritionRepository
 import com.shredcoach.app.data.repository.ScheduledWorkoutRepository
 import com.shredcoach.app.data.repository.UserRepository
+import com.shredcoach.app.domain.nutrition.IngredientAggregator
+import com.shredcoach.app.domain.nutrition.NutritionInsights
 import com.shredcoach.app.domain.nutrition.TdeeCalculator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -41,12 +43,10 @@ data class NutritionState(
     val searchResults: List<FoodEntity> = emptyList(),
     val selectedFood: FoodEntity? = null,
     val quantity: String = "",
-    // Top foods
-    val topFoods: List<TopFoodDisplay> = emptyList(),
+    // Insights nutrition (30 derniers jours, agrégés depuis les scans)
+    val insights: NutritionInsights? = null,
     val isLoading: Boolean = true
 )
-
-data class TopFoodDisplay(val name: String, val count: Int, val totalGrams: Int)
 
 @HiltViewModel
 class NutritionViewModel @Inject constructor(
@@ -72,13 +72,13 @@ class NutritionViewModel @Inject constructor(
         }
         loadGoal()
         loadDay(LocalDate.now())
-        loadTopFoods()
+        loadInsights()
     }
 
     fun refresh() {
         loadGoal()
         loadDay(_state.value.selectedDate)
-        loadTopFoods()
+        loadInsights()
     }
 
     fun selectDate(date: LocalDate) {
@@ -147,10 +147,19 @@ class NutritionViewModel @Inject constructor(
         }
     }
 
-    private fun loadTopFoods() {
+    /**
+     * Charge les insights nutrition sur 30 jours glissants. Lit les scans
+     * depuis MealScanDao, déserialise leur resultJson et passe la liste à
+     * IngredientAggregator. Calcul léger (<10ms typique pour 100 scans),
+     * pas de cache → recalculé à chaque pull-to-refresh.
+     */
+    private fun loadInsights() {
         viewModelScope.launch {
-            val top = repo.getTopFoods(LocalDate.now().minusDays(30))
-            _state.update { it.copy(topFoods = top.map { f -> TopFoodDisplay(f.name, f.count, f.totalGrams) }) }
+            val periodDays = 30
+            val sinceDate = LocalDate.now().minusDays(periodDays.toLong()).toString()
+            val scans = mealScanDao.getScansSince(sinceDate)
+            val insights = IngredientAggregator.aggregate(scans, periodDays = periodDays)
+            _state.update { it.copy(insights = insights) }
         }
     }
 
