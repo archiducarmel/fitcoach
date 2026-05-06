@@ -240,23 +240,29 @@ class ProfileViewModel @Inject constructor(
     }
 
     /**
-     * Recalcule le TDEE à partir du profil actuel et met à jour NutritionGoalEntity.
-     * Appelé automatiquement quand le poids ou l'objectif changent.
+     * Recalcule la base calorique sédentaire (BMR × 1.20 + ajustement objectif)
+     * et la persiste dans NutritionGoalEntity. Appelé quand le poids, l'objectif
+     * ou la morphologie changent.
+     *
+     * On stocke délibérément la BASE SÉDENTAIRE et non le TDEE complet :
+     * le bonus calorique des séances effectuées est ajouté DYNAMIQUEMENT par
+     * NutritionViewModel.recalcDailyTarget qui lit l'activité réelle. Ainsi,
+     * les autres écrans (Home, Stats) qui lisent goal.targetCalories voient
+     * la cible "stable" jour de repos, et la nutrition montre la cible adaptée.
      */
     private suspend fun recalculateTDEE() {
         val profile = userRepository.getUserProfileOnce() ?: return
         val existing = nutritionRepository.getNutritionGoalOnce() ?: NutritionGoalEntity()
-        val newCalories = TdeeCalculator.targetCalories(
+        val sedentaryBase = TdeeCalculator.targetCaloriesSedentaryBase(
             sex = profile.sex,
             weightKg = profile.currentWeightKg,
             heightCm = profile.heightCm,
             age = profile.age,
-            activityLevel = existing.activityLevel,
             goal = profile.goal
         )
         nutritionRepository.saveNutritionGoal(
             existing.copy(
-                targetCalories = newCalories,
+                targetCalories = sedentaryBase,
                 weight = profile.currentWeightKg,
                 height = profile.heightCm,
                 age = profile.age,

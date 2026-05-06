@@ -5,10 +5,12 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shredcoach.app.data.local.dao.MealScanDao
+import com.shredcoach.app.data.local.dao.WorkoutLogDao
 import com.shredcoach.app.data.local.entity.*
 import com.shredcoach.app.data.repository.NutritionRepository
 import com.shredcoach.app.data.repository.ScheduledWorkoutRepository
 import com.shredcoach.app.data.repository.UserRepository
+import com.shredcoach.app.domain.nutrition.DailyActivityState
 import com.shredcoach.app.domain.nutrition.IngredientAggregator
 import com.shredcoach.app.domain.nutrition.NutritionInsights
 import com.shredcoach.app.domain.nutrition.TdeeCalculator
@@ -34,7 +36,19 @@ data class NutritionState(
     val totalCarbs: Double = 0.0,
     val totalFats: Double = 0.0,
     val goal: NutritionGoalEntity = NutritionGoalEntity(),
-    val adjustedTargetCalories: Int = 2200, // Target ajusté jour training vs repos
+    /**
+     * Cible calorique du jour — adaptative.
+     * Formule : sedentaryBase + workoutKcalBurned. Pas de bonus calendaire.
+     */
+    val adjustedTargetCalories: Int = 2200,
+    /**
+     * État réel d'activité du jour, calculé depuis les WorkoutLogEntity
+     * complétés. Distinct de `isTrainingDay` du calendrier prévu.
+     */
+    val activityState: DailyActivityState = DailyActivityState.PENDING,
+    /** Décomposition affichable de la cible calorique (pour l'UI). */
+    val energyBreakdown: EnergyBreakdown = EnergyBreakdown(),
+    /** Conservé pour compatibilité descendante (UI legacy). À retirer à terme. */
     val isTrainingDay: Boolean = false,
     // Add meal dialog
     val showAddMeal: Boolean = false,
@@ -48,31 +62,78 @@ data class NutritionState(
     val isLoading: Boolean = true
 )
 
+/**
+ * Décomposition de la cible calorique du jour, prête à afficher dans l'UI.
+ *
+ *  total = sedentaryMaintenance + goalDelta + workoutBonus
+ *
+ *  - sedentaryMaintenance : BMR × 1.20 (dépense de base, journée assise).
+ *  - goalDelta            : -400 (sèche) / 0 (maintien) / +300 (prise masse).
+ *  - workoutBonus         : kcal RÉELLEMENT brûlées sur les séances complétées
+ *                           du jour (formule MET, lue depuis WorkoutLogEntity).
+ *
+ * `completedWorkouts` documente la source du bonus pour la transparence UI
+ * (ex : tooltip "1 séance de 52 min · 240 kcal").
+ */
+@Immutable
+data class EnergyBreakdown(
+    val sedentaryMaintenance: Int = 0,
+    val goalDelta: Int = 0,
+    val workoutBonus: Int = 0,
+    val total: Int = 0,
+    val completedWorkouts: Int = 0,
+    val totalWorkoutMinutes: Int = 0,
+)
+
 @HiltViewModel
 class NutritionViewModel @Inject constructor(
     private val repo: NutritionRepository,
     private val mealScanDao: MealScanDao,
-    private val scheduledRepo: ScheduledWorkoutRepository,
+    @Suppress("unused") private val scheduledRepo: ScheduledWorkoutRepository,
+    private val workoutLogDao: WorkoutLogDao,
     private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(NutritionState())
     val state: StateFlow<NutritionState> = _state.asStateFlow()
 
-    /** Jours d'entraînement préférés (1=Lun … 7=Dim), chargés une fois au init. */
-    private var workoutDays: Set<Int> = setOf(1, 3, 5)
+    /**
+     * Cutoff horaire pour considérer la journée comme "terminée" (état RESTED
+     * définitif). Avant 22h, l'absence de séance reste PENDING — l'user a
+     * encore le temps de bouger, donc pas de verdict figé.
+     */
+    private val DAY_CUTOFF_HOUR = 22
 
     init {
         viewModelScope.launch { repo.seedFoodsIfEmpty() }
         viewModelScope.launch {
-            val profile = userRepository.getUserProfileOnce()
-            workoutDays = profile?.workoutDays ?: setOf(1, 3, 5)
-            // Recalculer après chargement du profil (workoutDays maintenant correct)
+            // Recalculer dès que le profil est dispo (calcul dépend du poids)
             recalcDailyTarget(_state.value.selectedDate)
         }
         loadGoal()
         loadDay(LocalDate.now())
         loadInsights()
+        observeWorkoutsForActiveDate()
+    }
+
+    /**
+     * Observe les WorkoutLogEntity pour la date sélectionnée et déclenche
+     * le recalcul adaptatif quand quelque chose change (séance terminée,
+     * édition de durée, suppression…). Garantit que la cible nutrition
+     * reflète l'activité réelle SANS pull-to-refresh manuel.
+     */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    private fun observeWorkoutsForActiveDate() {
+        viewModelScope.launch {
+            // Re-collect chaque fois que selectedDate change
+            _state
+                .map { it.selectedDate }
+                .distinctUntilChanged()
+                .flatMapLatest { date -> workoutLogDao.getWorkoutLogsBetween(date, date) }
+                .collect {
+                    recalcDailyTarget(_state.value.selectedDate)
+                }
+        }
     }
 
     fun refresh() {
@@ -127,23 +188,87 @@ class NutritionViewModel @Inject constructor(
     }
 
     /**
-     * Détermine si [date] est un jour d'entraînement (séance planifiée OU jour habituel)
-     * et ajuste le target calories en conséquence.
+     * Recalcul adaptatif de la cible calorique du jour.
+     *
+     * Modèle : BMR × 1.20 (sédentaire) + ajustement objectif + kcal RÉELLEMENT
+     * brûlées par les séances complétées (lecture WorkoutLogEntity, formule MET).
+     * Aucun bonus calendaire fantôme : si l'user n'a pas bougé, le bonus = 0.
+     *
+     * Détermine également [DailyActivityState] depuis la réalité observée :
+     *  - TRAINED si ≥1 séance complétée aujourd'hui
+     *  - RESTED si aucune séance + (date passée OU heure ≥ DAY_CUTOFF_HOUR)
+     *  - PENDING si aucune séance + journée encore active
+     *
+     * Robuste si profil pas encore chargé (target = défaut state, pas de crash).
      */
     private fun recalcDailyTarget(date: LocalDate) {
         viewModelScope.launch {
-            val scheduled = scheduledRepo.getBetweenOnce(date, date)
-            val hasScheduled = scheduled.any { it.status == "PLANNED" || it.status == "COMPLETED" }
-            // Fallback : jours d'entraînement habituels du profil
-            val isTraining = hasScheduled || (date.dayOfWeek.value in workoutDays)
+            val profile = userRepository.getUserProfileOnce()
+            if (profile == null) return@launch
 
-            val goal = _state.value.goal
-            val adjusted = TdeeCalculator.dailyAdjustedCalories(
-                weeklyBaseTarget = goal.targetCalories,
-                isTrainingDay = isTraining,
-                trainingDaysPerWeek = workoutDays.size
+            // 1. Base sédentaire fixe (ne dépend que des données morphologiques + objectif)
+            val sedentaryBase = TdeeCalculator.targetCaloriesSedentaryBase(
+                sex = profile.sex,
+                weightKg = profile.currentWeightKg,
+                heightCm = profile.heightCm,
+                age = profile.age,
+                goal = profile.goal
             )
-            _state.update { it.copy(adjustedTargetCalories = adjusted, isTrainingDay = isTraining) }
+            val sedentaryMaintenance = TdeeCalculator.sedentaryMaintenance(
+                profile.sex, profile.currentWeightKg, profile.heightCm, profile.age
+            )
+            val goalDelta = TdeeCalculator.goalAdjustment(profile.goal)
+
+            // 2. Bonus = somme kcal brûlées par séances complétées de [date]
+            val completedLogs = workoutLogDao.getCompletedLogsOnDateOnce(date)
+            val workoutBonus = TdeeCalculator.totalWorkoutKcalForDay(
+                completedLogs = completedLogs,
+                userWeightKg = profile.currentWeightKg
+            )
+            val totalWorkoutMinutes = completedLogs.sumOf { log ->
+                if (log.actualDurationSeconds > 60L) (log.actualDurationSeconds / 60).toInt()
+                else log.durationMinutes
+            }
+
+            // 3. Cible adaptative finale
+            val adjusted = TdeeCalculator.adaptiveDailyTarget(sedentaryBase, workoutBonus)
+
+            // 4. État réel (jamais le calendrier prévu)
+            val state = computeActivityState(date, completedLogs.isNotEmpty())
+
+            // 5. Décomposition prête pour l'UI
+            val breakdown = EnergyBreakdown(
+                sedentaryMaintenance = sedentaryMaintenance,
+                goalDelta = goalDelta,
+                workoutBonus = workoutBonus,
+                total = adjusted,
+                completedWorkouts = completedLogs.size,
+                totalWorkoutMinutes = totalWorkoutMinutes
+            )
+
+            _state.update { it.copy(
+                adjustedTargetCalories = adjusted,
+                activityState = state,
+                energyBreakdown = breakdown,
+                isTrainingDay = state == DailyActivityState.TRAINED  // legacy compat
+            ) }
+        }
+    }
+
+    /**
+     * État du jour basé sur la réalité observée + la position dans le temps.
+     * - Date passée + 0 séance → RESTED (verdict figé).
+     * - Date future → PENDING (rien ne s'est encore passé).
+     * - Aujourd'hui : ≥1 séance → TRAINED ; sinon PENDING avant 22h, RESTED après.
+     */
+    private fun computeActivityState(date: LocalDate, hasTrainedToday: Boolean): DailyActivityState {
+        if (hasTrainedToday) return DailyActivityState.TRAINED
+        val today = LocalDate.now()
+        return when {
+            date.isBefore(today) -> DailyActivityState.RESTED
+            date.isAfter(today) -> DailyActivityState.PENDING
+            LocalTime.now().hour >= DAY_CUTOFF_HOUR -> DailyActivityState.RESTED
+            else -> DailyActivityState.PENDING
         }
     }
 

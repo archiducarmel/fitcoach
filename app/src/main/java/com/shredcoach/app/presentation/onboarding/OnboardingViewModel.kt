@@ -56,12 +56,14 @@ class OnboardingViewModel @Inject constructor(
 
     fun calculateTDEE(): Int {
         val s = _state.value
-        return TdeeCalculator.targetCalories(
+        // Base sédentaire (BMR × 1.20) + ajustement objectif. Le bonus
+        // calorique des séances est ensuite ajouté dynamiquement par
+        // NutritionViewModel selon l'activité réelle.
+        return TdeeCalculator.targetCaloriesSedentaryBase(
             sex = s.sex,
             weightKg = s.weight.toDoubleOrNull() ?: 80.0,
             heightCm = s.height.toIntOrNull() ?: 178,
             age = s.age.toIntOrNull() ?: 30,
-            activityLevel = 3, // Modéré par défaut à l'onboarding
             goal = s.goal
         )
     }

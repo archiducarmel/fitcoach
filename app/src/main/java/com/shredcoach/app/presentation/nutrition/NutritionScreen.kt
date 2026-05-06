@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
 import androidx.navigation.NavController
 import com.shredcoach.app.data.local.entity.FoodEntity
 import com.shredcoach.app.data.local.entity.MealType
+import com.shredcoach.app.domain.nutrition.DailyActivityState
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
 import java.time.format.DateTimeFormatter
@@ -209,20 +210,8 @@ private fun MacrosSummaryCard(state: NutritionState) {
                     .padding(20.dp)
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    // Badge jour training / repos
-                    val dayLabel = if (state.isTrainingDay) "Jour d'entraînement" else "Jour de repos"
-                    val dayIcon = if (state.isTrainingDay) Icons.Default.FitnessCenter else Icons.Default.SelfImprovement
-                    Surface(shape = RoundedCornerShape(8.dp), color = Color.White.copy(alpha = 0.2f)) {
-                        Row(
-                            Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Icon(dayIcon, null, Modifier.size(14.dp), tint = Color.White)
-                            Text(dayLabel, style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.SemiBold, color = Color.White)
-                        }
-                    }
+                    // Badge état d'activité réelle (calculé depuis WorkoutLogEntity, pas calendrier)
+                    ActivityStatePill(state = state.activityState, breakdown = state.energyBreakdown)
 
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
                         Column {
@@ -244,6 +233,9 @@ private fun MacrosSummaryCard(state: NutritionState) {
                             }
                         }
                     }
+
+                    // Décomposition transparente : pourquoi cette cible
+                    EnergyBreakdownStrip(state.energyBreakdown)
                 }
             }
 
@@ -255,6 +247,64 @@ private fun MacrosSummaryCard(state: NutritionState) {
             }
         }
     }
+}
+
+// ═══════════════════════════════════════
+// PILL ÉTAT D'ACTIVITÉ + DÉCOMPOSITION ÉNERGIE
+// ═══════════════════════════════════════
+//
+// Affichage transparent de la logique adaptative : la cible calorique du
+// jour est calculée à partir de l'activité RÉELLE (séances complétées),
+// pas du calendrier prévu. L'user voit clairement :
+//  - L'état actuel (entraîné / en attente / au repos).
+//  - La décomposition (base sédentaire + bonus séance).
+//  - Combien de séance(s) ont contribué au bonus.
+
+@Composable
+private fun ActivityStatePill(state: DailyActivityState, breakdown: EnergyBreakdown) {
+    val (label, icon) = when (state) {
+        DailyActivityState.TRAINED -> {
+            val sessions = breakdown.completedWorkouts
+            val mins = breakdown.totalWorkoutMinutes
+            val text = if (sessions == 1) "Entraîné · $mins min"
+            else "Entraîné · $sessions séances · $mins min"
+            text to Icons.Default.FitnessCenter
+        }
+        DailyActivityState.PENDING -> "En attente d'activité" to Icons.Default.AccessTime
+        DailyActivityState.RESTED -> "Jour de repos" to Icons.Default.SelfImprovement
+    }
+    Surface(shape = RoundedCornerShape(8.dp), color = Color.White.copy(alpha = 0.22f)) {
+        Row(
+            Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
+            Icon(icon, null, Modifier.size(14.dp), tint = Color.White)
+            Text(label, style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold, color = Color.White, maxLines = 1)
+        }
+    }
+}
+
+@Composable
+private fun EnergyBreakdownStrip(breakdown: EnergyBreakdown) {
+    if (breakdown.total == 0) return
+    val deltaSign = if (breakdown.goalDelta >= 0) "+" else ""
+    val text = buildString {
+        append("Base sédentaire : ${breakdown.sedentaryMaintenance} kcal")
+        if (breakdown.goalDelta != 0) append(" · objectif $deltaSign${breakdown.goalDelta} kcal")
+        if (breakdown.workoutBonus > 0) {
+            append(" · séance${if (breakdown.completedWorkouts > 1) "s" else ""}")
+            append(" +${breakdown.workoutBonus} kcal")
+        }
+    }
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
+        color = Color.White.copy(alpha = 0.78f),
+        maxLines = 2,
+        modifier = Modifier.padding(top = 2.dp)
+    )
 }
 
 @Composable

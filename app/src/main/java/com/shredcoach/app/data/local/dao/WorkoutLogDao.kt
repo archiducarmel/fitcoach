@@ -54,6 +54,15 @@ interface WorkoutLogDao {
     @Query("SELECT * FROM workout_logs WHERE date(date) >= :startDate AND date(date) <= :endDate ORDER BY date DESC")
     fun getWorkoutLogsBetween(startDate: LocalDate, endDate: LocalDate): Flow<List<WorkoutLogEntity>>
 
+    /**
+     * Snapshot des séances effectuées sur une date (utilisé par le calcul
+     * adaptatif des calories nutrition : on lit l'activité RÉELLE pour
+     * ajuster la cible quotidienne, pas le calendrier prévu).
+     * Filtre `completed = 1` pour exclure les séances abandonnées.
+     */
+    @Query("SELECT * FROM workout_logs WHERE date(date) = date(:date) AND completed = 1 ORDER BY date ASC")
+    suspend fun getCompletedLogsOnDateOnce(date: LocalDate): List<WorkoutLogEntity>
+
     @Query("SELECT * FROM workout_logs ORDER BY date DESC LIMIT :limit")
     fun getRecentWorkoutLogs(limit: Int): Flow<List<WorkoutLogEntity>>
 
