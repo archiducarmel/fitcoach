@@ -131,6 +131,47 @@
     <string name="notif_shaker_in_2h">Dans 2h : %1$s. Pense à ton shaker 🥤 (whey + banane = top pré-training).</string>
     <string name="notif_start_in_30min">Dans 30 min : %1$s. Prépare tes affaires et allume la flamme ! 🔥</string>
 
+    <!-- Phase 4b — Fallback prénom utilisé dans les prompts LLM des workers notif quand profile.firstName est vide -->
+    <string name="coach_first_name_fallback">toi</string>
+
+    <!-- Phase 4b — MealDebriefWorker : titres, fallbacks locaux, action -->
+    <string name="meal_debrief_action_view_day">Voir la journée</string>
+    <string name="meal_debrief_default_dish">ton repas</string>
+    <string name="meal_debrief_title_breakfast">🥐 Petit-déj débriefé</string>
+    <string name="meal_debrief_title_lunch">🥗 Déj passé au crible</string>
+    <string name="meal_debrief_title_snack">🍪 Goûter analysé</string>
+    <string name="meal_debrief_title_dinner">🍽 Dîner décortiqué</string>
+    <string name="meal_debrief_title_pretraining">🥤 Shake pré-training</string>
+    <string name="meal_debrief_title_grignotage">🍿 Grignotage analysé</string>
+    <string name="meal_debrief_title_default">🍽 Repas analysé</string>
+    <!-- "%1$s" = title de base, %2$d = nombre de plats -->
+    <string name="meal_debrief_title_with_count">%1$s (%2$d plats)</string>
+    <!-- Fallback verdicts SHRED end-of-day. %1$d = kcal du jour, %2$d = cible kcal. -->
+    <string name="meal_debrief_fallback_eod_shred_over">%1$dkcal sur %2$d visés (dépassement).</string>
+    <string name="meal_debrief_fallback_eod_shred_aligned">%1$d/%2$dkcal — bilan aligné.</string>
+    <!-- "%1$s" = verdict ci-dessus, %2$d = protéines journée -->
+    <string name="meal_debrief_fallback_eod_shred">Journée bouclée : %1$s Repos prot %2$dg, hydrate-toi avant le coucher.</string>
+    <!-- %1$d = kcal jour, %2$d = cible kcal, %3$d = prot jour, %4$d = cible prot -->
+    <string name="meal_debrief_fallback_eod_general">Bilan jour : %1$d/%2$dkcal, %3$d/%4$dg prot. Bonne récup.</string>
+    <!-- %1$s = nom du plat, %2$d = prot jour, %3$d = déficit prot -->
+    <string name="meal_debrief_fallback_post_workout">Après ta séance, %1$s apporte %2$dg prot ce jour. Vise +%3$dg d\'ici la fin pour optimiser la récup.</string>
+    <!-- %1$s = nom du plat, %2$d = prot jour, %3$d = cible prot, %4$d = déficit prot -->
+    <string name="meal_debrief_fallback_low_prot">%1$s passé : %2$d/%3$dg prot. %4$dg restants — privilégie une source dense au prochain repas.</string>
+    <!-- %1$d = kcal jour, %2$d = cible kcal -->
+    <string name="meal_debrief_fallback_near_target_shred">%1$d/%2$dkcal — tu es proche de la cible. Repas suivant léger pour finir net.</string>
+    <!-- %1$s = nom du plat, %2$d = kcal jour, %3$d = cible kcal, %4$d = prot jour, %5$d = cible prot, %6$d = repas restants -->
+    <string name="meal_debrief_fallback_default">%1$s encaissé. Cumul : %2$d/%3$dkcal · %4$d/%5$dg prot. %6$d repas restants.</string>
+
+    <!-- Phase 4b — WorkoutDebriefWorker -->
+    <string name="workout_debrief_session_fallback_name">Séance libre</string>
+    <!-- "%1$s" = nom de la séance -->
+    <string name="workout_debrief_title">💪 Débrief : %1$s</string>
+    <!-- Pluralisation du fallback local (n=nombre de séances cette semaine) -->
+    <plurals name="workout_debrief_fallback_local">
+        <item quantity="one">Séance terminée : %1$d séries, %2$dkg de volume. %3$d séance cette semaine. Bonne récup !</item>
+        <item quantity="other">Séance terminée : %1$d séries, %2$dkg de volume. %3$d séances cette semaine. Bonne récup !</item>
+    </plurals>
+
     <!-- ════════════════════════════════════════════════════════════ -->
     <!-- Notification channels (system Settings → App → Notifications) -->
     <!-- Phase 6 — créés au boot dans ShredCoachApplication.createNotificationChannels -->

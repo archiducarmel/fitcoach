@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.shredcoach.app.R
 import com.shredcoach.app.ShredCoachApplication
 import com.shredcoach.app.data.local.entity.NotifType
 import com.shredcoach.app.data.local.secure.SecureKeyStore
@@ -47,7 +48,7 @@ class WorkoutDebriefWorker @AssistedInject constructor(
 
         // Nom de la séance
         val workoutName = log.workoutId?.let { workoutRepository.getWorkoutById(it)?.name }
-            ?: "Séance libre"
+            ?: context.getString(R.string.workout_debrief_session_fallback_name)
 
         // Nombre de séances dans la semaine courante (lundi → aujourd'hui)
         val today = LocalDate.now()
@@ -61,7 +62,7 @@ class WorkoutDebriefWorker @AssistedInject constructor(
         val streak = streakService.compute(recentLogs.filter { it.completed }, today).currentDays
 
         val prompt = DebriefPrompts.buildWorkoutDebriefPrompt(
-            firstName = profile.firstName.ifBlank { "toi" },
+            firstName = profile.firstName.ifBlank { context.getString(R.string.coach_first_name_fallback) },
             workoutName = workoutName,
             durationMin = log.actualDurationSeconds / 60,
             exercisesCompleted = log.exercisesCompleted,
@@ -100,7 +101,7 @@ class WorkoutDebriefWorker @AssistedInject constructor(
 
         dispatcher.dispatch(
             type = NotifType.WORKOUT_DEBRIEF,
-            title = "💪 Débrief : $workoutName",
+            title = context.getString(R.string.workout_debrief_title, workoutName),
             body = body,
             channelId = ShredCoachApplication.CHANNEL_DEBRIEF,
             source = source
@@ -109,7 +110,11 @@ class WorkoutDebriefWorker @AssistedInject constructor(
     }
 
     private fun fallbackWorkoutMessage(volume: Int, sets: Int, weekCount: Int): String =
-        "Séance terminée : ${sets} séries, ${volume}kg de volume. $weekCount séance${if (weekCount > 1) "s" else ""} cette semaine. Bonne récup !"
+        context.resources.getQuantityString(
+            R.plurals.workout_debrief_fallback_local,
+            weekCount,
+            sets, volume, weekCount,
+        )
 
     companion object {
         const val KEY_LOG_ID = "log_id"

@@ -59,7 +59,7 @@ class ScheduledWorkoutReminderWorker @AssistedInject constructor(
             ?: scheduled.title.takeIf { it.isNotBlank() }
             ?: context.getString(R.string.notif_session_fallback_default)
         val timeStr = scheduled.time?.toString()?.substring(0, 5) ?: ""
-        val firstName = profile.firstName.ifBlank { "toi" }
+        val firstName = profile.firstName.ifBlank { context.getString(R.string.coach_first_name_fallback) }
 
         // Enrichissement routine-aware : si la séance est un split (Push/Pull/…),
         // on l'ajoute en préfixe au nom + on l'injecte dans le contexte LLM pour

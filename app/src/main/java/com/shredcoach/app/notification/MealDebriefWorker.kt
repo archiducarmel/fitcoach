@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.shredcoach.app.R
 import com.shredcoach.app.ShredCoachApplication
 import com.shredcoach.app.data.local.dao.MealScanDao
 import com.shredcoach.app.data.local.dao.NutritionDao
@@ -185,7 +186,7 @@ class MealDebriefWorker @AssistedInject constructor(
             deeplink = DEEPLINK_NUTRITION,
             actions = listOf(
                 AppNotificationDispatcher.NotificationAction(
-                    label = "Voir la journée",
+                    label = context.getString(R.string.meal_debrief_action_view_day),
                     deeplinkRoute = DEEPLINK_NUTRITION,
                 )
             ),
@@ -362,6 +363,8 @@ class MealDebriefWorker @AssistedInject constructor(
      * Fallback local appelé si le LLM est indispo (clé absente, timeout, erreur).
      * 6 variations selon mealType × position dans la journée × objectif. Toutes
      * factuelles, chiffrées, alignées sur les règles "constat → action".
+     *
+     * i18n : tous les littéraux sont passés par R.string (Phase 4b).
      */
     private fun fallbackMessage(
         dishName: String,
@@ -370,31 +373,48 @@ class MealDebriefWorker @AssistedInject constructor(
     ): String {
         val deficitCals = (ctx.targetCalories - ctx.dailyCalories).coerceAtLeast(0)
         val deficitProt = (ctx.targetProteins - ctx.dailyProteins.toInt()).coerceAtLeast(0)
-        val dishLabel = dishName.ifBlank { "ton repas" }
+        val dishLabel = dishName.ifBlank { context.getString(R.string.meal_debrief_default_dish) }
+        val proteinsInt = ctx.dailyProteins.toInt()
 
         return when {
             ctx.isEndOfDay && goalName == "SHRED" -> {
-                val verdict = if (ctx.dailyCalories > ctx.targetCalories)
-                    "${ctx.dailyCalories}kcal sur ${ctx.targetCalories} visés (dépassement)."
-                else
-                    "${ctx.dailyCalories}/${ctx.targetCalories}kcal — bilan aligné."
-                "Journée bouclée : $verdict Repos prot ${ctx.dailyProteins.toInt()}g, hydrate-toi avant le coucher."
+                val verdict = if (ctx.dailyCalories > ctx.targetCalories) {
+                    context.getString(
+                        R.string.meal_debrief_fallback_eod_shred_over,
+                        ctx.dailyCalories, ctx.targetCalories,
+                    )
+                } else {
+                    context.getString(
+                        R.string.meal_debrief_fallback_eod_shred_aligned,
+                        ctx.dailyCalories, ctx.targetCalories,
+                    )
+                }
+                context.getString(R.string.meal_debrief_fallback_eod_shred, verdict, proteinsInt)
             }
-            ctx.isEndOfDay -> {
-                "Bilan jour : ${ctx.dailyCalories}/${ctx.targetCalories}kcal, ${ctx.dailyProteins.toInt()}/${ctx.targetProteins}g prot. Bonne récup."
-            }
-            ctx.workoutDoneToday && deficitProt > 30 -> {
-                "Après ta séance, $dishLabel apporte ${ctx.dailyProteins.toInt()}g prot ce jour. Vise +${deficitProt}g d'ici la fin pour optimiser la récup."
-            }
-            deficitProt > 50 -> {
-                "$dishLabel passé : ${ctx.dailyProteins.toInt()}/${ctx.targetProteins}g prot. ${deficitProt}g restants — privilégie une source dense au prochain repas."
-            }
-            deficitCals < 200 && goalName == "SHRED" -> {
-                "${ctx.dailyCalories}/${ctx.targetCalories}kcal — tu es proche de la cible. Repas suivant léger pour finir net."
-            }
-            else -> {
-                "$dishLabel encaissé. Cumul : ${ctx.dailyCalories}/${ctx.targetCalories}kcal · ${ctx.dailyProteins.toInt()}/${ctx.targetProteins}g prot. ${ctx.remainingMealSlots} repas restants."
-            }
+            ctx.isEndOfDay -> context.getString(
+                R.string.meal_debrief_fallback_eod_general,
+                ctx.dailyCalories, ctx.targetCalories,
+                proteinsInt, ctx.targetProteins,
+            )
+            ctx.workoutDoneToday && deficitProt > 30 -> context.getString(
+                R.string.meal_debrief_fallback_post_workout,
+                dishLabel, proteinsInt, deficitProt,
+            )
+            deficitProt > 50 -> context.getString(
+                R.string.meal_debrief_fallback_low_prot,
+                dishLabel, proteinsInt, ctx.targetProteins, deficitProt,
+            )
+            deficitCals < 200 && goalName == "SHRED" -> context.getString(
+                R.string.meal_debrief_fallback_near_target_shred,
+                ctx.dailyCalories, ctx.targetCalories,
+            )
+            else -> context.getString(
+                R.string.meal_debrief_fallback_default,
+                dishLabel,
+                ctx.dailyCalories, ctx.targetCalories,
+                proteinsInt, ctx.targetProteins,
+                ctx.remainingMealSlots,
+            )
         }
     }
 
@@ -403,16 +423,19 @@ class MealDebriefWorker @AssistedInject constructor(
      * Valeurs UTF-8 directes (les emojis fonctionnent en push notif Android).
      */
     private fun buildTitle(category: MealTypeClassifier.Category, dishCount: Int): String {
-        val base = when (category.id) {
-            MealTypeClassifier.PETIT_DEJEUNER.id -> "🥐 Petit-déj débriefé"
-            MealTypeClassifier.DEJEUNER.id      -> "🥗 Déj passé au crible"
-            MealTypeClassifier.GOUTER.id        -> "🍪 Goûter analysé"
-            MealTypeClassifier.DINER.id         -> "🍽 Dîner décortiqué"
-            MealTypeClassifier.PRETRAINING.id   -> "🥤 Shake pré-training"
-            MealTypeClassifier.GRIGNOTAGE.id    -> "🍿 Grignotage analysé"
-            else -> "🍽 Repas analysé"
+        val baseRes = when (category.id) {
+            MealTypeClassifier.PETIT_DEJEUNER.id -> R.string.meal_debrief_title_breakfast
+            MealTypeClassifier.DEJEUNER.id       -> R.string.meal_debrief_title_lunch
+            MealTypeClassifier.GOUTER.id         -> R.string.meal_debrief_title_snack
+            MealTypeClassifier.DINER.id          -> R.string.meal_debrief_title_dinner
+            MealTypeClassifier.PRETRAINING.id    -> R.string.meal_debrief_title_pretraining
+            MealTypeClassifier.GRIGNOTAGE.id     -> R.string.meal_debrief_title_grignotage
+            else -> R.string.meal_debrief_title_default
         }
-        return if (dishCount > 1) "$base ($dishCount plats)" else base
+        val base = context.getString(baseRes)
+        return if (dishCount > 1) {
+            context.getString(R.string.meal_debrief_title_with_count, base, dishCount)
+        } else base
     }
 
     private data class DebriefContext(

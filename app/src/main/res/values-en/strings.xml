@@ -124,6 +124,37 @@
     <string name="notif_shaker_in_2h">In 2h: %1$s. Don\'t forget your shaker 🥤 (whey + banana = great pre-workout).</string>
     <string name="notif_start_in_30min">In 30 min: %1$s. Get ready and light the fire! 🔥</string>
 
+    <!-- Phase 4b — First-name fallback used in LLM prompts when profile.firstName is blank -->
+    <string name="coach_first_name_fallback">you</string>
+
+    <!-- Phase 4b — MealDebriefWorker: titles, local fallbacks, action -->
+    <string name="meal_debrief_action_view_day">View today\'s meals</string>
+    <string name="meal_debrief_default_dish">your meal</string>
+    <string name="meal_debrief_title_breakfast">🥐 Breakfast debriefed</string>
+    <string name="meal_debrief_title_lunch">🥗 Lunch broken down</string>
+    <string name="meal_debrief_title_snack">🍪 Snack reviewed</string>
+    <string name="meal_debrief_title_dinner">🍽 Dinner dissected</string>
+    <string name="meal_debrief_title_pretraining">🥤 Pre-workout shake</string>
+    <string name="meal_debrief_title_grignotage">🍿 Snacking reviewed</string>
+    <string name="meal_debrief_title_default">🍽 Meal reviewed</string>
+    <string name="meal_debrief_title_with_count">%1$s (%2$d dishes)</string>
+    <string name="meal_debrief_fallback_eod_shred_over">%1$dkcal vs %2$d target (over).</string>
+    <string name="meal_debrief_fallback_eod_shred_aligned">%1$d/%2$dkcal — on target.</string>
+    <string name="meal_debrief_fallback_eod_shred">Day wrapped: %1$s Resting prot %2$dg, hydrate before bed.</string>
+    <string name="meal_debrief_fallback_eod_general">Daily totals: %1$d/%2$dkcal, %3$d/%4$dg prot. Good recovery.</string>
+    <string name="meal_debrief_fallback_post_workout">Post-workout, %1$s brings you to %2$dg prot today. Aim for +%3$dg by the end to optimize recovery.</string>
+    <string name="meal_debrief_fallback_low_prot">%1$s logged: %2$d/%3$dg prot. %4$dg left — favor a dense source for the next meal.</string>
+    <string name="meal_debrief_fallback_near_target_shred">%1$d/%2$dkcal — close to target. Keep the next meal light to finish clean.</string>
+    <string name="meal_debrief_fallback_default">%1$s logged. Totals: %2$d/%3$dkcal · %4$d/%5$dg prot. %6$d meals remaining.</string>
+
+    <!-- Phase 4b — WorkoutDebriefWorker -->
+    <string name="workout_debrief_session_fallback_name">Free session</string>
+    <string name="workout_debrief_title">💪 Debrief: %1$s</string>
+    <plurals name="workout_debrief_fallback_local">
+        <item quantity="one">Session done: %1$d sets, %2$dkg of volume. %3$d session this week. Good recovery!</item>
+        <item quantity="other">Session done: %1$d sets, %2$dkg of volume. %3$d sessions this week. Good recovery!</item>
+    </plurals>
+
     <!-- Notification channels -->
     <string name="notif_channel_meals_name">Meal reminders</string>
     <string name="notif_channel_meals_desc">Reminders for meals and protein shakers</string>
