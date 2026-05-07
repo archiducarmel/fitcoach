@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -34,6 +35,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
+import com.shredcoach.app.R
 import com.shredcoach.app.data.remote.ExerciseDbExercise
 import com.shredcoach.app.data.remote.ExerciseDbMeta
 import com.shredcoach.app.presentation.navigation.Screen
@@ -61,11 +63,15 @@ fun ExerciseDbExplorerScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Découvrir", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.exo_db_title), fontWeight = FontWeight.Bold)
                         val subtitle = when {
-                            state.isLoading -> "Chargement…"
-                            state.totalInDataset > 0 -> "${state.exercises.size} / ${state.totalInDataset} exercices"
-                            else -> "Free Exercise DB"
+                            state.isLoading -> stringResource(R.string.exo_db_loading)
+                            state.totalInDataset > 0 -> stringResource(
+                                R.string.exo_db_count_subtitle,
+                                state.exercises.size,
+                                state.totalInDataset,
+                            )
+                            else -> stringResource(R.string.exo_db_subtitle_brand)
                         }
                         Text(
                             subtitle,
@@ -76,7 +82,7 @@ fun ExerciseDbExplorerScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.exo_db_back_cd))
                     }
                 },
                 actions = {
@@ -84,11 +90,11 @@ fun ExerciseDbExplorerScreen(
                         || state.selectedEquipment != null || state.selectedCategory != null
                         || state.selectedLevel != null) {
                         TextButton(onClick = { viewModel.clearAllFilters() }) {
-                            Text("Reset", color = OrangeVibrant, fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.exo_db_reset), color = OrangeVibrant, fontWeight = FontWeight.SemiBold)
                         }
                     }
                     IconButton(onClick = { viewModel.refresh() }) {
-                        Icon(Icons.Default.Refresh, "Recharger")
+                        Icon(Icons.Default.Refresh, stringResource(R.string.exo_db_reload_cd))
                     }
                 }
             )
@@ -117,12 +123,12 @@ fun ExerciseDbExplorerScreen(
                 OutlinedTextField(
                     value = state.searchQuery,
                     onValueChange = viewModel::onSearchChanged,
-                    placeholder = { Text("Rechercher (squat, bench, curl…)") },
+                    placeholder = { Text(stringResource(R.string.exo_db_search_placeholder)) },
                     leadingIcon = { Icon(Icons.Default.Search, null) },
                     trailingIcon = {
                         if (state.searchQuery.isNotBlank()) {
                             IconButton(onClick = { viewModel.onSearchChanged("") }) {
-                                Icon(Icons.Default.Close, "Effacer")
+                                Icon(Icons.Default.Close, stringResource(R.string.exo_db_clear_cd))
                             }
                         }
                     },
@@ -183,7 +189,7 @@ fun ExerciseDbExplorerScreen(
                     if (state.exercises.size >= 12) {
                         item(span = { GridItemSpan(maxLineSpan) }, key = "end_marker") {
                             Text(
-                                "✦ ${state.exercises.size} résultats affichés",
+                                stringResource(R.string.exo_db_results_shown, state.exercises.size),
                                 modifier = Modifier.fillMaxWidth().padding(16.dp),
                                 textAlign = TextAlign.Center,
                                 style = MaterialTheme.typography.labelMedium,
@@ -220,10 +226,14 @@ private fun DiagnosticBanner(state: ExerciseDbExplorerState) {
         Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
             Text(
                 text = when {
-                    state.error != null -> "⚠ ERREUR"
-                    state.isLoading -> "⏳ Chargement…"
-                    state.exercises.isNotEmpty() -> "✓ OK · ${state.exercises.size}/${state.totalInDataset} exos"
-                    else -> "○ Vide"
+                    state.error != null -> stringResource(R.string.exo_db_diag_error)
+                    state.isLoading -> stringResource(R.string.exo_db_diag_loading)
+                    state.exercises.isNotEmpty() -> stringResource(
+                        R.string.exo_db_diag_ok,
+                        state.exercises.size,
+                        state.totalInDataset,
+                    )
+                    else -> stringResource(R.string.exo_db_diag_empty)
                 },
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.ExtraBold
@@ -267,16 +277,16 @@ private fun HeroBanner(totalCount: Int) {
                     Icon(Icons.Default.FitnessCenter, null, tint = Color.White, modifier = Modifier.size(28.dp))
                 }
                 Column(Modifier.weight(1f)) {
-                    Text("Bibliothèque Free Exercise DB", style = MaterialTheme.typography.titleMedium,
+                    Text(stringResource(R.string.exo_db_hero_title), style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold, color = Color.White)
                     Text(
-                        if (totalCount > 0) "$totalCount exercices · photos HD"
-                        else "Chargement de la bibliothèque…",
+                        if (totalCount > 0) stringResource(R.string.exo_db_hero_subtitle, totalCount)
+                        else stringResource(R.string.exo_db_hero_loading),
                         style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.9f)
                     )
                 }
                 Surface(shape = RoundedCornerShape(10.dp), color = Color.White.copy(alpha = 0.18f)) {
-                    Text("FREE",
+                    Text(stringResource(R.string.exo_db_hero_badge),
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.ExtraBold, color = Color.White)
@@ -304,7 +314,7 @@ private fun FilterSection(
 ) {
     Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         FilterChipsRow(
-            label = "Muscle ciblé",
+            label = stringResource(R.string.exo_db_filter_muscle),
             icon = Icons.Default.SelfImprovement,
             options = meta.muscles,
             selected = selectedMuscle,
@@ -313,7 +323,7 @@ private fun FilterSection(
             displayFn = ExerciseDbTranslations::displayMuscle
         )
         FilterChipsRow(
-            label = "Équipement",
+            label = stringResource(R.string.exo_db_filter_equipment),
             icon = Icons.Default.SportsGymnastics,
             options = meta.equipments,
             selected = selectedEquipment,
@@ -322,7 +332,7 @@ private fun FilterSection(
             displayFn = ExerciseDbTranslations::displayEquipment
         )
         FilterChipsRow(
-            label = "Catégorie",
+            label = stringResource(R.string.exo_db_filter_category),
             icon = Icons.Default.Category,
             options = meta.categories,
             selected = selectedCategory,
@@ -331,7 +341,7 @@ private fun FilterSection(
             displayFn = ExerciseDbTranslations::displayCategory
         )
         FilterChipsRow(
-            label = "Niveau",
+            label = stringResource(R.string.exo_db_filter_level),
             icon = Icons.Default.Star,
             options = meta.levels,
             selected = selectedLevel,
@@ -371,7 +381,12 @@ private fun FilterChipsRow(
                         color = chipColor, fontWeight = FontWeight.Bold)
                 }
                 IconButton(onClick = { onSelect(null) }) {
-                    Icon(Icons.Default.Close, "Retirer le filtre $label", modifier = Modifier.size(12.dp), tint = chipColor)
+                    Icon(
+                        Icons.Default.Close,
+                        stringResource(R.string.exo_db_filter_remove_cd, label),
+                        modifier = Modifier.size(12.dp),
+                        tint = chipColor,
+                    )
                 }
             }
         }
@@ -581,7 +596,7 @@ internal fun AnimatedExerciseImage(
                     ) {
                         Icon(Icons.Default.PlayArrow, null,
                             modifier = Modifier.size(10.dp), tint = Color.White)
-                        Text("ANIM", color = Color.White, fontSize = 8.sp,
+                        Text(stringResource(R.string.exo_db_anim_badge), color = Color.White, fontSize = 8.sp,
                             fontWeight = FontWeight.ExtraBold)
                     }
                 }
@@ -634,8 +649,8 @@ private fun EmptyView() {
         Icon(Icons.Default.Search, null, modifier = Modifier.size(56.dp),
             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
         Spacer(Modifier.height(12.dp))
-        Text("Aucun exercice trouvé", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Text("Ajuste tes filtres ou ta recherche",
+        Text(stringResource(R.string.exo_db_empty_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.exo_db_empty_subtitle),
             style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
     }
@@ -651,7 +666,7 @@ private fun ErrorView(message: String, onRetry: () -> Unit) {
         Icon(Icons.Default.CloudOff, null, modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f))
         Spacer(Modifier.height(16.dp))
-        Text("Téléchargement impossible",
+        Text(stringResource(R.string.exo_db_error_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center)
         Spacer(Modifier.height(8.dp))
@@ -661,10 +676,10 @@ private fun ErrorView(message: String, onRetry: () -> Unit) {
         Button(onClick = onRetry, colors = ButtonDefaults.buttonColors(containerColor = OrangeVibrant)) {
             Icon(Icons.Default.Refresh, null, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(6.dp))
-            Text("Réessayer")
+            Text(stringResource(R.string.exo_db_retry))
         }
         Spacer(Modifier.height(12.dp))
-        Text("Vérifie ta connexion internet — la bibliothèque est servie depuis GitHub",
+        Text(stringResource(R.string.exo_db_error_hint),
             style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f))
     }

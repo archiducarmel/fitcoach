@@ -4434,4 +4434,60 @@
     <string name="backup_error_db_too_recent">Backup is from a newer app version (DB v%1$d &gt; v%2$d). Update ShredCoach.</string>
     <string name="backup_error_unknown">Unknown error</string>
     <string name="backup_error_needs_recovery_code">Encrypted archive — recovery code required</string>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         ExerciseDB Explorer / Detail screens — Phase 8d i18n
+         ═══════════════════════════════════════════════════════════════ -->
+    <string name="exo_db_title">Browse</string>
+    <string name="exo_db_loading">Loading…</string>
+    <string name="exo_db_subtitle_brand">Free Exercise DB</string>
+    <string name="exo_db_count_subtitle">%1$d / %2$d exercises</string>
+    <string name="exo_db_back_cd">Back</string>
+    <string name="exo_db_reset">Reset</string>
+    <string name="exo_db_reload_cd">Reload</string>
+    <string name="exo_db_search_placeholder">Search (squat, bench, curl…)</string>
+    <string name="exo_db_clear_cd">Clear</string>
+    <string name="exo_db_diag_error">⚠ ERROR</string>
+    <string name="exo_db_diag_loading">⏳ Loading…</string>
+    <string name="exo_db_diag_ok">✓ OK · %1$d/%2$d exos</string>
+    <string name="exo_db_diag_empty">○ Empty</string>
+    <string name="exo_db_hero_title">Free Exercise DB library</string>
+    <string name="exo_db_hero_subtitle">%1$d exercises · HD photos</string>
+    <string name="exo_db_hero_loading">Loading library…</string>
+    <string name="exo_db_hero_badge">FREE</string>
+    <string name="exo_db_filter_muscle">Target muscle</string>
+    <string name="exo_db_filter_equipment">Equipment</string>
+    <string name="exo_db_filter_category">Category</string>
+    <string name="exo_db_filter_level">Level</string>
+    <string name="exo_db_filter_remove_cd">Remove %1$s filter</string>
+    <string name="exo_db_results_shown">✦ %1$d results shown</string>
+    <string name="exo_db_empty_title">No exercise found</string>
+    <string name="exo_db_empty_subtitle">Adjust your filters or your search</string>
+    <string name="exo_db_error_title">Download failed</string>
+    <string name="exo_db_retry">Retry</string>
+    <string name="exo_db_error_hint">Check your internet connection — the library is served from GitHub</string>
+    <string name="exo_db_anim_badge">ANIM</string>
+    <!-- Detail screen -->
+    <string name="exo_db_detail_fallback_title">Detail</string>
+    <string name="exo_db_detail_error">Error</string>
+    <string name="exo_db_detail_anim_badge">Animated demo</string>
+    <string name="exo_db_detail_pos_start">Starting position</string>
+    <string name="exo_db_detail_pos_end">Ending position</string>
+    <string name="exo_db_detail_save_done">Added to my library</string>
+    <string name="exo_db_detail_save_action">Save to my library</string>
+    <string name="exo_db_detail_primary_muscles">Primary muscles</string>
+    <string name="exo_db_detail_secondary_muscles">Secondary muscles</string>
+    <string name="exo_db_detail_steps">Step-by-step execution</string>
+    <string name="exo_db_detail_translating">Translating…</string>
+    <string name="exo_db_detail_translated">Auto-translated by AI</string>
+    <string name="exo_db_detail_native_lang">Instructions in English</string>
+    <string name="exo_db_detail_translation_unavailable">Instructions in English (translation unavailable)</string>
+    <string name="exo_db_detail_flag">🇬🇧</string>
+    <string name="exo_db_detail_flag_native">🇬🇧</string>
+    <!-- Saved-to-library payload (strings used to build ExerciseEntity) -->
+    <string name="exo_db_save_default_execution">See demo images.</string>
+    <string name="exo_db_save_category_line">Category: %1$s</string>
+    <string name="exo_db_save_mechanic_line">Mechanic: %1$s</string>
+    <string name="exo_db_save_force_line">Force: %1$s</string>
+    <string name="exo_db_save_level_line">Level: %1$s</string>
 </resources>

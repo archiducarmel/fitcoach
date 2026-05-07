@@ -1,12 +1,27 @@
 package com.shredcoach.app.presentation.explorer
 
+import com.shredcoach.app.domain.i18n.PromptLocale
+
 /**
- * Traductions FR des libellés du dataset free-exercise-db.
+ * Traductions des libellés du dataset free-exercise-db.
  *
  * IMPORTANT : on ne modifie JAMAIS la valeur stockée (qui sert au filtrage avec l'API).
  * On ne traduit que pour l'AFFICHAGE via les fonctions `display*()`.
+ *
+ * Locale dispatch :
+ *  - FR : applique les dictionnaires FR ci-dessous
+ *  - EN : retourne la valeur source en Title Case (le dataset est nativement EN)
+ *  - Toute autre locale (V2 future) : retombe sur EN par défaut
  */
 object ExerciseDbTranslations {
+
+    private fun displayLocaleAware(value: String, frMap: Map<String, String>): String {
+        val key = value.lowercase()
+        return when {
+            !PromptLocale.isEn() -> frMap[key] ?: value.replaceFirstChar { it.uppercase() }
+            else -> value.replaceFirstChar { it.uppercase() }
+        }
+    }
 
     // ── 17 muscles ──
     private val muscles = mapOf(
@@ -76,12 +91,12 @@ object ExerciseDbTranslations {
         "isolation" to "Isolation"
     )
 
-    fun displayMuscle(value: String): String = muscles[value.lowercase()] ?: value.replaceFirstChar { it.uppercase() }
-    fun displayEquipment(value: String): String = equipments[value.lowercase()] ?: value.replaceFirstChar { it.uppercase() }
-    fun displayCategory(value: String): String = categories[value.lowercase()] ?: value.replaceFirstChar { it.uppercase() }
-    fun displayLevel(value: String): String = levels[value.lowercase()] ?: value.replaceFirstChar { it.uppercase() }
-    fun displayForce(value: String): String = forces[value.lowercase()] ?: value.replaceFirstChar { it.uppercase() }
-    fun displayMechanic(value: String): String = mechanics[value.lowercase()] ?: value.replaceFirstChar { it.uppercase() }
+    fun displayMuscle(value: String): String = displayLocaleAware(value, muscles)
+    fun displayEquipment(value: String): String = displayLocaleAware(value, equipments)
+    fun displayCategory(value: String): String = displayLocaleAware(value, categories)
+    fun displayLevel(value: String): String = displayLocaleAware(value, levels)
+    fun displayForce(value: String): String = displayLocaleAware(value, forces)
+    fun displayMechanic(value: String): String = displayLocaleAware(value, mechanics)
 
     // ═════════════════════════════════════════════════════════════════
     // Traduction des NOMS d'exercices — dictionnaire à 2 phases
@@ -491,9 +506,15 @@ object ExerciseDbTranslations {
     /**
      * Traduit un nom d'exercice EN → FR via l'algorithme 2 phases.
      * Si aucune traduction n'est trouvée, retourne le nom original en Title Case.
+     *
+     * En locale EN, retourne le nom source en Title Case (pas de traduction).
      */
     fun translateExerciseName(name: String): String {
         if (name.isBlank()) return name
+        if (PromptLocale.isEn()) {
+            return name.split(Regex("\\s+"))
+                .joinToString(" ") { it.replaceFirstChar { c -> c.titlecase() } }
+        }
         var result = name
 
         // Phase 1 : remplacer les expressions (triées par longueur descendante pour greedy match)

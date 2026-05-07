@@ -1897,4 +1897,60 @@
     <string name="backup_error_db_too_recent">Backup d\'une version d\'app plus récente (DB v%1$d &gt; v%2$d). Mets à jour ShredCoach.</string>
     <string name="backup_error_unknown">Erreur inconnue</string>
     <string name="backup_error_needs_recovery_code">Archive chiffrée — code de récupération requis</string>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         ExerciseDB Explorer / Detail screens — Phase 8d i18n
+         ═══════════════════════════════════════════════════════════════ -->
+    <string name="exo_db_title">Découvrir</string>
+    <string name="exo_db_loading">Chargement…</string>
+    <string name="exo_db_subtitle_brand">Free Exercise DB</string>
+    <string name="exo_db_count_subtitle">%1$d / %2$d exercices</string>
+    <string name="exo_db_back_cd">Retour</string>
+    <string name="exo_db_reset">Reset</string>
+    <string name="exo_db_reload_cd">Recharger</string>
+    <string name="exo_db_search_placeholder">Rechercher (squat, bench, curl…)</string>
+    <string name="exo_db_clear_cd">Effacer</string>
+    <string name="exo_db_diag_error">⚠ ERREUR</string>
+    <string name="exo_db_diag_loading">⏳ Chargement…</string>
+    <string name="exo_db_diag_ok">✓ OK · %1$d/%2$d exos</string>
+    <string name="exo_db_diag_empty">○ Vide</string>
+    <string name="exo_db_hero_title">Bibliothèque Free Exercise DB</string>
+    <string name="exo_db_hero_subtitle">%1$d exercices · photos HD</string>
+    <string name="exo_db_hero_loading">Chargement de la bibliothèque…</string>
+    <string name="exo_db_hero_badge">FREE</string>
+    <string name="exo_db_filter_muscle">Muscle ciblé</string>
+    <string name="exo_db_filter_equipment">Équipement</string>
+    <string name="exo_db_filter_category">Catégorie</string>
+    <string name="exo_db_filter_level">Niveau</string>
+    <string name="exo_db_filter_remove_cd">Retirer le filtre %1$s</string>
+    <string name="exo_db_results_shown">✦ %1$d résultats affichés</string>
+    <string name="exo_db_empty_title">Aucun exercice trouvé</string>
+    <string name="exo_db_empty_subtitle">Ajuste tes filtres ou ta recherche</string>
+    <string name="exo_db_error_title">Téléchargement impossible</string>
+    <string name="exo_db_retry">Réessayer</string>
+    <string name="exo_db_error_hint">Vérifie ta connexion internet — la bibliothèque est servie depuis GitHub</string>
+    <string name="exo_db_anim_badge">ANIM</string>
+    <!-- Detail screen -->
+    <string name="exo_db_detail_fallback_title">Détail</string>
+    <string name="exo_db_detail_error">Erreur</string>
+    <string name="exo_db_detail_anim_badge">Démonstration animée</string>
+    <string name="exo_db_detail_pos_start">Position de départ</string>
+    <string name="exo_db_detail_pos_end">Position d\'arrivée</string>
+    <string name="exo_db_detail_save_done">Ajouté à ma bibliothèque</string>
+    <string name="exo_db_detail_save_action">Sauvegarder dans ma bibliothèque</string>
+    <string name="exo_db_detail_primary_muscles">Muscles principaux</string>
+    <string name="exo_db_detail_secondary_muscles">Muscles secondaires</string>
+    <string name="exo_db_detail_steps">Exécution étape par étape</string>
+    <string name="exo_db_detail_translating">Traduction en cours…</string>
+    <string name="exo_db_detail_translated">Traduit automatiquement par IA</string>
+    <string name="exo_db_detail_native_lang">Instructions en anglais</string>
+    <string name="exo_db_detail_translation_unavailable">Instructions en anglais (traduction indisponible)</string>
+    <string name="exo_db_detail_flag">🇫🇷</string>
+    <string name="exo_db_detail_flag_native">🇺🇸</string>
+    <!-- Saved-to-library payload (FR strings used to build ExerciseEntity) -->
+    <string name="exo_db_save_default_execution">Voir les images de démonstration.</string>
+    <string name="exo_db_save_category_line">Catégorie : %1$s</string>
+    <string name="exo_db_save_mechanic_line">Mécanique : %1$s</string>
+    <string name="exo_db_save_force_line">Force : %1$s</string>
+    <string name="exo_db_save_level_line">Niveau : %1$s</string>
 </resources>

@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -31,6 +32,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
+import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.ExerciseEntity
 import com.shredcoach.app.data.remote.ExerciseDbExercise
 import com.shredcoach.app.data.remote.ExerciseDbService
@@ -42,6 +44,7 @@ import com.shredcoach.app.domain.model.MuscleGroup
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -67,6 +70,7 @@ data class ExerciseDbDetailState(
 
 @HiltViewModel
 class ExerciseDbDetailViewModel @Inject constructor(
+    @ApplicationContext private val appContext: android.content.Context,
     private val service: ExerciseDbService,
     private val exerciseRepository: ExerciseRepository,
     private val userRepository: UserRepository,
@@ -92,7 +96,14 @@ class ExerciseDbDetailViewModel @Inject constructor(
                     // Déclenche la traduction en tâche de fond (non-bloquant)
                     if (ex.instructions.isNotEmpty()) translateInBackground(ex)
                 }
-                .onFailure { err -> _state.update { it.copy(isLoading = false, error = err.message ?: "Erreur") } }
+                .onFailure { err ->
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            error = err.message ?: appContext.getString(R.string.exo_db_detail_error),
+                        )
+                    }
+                }
         }
     }
 
@@ -145,17 +156,37 @@ class ExerciseDbDetailViewModel @Inject constructor(
                         com.shredcoach.app.presentation.explorer.ExerciseDbTranslations.displayEquipment(it)
                     } ?: "—",
                     executionKey = instructionsToSave.joinToString("\n") { "• $it" }
-                        .ifBlank { "Voir les images de démonstration." },
+                        .ifBlank { appContext.getString(R.string.exo_db_save_default_execution) },
                     startingWeight = "—",
                     series = 3,
                     repsMin = 8,
                     repsMax = 12,
                     restSeconds = 90,
                     tips = listOfNotNull(
-                        ex.category.takeIf { it.isNotBlank() }?.let { "Catégorie : ${it.replaceFirstChar { c -> c.uppercase() }}" },
-                        ex.mechanic?.let { "Mécanique : ${it.replaceFirstChar { c -> c.uppercase() }}" },
-                        ex.force?.let { "Force : ${it.replaceFirstChar { c -> c.uppercase() }}" },
-                        ex.level.takeIf { it.isNotBlank() }?.let { "Niveau : ${it.replaceFirstChar { c -> c.uppercase() }}" }
+                        ex.category.takeIf { it.isNotBlank() }?.let {
+                            appContext.getString(
+                                R.string.exo_db_save_category_line,
+                                ExerciseDbTranslations.displayCategory(it),
+                            )
+                        },
+                        ex.mechanic?.let {
+                            appContext.getString(
+                                R.string.exo_db_save_mechanic_line,
+                                ExerciseDbTranslations.displayMechanic(it),
+                            )
+                        },
+                        ex.force?.let {
+                            appContext.getString(
+                                R.string.exo_db_save_force_line,
+                                ExerciseDbTranslations.displayForce(it),
+                            )
+                        },
+                        ex.level.takeIf { it.isNotBlank() }?.let {
+                            appContext.getString(
+                                R.string.exo_db_save_level_line,
+                                ExerciseDbTranslations.displayLevel(it),
+                            )
+                        },
                     ).joinToString("\n"),
                     tempo = "2-0-1-0",
                     gifUrl = ex.firstImageUrl,
@@ -226,7 +257,8 @@ fun ExerciseDbDetailScreen(
             TopAppBar(
                 title = {
                     Text(
-                        ex?.name?.let { ExerciseDbTranslations.translateExerciseName(it) } ?: "Détail",
+                        ex?.name?.let { ExerciseDbTranslations.translateExerciseName(it) }
+                            ?: stringResource(R.string.exo_db_detail_fallback_title),
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -234,7 +266,7 @@ fun ExerciseDbDetailScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.exo_db_back_cd))
                     }
                 }
             )
@@ -249,7 +281,7 @@ fun ExerciseDbDetailScreen(
                     Icon(Icons.Default.CloudOff, null, modifier = Modifier.size(48.dp),
                         tint = MaterialTheme.colorScheme.error)
                     Spacer(Modifier.height(8.dp))
-                    Text(state.error ?: "Erreur", color = MaterialTheme.colorScheme.error)
+                    Text(state.error ?: stringResource(R.string.exo_db_detail_error), color = MaterialTheme.colorScheme.error)
                 }
             }
             ex != null -> DetailContent(
@@ -302,7 +334,7 @@ private fun DetailContent(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     Icon(Icons.Default.PlayArrow, null, modifier = Modifier.size(14.dp), tint = Color.White)
-                    Text("Démonstration animée", style = MaterialTheme.typography.labelSmall,
+                    Text(stringResource(R.string.exo_db_detail_anim_badge), style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
@@ -314,8 +346,8 @@ private fun DetailContent(
                 Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                StillFrameThumbnail(ex.firstImageUrl, "Position de départ", Modifier.weight(1f))
-                StillFrameThumbnail(ex.secondImageUrl, "Position d'arrivée", Modifier.weight(1f))
+                StillFrameThumbnail(ex.firstImageUrl, stringResource(R.string.exo_db_detail_pos_start), Modifier.weight(1f))
+                StillFrameThumbnail(ex.secondImageUrl, stringResource(R.string.exo_db_detail_pos_end), Modifier.weight(1f))
             }
         }
 
@@ -363,19 +395,19 @@ private fun DetailContent(
                     state.savedToFavorites -> {
                         Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Ajouté à ma bibliothèque", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Text(stringResource(R.string.exo_db_detail_save_done), fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
                     else -> {
                         Icon(Icons.Default.BookmarkAdd, null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Sauvegarder dans ma bibliothèque", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Text(stringResource(R.string.exo_db_detail_save_action), fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
                 }
             }
 
-            // ── MUSCLES PRINCIPAUX (FR) ──
+            // ── MUSCLES PRINCIPAUX ──
             if (ex.primaryMuscles.isNotEmpty()) {
-                SectionHeader("Muscles principaux", Icons.Default.SelfImprovement, NeonGreen)
+                SectionHeader(stringResource(R.string.exo_db_detail_primary_muscles), Icons.Default.SelfImprovement, NeonGreen)
                 androidx.compose.foundation.layout.FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -391,7 +423,7 @@ private fun DetailContent(
                 }
             }
             if (ex.secondaryMuscles.isNotEmpty()) {
-                SectionHeader("Muscles secondaires", Icons.Default.Tune, Color(0xFF8B5CF6))
+                SectionHeader(stringResource(R.string.exo_db_detail_secondary_muscles), Icons.Default.Tune, Color(0xFF8B5CF6))
                 androidx.compose.foundation.layout.FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -407,45 +439,50 @@ private fun DetailContent(
                 }
             }
 
-            // ── INSTRUCTIONS (traduites auto par IA, fallback anglais) ──
+            // ── INSTRUCTIONS (traduites auto par IA en non-EN, source EN sinon) ──
             if (ex.instructions.isNotEmpty()) {
-                SectionHeader("Exécution étape par étape", Icons.Default.FormatListNumbered, OrangeVibrant)
+                SectionHeader(stringResource(R.string.exo_db_detail_steps), Icons.Default.FormatListNumbered, OrangeVibrant)
 
+                val isEnLocale = com.shredcoach.app.domain.i18n.PromptLocale.isEn()
                 val displayInstructions = state.translatedInstructions ?: ex.instructions
-                val isFrench = state.translatedInstructions != null
+                // En locale EN, la source ExerciseDB est déjà la langue UI → pas de
+                // badge "traduit". Sinon, on affiche le statut (traducting/done/failed).
+                val translatedToUiLang = !isEnLocale && state.translatedInstructions != null
 
-                // Indicateur de traduction (léger, sous le header)
-                Row(
-                    modifier = Modifier.padding(start = 36.dp, bottom = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    when {
-                        state.isTranslating -> {
-                            CircularProgressIndicator(
-                                strokeWidth = 1.5.dp,
-                                modifier = Modifier.size(10.dp),
-                                color = OrangeVibrant
-                            )
-                            Text("Traduction en cours…",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                fontSize = 10.sp)
-                        }
-                        isFrench -> {
-                            Text("🇫🇷", fontSize = 10.sp)
-                            Text("Traduit automatiquement par IA",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = NeonGreen.copy(alpha = 0.85f),
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 10.sp)
-                        }
-                        else -> {
-                            Text("🇺🇸", fontSize = 10.sp)
-                            Text("Instructions en anglais (traduction indisponible)",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                fontSize = 10.sp)
+                // Indicateur de traduction (léger, sous le header) — masqué en EN
+                if (!isEnLocale) {
+                    Row(
+                        modifier = Modifier.padding(start = 36.dp, bottom = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        when {
+                            state.isTranslating -> {
+                                CircularProgressIndicator(
+                                    strokeWidth = 1.5.dp,
+                                    modifier = Modifier.size(10.dp),
+                                    color = OrangeVibrant
+                                )
+                                Text(stringResource(R.string.exo_db_detail_translating),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                    fontSize = 10.sp)
+                            }
+                            translatedToUiLang -> {
+                                Text(stringResource(R.string.exo_db_detail_flag), fontSize = 10.sp)
+                                Text(stringResource(R.string.exo_db_detail_translated),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = NeonGreen.copy(alpha = 0.85f),
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 10.sp)
+                            }
+                            else -> {
+                                Text(stringResource(R.string.exo_db_detail_flag_native), fontSize = 10.sp)
+                                Text(stringResource(R.string.exo_db_detail_translation_unavailable),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                    fontSize = 10.sp)
+                            }
                         }
                     }
                 }
