@@ -59,6 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -66,6 +67,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.shredcoach.app.R
 import com.shredcoach.app.data.backup.provider.ProviderId
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
@@ -142,27 +144,31 @@ fun BackupSettingsSection(
         when (val e = event) {
             null -> Unit
             is BackupSettingsViewModel.UiEvent.FolderUpdated ->
-                snackbar.showSnackbar("Dossier de sauvegarde configuré")
+                snackbar.showSnackbar(context.getString(R.string.backup_snack_folder_set))
             is BackupSettingsViewModel.UiEvent.BackupOk ->
-                snackbar.showSnackbar("Sauvegarde réussie · ${e.photosCount} photos")
+                snackbar.showSnackbar(context.getString(R.string.backup_snack_ok, e.photosCount))
             is BackupSettingsViewModel.UiEvent.RestoreOk -> {
-                val skipMsg = if (e.skippedPhotos > 0) " (${e.skippedPhotos} ignorées)" else ""
-                snackbar.showSnackbar("Restauration OK · ${e.photosCount} photos$skipMsg")
+                val skipMsg = if (e.skippedPhotos > 0)
+                    " " + context.getString(R.string.backup_snack_restore_skipped, e.skippedPhotos)
+                else ""
+                snackbar.showSnackbar(
+                    context.getString(R.string.backup_snack_restore_ok, e.photosCount) + skipMsg
+                )
             }
             is BackupSettingsViewModel.UiEvent.Error ->
-                snackbar.showSnackbar("Échec : ${e.message}")
+                snackbar.showSnackbar(context.getString(R.string.backup_snack_error, e.message))
             BackupSettingsViewModel.UiEvent.Disconnected ->
-                snackbar.showSnackbar("Sauvegarde déconnectée")
+                snackbar.showSnackbar(context.getString(R.string.backup_snack_disconnected))
             BackupSettingsViewModel.UiEvent.LinkedToGoogle ->
-                snackbar.showSnackbar("Connecté à Google Drive")
+                snackbar.showSnackbar(context.getString(R.string.backup_snack_drive_linked))
             BackupSettingsViewModel.UiEvent.UnlinkedFromGoogle ->
-                snackbar.showSnackbar("Déconnecté de Google Drive")
+                snackbar.showSnackbar(context.getString(R.string.backup_snack_drive_unlinked))
             is BackupSettingsViewModel.UiEvent.ShowRecoveryCode ->
                 revealedRecoveryCode = e.code
             BackupSettingsViewModel.UiEvent.PromptRecoveryCode ->
                 promptRecoveryCode = true
             BackupSettingsViewModel.UiEvent.EncryptionDisabled ->
-                snackbar.showSnackbar("Chiffrement désactivé")
+                snackbar.showSnackbar(context.getString(R.string.backup_snack_encryption_disabled))
         }
         viewModel.consumeEvent()
     }
@@ -191,8 +197,10 @@ fun BackupSettingsSection(
                     Icon(Icons.Default.Folder, null, Modifier.size(20.dp))
                     Spacer(Modifier.size(10.dp))
                     Text(
-                        if (state.folderUri != null) "Changer le dossier"
-                        else "Choisir un dossier",
+                        stringResource(
+                            if (state.folderUri != null) R.string.backup_change_folder
+                            else R.string.backup_pick_folder
+                        ),
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                     )
@@ -228,13 +236,13 @@ fun BackupSettingsSection(
                 ) {
                     Column(Modifier.weight(1f).padding(end = 12.dp)) {
                         Text(
-                            "Sauvegarde automatique",
+                            stringResource(R.string.backup_auto_title),
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge,
                         )
                         Spacer(Modifier.height(2.dp))
                         Text(
-                            "Une fois par nuit à 3h, batterie OK",
+                            stringResource(R.string.backup_auto_subtitle),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         )
@@ -274,11 +282,11 @@ fun BackupSettingsSection(
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
                     Spacer(Modifier.size(10.dp))
-                    Text("Sauvegarde en cours…", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.backup_running), fontWeight = FontWeight.SemiBold)
                 } else {
                     Icon(Icons.Default.CloudUpload, null, Modifier.size(20.dp))
                     Spacer(Modifier.size(10.dp))
-                    Text("Sauvegarder maintenant", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.backup_now), fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -309,14 +317,14 @@ fun BackupSettingsSection(
             if (state.running == BackupSettingsViewModel.RunningOp.RESTORE) {
                 CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
                 Spacer(Modifier.size(10.dp))
-                Text("Restauration en cours…", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.backup_restoring), fontWeight = FontWeight.SemiBold)
             } else {
                 Icon(Icons.Default.Restore, null, Modifier.size(20.dp))
                 Spacer(Modifier.size(10.dp))
                 // Texte court — le contexte "Drive vs local" est déjà signifié
                 // par le ProviderSelector (chips) au-dessus.
                 Text(
-                    "Restaurer une sauvegarde",
+                    stringResource(R.string.backup_restore),
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                 )
@@ -334,7 +342,7 @@ fun BackupSettingsSection(
             ) {
                 Icon(Icons.Default.CloudOff, null, Modifier.size(16.dp))
                 Spacer(Modifier.size(8.dp))
-                Text("Déconnecter la sauvegarde")
+                Text(stringResource(R.string.backup_disconnect_local))
             }
         }
     }
@@ -345,13 +353,8 @@ fun BackupSettingsSection(
         AlertDialog(
             onDismissRequest = { showRestoreConfirm = null },
             icon = { Icon(Icons.Default.Restore, null, tint = MaterialTheme.colorScheme.error) },
-            title = { Text("Restaurer cette archive ?") },
-            text = {
-                Text(
-                    "Toutes tes données actuelles (séances, repas, conversations Shreddy, photos…) " +
-                        "seront REMPLACÉES par celles de l'archive. Cette opération est irréversible.",
-                )
-            },
+            title = { Text(stringResource(R.string.backup_restore_dialog_title)) },
+            text = { Text(stringResource(R.string.backup_restore_dialog_text)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -359,10 +362,12 @@ fun BackupSettingsSection(
                         showRestoreConfirm = null
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                ) { Text("Restaurer") }
+                ) { Text(stringResource(R.string.backup_restore_confirm)) }
             },
             dismissButton = {
-                TextButton(onClick = { showRestoreConfirm = null }) { Text("Annuler") }
+                TextButton(onClick = { showRestoreConfirm = null }) {
+                    Text(stringResource(R.string.common_cancel_short))
+                }
             },
         )
     }
@@ -371,14 +376,8 @@ fun BackupSettingsSection(
         AlertDialog(
             onDismissRequest = { showDisconnectConfirm = false },
             icon = { Icon(Icons.Default.CloudOff, null) },
-            title = { Text("Déconnecter la sauvegarde ?") },
-            text = {
-                Text(
-                    "On va oublier ton dossier de sauvegarde et arrêter la sauvegarde automatique. " +
-                        "Tes archives existantes ne sont pas supprimées — tu peux toujours les " +
-                        "restaurer plus tard depuis ton cloud.",
-                )
-            },
+            title = { Text(stringResource(R.string.backup_disconnect_dialog_title)) },
+            text = { Text(stringResource(R.string.backup_disconnect_dialog_text)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -386,10 +385,12 @@ fun BackupSettingsSection(
                         showDisconnectConfirm = false
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                ) { Text("Déconnecter") }
+                ) { Text(stringResource(R.string.backup_disconnect_confirm)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDisconnectConfirm = false }) { Text("Annuler") }
+                TextButton(onClick = { showDisconnectConfirm = false }) {
+                    Text(stringResource(R.string.common_cancel_short))
+                }
             },
         )
     }
@@ -398,14 +399,8 @@ fun BackupSettingsSection(
         AlertDialog(
             onDismissRequest = { showGoogleUnlinkConfirm = false },
             icon = { Icon(Icons.Default.CloudOff, null) },
-            title = { Text("Déconnecter Google Drive ?") },
-            text = {
-                Text(
-                    "Tes sauvegardes existantes restent dans ton Drive (dossier app caché) — " +
-                        "tu peux les retrouver en te reconnectant. Mais la sauvegarde automatique " +
-                        "sera désactivée jusqu'à reconnexion."
-                )
-            },
+            title = { Text(stringResource(R.string.backup_disconnect_drive_dialog_title)) },
+            text = { Text(stringResource(R.string.backup_disconnect_drive_dialog_text)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -413,10 +408,12 @@ fun BackupSettingsSection(
                         showGoogleUnlinkConfirm = false
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                ) { Text("Déconnecter") }
+                ) { Text(stringResource(R.string.backup_disconnect_confirm)) }
             },
             dismissButton = {
-                TextButton(onClick = { showGoogleUnlinkConfirm = false }) { Text("Annuler") }
+                TextButton(onClick = { showGoogleUnlinkConfirm = false }) {
+                    Text(stringResource(R.string.common_cancel_short))
+                }
             },
         )
     }
@@ -441,12 +438,13 @@ fun BackupSettingsSection(
         AlertDialog(
             onDismissRequest = { showRestoreConfirmRemote = null },
             icon = { Icon(Icons.Default.Restore, null, tint = MaterialTheme.colorScheme.error) },
-            title = { Text("Restaurer cette archive ?") },
+            title = { Text(stringResource(R.string.backup_restore_dialog_title)) },
             text = {
                 Text(
-                    "Toutes tes données actuelles (séances, repas, conversations Shreddy, photos…) " +
-                        "seront REMPLACÉES par celles de l'archive du ${formatRelative(pendingRemoteRestore.createdAt)}. " +
-                        "Cette opération est irréversible."
+                    stringResource(
+                        R.string.backup_restore_dialog_text_with_date,
+                        formatRelative(context, pendingRemoteRestore.createdAt),
+                    )
                 )
             },
             confirmButton = {
@@ -456,10 +454,12 @@ fun BackupSettingsSection(
                         showRestoreConfirmRemote = null
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                ) { Text("Restaurer") }
+                ) { Text(stringResource(R.string.backup_restore_confirm)) }
             },
             dismissButton = {
-                TextButton(onClick = { showRestoreConfirmRemote = null }) { Text("Annuler") }
+                TextButton(onClick = { showRestoreConfirmRemote = null }) {
+                    Text(stringResource(R.string.common_cancel_short))
+                }
             },
         )
     }
@@ -469,15 +469,8 @@ fun BackupSettingsSection(
         AlertDialog(
             onDismissRequest = { showEncryptionEnableDialog = false },
             icon = { Icon(Icons.Default.EnhancedEncryption, null, tint = OrangeVibrant) },
-            title = { Text("Activer le chiffrement ?") },
-            text = {
-                Text(
-                    "Tes sauvegardes seront chiffrées avec une clé AES-256 unique à ton appareil. " +
-                        "Personne (pas même Google) ne pourra les lire sans cette clé.\n\n" +
-                        "⚠️ Tu vas recevoir un code de récupération — note-le précieusement. " +
-                        "Sans lui, si tu changes de téléphone, tes sauvegardes seront perdues."
-                )
-            },
+            title = { Text(stringResource(R.string.backup_encryption_enable_title)) },
+            text = { Text(stringResource(R.string.backup_encryption_enable_text)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -485,10 +478,12 @@ fun BackupSettingsSection(
                         showEncryptionEnableDialog = false
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = OrangeVibrant),
-                ) { Text("Activer", fontWeight = FontWeight.SemiBold) }
+                ) { Text(stringResource(R.string.backup_encryption_enable_confirm), fontWeight = FontWeight.SemiBold) }
             },
             dismissButton = {
-                TextButton(onClick = { showEncryptionEnableDialog = false }) { Text("Annuler") }
+                TextButton(onClick = { showEncryptionEnableDialog = false }) {
+                    Text(stringResource(R.string.common_cancel_short))
+                }
             },
         )
     }
@@ -498,14 +493,8 @@ fun BackupSettingsSection(
         AlertDialog(
             onDismissRequest = { showEncryptionDisableConfirm = false },
             icon = { Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.error) },
-            title = { Text("Désactiver le chiffrement ?") },
-            text = {
-                Text(
-                    "Les FUTURES sauvegardes seront en clair (transport HTTPS + chiffrement Drive " +
-                        "côté Google quand même). Les sauvegardes chiffrées existantes restent " +
-                        "lisibles tant que tu as ton code de récupération."
-                )
-            },
+            title = { Text(stringResource(R.string.backup_encryption_disable_title)) },
+            text = { Text(stringResource(R.string.backup_encryption_disable_text)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -513,10 +502,12 @@ fun BackupSettingsSection(
                         showEncryptionDisableConfirm = false
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                ) { Text("Désactiver") }
+                ) { Text(stringResource(R.string.backup_encryption_disable_confirm)) }
             },
             dismissButton = {
-                TextButton(onClick = { showEncryptionDisableConfirm = false }) { Text("Annuler") }
+                TextButton(onClick = { showEncryptionDisableConfirm = false }) {
+                    Text(stringResource(R.string.common_cancel_short))
+                }
             },
         )
     }
@@ -548,27 +539,31 @@ fun BackupSettingsSection(
 
 @Composable
 private fun StatusCard(state: BackupSettingsViewModel.UiState) {
+    val context = LocalContext.current
     val (icon, tint, title, subtitle) = when {
         !state.isConfigured -> StatusInfo(
             icon = Icons.Default.CloudOff,
             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-            title = "Aucune sauvegarde configurée",
+            title = stringResource(R.string.backup_status_not_configured),
             subtitle = when (state.providerId) {
-                ProviderId.GOOGLE_DRIVE -> "Connecte ton compte Google pour activer la sauvegarde Drive."
-                ProviderId.LOCAL_SAF -> "Choisis un dossier (Drive, OneDrive, local) pour protéger tes données."
+                ProviderId.GOOGLE_DRIVE -> stringResource(R.string.backup_status_subtitle_drive)
+                ProviderId.LOCAL_SAF -> stringResource(R.string.backup_status_subtitle_local)
             },
         )
         state.lastBackupAt == null -> StatusInfo(
             icon = Icons.Default.Schedule,
             tint = OrangeVibrant,
-            title = "Configuré, pas encore sauvegardé",
-            subtitle = "Lance une sauvegarde manuelle, ou active la sauvegarde quotidienne.",
+            title = stringResource(R.string.backup_status_configured_never),
+            subtitle = stringResource(R.string.backup_status_configured_never_subtitle),
         )
         else -> StatusInfo(
             icon = Icons.Default.CheckCircle,
             tint = NeonGreen,
-            title = "Sauvegarde active",
-            subtitle = "Dernière : ${formatRelative(state.lastBackupAt)}",
+            title = stringResource(R.string.backup_status_active),
+            subtitle = stringResource(
+                R.string.backup_status_active_subtitle,
+                formatRelative(context, state.lastBackupAt),
+            ),
         )
     }
 
@@ -619,19 +614,18 @@ private data class StatusInfo(
 )
 
 /**
- * Formatage relatif "il y a X" en français, tronqué à la granularité utile.
+ * Formatage relatif "il y a X" / "X ago", tronqué à la granularité utile.
  * On évite une dep `RelativeDateTimeFormatter` (API 24+) pour rester ISO
- * sur le wording (formulation conviviale "il y a quelques instants" plutôt
- * que "0 minute").
+ * sur le wording — Context permet le dispatch FR/EN via stringResource.
  */
-private fun formatRelative(instant: Instant): String {
+private fun formatRelative(context: android.content.Context, instant: Instant): String {
     val seconds = Duration.between(instant, Instant.now()).seconds
     return when {
-        seconds < 60 -> "à l'instant"
-        seconds < 3600 -> "il y a ${seconds / 60} min"
-        seconds < 86_400 -> "il y a ${seconds / 3600} h"
-        seconds < 604_800 -> "il y a ${seconds / 86_400} j"
-        else -> "il y a ${seconds / 604_800} sem"
+        seconds < 60 -> context.getString(R.string.backup_time_now)
+        seconds < 3600 -> context.getString(R.string.backup_time_minutes_ago, seconds / 60)
+        seconds < 86_400 -> context.getString(R.string.backup_time_hours_ago, seconds / 3600)
+        seconds < 604_800 -> context.getString(R.string.backup_time_days_ago, seconds / 86_400)
+        else -> context.getString(R.string.backup_time_weeks_ago, seconds / 604_800)
     }
 }
 
@@ -653,14 +647,14 @@ private fun ProviderSelector(
         FilterChip(
             selected = selected == ProviderId.LOCAL_SAF,
             onClick = { onSelect(ProviderId.LOCAL_SAF) },
-            label = { Text("Stockage local") },
+            label = { Text(stringResource(R.string.backup_provider_local)) },
             leadingIcon = { Icon(Icons.Default.Folder, null, Modifier.size(16.dp)) },
             modifier = Modifier.weight(1f),
         )
         FilterChip(
             selected = selected == ProviderId.GOOGLE_DRIVE,
             onClick = { onSelect(ProviderId.GOOGLE_DRIVE) },
-            label = { Text("Google Drive") },
+            label = { Text(stringResource(R.string.backup_provider_drive)) },
             leadingIcon = { Icon(Icons.Default.CloudUpload, null, Modifier.size(16.dp)) },
             modifier = Modifier.weight(1f),
         )
@@ -737,7 +731,7 @@ private fun UnlinkedGoogleContent(
             }
             Column(Modifier.weight(1f)) {
                 Text(
-                    if (isLinking) "Connexion en cours…" else "Pas de compte connecté",
+                    stringResource(if (isLinking) R.string.backup_google_linking else R.string.backup_google_no_account),
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
@@ -745,8 +739,7 @@ private fun UnlinkedGoogleContent(
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    if (isLinking) "On synchronise ton identité Google."
-                    else "Connecte ton compte pour activer la sauvegarde Drive.",
+                    stringResource(if (isLinking) R.string.backup_google_linking_subtitle else R.string.backup_google_no_account_subtitle),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
                     maxLines = 2,
@@ -768,11 +761,11 @@ private fun UnlinkedGoogleContent(
                     color = MaterialTheme.colorScheme.onPrimary,
                 )
                 Spacer(Modifier.size(10.dp))
-                Text("Connexion…", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.backup_google_connecting), fontWeight = FontWeight.SemiBold)
             } else {
                 Icon(Icons.Default.Login, null, Modifier.size(20.dp))
                 Spacer(Modifier.size(10.dp))
-                Text("Continuer avec Google", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.backup_google_connect), fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -818,7 +811,7 @@ private fun LinkedGoogleContent(
             }
             Column(Modifier.weight(1f)) {
                 Text(
-                    displayName?.takeIf { it.isNotBlank() } ?: "Compte Google",
+                    displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.backup_google_account_fallback),
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
@@ -853,7 +846,7 @@ private fun LinkedGoogleContent(
                     tint = NeonGreen,
                 )
                 Text(
-                    "Drive privé sécurisé",
+                    stringResource(R.string.backup_google_secure),
                     style = MaterialTheme.typography.labelMedium,
                     color = NeonGreen,
                     fontWeight = FontWeight.SemiBold,
@@ -868,7 +861,7 @@ private fun LinkedGoogleContent(
                 ),
             ) {
                 Text(
-                    "Déconnecter",
+                    stringResource(R.string.backup_disconnect_confirm),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Medium,
                 )
@@ -888,10 +881,11 @@ private fun RemoteArchivePickerDialog(
     onDismiss: () -> Unit,
     onPick: (com.shredcoach.app.data.backup.provider.RemoteArchive) -> Unit,
 ) {
+    val context = LocalContext.current
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Default.CloudUpload, null, tint = OrangeVibrant) },
-        title = { Text("Choisir une sauvegarde") },
+        title = { Text(stringResource(R.string.backup_picker_title)) },
         text = {
             when {
                 isLoading -> {
@@ -901,12 +895,10 @@ private fun RemoteArchivePickerDialog(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                        Text("Chargement des sauvegardes…")
+                        Text(stringResource(R.string.backup_picker_loading))
                     }
                 }
-                archives.isEmpty() -> Text(
-                    "Aucune sauvegarde trouvée sur ton Drive. Lance d'abord une sauvegarde manuelle.",
-                )
+                archives.isEmpty() -> Text(stringResource(R.string.backup_picker_empty))
                 else -> {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         archives.take(20).forEach { archive ->
@@ -918,12 +910,12 @@ private fun RemoteArchivePickerDialog(
                             ) {
                                 Column(Modifier.padding(12.dp)) {
                                     Text(
-                                        formatRelative(archive.createdAt).replaceFirstChar { it.uppercase() },
+                                        formatRelative(context, archive.createdAt).replaceFirstChar { it.uppercase() },
                                         fontWeight = FontWeight.SemiBold,
                                         style = MaterialTheme.typography.bodyMedium,
                                     )
                                     Text(
-                                        "${archive.sizeBytes / 1024} Ko",
+                                        stringResource(R.string.backup_picker_size_kb, archive.sizeBytes / 1024),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                                     )
@@ -935,7 +927,7 @@ private fun RemoteArchivePickerDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Fermer") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.backup_picker_close)) }
         },
     )
 }
@@ -973,14 +965,16 @@ private fun EncryptionSection(
                     )
                     Column {
                         Text(
-                            "Chiffrement de bout en bout",
+                            stringResource(R.string.backup_encryption_title),
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge,
                         )
                         Spacer(Modifier.height(2.dp))
                         Text(
-                            if (enabled) "AES-256 — seul ton appareil peut lire les sauvegardes"
-                            else "Chiffre tes sauvegardes avec une clé à toi",
+                            stringResource(
+                                if (enabled) R.string.backup_encryption_subtitle_on
+                                else R.string.backup_encryption_subtitle_off
+                            ),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         )
@@ -998,7 +992,7 @@ private fun EncryptionSection(
                     Icon(Icons.Default.Lock, null, Modifier.size(16.dp))
                     Spacer(Modifier.size(6.dp))
                     Text(
-                        "Voir mon code de récupération",
+                        stringResource(R.string.backup_encryption_view_code),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -1026,13 +1020,11 @@ private fun RecoveryCodeDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Default.EnhancedEncryption, null, tint = OrangeVibrant) },
-        title = { Text("Ton code de récupération") },
+        title = { Text(stringResource(R.string.backup_recovery_code_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "Note ce code dans un endroit sûr (gestionnaire de mots de passe, " +
-                        "papier, photo dans le cloud personnel). Il te permettra de " +
-                        "restaurer tes sauvegardes chiffrées sur un autre téléphone.",
+                    stringResource(R.string.backup_recovery_code_text),
                     style = MaterialTheme.typography.bodySmall,
                 )
                 Surface(
@@ -1053,7 +1045,11 @@ private fun RecoveryCodeDialog(
                             fontSize = 13.sp,
                         )
                         IconButton(onClick = { clipboard.setText(AnnotatedString(code)) }) {
-                            Icon(Icons.Default.ContentCopy, "Copier", tint = OrangeVibrant)
+                            Icon(
+                                Icons.Default.ContentCopy,
+                                stringResource(R.string.backup_recovery_code_copy_cd),
+                                tint = OrangeVibrant
+                            )
                         }
                     }
                 }
@@ -1067,7 +1063,7 @@ private fun RecoveryCodeDialog(
                         tint = MaterialTheme.colorScheme.error,
                     )
                     Text(
-                        "Sans ce code, aucune restauration possible sur un autre appareil.",
+                        stringResource(R.string.backup_recovery_code_warning),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -1076,7 +1072,7 @@ private fun RecoveryCodeDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("J'ai sauvegardé mon code", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.backup_recovery_code_saved), fontWeight = FontWeight.SemiBold)
             }
         },
     )
@@ -1097,18 +1093,22 @@ private fun RecoveryCodeInputDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Default.Lock, null, tint = OrangeVibrant) },
-        title = { Text("Code de récupération requis") },
+        title = { Text(stringResource(R.string.backup_recovery_code_input_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "Cette sauvegarde est chiffrée. Saisis le code de récupération " +
-                        "que tu as noté quand tu as activé le chiffrement.",
+                    stringResource(R.string.backup_recovery_code_input_text),
                     style = MaterialTheme.typography.bodySmall,
                 )
                 OutlinedTextField(
                     value = input,
                     onValueChange = { input = it },
-                    placeholder = { Text("AbCd-EfGh-IjKl-…", fontFamily = FontFamily.Monospace) },
+                    placeholder = {
+                        Text(
+                            stringResource(R.string.backup_recovery_code_input_placeholder),
+                            fontFamily = FontFamily.Monospace,
+                        )
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = false,
                     maxLines = 3,
@@ -1126,11 +1126,13 @@ private fun RecoveryCodeInputDialog(
                     CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = OrangeVibrant)
                     Spacer(Modifier.size(6.dp))
                 }
-                Text("Restaurer", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.backup_restore_confirm), fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !isLoading) { Text("Annuler") }
+            TextButton(onClick = onDismiss, enabled = !isLoading) {
+                Text(stringResource(R.string.common_cancel_short))
+            }
         },
     )
 }

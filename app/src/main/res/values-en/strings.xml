@@ -4325,4 +4325,113 @@
     <string name="exo_etirement_vertical_des_bras_execution">Stretch position, hold 30s without bouncing. Breathe deeply. No pain, just tension.</string>
     <string name="exo_etirement_vertical_des_bras_tips">Mobility movement. No pain, just stretch tension.</string>
     <string name="exo_etirement_vertical_des_bras_starting_weight">Bodyweight</string>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Backup (Settings → Backup) — section, dialogs, snackbars
+         Phase 8c i18n
+         ═══════════════════════════════════════════════════════════════ -->
+    <!-- StatusCard -->
+    <string name="backup_status_not_configured">No backup configured</string>
+    <string name="backup_status_subtitle_drive">Connect your Google account to enable Drive backup.</string>
+    <string name="backup_status_subtitle_local">Pick a folder (Drive, OneDrive, local) to protect your data.</string>
+    <string name="backup_status_configured_never">Configured, not backed up yet</string>
+    <string name="backup_status_configured_never_subtitle">Run a manual backup, or enable nightly backup.</string>
+    <string name="backup_status_active">Backup active</string>
+    <string name="backup_status_active_subtitle">Last: %1$s</string>
+    <!-- Provider selector -->
+    <string name="backup_provider_local">Local storage</string>
+    <string name="backup_provider_drive">Google Drive</string>
+    <!-- SAF buttons -->
+    <string name="backup_change_folder">Change folder</string>
+    <string name="backup_pick_folder">Pick a folder</string>
+    <!-- Auto-backup -->
+    <string name="backup_auto_title">Automatic backup</string>
+    <string name="backup_auto_subtitle">Once a night at 3am, when battery is OK</string>
+    <!-- CTA -->
+    <string name="backup_running">Backing up…</string>
+    <string name="backup_now">Back up now</string>
+    <string name="backup_restoring">Restoring…</string>
+    <string name="backup_restore">Restore a backup</string>
+    <string name="backup_disconnect_local">Disconnect backup</string>
+    <!-- Restore confirmation dialog -->
+    <string name="backup_restore_dialog_title">Restore this archive?</string>
+    <string name="backup_restore_dialog_text">All your current data (sessions, meals, Shreddy chats, photos…) will be REPLACED by the archive content. This action is irreversible.</string>
+    <string name="backup_restore_dialog_text_with_date">All your current data (sessions, meals, Shreddy chats, photos…) will be REPLACED by the archive from %1$s. This action is irreversible.</string>
+    <string name="backup_restore_confirm">Restore</string>
+    <string name="common_cancel_short">Cancel</string>
+    <!-- Disconnect dialogs -->
+    <string name="backup_disconnect_dialog_title">Disconnect backup?</string>
+    <string name="backup_disconnect_dialog_text">We\'ll forget your backup folder and stop the automatic backup. Your existing archives are not deleted — you can still restore them later from your cloud.</string>
+    <string name="backup_disconnect_confirm">Disconnect</string>
+    <string name="backup_disconnect_drive_dialog_title">Disconnect Google Drive?</string>
+    <string name="backup_disconnect_drive_dialog_text">Your existing backups stay in your Drive (hidden app folder) — you can recover them by signing in again. But automatic backup will be off until you reconnect.</string>
+    <!-- Encryption section -->
+    <string name="backup_encryption_enable_title">Enable encryption?</string>
+    <string name="backup_encryption_enable_text">Your backups will be encrypted with a unique AES-256 key tied to this device. Nobody (not even Google) can read them without that key.\n\n⚠️ You\'ll get a recovery code — store it carefully. Without it, if you switch phones, your backups will be lost.</string>
+    <string name="backup_encryption_enable_confirm">Enable</string>
+    <string name="backup_encryption_disable_title">Disable encryption?</string>
+    <string name="backup_encryption_disable_text">FUTURE backups will be in plain text (HTTPS in transit + Google\'s Drive-side encryption still apply). Existing encrypted backups remain readable as long as you keep your recovery code.</string>
+    <string name="backup_encryption_disable_confirm">Disable</string>
+    <string name="backup_encryption_title">End-to-end encryption</string>
+    <string name="backup_encryption_subtitle_on">AES-256 — only your device can read your backups</string>
+    <string name="backup_encryption_subtitle_off">Encrypt your backups with a key only you have</string>
+    <string name="backup_encryption_view_code">View my recovery code</string>
+    <!-- Recovery code dialog -->
+    <string name="backup_recovery_code_title">Your recovery code</string>
+    <string name="backup_recovery_code_text">Save this code somewhere safe (password manager, paper, personal cloud photo). It lets you restore encrypted backups on another phone.</string>
+    <string name="backup_recovery_code_copy_cd">Copy</string>
+    <string name="backup_recovery_code_warning">Without this code, no restore is possible on another device.</string>
+    <string name="backup_recovery_code_saved">I\'ve saved my code</string>
+    <string name="backup_recovery_code_input_title">Recovery code required</string>
+    <string name="backup_recovery_code_input_text">This backup is encrypted. Enter the recovery code you wrote down when you enabled encryption.</string>
+    <string name="backup_recovery_code_input_placeholder">AbCd-EfGh-IjKl-…</string>
+    <!-- Snackbars -->
+    <string name="backup_snack_folder_set">Backup folder configured</string>
+    <string name="backup_snack_ok">Backup successful · %1$d photos</string>
+    <string name="backup_snack_restore_ok">Restore OK · %1$d photos</string>
+    <string name="backup_snack_restore_skipped">(%1$d skipped)</string>
+    <string name="backup_snack_error">Failed: %1$s</string>
+    <string name="backup_snack_disconnected">Backup disconnected</string>
+    <string name="backup_snack_drive_linked">Connected to Google Drive</string>
+    <string name="backup_snack_drive_unlinked">Disconnected from Google Drive</string>
+    <string name="backup_snack_encryption_disabled">Encryption disabled</string>
+    <!-- Google account card -->
+    <string name="backup_google_linking">Signing in…</string>
+    <string name="backup_google_no_account">No account connected</string>
+    <string name="backup_google_linking_subtitle">Syncing your Google identity.</string>
+    <string name="backup_google_no_account_subtitle">Connect your account to enable Drive backup.</string>
+    <string name="backup_google_connecting">Signing in…</string>
+    <string name="backup_google_connect">Continue with Google</string>
+    <string name="backup_google_account_fallback">Google account</string>
+    <string name="backup_google_secure">Private secured Drive</string>
+    <!-- Remote archive picker -->
+    <string name="backup_picker_title">Pick a backup</string>
+    <string name="backup_picker_loading">Loading backups…</string>
+    <string name="backup_picker_empty">No backup found on your Drive. Run a manual backup first.</string>
+    <string name="backup_picker_close">Close</string>
+    <string name="backup_picker_size_kb">%1$d KB</string>
+    <!-- Format relative dates -->
+    <string name="backup_time_now">just now</string>
+    <string name="backup_time_minutes_ago">%1$d min ago</string>
+    <string name="backup_time_hours_ago">%1$d h ago</string>
+    <string name="backup_time_days_ago">%1$d d ago</string>
+    <string name="backup_time_weeks_ago">%1$d w ago</string>
+    <!-- Notifier -->
+    <string name="backup_notif_success_title">Backup successful</string>
+    <string name="backup_notif_success_body">%1$d photos · %2$s synced to Google Drive</string>
+    <string name="backup_notif_failure_title">Backup failed</string>
+    <string name="backup_notif_failure_body">%1$s — tap to check</string>
+    <!-- Byte units -->
+    <string name="backup_bytes_o">%1$d B</string>
+    <string name="backup_bytes_ko">%1$.0f KB</string>
+    <string name="backup_bytes_mo">%1$.1f MB</string>
+    <string name="backup_bytes_go">%1$.2f GB</string>
+    <!-- Repository errors -->
+    <string name="backup_error_not_configured">Backup not configured (provider %1$s). Go to Settings → Backup.</string>
+    <string name="backup_error_download_failed">Could not download archive: %1$s</string>
+    <string name="backup_error_manifest_corrupt">Manifest unreadable (corrupt JSON)</string>
+    <string name="backup_error_format_too_recent">Backup is format v%1$d, app supports up to v%2$d. Update ShredCoach.</string>
+    <string name="backup_error_db_too_recent">Backup is from a newer app version (DB v%1$d &gt; v%2$d). Update ShredCoach.</string>
+    <string name="backup_error_unknown">Unknown error</string>
+    <string name="backup_error_needs_recovery_code">Encrypted archive — recovery code required</string>
 </resources>

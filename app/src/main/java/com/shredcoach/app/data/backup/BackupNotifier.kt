@@ -41,8 +41,8 @@ class BackupNotifier @Inject constructor(
         val sizeText = formatBytes(sizeBytes)
         post(
             id = NOTIF_ID_BACKUP,
-            title = "Sauvegarde réussie",
-            body = "$photosCount photos · $sizeText synchronisés sur Google Drive",
+            title = context.getString(R.string.backup_notif_success_title),
+            body = context.getString(R.string.backup_notif_success_body, photosCount, sizeText),
             ongoing = false,
         )
     }
@@ -50,8 +50,8 @@ class BackupNotifier @Inject constructor(
     fun notifyFailure(reason: String) {
         post(
             id = NOTIF_ID_BACKUP,
-            title = "Sauvegarde impossible",
-            body = "$reason — touche pour vérifier",
+            title = context.getString(R.string.backup_notif_failure_title),
+            body = context.getString(R.string.backup_notif_failure_body, reason),
             ongoing = false,
         )
     }
@@ -96,12 +96,12 @@ class BackupNotifier @Inject constructor(
     }
 
     private fun formatBytes(bytes: Long): String {
-        if (bytes < 1024) return "${bytes} o"
+        if (bytes < 1024) return context.getString(R.string.backup_bytes_o, bytes)
         val kb = bytes / 1024.0
-        if (kb < 1024) return "%.0f Ko".format(kb)
+        if (kb < 1024) return context.getString(R.string.backup_bytes_ko, kb)
         val mb = kb / 1024.0
-        if (mb < 1024) return "%.1f Mo".format(mb)
-        return "%.2f Go".format(mb / 1024.0)
+        if (mb < 1024) return context.getString(R.string.backup_bytes_mo, mb)
+        return context.getString(R.string.backup_bytes_go, mb / 1024.0)
     }
 
     private companion object {

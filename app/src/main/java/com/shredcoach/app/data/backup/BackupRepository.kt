@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.util.Log
+import com.shredcoach.app.R
 import com.shredcoach.app.data.auth.GoogleAuthRepository
 import com.shredcoach.app.data.backup.crypto.BackupKeyManager
 import com.shredcoach.app.data.backup.provider.BackupProvider
@@ -107,7 +108,7 @@ class BackupRepository @Inject constructor(
 
         if (!provider.isConfigured()) {
             return BackupResult.Failure(
-                "Sauvegarde non configurée (provider ${snap.providerId}). Va dans Paramètres → Sauvegarde."
+                context.getString(R.string.backup_error_not_configured, snap.providerId.toString())
             )
         }
 
@@ -164,7 +165,7 @@ class BackupRepository @Inject constructor(
             }
         }.getOrElse { e ->
             Log.e(TAG, "Backup failed", e)
-            BackupResult.Failure(e.message ?: "Erreur inconnue")
+            BackupResult.Failure(e.message ?: context.getString(R.string.backup_error_unknown))
         }
     }
 
@@ -194,7 +195,9 @@ class BackupRepository @Inject constructor(
         val localFile = runCatching { provider.downloadArchive(remote) }
             .getOrElse { e ->
                 Log.e(TAG, "Download failed for ${remote.id}", e)
-                return RestoreResult.Failure("Téléchargement de l'archive impossible : ${e.message}")
+                return RestoreResult.Failure(
+                    context.getString(R.string.backup_error_download_failed, e.message ?: "")
+                )
             }
         return try {
             runRestore(Uri.fromFile(localFile), recoveryCode)
@@ -229,7 +232,7 @@ class BackupRepository @Inject constructor(
 
             // 2. Parse + validation versions
             val manifest = BackupGson.instance.fromJson(unpack.manifestJson, BackupManifest::class.java)
-                ?: throw IllegalArgumentException("Manifest illisible (JSON corrompu)")
+                ?: throw IllegalArgumentException(context.getString(R.string.backup_error_manifest_corrupt))
             validateVersions(manifest)
 
             // 3. Patch photo paths : map originalPath → newLocalPath
@@ -271,9 +274,11 @@ class BackupRepository @Inject constructor(
             // Cas spécifique : archive chiffrée mais pas de clé → remonter au
             // caller pour qu'il prompte l'user. Pas une erreur logique.
             if (e is BackupArchive.EncryptedArchiveException) {
-                RestoreResult.NeedsRecoveryCode(e.message ?: "Archive chiffrée — code de récupération requis")
+                RestoreResult.NeedsRecoveryCode(
+                    e.message ?: context.getString(R.string.backup_error_needs_recovery_code)
+                )
             } else {
-                RestoreResult.Failure(e.message ?: "Erreur inconnue")
+                RestoreResult.Failure(e.message ?: context.getString(R.string.backup_error_unknown))
             }
         }
     }
@@ -292,12 +297,16 @@ class BackupRepository @Inject constructor(
     private fun validateVersions(manifest: BackupManifest) {
         if (manifest.backupSchemaVersion > BackupManifest.BACKUP_SCHEMA_VERSION) {
             throw IllegalStateException(
-                "Backup au format v${manifest.backupSchemaVersion}, app supporte v${BackupManifest.BACKUP_SCHEMA_VERSION} max. Mets à jour ShredCoach."
+                context.getString(
+                    R.string.backup_error_format_too_recent,
+                    manifest.backupSchemaVersion,
+                    BackupManifest.BACKUP_SCHEMA_VERSION,
+                )
             )
         }
         if (manifest.roomDbVersion > ROOM_DB_VERSION) {
             throw IllegalStateException(
-                "Backup d'une version d'app plus récente (DB v${manifest.roomDbVersion} > v$ROOM_DB_VERSION). Mets à jour ShredCoach."
+                context.getString(R.string.backup_error_db_too_recent, manifest.roomDbVersion, ROOM_DB_VERSION)
             )
         }
     }

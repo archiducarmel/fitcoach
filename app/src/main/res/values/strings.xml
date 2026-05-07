@@ -1788,4 +1788,113 @@
     <string name="ingredient_cat_drinks">Boissons</string>
     <string name="ingredient_cat_sweets">Sucres &amp; desserts</string>
     <string name="ingredient_cat_other">Autres</string>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Backup (Settings → Sauvegarde) — section, dialogs, snackbars
+         Phase 8c i18n
+         ═══════════════════════════════════════════════════════════════ -->
+    <!-- StatusCard -->
+    <string name="backup_status_not_configured">Aucune sauvegarde configurée</string>
+    <string name="backup_status_subtitle_drive">Connecte ton compte Google pour activer la sauvegarde Drive.</string>
+    <string name="backup_status_subtitle_local">Choisis un dossier (Drive, OneDrive, local) pour protéger tes données.</string>
+    <string name="backup_status_configured_never">Configuré, pas encore sauvegardé</string>
+    <string name="backup_status_configured_never_subtitle">Lance une sauvegarde manuelle, ou active la sauvegarde quotidienne.</string>
+    <string name="backup_status_active">Sauvegarde active</string>
+    <string name="backup_status_active_subtitle">Dernière : %1$s</string>
+    <!-- Provider selector -->
+    <string name="backup_provider_local">Stockage local</string>
+    <string name="backup_provider_drive">Google Drive</string>
+    <!-- SAF buttons -->
+    <string name="backup_change_folder">Changer le dossier</string>
+    <string name="backup_pick_folder">Choisir un dossier</string>
+    <!-- Auto-backup -->
+    <string name="backup_auto_title">Sauvegarde automatique</string>
+    <string name="backup_auto_subtitle">Une fois par nuit à 3h, batterie OK</string>
+    <!-- CTA -->
+    <string name="backup_running">Sauvegarde en cours…</string>
+    <string name="backup_now">Sauvegarder maintenant</string>
+    <string name="backup_restoring">Restauration en cours…</string>
+    <string name="backup_restore">Restaurer une sauvegarde</string>
+    <string name="backup_disconnect_local">Déconnecter la sauvegarde</string>
+    <!-- Restore confirmation dialog -->
+    <string name="backup_restore_dialog_title">Restaurer cette archive ?</string>
+    <string name="backup_restore_dialog_text">Toutes tes données actuelles (séances, repas, conversations Shreddy, photos…) seront REMPLACÉES par celles de l\'archive. Cette opération est irréversible.</string>
+    <string name="backup_restore_dialog_text_with_date">Toutes tes données actuelles (séances, repas, conversations Shreddy, photos…) seront REMPLACÉES par celles de l\'archive du %1$s. Cette opération est irréversible.</string>
+    <string name="backup_restore_confirm">Restaurer</string>
+    <string name="common_cancel_short">Annuler</string>
+    <!-- Disconnect dialogs -->
+    <string name="backup_disconnect_dialog_title">Déconnecter la sauvegarde ?</string>
+    <string name="backup_disconnect_dialog_text">On va oublier ton dossier de sauvegarde et arrêter la sauvegarde automatique. Tes archives existantes ne sont pas supprimées — tu peux toujours les restaurer plus tard depuis ton cloud.</string>
+    <string name="backup_disconnect_confirm">Déconnecter</string>
+    <string name="backup_disconnect_drive_dialog_title">Déconnecter Google Drive ?</string>
+    <string name="backup_disconnect_drive_dialog_text">Tes sauvegardes existantes restent dans ton Drive (dossier app caché) — tu peux les retrouver en te reconnectant. Mais la sauvegarde automatique sera désactivée jusqu\'à reconnexion.</string>
+    <!-- Encryption section -->
+    <string name="backup_encryption_enable_title">Activer le chiffrement ?</string>
+    <string name="backup_encryption_enable_text">Tes sauvegardes seront chiffrées avec une clé AES-256 unique à ton appareil. Personne (pas même Google) ne pourra les lire sans cette clé.\n\n⚠️ Tu vas recevoir un code de récupération — note-le précieusement. Sans lui, si tu changes de téléphone, tes sauvegardes seront perdues.</string>
+    <string name="backup_encryption_enable_confirm">Activer</string>
+    <string name="backup_encryption_disable_title">Désactiver le chiffrement ?</string>
+    <string name="backup_encryption_disable_text">Les FUTURES sauvegardes seront en clair (transport HTTPS + chiffrement Drive côté Google quand même). Les sauvegardes chiffrées existantes restent lisibles tant que tu as ton code de récupération.</string>
+    <string name="backup_encryption_disable_confirm">Désactiver</string>
+    <string name="backup_encryption_title">Chiffrement de bout en bout</string>
+    <string name="backup_encryption_subtitle_on">AES-256 — seul ton appareil peut lire les sauvegardes</string>
+    <string name="backup_encryption_subtitle_off">Chiffre tes sauvegardes avec une clé à toi</string>
+    <string name="backup_encryption_view_code">Voir mon code de récupération</string>
+    <!-- Recovery code dialog -->
+    <string name="backup_recovery_code_title">Ton code de récupération</string>
+    <string name="backup_recovery_code_text">Note ce code dans un endroit sûr (gestionnaire de mots de passe, papier, photo dans le cloud personnel). Il te permettra de restaurer tes sauvegardes chiffrées sur un autre téléphone.</string>
+    <string name="backup_recovery_code_copy_cd">Copier</string>
+    <string name="backup_recovery_code_warning">Sans ce code, aucune restauration possible sur un autre appareil.</string>
+    <string name="backup_recovery_code_saved">J\'ai sauvegardé mon code</string>
+    <string name="backup_recovery_code_input_title">Code de récupération requis</string>
+    <string name="backup_recovery_code_input_text">Cette sauvegarde est chiffrée. Saisis le code de récupération que tu as noté quand tu as activé le chiffrement.</string>
+    <string name="backup_recovery_code_input_placeholder">AbCd-EfGh-IjKl-…</string>
+    <!-- Snackbars -->
+    <string name="backup_snack_folder_set">Dossier de sauvegarde configuré</string>
+    <string name="backup_snack_ok">Sauvegarde réussie · %1$d photos</string>
+    <string name="backup_snack_restore_ok">Restauration OK · %1$d photos</string>
+    <string name="backup_snack_restore_skipped">(%1$d ignorées)</string>
+    <string name="backup_snack_error">Échec : %1$s</string>
+    <string name="backup_snack_disconnected">Sauvegarde déconnectée</string>
+    <string name="backup_snack_drive_linked">Connecté à Google Drive</string>
+    <string name="backup_snack_drive_unlinked">Déconnecté de Google Drive</string>
+    <string name="backup_snack_encryption_disabled">Chiffrement désactivé</string>
+    <!-- Google account card -->
+    <string name="backup_google_linking">Connexion en cours…</string>
+    <string name="backup_google_no_account">Pas de compte connecté</string>
+    <string name="backup_google_linking_subtitle">On synchronise ton identité Google.</string>
+    <string name="backup_google_no_account_subtitle">Connecte ton compte pour activer la sauvegarde Drive.</string>
+    <string name="backup_google_connecting">Connexion…</string>
+    <string name="backup_google_connect">Continuer avec Google</string>
+    <string name="backup_google_account_fallback">Compte Google</string>
+    <string name="backup_google_secure">Drive privé sécurisé</string>
+    <!-- Remote archive picker -->
+    <string name="backup_picker_title">Choisir une sauvegarde</string>
+    <string name="backup_picker_loading">Chargement des sauvegardes…</string>
+    <string name="backup_picker_empty">Aucune sauvegarde trouvée sur ton Drive. Lance d\'abord une sauvegarde manuelle.</string>
+    <string name="backup_picker_close">Fermer</string>
+    <string name="backup_picker_size_kb">%1$d Ko</string>
+    <!-- Format relative dates -->
+    <string name="backup_time_now">à l\'instant</string>
+    <string name="backup_time_minutes_ago">il y a %1$d min</string>
+    <string name="backup_time_hours_ago">il y a %1$d h</string>
+    <string name="backup_time_days_ago">il y a %1$d j</string>
+    <string name="backup_time_weeks_ago">il y a %1$d sem</string>
+    <!-- Notifier -->
+    <string name="backup_notif_success_title">Sauvegarde réussie</string>
+    <string name="backup_notif_success_body">%1$d photos · %2$s synchronisés sur Google Drive</string>
+    <string name="backup_notif_failure_title">Sauvegarde impossible</string>
+    <string name="backup_notif_failure_body">%1$s — touche pour vérifier</string>
+    <!-- Byte units -->
+    <string name="backup_bytes_o">%1$d o</string>
+    <string name="backup_bytes_ko">%1$.0f Ko</string>
+    <string name="backup_bytes_mo">%1$.1f Mo</string>
+    <string name="backup_bytes_go">%1$.2f Go</string>
+    <!-- Repository errors -->
+    <string name="backup_error_not_configured">Sauvegarde non configurée (provider %1$s). Va dans Paramètres → Sauvegarde.</string>
+    <string name="backup_error_download_failed">Téléchargement de l\'archive impossible : %1$s</string>
+    <string name="backup_error_manifest_corrupt">Manifest illisible (JSON corrompu)</string>
+    <string name="backup_error_format_too_recent">Backup au format v%1$d, app supporte v%2$d max. Mets à jour ShredCoach.</string>
+    <string name="backup_error_db_too_recent">Backup d\'une version d\'app plus récente (DB v%1$d &gt; v%2$d). Mets à jour ShredCoach.</string>
+    <string name="backup_error_unknown">Erreur inconnue</string>
+    <string name="backup_error_needs_recovery_code">Archive chiffrée — code de récupération requis</string>
 </resources>
