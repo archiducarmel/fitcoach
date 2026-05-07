@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.shredcoach.app.presentation.theme.NeonGreen
@@ -552,53 +553,168 @@ fun CaloriesPremiumChart(state: NutritionStatsData) {
 @Composable
 private fun CaloriesBarsChart(state: NutritionStatsData) {
     val data = state.weeklyCalories
-    val target = state.targetCalories
-    val maxCal = (data.maxOfOrNull { it.second } ?: target).coerceAtLeast(target).toFloat()
+    // Cible PAR JOUR — varie d'un jour à l'autre car adaptative (base sédentaire
+    // + bonus MET des séances réelles). Si pour une raison X la liste n'est pas
+    // alignée (cas dégénéré), on fallback sur la cible statique pour ne pas crasher.
+    val targets = if (state.weeklyTargets.size == data.size) state.weeklyTargets
+        else List(data.size) { state.targetCalories }
+    val fallbackTarget = state.targetCalories
 
-    Row(
-        Modifier.fillMaxWidth().height(140.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.Bottom
+    // maxCal englobe à la fois les valeurs ET les targets (la polyline doit
+    // tenir dans le chart même si target > toutes les barres).
+    val maxBarValue = data.maxOfOrNull { it.second } ?: fallbackTarget
+    val maxTarget = targets.maxOrNull() ?: fallbackTarget
+    val maxCal = maxOf(maxBarValue, maxTarget, fallbackTarget).toFloat().coerceAtLeast(1f)
+
+    val barZoneHeight = 124.dp                 // hauteur de dessin des barres
+    val barZoneTopOffset = 16.dp               // 12 (texte kcal) + 4 (spacing)
+    val barWidth = 28.dp
+    val targetLineColor = OrangeVibrant.copy(alpha = 0.55f)
+    val targetMarkerColor = OrangeVibrant
+    val targetLabelColor = OrangeVibrant.copy(alpha = 0.9f)
+    val cardSurface = MaterialTheme.colorScheme.surface
+    val labelStyle = TextStyle(
+        fontSize = 9.sp,
+        fontFeatureSettings = "tnum",
+        color = targetLabelColor,
+        fontWeight = FontWeight.Bold,
+    )
+    val tm = rememberTextMeasurer()
+
+    Column(
+        Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        data.forEachIndexed { idx, (day, cal) ->
-            val fraction = (cal / maxCal).coerceIn(0f, 1f)
-            val barColor = when {
-                cal == 0 -> MaterialTheme.colorScheme.surfaceVariant
-                cal > target * 1.1 -> ErrorRed
-                cal >= target * 0.9 -> NeonGreen
-                else -> OrangeVibrant
+        Box(Modifier.fillMaxWidth().height(140.dp)) {
+            // 1. Barres au fond — chaque barre comparée à SON target du jour.
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.Bottom
+            ) {
+                data.forEachIndexed { idx, (day, cal) ->
+                    val dayTarget = targets[idx].coerceAtLeast(1)
+                    val fraction = (cal / maxCal).coerceIn(0f, 1f)
+                    val barColor = when {
+                        cal == 0 -> MaterialTheme.colorScheme.surfaceVariant
+                        cal > dayTarget * 1.1 -> ErrorRed
+                        cal >= dayTarget * 0.9 -> NeonGreen
+                        else -> OrangeVibrant
+                    }
+                    val animatedHeight = remember(day, fraction) { Animatable(0f) }
+                    LaunchedEffect(fraction) {
+                        kotlinx.coroutines.delay((idx * 50).toLong())
+                        animatedHeight.animateTo(
+                            targetValue = fraction.coerceAtLeast(0.05f),
+                            animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing)
+                        )
+                    }
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        if (cal > 0) Text(
+                            "$cal",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = barColor
+                        )
+                        Box(
+                            Modifier
+                                .width(barWidth)
+                                .height(barZoneHeight * animatedHeight.value)
+                                .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
+                                .background(barColor)
+                        )
+                    }
+                }
             }
-            val animatedHeight = remember(day, fraction) { Animatable(0f) }
-            LaunchedEffect(fraction) {
-                kotlinx.coroutines.delay((idx * 50).toLong())
-                animatedHeight.animateTo(
-                    targetValue = fraction.coerceAtLeast(0.05f),
-                    animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing)
+
+            // 2. Polyline "Objectif" overlay — passe par chaque target du jour.
+            //
+            // Le target adaptatif varie quotidiennement (ex: 2200 jour de repos,
+            // 2600 jour de séance), donc une simple ligne horizontale serait
+            // FAUSSE. On trace une polyline en pointillés qui zigzague au
+            // niveau de chaque cible quotidienne, avec un point marqueur.
+            //
+            // Calcul des centres X : Row utilise SpaceEvenly avec barre = 28dp
+            // → gap = (W - n×28) / (n+1) ; centre_i = gap×(i+1) + 28×(i+0.5).
+            Canvas(modifier = Modifier.matchParentSize()) {
+                val n = targets.size
+                if (n == 0) return@Canvas
+                val w = size.width
+                val barWPx = barWidth.toPx()
+                val gapPx = ((w - n * barWPx) / (n + 1)).coerceAtLeast(0f)
+                val topPx = barZoneTopOffset.toPx()
+                val zoneHeightPx = barZoneHeight.toPx()
+
+                val centersX = (0 until n).map { i -> gapPx * (i + 1) + barWPx * (i + 0.5f) }
+                val centersY = targets.map { t ->
+                    val frac = (t / maxCal).coerceIn(0f, 1f)
+                    topPx + zoneHeightPx * (1f - frac)
+                }
+
+                // Polyline reliant les points cibles, étendue jusqu'aux bords
+                // pour que la "ligne" ne semble pas suspendue dans le vide.
+                val path = Path().apply {
+                    moveTo(0f, centersY.first())
+                    lineTo(centersX.first(), centersY.first())
+                    for (i in 1 until n) lineTo(centersX[i], centersY[i])
+                    lineTo(w, centersY.last())
+                }
+                drawPath(
+                    path = path,
+                    color = targetLineColor,
+                    style = Stroke(
+                        width = 1.4.dp.toPx(),
+                        cap = StrokeCap.Round,
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 6f), 0f)
+                    )
                 )
-            }
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                if (cal > 0) Text(
-                    "$cal",
-                    style = MaterialTheme.typography.labelSmall,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = barColor
+
+                // Petits points sur chaque cible — matérialisent la valeur
+                // exacte au-dessus de chaque barre.
+                val markerOuter = 3.5.dp.toPx()
+                val markerInner = 1.8.dp.toPx()
+                for (i in 0 until n) {
+                    drawCircle(targetMarkerColor, markerOuter, Offset(centersX[i], centersY[i]))
+                    drawCircle(cardSurface, markerInner, Offset(centersX[i], centersY[i]))
+                }
+
+                // Label "Cible XXXX" du dernier jour, posé à droite avec un
+                // fond surface pour ne pas être barré par la ligne.
+                val lastTarget = targets.last()
+                val tl = tm.measure("Cible $lastTarget", labelStyle)
+                val labelPad = 3f
+                val labelX = (w - tl.size.width - labelPad).coerceAtLeast(0f)
+                val labelY = (centersY.last() - tl.size.height / 2f)
+                    .coerceIn(0f, size.height - tl.size.height)
+                drawRect(
+                    color = cardSurface,
+                    topLeft = Offset(labelX - labelPad, labelY - 1f),
+                    size = Size(tl.size.width + labelPad * 2, tl.size.height + 2f)
                 )
-                Box(
-                    Modifier.width(28.dp).fillMaxHeight(animatedHeight.value)
-                        .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
-                        .background(barColor)
-                )
-                Text(day, style = MaterialTheme.typography.labelSmall, fontSize = 9.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                drawText(tl, topLeft = Offset(labelX, labelY))
             }
         }
-    }
-    // Ligne objectif
-    Box(Modifier.fillMaxWidth().padding(top = 4.dp)) {
-        HorizontalDivider(color = OrangeVibrant.copy(alpha = 0.3f), thickness = 1.dp)
-        Text("Objectif : $target kcal", modifier = Modifier.align(Alignment.CenterEnd),
-            style = MaterialTheme.typography.labelSmall, fontSize = 8.sp, color = OrangeVibrant.copy(alpha = 0.6f))
+
+        // Labels jours — Row dédiée, tous au même Y par construction.
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            data.forEach { (day, _) ->
+                Text(
+                    day,
+                    modifier = Modifier.width(barWidth),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontSize = 9.sp,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
+            }
+        }
     }
 }
 
@@ -729,89 +845,178 @@ private fun CaloriesSmoothChart(state: NutritionStatsData) {
 fun FastingWindowCard(stats: com.shredcoach.app.domain.nutrition.FastingStats) {
     if (stats.isEmpty || stats.daysMeasured < 2) return
 
+    val accent = OrangeVibrant
+    val mutedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
+
+    // Choix contextuel du milestone affiché : si l'user atteint déjà 14h en
+    // moyenne (ou a au moins 1 jour ≥16h), on cible le palier 16h iconique.
+    // Sinon on montre le palier 14h, plus accessible — pas de double affichage
+    // 14h+16h qui dilue le focus et alourdit la card.
+    val showSixteen = stats.daysWith16h > 0 || stats.averageHours >= 14.0
+    val milestoneCount = if (showSixteen) stats.daysWith16h else stats.daysWith14h
+    val milestoneLabel = if (showSixteen) "Jours ≥ 16h" else "Jours ≥ 14h"
+    val milestoneAccent = if (milestoneCount > 0) NeonGreen else mutedTextColor
+
     Card(
         Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Default.NightsStay, null, Modifier.size(20.dp), tint = OrangeVibrant)
-                Column(Modifier.weight(1f)) {
-                    Text("Jeûne intermittent", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                    Text(stats.verdictText, style = MaterialTheme.typography.labelSmall,
-                        color = fastingVerdictColor(stats.averageHours))
-                }
-                if (stats.daysWith16h > 0) {
-                    Surface(shape = RoundedCornerShape(6.dp), color = NeonGreen.copy(alpha = 0.15f)) {
-                        Text("${stats.daysWith16h}j · 16-8",
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
-                            fontWeight = FontWeight.Bold,
-                            color = NeonGreen)
-                    }
+        Column(
+            Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
+            // ── Header épuré ── icône + titre seulement, le verdict descend en footer
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(Icons.Default.NightsStay, null, Modifier.size(20.dp), tint = accent)
+                Text(
+                    "Jeûne intermittent",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            // ── Hero ── dial centré 160dp, moyenne au cœur (l'unique gros chiffre)
+            Box(
+                Modifier.fillMaxWidth().height(160.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                FastingDial24h(
+                    eatingStartHour = stats.averageEatingStartHour,
+                    eatingEndHour = stats.averageEatingEndHour,
+                    modifier = Modifier.size(160.dp)
+                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        formatFastingHours(stats.averageHours),
+                        style = MaterialTheme.typography.headlineMedium.copy(fontFeatureSettings = "tnum"),
+                        fontWeight = FontWeight.ExtraBold,
+                        color = accent,
+                        maxLines = 1,
+                        softWrap = false
+                    )
+                    Text(
+                        "jeûne moyen",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = mutedTextColor
+                    )
                 }
             }
 
-            // Cadran + métriques
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Box(Modifier.size(150.dp), contentAlignment = Alignment.Center) {
-                    FastingDial24h(
-                        eatingStartHour = stats.averageEatingStartHour,
-                        eatingEndHour = stats.averageEatingEndHour,
-                        modifier = Modifier.fillMaxSize()
+            // ── Fenêtre alimentaire ── ligne pleine largeur sous le dial,
+            // assez de place pour les heures précises sans troncature.
+            // Pourquoi pas dans un chip : "12h30–20h00" (11 chars titleSmall
+            // bold tnum) ne tient pas dans un chip à weight(1f) sur 360dp →
+            // troncature systématique. Une ligne centrée donne ~280dp dispo,
+            // largement suffisant.
+            if (stats.averageEatingStartHour != null && stats.averageEatingEndHour != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Fenêtre alimentaire ",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = mutedTextColor,
+                        maxLines = 1,
                     )
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            formatFastingHours(stats.averageHours),
-                            style = MaterialTheme.typography.headlineSmall.copy(fontFeatureSettings = "tnum"),
-                            fontWeight = FontWeight.ExtraBold,
-                            color = OrangeVibrant
-                        )
-                        Text("jeûne moyen",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f))
-                    }
+                    Text(
+                        "${formatClockCompact(stats.averageEatingStartHour)} → ${formatClockCompact(stats.averageEatingEndHour)}",
+                        style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
+                        fontWeight = FontWeight.Bold,
+                        color = accent,
+                        maxLines = 1,
+                        softWrap = false,
+                    )
                 }
+            }
 
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    FastingStatRow(
-                        label = "Meilleur",
-                        value = formatFastingHours(stats.bestHours),
-                        color = NeonGreen
-                    )
-                    FastingStatRow(
-                        label = "Jours ≥ 16h",
-                        value = "${stats.daysWith16h}/${stats.daysMeasured}",
-                        color = OrangeVibrant
-                    )
-                    FastingStatRow(
-                        label = "Jours ≥ 14h",
-                        value = "${stats.daysWith14h}/${stats.daysMeasured}",
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
-                    )
-                    if (stats.averageEatingStartHour != null && stats.averageEatingEndHour != null) {
-                        FastingStatRow(
-                            label = "Fenêtre repas",
-                            value = "${formatClock(stats.averageEatingStartHour)} → ${formatClock(stats.averageEatingEndHour)}",
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
-                        )
-                    }
-                }
+            // ── Strip 2 chips ── ~150dp chacun, plus de place pour respirer.
+            // Une seule ligne dense mais aérée, rythme régulier.
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                FastingStatChip(
+                    modifier = Modifier.weight(1f),
+                    label = milestoneLabel,
+                    value = "$milestoneCount/${stats.daysMeasured}",
+                    accent = milestoneAccent,
+                )
+                FastingStatChip(
+                    modifier = Modifier.weight(1f),
+                    label = "Record",
+                    value = formatFastingHours(stats.bestHours),
+                    accent = bestFastingColor(stats.bestHours),
+                )
+            }
+
+            // ── Verdict footer ── ton subtil, centré, sans ornement
+            if (stats.verdictText.isNotBlank()) {
+                Text(
+                    stats.verdictText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = fastingVerdictColor(stats.averageHours),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }
 }
 
+/**
+ * Pill compacte : label muted en haut, value en gras coloré en bas, fond
+ * teinté de l'accent (8% d'opacité) pour différencier sans saturer. Tous
+ * les chips ont la même structure → rythme visuel régulier.
+ */
 @Composable
-private fun FastingStatRow(label: String, value: String, color: Color) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(label, style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
-            modifier = Modifier.weight(1f))
-        Text(value, style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
-            fontWeight = FontWeight.Bold, color = color, maxLines = 1, softWrap = false)
+private fun FastingStatChip(
+    modifier: Modifier,
+    label: String,
+    value: String,
+    accent: Color,
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        color = accent.copy(alpha = 0.08f)
+    ) {
+        Column(
+            Modifier
+                .padding(vertical = 10.dp, horizontal = 8.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                value,
+                style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"),
+                fontWeight = FontWeight.Bold,
+                color = accent,
+                maxLines = 1,
+                softWrap = false,
+            )
+        }
     }
+}
+
+@Composable
+private fun bestFastingColor(bestHours: Double): Color = when {
+    bestHours >= 16.0 -> NeonGreen
+    bestHours >= 14.0 -> OrangeVibrant
+    else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
 }
 
 /**
@@ -922,6 +1127,13 @@ private fun formatClock(hours: Double): String {
     val h = hours.toInt()
     val m = ((hours - h) * 60).toInt()
     return "%02d:%02d".format(h, m)
+}
+
+/** Format compact "12h" / "12h30" — pour rangées étroites. */
+private fun formatClockCompact(hours: Double): String {
+    val h = hours.toInt()
+    val m = ((hours - h) * 60).toInt()
+    return if (m < 5) "${h}h" else "${h}h${m.toString().padStart(2, '0')}"
 }
 
 private fun buildSmoothPath(pts: List<Offset>): Path {

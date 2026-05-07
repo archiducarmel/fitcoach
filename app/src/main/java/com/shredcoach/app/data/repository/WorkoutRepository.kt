@@ -98,6 +98,10 @@ class WorkoutRepository @Inject constructor(
     suspend fun getMaxWeightForExercise(exerciseId: Long): Double? =
         workoutLogDao.getMaxWeightForExercise(exerciseId)
 
+    /** Record max-reps — bodyweight purs ET time-based (reps = secondes alors). */
+    suspend fun getMaxRepsForExercise(exerciseId: Long): Int? =
+        workoutLogDao.getMaxRepsForExercise(exerciseId)
+
     suspend fun insertWorkoutSet(set: WorkoutSetEntity): Long =
         workoutLogDao.insertWorkoutSet(set)
 

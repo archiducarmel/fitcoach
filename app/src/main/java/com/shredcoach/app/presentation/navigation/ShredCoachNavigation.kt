@@ -149,6 +149,7 @@ private val ALLOWED_DEEPLINK_PREFIXES = setOf(
     "body_scanner",
     "stats",
     "profile",
+    "settings",
 )
 
 // Direction du slide entre tabs : -1 = vers la gauche, +1 = vers la droite
@@ -573,13 +574,31 @@ private fun ShredCoachBottomBar(
                             // Ne rien faire UNIQUEMENT si on est déjà sur la route racine du tab
                             // (sinon on bloquerait la navigation depuis un sous-écran — ex : MealScanDetail → Historique)
                             val alreadyOnTabRoot = currentRoute == item.route
-                            if (!alreadyOnTabRoot) {
+                            if (alreadyOnTabRoot) return@hapticClickable
+
+                            // **Pourquoi pas le pattern saveState/restoreState canonique** :
+                            // il a un piège quand la destination est la start destination
+                            // (Home). Si un état avait été sauvegardé sous la clé `home`
+                            // par une navigation antérieure (Stats→Home avec saveState),
+                            // `restoreState=true` réinjecte cet état au-dessus du Home
+                            // courant — résultat : l'utilisateur tape "Accueil" depuis
+                            // Notifications et l'écran ne change pas visuellement (l'ancien
+                            // sous-écran de Home revient).
+                            //
+                            // Solution simple et robuste : si le tab cible est déjà dans
+                            // le back-stack, on `popBackStack` jusqu'à lui (retour propre,
+                            // l'état natif du back-stack se gère). Sinon, navigate frais
+                            // avec popUpTo(start) pour ne pas accumuler les tabs.
+                            val poppedToExisting = navController.popBackStack(
+                                route = item.route,
+                                inclusive = false,
+                            )
+                            if (!poppedToExisting) {
                                 navController.navigate(item.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+                                        inclusive = false
                                     }
                                     launchSingleTop = true
-                                    restoreState = true
                                 }
                             }
                         },

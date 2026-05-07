@@ -71,6 +71,15 @@ class OnboardingViewModel @Inject constructor(
     fun completeOnboarding() {
         val s = _state.value
         viewModelScope.launch {
+            // Guard race avec post-restore : si un profil existe déjà (restore
+            // depuis Google Drive vient juste de peupler la DB), on ne réinsert
+            // pas — sinon duplicate UserProfileEntity. On marque juste l'onboarding
+            // terminé pour déclencher la nav.
+            val existing = userRepository.getUserProfileOnce()
+            if (existing != null) {
+                _state.update { it.copy(isComplete = true) }
+                return@launch
+            }
             // Créer le profil
             userRepository.insertUserProfile(UserProfileEntity(
                 firstName = s.firstName.ifBlank { "Athlète" },
@@ -106,5 +115,15 @@ class OnboardingViewModel @Inject constructor(
 
             _state.update { it.copy(isComplete = true) }
         }
+    }
+
+    /**
+     * Court-circuit pour le cas "restore depuis Google Drive pendant onboarding".
+     * La DB a déjà été repeuplée par le pipeline restore (UserProfileEntity inclus),
+     * donc on ne doit PAS appeler [completeOnboarding] qui ferait un insert
+     * dupliqué. On marque juste l'onboarding terminé pour déclencher la nav.
+     */
+    fun markCompletedFromRestore() {
+        _state.update { it.copy(isComplete = true) }
     }
 }

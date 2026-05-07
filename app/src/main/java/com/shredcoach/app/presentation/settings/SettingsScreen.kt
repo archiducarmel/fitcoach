@@ -136,6 +136,11 @@ fun SettingsScreen(
                     )
                 }
 
+                // ═══ VOIX SHREDDY (moteur + persona) ═══
+                SettingsSection("Voix Shreddy", Icons.Default.RecordVoiceOver) {
+                    com.shredcoach.app.presentation.settings.voice.VoiceSettingsSection()
+                }
+
                 // ═══ SANTÉ / LIMITATIONS ═══
                 SettingsSection("Santé & limitations", Icons.Default.HealthAndSafety) {
                     OutlinedTextField(

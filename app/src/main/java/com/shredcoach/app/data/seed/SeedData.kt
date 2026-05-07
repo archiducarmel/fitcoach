@@ -769,6 +769,30 @@ object SeedData {
             difficulty = 1
         ),
         ExerciseEntity(
+            // Activation cardio bodyweight — couvre l'utilisateur qui n'a pas
+            // de machine cardio (équipement BODYWEIGHT). Sans cet exo, le
+            // générateur ne pouvait inclure aucune activation cardio pour
+            // ces utilisateurs → mauvaise pratique coach (every workout
+            // should start with general activation). Le slugify GIF ne
+            // matchera probablement pas en stock GitHub Releases au début ;
+            // Coil affiche un placeholder gracieux si 404, à enrichir plus
+            // tard avec un vrai GIF "Jumping_jacks.gif".
+            name = "Activation cardio (jumping jacks, montées de genoux)",
+            muscleGroup = MuscleGroup.WARMUP,
+            variant = ExerciseVariant.BODYWEIGHT,
+            equipment = "Aucun",
+            executionKey = "30 sec jumping jacks puis 30 sec course sur place avec montées de genoux. Rythme modéré qui augmente progressivement.",
+            startingWeight = "Poids du corps",
+            series = 2,
+            repsMin = 30,
+            repsMax = 45,
+            restSeconds = 15,
+            tips = "5 min pour faire monter le rythme cardiaque sans fatiguer. Reste léger sur les appuis.",
+            tempo = "N/A",
+            gifUrl = gif("Jumping_jacks.gif"),
+            difficulty = 1
+        ),
+        ExerciseEntity(
             name = "Mobilisations articulaires",
             muscleGroup = MuscleGroup.WARMUP,
             variant = ExerciseVariant.BODYWEIGHT,

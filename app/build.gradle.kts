@@ -102,6 +102,20 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            // Conflits META-INF entre les jars Google API client (Drive, auth-oauth2,
+            // auth-credentials, http-client). Chaque jar embarque son propre INDEX.LIST,
+            // DEPENDENCIES, NOTICE, LICENSE — mêmes chemins, contenus différents → AGP
+            // refuse au moment du packaging. On exclut systématiquement ces fichiers
+            // de l'APK final (ils ne servent pas au runtime, juste au build/distribution).
+            excludes += "/META-INF/INDEX.LIST"
+            excludes += "/META-INF/DEPENDENCIES"
+            excludes += "/META-INF/NOTICE"
+            excludes += "/META-INF/NOTICE.txt"
+            excludes += "/META-INF/NOTICE.md"
+            excludes += "/META-INF/LICENSE"
+            excludes += "/META-INF/LICENSE.txt"
+            excludes += "/META-INF/LICENSE.md"
+            excludes += "/META-INF/io.netty.versions.properties"
         }
     }
 
@@ -126,6 +140,10 @@ dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+    // ProcessLifecycleOwner — détecte foreground/background du process pour
+    // que le WorkoutSessionService ne double-fire pas la voix/vibration
+    // quand l'app est au premier plan (UI gère déjà).
+    implementation("androidx.lifecycle:lifecycle-process:2.6.2")
     implementation("androidx.activity:activity-compose:1.8.1")
 
     // Jetpack Compose
@@ -182,6 +200,9 @@ dependencies {
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    // Pour `Task<T>.await()` — pont coroutines vers Play Services Tasks (utilisé par
+    // l'AuthorizationClient Drive : `client.authorize(req).await()`).
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 
     // Gson for JSON
     implementation("com.google.code.gson:gson:2.10.1")
@@ -189,6 +210,24 @@ dependencies {
     // OkHttp for LLM API calls
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // ───────────────────────────────────────────────
+    // Google Drive backup (cloud sync)
+    // ───────────────────────────────────────────────
+    // play-services-auth fournit `AuthorizationClient` qui demande à l'utilisateur
+    // l'accès au scope `drive.appdata` (dossier caché app-specific). On évite
+    // Credential Manager (overkill pour ce use case — l'authent est implicite via
+    // AuthorizationClient.authorize()).
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
+    // SDK Google Drive REST v3. Volumineux mais gère pour nous : auth headers,
+    // resumable uploads pour fichiers > 5Mo, retry, parsing JSON.
+    implementation("com.google.api-client:google-api-client-android:2.2.0") {
+        // Évite conflit avec httpclient déjà transitive d'OkHttp/Conscrypt.
+        exclude(group = "org.apache.httpcomponents")
+    }
+    implementation("com.google.apis:google-api-services-drive:v3-rev20240914-2.0.0") {
+        exclude(group = "org.apache.httpcomponents")
+    }
 
     // Baseline Profile installer — au premier lancement, applique le profil
     // AOT-compilé bundlé dans l'APK (généré par le module :baselineprofile).

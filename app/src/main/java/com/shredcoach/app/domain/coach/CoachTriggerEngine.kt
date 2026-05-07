@@ -273,7 +273,13 @@ class CoachTriggerEngine @Inject constructor(
         profile: UserProfileEntity,
         today: LocalDate,
     ): CoachTrigger.BodyScanStale? {
-        val lastScan = profile.bodyScanTimestamp ?: return CoachTrigger.BodyScanStale(daysSince = 999)
+        // **Pourquoi pas de fallback "999 si jamais scanné"** :
+        // BodyScanStale signifie "ta dernière mesure est ancienne, refais-en une".
+        // Si l'user n'a JAMAIS scanné, ce trigger émet une notif mensongère
+        // ("Dernière mesure il y a 999 jours") qui décrédibilise complètement
+        // le coach. La feature BodyScanner se découvre via l'UI Home/nav, pas
+        // via un nag passif-agressif. → Si jamais scanné, on ne déclenche rien.
+        val lastScan = profile.bodyScanTimestamp ?: return null
         val daysSince = ChronoUnit.DAYS.between(lastScan.toLocalDate(), today).toInt()
         if (daysSince < 30) return null
         return CoachTrigger.BodyScanStale(daysSince = daysSince)
