@@ -1233,6 +1233,118 @@
     <string name="insights_nutri_verdict_poor">À améliorer · privilégie les A et B</string>
     <string name="insights_nutri_ab_share">%1$d%% A+B</string>
 
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Meal scanner screen -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <string name="scanner_title">Meal Scanner</string>
+    <string name="scanner_subtitle">Analyse nutritionnelle par IA</string>
+    <string name="scanner_history_cd">Historique</string>
+    <string name="scanner_history_empty">Aucun scan enregistré</string>
+    <string name="scanner_analyze_cta">Analyser ce repas</string>
+    <string name="scanner_analyzing_title">Shreddy analyse ton repas...</string>
+    <string name="scanner_analyzing_desc">Identification, calcul des macros et micronutriments</string>
+    <string name="scanner_auto_added">Automatiquement ajouté au suivi nutrition</string>
+    <string name="scanner_scan_other_cta">Scanner un autre repas</string>
+
+    <!-- Hints panel -->
+    <string name="scanner_hints_title">Aide à l\'analyse</string>
+    <string name="scanner_hints_active">Indices renseignés · Shreddy les prendra en compte</string>
+    <string name="scanner_hints_optional">Optionnel · Améliore la précision de l\'analyse</string>
+    <string name="scanner_hint_plate_label">Type d\'assiette</string>
+    <string name="scanner_hint_plate_help_text">Aide à dimensionner ta portion à partir du contenant utilisé</string>
+    <string name="scanner_hint_plate_help_photo">Aide à estimer le poids de la nourriture via le diamètre</string>
+    <string name="scanner_hint_plate_chip">%1$s (%2$d cm)</string>
+    <string name="scanner_hint_bowl_label">Type de bol</string>
+    <string name="scanner_hint_bowl_help_text">Aide à dimensionner ta portion à partir du volume du bol</string>
+    <string name="scanner_hint_bowl_help_photo">Aide à estimer le poids via le volume</string>
+    <string name="scanner_hint_bowl_chip">%1$s (%2$s)</string>
+    <string name="scanner_hint_bowl_volume_ml">%1$d ml</string>
+    <string name="scanner_hint_bowl_saladier">≥ 1.5 L</string>
+    <string name="scanner_hint_desc_label">Précisions (facultatif)</string>
+    <string name="scanner_hint_desc_help">Lève les ambiguïtés visuelles (ex: frite igname vs pomme de terre, haricot niébé, fromage blanc)</string>
+    <string name="scanner_hint_desc_placeholder">Ex: frites d\'igname, haricots niébé, fromage blanc 0%%...</string>
+    <string name="scanner_hint_desc_count">%1$d/300</string>
+    <string name="scanner_hint_clear">Tout effacer</string>
+
+    <!-- Score hero card -->
+    <string name="scanner_hero_default_name">Repas analysé</string>
+    <string name="scanner_hero_dishes_count">%1$d plats détectés</string>
+    <string name="scanner_hero_score_unit">/10</string>
+    <string name="scanner_quick_kcal_label">kcal</string>
+    <string name="scanner_quick_weight_label">poids</string>
+    <string name="scanner_quick_dishes_label">plat(s)</string>
+
+    <!-- Macros card -->
+    <string name="scanner_macros_title">Macronutriments</string>
+    <string name="scanner_macros_kcal_split">Répartition calorique</string>
+    <string name="scanner_macro_proteins">Protéines</string>
+    <string name="scanner_macro_carbs">Glucides</string>
+    <string name="scanner_macro_fats">Lipides</string>
+    <string name="scanner_macro_fibers">Fibres</string>
+    <string name="scanner_macro_grams">%1$.0fg</string>
+    <string name="scanner_macro_grams_one_decimal">%1$.1fg</string>
+    <string name="scanner_macro_ajr_pct">%1$d%% AJR</string>
+    <string name="scanner_macro_pct_value">%1$d%%</string>
+    <string name="scanner_macro_kcal_unit">kcal</string>
+
+    <!-- Dish card -->
+    <string name="scanner_dish_weight">%1$d g</string>
+    <string name="scanner_dish_kcal">%1$d</string>
+    <string name="scanner_dish_macro_sugars">Sucres</string>
+    <string name="scanner_dish_macro_saturated">Saturés</string>
+    <string name="scanner_dish_macro_salt">Sel</string>
+
+    <!-- Ingredient detail card -->
+    <string name="scanner_ing_decrease_5g_cd">Diminuer 5g</string>
+    <string name="scanner_ing_increase_5g_cd">Augmenter 5g</string>
+    <string name="scanner_ing_editable_cd">Modifiable</string>
+    <string name="scanner_ing_unit_g">g</string>
+    <string name="scanner_ing_category_weight">%1$s · %2$dg</string>
+    <string name="scanner_ing_kcal">%1$d kcal</string>
+
+    <!-- Micronutrients + allergens -->
+    <string name="scanner_micros_title">Micronutriments</string>
+    <string name="scanner_micros_pct">%1$d%%</string>
+    <string name="scanner_allergens_title">Allergènes potentiels</string>
+    <string name="scanner_allergens_separator"> · </string>
+
+    <!-- History card -->
+    <string name="scanner_history_meta">%1$s · %2$d kcal</string>
+    <string name="scanner_history_score_unit">/10</string>
+    <string name="scanner_history_delete_cd">Supprimer</string>
+
+    <!-- Photo capture zone -->
+    <string name="scanner_capture_title">Analyser un repas</string>
+    <string name="scanner_capture_desc">Shreddy identifie les ingrédients et calcule macros + micronutriments. Photo ou description : même précision.</string>
+    <string name="scanner_capture_take_photo">Prendre une photo</string>
+    <string name="scanner_capture_pick_gallery">Choisir depuis la galerie</string>
+    <string name="scanner_capture_or">ou</string>
+    <string name="scanner_capture_describe_text">Décrire mon repas en texte</string>
+
+    <!-- Text description panel -->
+    <string name="scanner_text_title">Décris ton repas</string>
+    <string name="scanner_text_subtitle">Sois précis sur les quantités pour une bonne estimation</string>
+    <string name="scanner_text_back_cd">Retour</string>
+    <string name="scanner_text_placeholder">Ex : 2 œufs au plat, 80g de bacon grillé, 2 tranches de pain complet beurrées, 1 verre de jus d\'orange</string>
+    <string name="scanner_text_tip">💡 Mentionne les quantités (grammes, unités, portions)</string>
+    <string name="scanner_text_count">%1$d/1000</string>
+
+    <!-- Meal date/time card -->
+    <string name="scanner_dt_title">Date et heure du repas</string>
+    <string name="scanner_dt_late_warning">Tu as scanné en différé. Indique l\'heure réelle du repas pour une bonne classification (petit-dej, déj, dîner...).</string>
+    <string name="scanner_dt_classified_as">Classé : %1$s</string>
+    <string name="scanner_dt_picker_time_title">Heure du repas</string>
+    <string name="scanner_dt_picker_ok">OK</string>
+    <string name="scanner_dt_picker_cancel">Annuler</string>
+
+    <!-- MealTypeClassifier categories -->
+    <string name="meal_cat_breakfast">Petit-déjeuner</string>
+    <string name="meal_cat_lunch">Déjeuner</string>
+    <string name="meal_cat_snack_afternoon">Goûter</string>
+    <string name="meal_cat_dinner">Dîner</string>
+    <string name="meal_cat_snacking">Grignotage</string>
+    <string name="meal_cat_pretraining">Pré-training</string>
+
     <!-- IngredientCategory enum -->
     <string name="ingredient_cat_animal_proteins">Protéines animales</string>
     <string name="ingredient_cat_plant_proteins">Protéines végétales</string>

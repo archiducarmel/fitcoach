@@ -25,16 +25,17 @@ object MealTypeClassifier {
      */
     data class Category(
         val id: String,           // stocké dans MealScanEntity.mealType
-        val displayName: String,  // affiché dans l'UI + notifications
+        val displayName: String,  // affiché dans l'UI + notifications (FR — DB-stable)
+        @androidx.annotation.StringRes val displayNameRes: Int,
         val trackingType: MealType
     )
 
-    val PETIT_DEJEUNER = Category("petit_dejeuner", "Petit-déjeuner", MealType.BREAKFAST)
-    val DEJEUNER       = Category("dejeuner",       "Déjeuner",       MealType.LUNCH)
-    val GOUTER         = Category("gouter",         "Goûter",         MealType.SNACK)
-    val DINER          = Category("diner",          "Dîner",          MealType.DINNER)
-    val GRIGNOTAGE     = Category("grignotage",     "Grignotage",     MealType.SNACK)
-    val PRETRAINING    = Category("pretraining",    "Pré-training",   MealType.PRE_WORKOUT)
+    val PETIT_DEJEUNER = Category("petit_dejeuner", "Petit-déjeuner", com.shredcoach.app.R.string.meal_cat_breakfast, MealType.BREAKFAST)
+    val DEJEUNER       = Category("dejeuner",       "Déjeuner",       com.shredcoach.app.R.string.meal_cat_lunch, MealType.LUNCH)
+    val GOUTER         = Category("gouter",         "Goûter",         com.shredcoach.app.R.string.meal_cat_snack_afternoon, MealType.SNACK)
+    val DINER          = Category("diner",          "Dîner",          com.shredcoach.app.R.string.meal_cat_dinner, MealType.DINNER)
+    val GRIGNOTAGE     = Category("grignotage",     "Grignotage",     com.shredcoach.app.R.string.meal_cat_snacking, MealType.SNACK)
+    val PRETRAINING    = Category("pretraining",    "Pré-training",   com.shredcoach.app.R.string.meal_cat_pretraining, MealType.PRE_WORKOUT)
 
     /**
      * Classifie un repas en fonction de l'heure de scan et (optionnellement) des noms

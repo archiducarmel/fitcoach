@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -51,6 +52,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import com.shredcoach.app.R
 import com.shredcoach.app.data.remote.AnalyzedDish
 import com.shredcoach.app.data.remote.BowlType
 import com.shredcoach.app.data.remote.MealAnalysisResult
@@ -103,16 +105,16 @@ fun MealScannerScreen(
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Icon(Icons.Default.CameraAlt, null, Modifier.size(24.dp), tint = OrangeVibrant)
                         Column {
-                            Text("Meal Scanner", fontWeight = FontWeight.Bold)
-                            Text("Analyse nutritionnelle par IA", style = MaterialTheme.typography.labelSmall,
+                            Text(stringResource(R.string.scanner_title), fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.scanner_subtitle), style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 },
-                navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour") } },
+                navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.common_back)) } },
                 actions = {
                     IconButton(onClick = { viewModel.toggleHistory() }) {
-                        Icon(Icons.Default.History, "Historique",
+                        Icon(Icons.Default.History, stringResource(R.string.scanner_history_cd),
                             tint = if (state.showHistory) OrangeVibrant else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                     }
                 },
@@ -133,7 +135,7 @@ fun MealScannerScreen(
                             Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                                 Icon(Icons.Default.History, null, Modifier.size(32.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
                                 Spacer(Modifier.height(8.dp))
-                                Text("Aucun scan enregistré", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                                Text(stringResource(R.string.scanner_history_empty), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                             }
                         }
                     }
@@ -216,7 +218,7 @@ fun MealScannerScreen(
                         // garantit aucun retour à la ligne ni troncature étrange
                         // (typo titleMedium passe largement à 17 chars).
                         Text(
-                            "Analyser ce repas",
+                            stringResource(R.string.scanner_analyze_cta),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
@@ -230,8 +232,8 @@ fun MealScannerScreen(
             if (state.isAnalyzing) {
                 item {
                     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Shreddy analyse ton repas...", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
-                        Text("Identification, calcul des macros et micronutriments", style = MaterialTheme.typography.bodySmall,
+                        Text(stringResource(R.string.scanner_analyzing_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
+                        Text(stringResource(R.string.scanner_analyzing_desc), style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), textAlign = TextAlign.Center)
                     }
                 }
@@ -288,7 +290,7 @@ fun MealScannerScreen(
                     Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = NeonGreen.copy(alpha = 0.1f))) {
                         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             Icon(Icons.Default.CheckCircle, null, Modifier.size(20.dp), tint = NeonGreen)
-                            Text("Automatiquement ajouté au suivi nutrition", style = MaterialTheme.typography.bodyMedium,
+                            Text(stringResource(R.string.scanner_auto_added), style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold, color = NeonGreen)
                         }
                     }
@@ -302,7 +304,7 @@ fun MealScannerScreen(
                     OutlinedButton(onClick = { viewModel.clear() }, modifier = Modifier.fillMaxWidth().height(48.dp),
                         shape = RoundedCornerShape(12.dp)) {
                         Icon(Icons.Default.CameraAlt, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp))
-                        Text("Scanner un autre repas", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.scanner_scan_other_cta), fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -348,10 +350,10 @@ private fun HintsPanel(state: MealScannerState, viewModel: MealScannerViewModel)
                     }
                 }
                 Column(Modifier.weight(1f)) {
-                    Text("Aide à l'analyse", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.scanner_hints_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     Text(
-                        if (hasAnyHint) "Indices renseignés · Shreddy les prendra en compte"
-                        else "Optionnel · Améliore la précision de l'analyse",
+                        if (hasAnyHint) stringResource(R.string.scanner_hints_active)
+                        else stringResource(R.string.scanner_hints_optional),
                         style = MaterialTheme.typography.bodySmall,
                         color = if (hasAnyHint) NeonGreen else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     )
@@ -378,18 +380,18 @@ private fun HintsPanel(state: MealScannerState, viewModel: MealScannerViewModel)
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Icon(Icons.Default.RadioButtonUnchecked, null, Modifier.size(16.dp), tint = OrangeVibrant)
-                            Text("Type d'assiette", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.scanner_hint_plate_label), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                         }
                         Text(
-                            if (isTextMode) "Aide à dimensionner ta portion à partir du contenant utilisé"
-                            else "Aide à estimer le poids de la nourriture via le diamètre",
+                            if (isTextMode) stringResource(R.string.scanner_hint_plate_help_text)
+                            else stringResource(R.string.scanner_hint_plate_help_photo),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             PlateType.values().filter { it != PlateType.NONE }.forEach { plate ->
                                 val selected = state.hintPlate == plate
                                 HintChip(
-                                    label = "${plate.label} (${plate.diameterCm} cm)",
+                                    label = stringResource(R.string.scanner_hint_plate_chip, plate.label, plate.diameterCm),
                                     selected = selected,
                                     onClick = { viewModel.setHintPlate(if (selected) PlateType.NONE else plate) }
                                 )
@@ -401,19 +403,20 @@ private fun HintsPanel(state: MealScannerState, viewModel: MealScannerViewModel)
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Icon(Icons.Default.Circle, null, Modifier.size(16.dp), tint = OrangeVibrant)
-                            Text("Type de bol", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.scanner_hint_bowl_label), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                         }
                         Text(
-                            if (isTextMode) "Aide à dimensionner ta portion à partir du volume du bol"
-                            else "Aide à estimer le poids via le volume",
+                            if (isTextMode) stringResource(R.string.scanner_hint_bowl_help_text)
+                            else stringResource(R.string.scanner_hint_bowl_help_photo),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             BowlType.values().filter { it != BowlType.NONE }.forEach { bowl ->
                                 val selected = state.hintBowl == bowl
-                                val volLabel = if (bowl == BowlType.SALADIER) "≥ 1.5 L" else "${bowl.volumeMl} ml"
+                                val volLabel = if (bowl == BowlType.SALADIER) stringResource(R.string.scanner_hint_bowl_saladier)
+                                    else stringResource(R.string.scanner_hint_bowl_volume_ml, bowl.volumeMl)
                                 HintChip(
-                                    label = "${bowl.label} ($volLabel)",
+                                    label = stringResource(R.string.scanner_hint_bowl_chip, bowl.label, volLabel),
                                     selected = selected,
                                     onClick = { viewModel.setHintBowl(if (selected) BowlType.NONE else bowl) }
                                 )
@@ -427,15 +430,15 @@ private fun HintsPanel(state: MealScannerState, viewModel: MealScannerViewModel)
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Icon(Icons.Default.Edit, null, Modifier.size(16.dp), tint = OrangeVibrant)
-                                Text("Précisions (facultatif)", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                                Text(stringResource(R.string.scanner_hint_desc_label), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                             }
-                            Text("Lève les ambiguïtés visuelles (ex: frite igname vs pomme de terre, haricot niébé, fromage blanc)",
+                            Text(stringResource(R.string.scanner_hint_desc_help),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                             OutlinedTextField(
                                 value = state.hintDescription,
                                 onValueChange = { viewModel.setHintDescription(it.take(300)) },
-                                placeholder = { Text("Ex: frites d'igname, haricots niébé, fromage blanc 0%...",
+                                placeholder = { Text(stringResource(R.string.scanner_hint_desc_placeholder),
                                     style = MaterialTheme.typography.bodySmall) },
                                 modifier = Modifier.fillMaxWidth(),
                                 minLines = 2,
@@ -444,7 +447,7 @@ private fun HintsPanel(state: MealScannerState, viewModel: MealScannerViewModel)
                                 textStyle = MaterialTheme.typography.bodyMedium,
                                 keyboardOptions = KeyboardOptions.Default
                             )
-                            Text("${state.hintDescription.length}/300",
+                            Text(stringResource(R.string.scanner_hint_desc_count, state.hintDescription.length),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                                 modifier = Modifier.fillMaxWidth(),
@@ -460,7 +463,7 @@ private fun HintsPanel(state: MealScannerState, viewModel: MealScannerViewModel)
                         ) {
                             Icon(Icons.Default.Refresh, null, Modifier.size(16.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("Tout effacer")
+                            Text(stringResource(R.string.scanner_hint_clear))
                         }
                     }
                 }
@@ -545,10 +548,10 @@ internal fun ScoreHeroCard(result: MealAnalysisResult) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text(result.dishes.firstOrNull()?.name ?: "Repas analysé",
+                        Text(result.dishes.firstOrNull()?.name ?: stringResource(R.string.scanner_hero_default_name),
                             style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = Color.White)
                         if (result.dishes.size > 1)
-                            Text("${result.dishes.size} plats détectés", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f))
+                            Text(stringResource(R.string.scanner_hero_dishes_count, result.dishes.size), style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f))
                         result.dishes.firstOrNull()?.cuisine?.takeIf { it.isNotBlank() }?.let {
                             Text(it, style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.75f))
                         }
@@ -559,7 +562,7 @@ internal fun ScoreHeroCard(result: MealAnalysisResult) {
                     Surface(shape = CircleShape, color = Color.White.copy(alpha = 0.2f), modifier = Modifier.size(64.dp)) {
                         Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                             Text("${result.healthScore}", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, color = Color.White)
-                            Text("/10", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.8f))
+                            Text(stringResource(R.string.scanner_hero_score_unit), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.8f))
                         }
                     }
                 }
@@ -568,11 +571,11 @@ internal fun ScoreHeroCard(result: MealAnalysisResult) {
                 }
                 // Totaux rapides
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    QuickStat("${result.totalCalories}", "kcal")
+                    QuickStat("${result.totalCalories}", stringResource(R.string.scanner_quick_kcal_label))
                     QuickStatDivider()
-                    QuickStat("${result.totalWeight}g", "poids")
+                    QuickStat("${result.totalWeight}g", stringResource(R.string.scanner_quick_weight_label))
                     QuickStatDivider()
-                    QuickStat("${result.dishes.size}", "plat(s)")
+                    QuickStat("${result.dishes.size}", stringResource(R.string.scanner_quick_dishes_label))
                 }
             }
         }
@@ -632,18 +635,18 @@ internal fun MacrosCard(result: MealAnalysisResult) {
         Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
 
             // ═══ SECTION 1 : 4 mini rings (poids + % AJR) ═══
-            Text("Macronutriments", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.scanner_macros_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                MacroRing("Protéines", result.totalProteins, pAjr, Color(0xFF3B82F6), Modifier.weight(1f))
-                MacroRing("Glucides", result.totalCarbs, gAjr, OrangeVibrant, Modifier.weight(1f))
-                MacroRing("Lipides", result.totalFats, lAjr, Color(0xFFEF4444), Modifier.weight(1f))
-                MacroRing("Fibres", result.totalFibers, fAjr, NeonGreen, Modifier.weight(1f))
+                MacroRing(stringResource(R.string.scanner_macro_proteins), result.totalProteins, pAjr, Color(0xFF3B82F6), Modifier.weight(1f))
+                MacroRing(stringResource(R.string.scanner_macro_carbs), result.totalCarbs, gAjr, OrangeVibrant, Modifier.weight(1f))
+                MacroRing(stringResource(R.string.scanner_macro_fats), result.totalFats, lAjr, Color(0xFFEF4444), Modifier.weight(1f))
+                MacroRing(stringResource(R.string.scanner_macro_fibers), result.totalFibers, fAjr, NeonGreen, Modifier.weight(1f))
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
 
             // ═══ SECTION 2 : Donut répartition calorique (centré) ═══
-            Text("Répartition calorique", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.scanner_macros_kcal_split), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
             // Donut centré
             // Capturer les couleurs composables AVANT le Canvas (DrawScope n'est pas @Composable)
@@ -667,7 +670,7 @@ internal fun MacrosCard(result: MealAnalysisResult) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("${result.totalCalories}", style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.ExtraBold)
-                        Text("kcal", style = MaterialTheme.typography.labelMedium,
+                        Text(stringResource(R.string.scanner_macro_kcal_unit), style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                     }
                 }
@@ -675,10 +678,10 @@ internal fun MacrosCard(result: MealAnalysisResult) {
 
             // Légende sous le donut — 2×2 grid bien espacée
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                MacroLegendItem("Protéines", result.totalProteins, (pPct * 100).toInt(), Color(0xFF3B82F6))
-                MacroLegendItem("Glucides", result.totalCarbs, (gPct * 100).toInt(), OrangeVibrant)
-                MacroLegendItem("Lipides", result.totalFats, (lPct * 100).toInt(), Color(0xFFEF4444))
-                MacroLegendItem("Fibres", result.totalFibers, (fPct * 100).toInt(), NeonGreen)
+                MacroLegendItem(stringResource(R.string.scanner_macro_proteins), result.totalProteins, (pPct * 100).toInt(), Color(0xFF3B82F6))
+                MacroLegendItem(stringResource(R.string.scanner_macro_carbs), result.totalCarbs, (gPct * 100).toInt(), OrangeVibrant)
+                MacroLegendItem(stringResource(R.string.scanner_macro_fats), result.totalFats, (lPct * 100).toInt(), Color(0xFFEF4444))
+                MacroLegendItem(stringResource(R.string.scanner_macro_fibers), result.totalFibers, (fPct * 100).toInt(), NeonGreen)
             }
         }
     }
@@ -695,13 +698,13 @@ private fun MacroRing(label: String, grams: Double, fraction: Float, color: Colo
                 drawArc(color, -90f, animFraction * 360f, false, style = s)
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("${String.format("%.0f", grams)}g", style = MaterialTheme.typography.titleSmall,
+                Text(stringResource(R.string.scanner_macro_grams, grams), style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.ExtraBold, color = color)
             }
         }
         Text(label, style = MaterialTheme.typography.labelSmall, fontSize = 10.sp,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-        Text("${(fraction * 100).toInt()}% AJR", style = MaterialTheme.typography.labelSmall, fontSize = 9.sp,
+        Text(stringResource(R.string.scanner_macro_ajr_pct, (fraction * 100).toInt()), style = MaterialTheme.typography.labelSmall, fontSize = 9.sp,
             color = color.copy(alpha = 0.7f), fontWeight = FontWeight.SemiBold)
     }
 }
@@ -710,9 +713,9 @@ private fun MacroRing(label: String, grams: Double, fraction: Float, color: Colo
 private fun MacroLegendItem(label: String, grams: Double, pct: Int, color: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(3.dp)) {
         Box(Modifier.size(12.dp).clip(CircleShape).background(color))
-        Text("$pct%", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = color)
+        Text(stringResource(R.string.scanner_macro_pct_value, pct), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = color)
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-        Text("${String.format("%.1f", grams)}g", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.scanner_macro_grams_one_decimal, grams), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -727,7 +730,7 @@ internal fun DishCard(
     dishIndex: Int = 0,
     onIngredientWeightChanged: ((ingredientIndex: Int, newWeightG: Int) -> Unit)? = null
 ) {
-    val mealLabel = mealTypeLabel(dish.mealType)
+    val mealLabel = stringResource(com.shredcoach.app.domain.nutrition.MealTypeClassifier.fromId(dish.mealType).displayNameRes)
     val mealIcon = mealTypeIcon(dish.mealType)
 
     Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
@@ -763,13 +766,13 @@ internal fun DishCard(
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text(dish.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text("${dish.weightG} g", style = MaterialTheme.typography.bodySmall,
+                            Text(stringResource(R.string.scanner_dish_weight, dish.weightG), style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                         }
                         Surface(shape = RoundedCornerShape(12.dp), color = OrangeVibrant) {
                             Column(Modifier.padding(horizontal = 14.dp, vertical = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text("${dish.calories}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = Color.White)
-                                Text("kcal", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.85f))
+                                Text(stringResource(R.string.scanner_macro_kcal_unit), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.85f))
                             }
                         }
                     }
@@ -778,14 +781,14 @@ internal fun DishCard(
 
             // ─── Macros — barres horizontales premium ───
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                DishMacroRow("Protéines", dish.proteins, Color(0xFF3B82F6), dish.calories.toFloat())
-                DishMacroRow("Glucides", dish.carbs, OrangeVibrant, dish.calories.toFloat())
-                DishMacroRow("Lipides", dish.fats, Color(0xFFEF4444), dish.calories.toFloat())
+                DishMacroRow(stringResource(R.string.scanner_macro_proteins), dish.proteins, Color(0xFF3B82F6), dish.calories.toFloat(), kcalPerGram = 4.0)
+                DishMacroRow(stringResource(R.string.scanner_macro_carbs), dish.carbs, OrangeVibrant, dish.calories.toFloat(), kcalPerGram = 4.0)
+                DishMacroRow(stringResource(R.string.scanner_macro_fats), dish.fats, Color(0xFFEF4444), dish.calories.toFloat(), kcalPerGram = 9.0)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    DishMacroMini("Fibres", dish.fibers, NeonGreen, Modifier.weight(1f))
-                    DishMacroMini("Sucres", dish.carbsSugar, Color(0xFFF59E0B), Modifier.weight(1f))
-                    DishMacroMini("Saturés", dish.fatsSaturated, Color(0xFFDC2626), Modifier.weight(1f))
-                    DishMacroMini("Sel", dish.salt, Color(0xFF64748B), Modifier.weight(1f))
+                    DishMacroMini(stringResource(R.string.scanner_macro_fibers), dish.fibers, NeonGreen, Modifier.weight(1f))
+                    DishMacroMini(stringResource(R.string.scanner_dish_macro_sugars), dish.carbsSugar, Color(0xFFF59E0B), Modifier.weight(1f))
+                    DishMacroMini(stringResource(R.string.scanner_dish_macro_saturated), dish.fatsSaturated, Color(0xFFDC2626), Modifier.weight(1f))
+                    DishMacroMini(stringResource(R.string.scanner_dish_macro_salt), dish.salt, Color(0xFF64748B), Modifier.weight(1f))
                 }
             }
 
@@ -807,10 +810,10 @@ internal fun DishCard(
 }
 
 @Composable
-private fun DishMacroRow(label: String, grams: Double, color: Color, totalCal: Float) {
-    val calContrib = when (label) {
-        "Protéines" -> grams * 4; "Glucides" -> grams * 4; "Lipides" -> grams * 9; else -> 0.0
-    }
+private fun DishMacroRow(label: String, grams: Double, color: Color, totalCal: Float, kcalPerGram: Double) {
+    // kcalPerGram passé explicitement (4 pour P/G, 9 pour L) — l'ancien
+    // `when (label)` cassait en EN car comparait à des littéraux FR.
+    val calContrib = grams * kcalPerGram
     val pct = if (totalCal > 0) (calContrib / totalCal * 100).toInt() else 0
     val fraction = (pct / 100f).coerceIn(0f, 1f)
 
@@ -820,9 +823,9 @@ private fun DishMacroRow(label: String, grams: Double, color: Color, totalCal: F
         Box(Modifier.weight(1f).height(8.dp).clip(RoundedCornerShape(4.dp)).background(color.copy(alpha = 0.1f))) {
             Box(Modifier.fillMaxWidth(fraction).fillMaxHeight().clip(RoundedCornerShape(4.dp)).background(color))
         }
-        Text("${String.format("%.1f", grams)}g", style = MaterialTheme.typography.bodySmall,
+        Text(stringResource(R.string.scanner_macro_grams_one_decimal, grams), style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold, modifier = Modifier.width(48.dp), textAlign = TextAlign.End)
-        Text("$pct%", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold,
+        Text(stringResource(R.string.scanner_macro_pct_value, pct), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold,
             color = color, modifier = Modifier.width(30.dp), textAlign = TextAlign.End)
     }
 }
@@ -830,7 +833,7 @@ private fun DishMacroRow(label: String, grams: Double, color: Color, totalCal: F
 @Composable
 private fun DishMacroMini(label: String, grams: Double, color: Color, modifier: Modifier = Modifier) {
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text("${String.format("%.1f", grams)}g", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = color)
+        Text(stringResource(R.string.scanner_macro_grams_one_decimal, grams), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = color)
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f), fontSize = 10.sp)
     }
 }
@@ -952,7 +955,7 @@ private fun IngredientDetailCard(
                                                 .clickable { applyDelta(-5) },
                                             contentAlignment = Alignment.Center
                                         ) {
-                                            Icon(Icons.Default.Remove, "Diminuer 5g",
+                                            Icon(Icons.Default.Remove, stringResource(R.string.scanner_ing_decrease_5g_cd),
                                                 tint = color, modifier = Modifier.size(14.dp))
                                         }
 
@@ -983,7 +986,7 @@ private fun IngredientDetailCard(
                                                 ),
                                                 keyboardActions = KeyboardActions(onDone = { commit() })
                                             )
-                                            Text("g",
+                                            Text(stringResource(R.string.scanner_ing_unit_g),
                                                 style = MaterialTheme.typography.labelSmall,
                                                 fontWeight = FontWeight.ExtraBold,
                                                 color = color)
@@ -998,7 +1001,7 @@ private fun IngredientDetailCard(
                                                 .clickable { applyDelta(5) },
                                             contentAlignment = Alignment.Center
                                         ) {
-                                            Icon(Icons.Default.Add, "Augmenter 5g",
+                                            Icon(Icons.Default.Add, stringResource(R.string.scanner_ing_increase_5g_cd),
                                                 tint = color, modifier = Modifier.size(14.dp))
                                         }
                                     }
@@ -1006,19 +1009,19 @@ private fun IngredientDetailCard(
 
                                 // Pictogramme stylo signalant l'éditabilité
                                 Icon(
-                                    Icons.Default.Edit, "Modifiable",
+                                    Icons.Default.Edit, stringResource(R.string.scanner_ing_editable_cd),
                                     modifier = Modifier.size(12.dp),
                                     tint = color.copy(alpha = 0.7f)
                                 )
                             }
                         } else {
-                            Text("${ing.category} · ${ing.weightG}g", style = MaterialTheme.typography.labelSmall,
+                            Text(stringResource(R.string.scanner_ing_category_weight, ing.category, ing.weightG), style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                         }
                     }
                     // Badge kcal
                     Surface(shape = RoundedCornerShape(8.dp), color = OrangeVibrant.copy(alpha = 0.1f)) {
-                        Text("${ing.calories} kcal", modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        Text(stringResource(R.string.scanner_ing_kcal, ing.calories), modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
                     }
                 }
@@ -1029,11 +1032,11 @@ private fun IngredientDetailCard(
                 Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                IngredientMacroBar("Protéines", ing.proteins, Color(0xFF3B82F6), totalMacroG, Modifier.weight(1f))
-                IngredientMacroBar("Glucides", ing.carbs, OrangeVibrant, totalMacroG, Modifier.weight(1f))
-                IngredientMacroBar("Lipides", ing.fats, Color(0xFFEF4444), totalMacroG, Modifier.weight(1f))
+                IngredientMacroBar(stringResource(R.string.scanner_macro_proteins), ing.proteins, Color(0xFF3B82F6), totalMacroG, Modifier.weight(1f))
+                IngredientMacroBar(stringResource(R.string.scanner_macro_carbs), ing.carbs, OrangeVibrant, totalMacroG, Modifier.weight(1f))
+                IngredientMacroBar(stringResource(R.string.scanner_macro_fats), ing.fats, Color(0xFFEF4444), totalMacroG, Modifier.weight(1f))
                 if (ing.fibers > 0) {
-                    IngredientMacroBar("Fibres", ing.fibers, NeonGreen, totalMacroG, Modifier.weight(1f))
+                    IngredientMacroBar(stringResource(R.string.scanner_macro_fibers), ing.fibers, NeonGreen, totalMacroG, Modifier.weight(1f))
                 }
             }
         }
@@ -1044,7 +1047,7 @@ private fun IngredientDetailCard(
 private fun IngredientMacroBar(label: String, grams: Double, color: Color, totalG: Double, modifier: Modifier) {
     val fraction = (grams / totalG).toFloat().coerceIn(0f, 1f)
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("${String.format("%.1f", grams)}g", style = MaterialTheme.typography.labelMedium,
+        Text(stringResource(R.string.scanner_macro_grams_one_decimal, grams), style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold, color = color)
         Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(color.copy(alpha = 0.1f))) {
             Box(Modifier.fillMaxWidth(fraction).fillMaxHeight().clip(RoundedCornerShape(3.dp)).background(color))
@@ -1094,7 +1097,7 @@ private fun ScanHistoryCard(scan: com.shredcoach.app.data.local.entity.MealScanE
                 Surface(shape = CircleShape, color = scoreColor.copy(alpha = 0.12f), modifier = Modifier.size(48.dp)) {
                     Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                         Text("${scan.healthScore}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = scoreColor)
-                        Text("/10", style = MaterialTheme.typography.labelSmall, fontSize = 8.sp, color = scoreColor.copy(alpha = 0.7f))
+                        Text(stringResource(R.string.scanner_history_score_unit), style = MaterialTheme.typography.labelSmall, fontSize = 8.sp, color = scoreColor.copy(alpha = 0.7f))
                     }
                 }
             }
@@ -1103,12 +1106,12 @@ private fun ScanHistoryCard(scan: com.shredcoach.app.data.local.entity.MealScanE
                 Text(scan.dishName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold,
                     maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                 com.shredcoach.app.domain.nutrition.NutriScorePictogram(nutriGrade, height = 20.dp)
-                Text("$dateStr · ${scan.totalCalories} kcal",
+                Text(stringResource(R.string.scanner_history_meta, dateStr, scan.totalCalories),
                     style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
             }
             // Supprimer
             IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-                Icon(Icons.Default.Close, "Supprimer", Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
+                Icon(Icons.Default.Close, stringResource(R.string.scanner_history_delete_cd), Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
             }
         }
     }
@@ -1125,8 +1128,7 @@ private fun categoryColor(category: String): Color = when (category.lowercase())
     else -> Color(0xFF64748B)
 }
 
-private fun mealTypeLabel(type: String): String =
-    com.shredcoach.app.domain.nutrition.MealTypeClassifier.fromId(type).displayName
+// (mealTypeLabel résolu via MealTypeClassifier.fromId(type).displayNameRes côté Composable)
 
 @Composable
 private fun mealTypeIcon(type: String): androidx.compose.ui.graphics.vector.ImageVector {
@@ -1150,7 +1152,7 @@ private fun mealTypeIcon(type: String): androidx.compose.ui.graphics.vector.Imag
 internal fun MicronutrientsCard(micros: List<Micronutrient>) {
     Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Micronutriments", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.scanner_micros_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             micros.forEach { micro ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text(micro.name, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
@@ -1162,7 +1164,7 @@ internal fun MicronutrientsCard(micros: List<Micronutrient>) {
                                 when { micro.ajrPercent >= 50 -> NeonGreen; micro.ajrPercent >= 20 -> OrangeVibrant; else -> Color(0xFF94A3B8) }
                             ))
                     }
-                    Text("${micro.ajrPercent}%", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold,
+                    Text(stringResource(R.string.scanner_micros_pct, micro.ajrPercent), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold,
                         modifier = Modifier.width(36.dp), textAlign = TextAlign.End)
                 }
             }
@@ -1181,8 +1183,8 @@ internal fun AllergensCard(allergens: List<String>) {
         Row(Modifier.fillMaxWidth().padding(14.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Default.Warning, null, Modifier.size(20.dp), tint = Color(0xFFF59E0B))
             Column {
-                Text("Allergènes potentiels", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Color(0xFFF59E0B))
-                Text(allergens.joinToString(" · "), style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.scanner_allergens_title), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Color(0xFFF59E0B))
+                Text(allergens.joinToString(stringResource(R.string.scanner_allergens_separator)), style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -1241,19 +1243,19 @@ private fun PhotoCaptureZone(
             Surface(shape = CircleShape, color = OrangeVibrant.copy(alpha = 0.12f), modifier = Modifier.size(72.dp)) {
                 Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.CameraAlt, null, Modifier.size(36.dp), tint = OrangeVibrant) }
             }
-            Text("Analyser un repas", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text("Shreddy identifie les ingrédients et calcule macros + micronutriments. Photo ou description : même précision.",
+            Text(stringResource(R.string.scanner_capture_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.scanner_capture_desc),
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), textAlign = TextAlign.Center)
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button(onClick = onCamera, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = OrangeVibrant)) {
                     Icon(Icons.Default.CameraAlt, null, Modifier.size(20.dp)); Spacer(Modifier.width(8.dp))
-                    Text("Prendre une photo", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.scanner_capture_take_photo), fontWeight = FontWeight.Bold)
                 }
                 OutlinedButton(onClick = onGallery, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(14.dp),
                     border = androidx.compose.foundation.BorderStroke(1.5.dp, OrangeVibrant)) {
                     Icon(Icons.Default.PhotoLibrary, null, Modifier.size(20.dp), tint = OrangeVibrant); Spacer(Modifier.width(8.dp))
-                    Text("Choisir depuis la galerie", fontWeight = FontWeight.Bold, color = OrangeVibrant)
+                    Text(stringResource(R.string.scanner_capture_pick_gallery), fontWeight = FontWeight.Bold, color = OrangeVibrant)
                 }
 
                 // ─── Séparateur "ou" + entrée mode TEXT ───
@@ -1263,12 +1265,12 @@ private fun PhotoCaptureZone(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                     HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f))
-                    Text("ou", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                    Text(stringResource(R.string.scanner_capture_or), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                     HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f))
                 }
                 TextButton(onClick = onDescribeText, modifier = Modifier.fillMaxWidth().height(48.dp), shape = RoundedCornerShape(14.dp)) {
                     Icon(Icons.Default.Edit, null, Modifier.size(18.dp), tint = OrangeVibrant); Spacer(Modifier.width(8.dp))
-                    Text("Décrire mon repas en texte", fontWeight = FontWeight.SemiBold, color = OrangeVibrant)
+                    Text(stringResource(R.string.scanner_capture_describe_text), fontWeight = FontWeight.SemiBold, color = OrangeVibrant)
                 }
             }
         }
@@ -1309,15 +1311,13 @@ private fun TextDescriptionPanel(
                     Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.Edit, null, Modifier.size(20.dp), tint = OrangeVibrant) }
                 }
                 Column(Modifier.weight(1f)) {
-                    Text("Décris ton repas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    // Sous-titre : on laisse wrap libre — pas de maxLines, sinon
-                    // troncature sur écrans étroits + fontScale élevé.
-                    Text("Sois précis sur les quantités pour une bonne estimation",
+                    Text(stringResource(R.string.scanner_text_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.scanner_text_subtitle),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                 }
                 IconButton(onClick = onCancel, enabled = !isAnalyzing) {
-                    Icon(Icons.Default.Close, "Retour", Modifier.size(20.dp),
+                    Icon(Icons.Default.Close, stringResource(R.string.scanner_text_back_cd), Modifier.size(20.dp),
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                 }
             }
@@ -1329,7 +1329,7 @@ private fun TextDescriptionPanel(
                 modifier = Modifier.fillMaxWidth().heightIn(min = 140.dp),
                 placeholder = {
                     Text(
-                        "Ex : 2 œufs au plat, 80g de bacon grillé, 2 tranches de pain complet beurrées, 1 verre de jus d'orange",
+                        stringResource(R.string.scanner_text_placeholder),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                     )
@@ -1354,13 +1354,13 @@ private fun TextDescriptionPanel(
             // ─── Compteur + tip discret ───
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    "💡 Mentionne les quantités (grammes, unités, portions)",
+                    stringResource(R.string.scanner_text_tip),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    "$charCount/1000",
+                    stringResource(R.string.scanner_text_count, charCount),
                     style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
                     color = if (countWarning) OrangeVibrant else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                     fontWeight = if (countWarning) FontWeight.SemiBold else FontWeight.Normal
@@ -1384,7 +1384,7 @@ private fun MealDateTimeCard(state: MealScannerState, viewModel: MealScannerView
     val now = java.time.LocalDateTime.now()
     val isLate = java.time.Duration.between(dt, now).toMinutes() > 15
 
-    val dateFmt = java.time.format.DateTimeFormatter.ofPattern("EEEE d MMMM", java.util.Locale.FRENCH)
+    val dateFmt = java.time.format.DateTimeFormatter.ofPattern("EEEE d MMMM", java.util.Locale.getDefault())
     val timeFmt = java.time.format.DateTimeFormatter.ofPattern("HH:mm")
 
     Card(
@@ -1402,10 +1402,10 @@ private fun MealDateTimeCard(state: MealScannerState, viewModel: MealScannerView
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Default.Schedule, null, Modifier.size(18.dp),
                     tint = if (isLate) OrangeVibrant else MaterialTheme.colorScheme.primary)
-                Text("Date et heure du repas", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.scanner_dt_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             }
             if (isLate) {
-                Text("Tu as scanné en différé. Indique l'heure réelle du repas pour une bonne classification (petit-dej, déj, dîner...).",
+                Text(stringResource(R.string.scanner_dt_late_warning),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f))
             }
@@ -1440,7 +1440,7 @@ private fun MealDateTimeCard(state: MealScannerState, viewModel: MealScannerView
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Icon(Icons.Default.Restaurant, null, Modifier.size(14.dp), tint = OrangeVibrant)
-                        Text("Classé : ${cat.displayName}", style = MaterialTheme.typography.labelSmall,
+                        Text(stringResource(R.string.scanner_dt_classified_as, stringResource(cat.displayNameRes)), style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold, color = OrangeVibrant)
                     }
                 }
@@ -1465,10 +1465,10 @@ private fun MealDateTimeCard(state: MealScannerState, viewModel: MealScannerView
                     } else {
                         viewModel.closeDatePicker()
                     }
-                }) { Text("OK") }
+                }) { Text(stringResource(R.string.scanner_dt_picker_ok)) }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.closeDatePicker() }) { Text("Annuler") }
+                TextButton(onClick = { viewModel.closeDatePicker() }) { Text(stringResource(R.string.scanner_dt_picker_cancel)) }
             }
         ) {
             DatePicker(state = datePickerState)
@@ -1486,12 +1486,12 @@ private fun MealDateTimeCard(state: MealScannerState, viewModel: MealScannerView
                 TextButton(onClick = {
                     val newTime = java.time.LocalTime.of(timePickerState.hour, timePickerState.minute)
                     viewModel.applyMealDateTime(java.time.LocalDateTime.of(dt.toLocalDate(), newTime))
-                }) { Text("OK") }
+                }) { Text(stringResource(R.string.scanner_dt_picker_ok)) }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.closeTimePicker() }) { Text("Annuler") }
+                TextButton(onClick = { viewModel.closeTimePicker() }) { Text(stringResource(R.string.scanner_dt_picker_cancel)) }
             },
-            title = { Text("Heure du repas", fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.scanner_dt_picker_time_title), fontWeight = FontWeight.Bold) },
             text = {
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     TimePicker(state = timePickerState)

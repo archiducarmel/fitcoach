@@ -1084,6 +1084,106 @@
     <string name="insights_nutri_verdict_poor">Needs work · prioritize A and B</string>
     <string name="insights_nutri_ab_share">%1$d%% A+B</string>
 
+    <!-- Meal scanner screen -->
+    <string name="scanner_title">Meal Scanner</string>
+    <string name="scanner_subtitle">AI nutrition analysis</string>
+    <string name="scanner_history_cd">History</string>
+    <string name="scanner_history_empty">No scan saved</string>
+    <string name="scanner_analyze_cta">Analyze this meal</string>
+    <string name="scanner_analyzing_title">Shreddy is analyzing your meal...</string>
+    <string name="scanner_analyzing_desc">Identifying, computing macros and micronutrients</string>
+    <string name="scanner_auto_added">Automatically added to nutrition tracking</string>
+    <string name="scanner_scan_other_cta">Scan another meal</string>
+
+    <string name="scanner_hints_title">Help with the analysis</string>
+    <string name="scanner_hints_active">Hints set · Shreddy will use them</string>
+    <string name="scanner_hints_optional">Optional · Improves analysis accuracy</string>
+    <string name="scanner_hint_plate_label">Plate type</string>
+    <string name="scanner_hint_plate_help_text">Helps size your portion from the container used</string>
+    <string name="scanner_hint_plate_help_photo">Helps estimate food weight via diameter</string>
+    <string name="scanner_hint_plate_chip">%1$s (%2$d cm)</string>
+    <string name="scanner_hint_bowl_label">Bowl type</string>
+    <string name="scanner_hint_bowl_help_text">Helps size your portion from the bowl volume</string>
+    <string name="scanner_hint_bowl_help_photo">Helps estimate weight via volume</string>
+    <string name="scanner_hint_bowl_chip">%1$s (%2$s)</string>
+    <string name="scanner_hint_bowl_volume_ml">%1$d ml</string>
+    <string name="scanner_hint_bowl_saladier">≥ 1.5 L</string>
+    <string name="scanner_hint_desc_label">Details (optional)</string>
+    <string name="scanner_hint_desc_help">Disambiguates visually (e.g. yam fries vs potato, black-eyed peas, fromage blanc)</string>
+    <string name="scanner_hint_desc_placeholder">e.g. yam fries, black-eyed peas, fromage blanc 0%%...</string>
+    <string name="scanner_hint_desc_count">%1$d/300</string>
+    <string name="scanner_hint_clear">Clear all</string>
+
+    <string name="scanner_hero_default_name">Analyzed meal</string>
+    <string name="scanner_hero_dishes_count">%1$d dishes detected</string>
+    <string name="scanner_hero_score_unit">/10</string>
+    <string name="scanner_quick_kcal_label">kcal</string>
+    <string name="scanner_quick_weight_label">weight</string>
+    <string name="scanner_quick_dishes_label">dish(es)</string>
+
+    <string name="scanner_macros_title">Macronutrients</string>
+    <string name="scanner_macros_kcal_split">Calorie split</string>
+    <string name="scanner_macro_proteins">Proteins</string>
+    <string name="scanner_macro_carbs">Carbs</string>
+    <string name="scanner_macro_fats">Fats</string>
+    <string name="scanner_macro_fibers">Fibers</string>
+    <string name="scanner_macro_grams">%1$.0fg</string>
+    <string name="scanner_macro_grams_one_decimal">%1$.1fg</string>
+    <string name="scanner_macro_ajr_pct">%1$d%% RDI</string>
+    <string name="scanner_macro_pct_value">%1$d%%</string>
+    <string name="scanner_macro_kcal_unit">kcal</string>
+
+    <string name="scanner_dish_weight">%1$d g</string>
+    <string name="scanner_dish_kcal">%1$d</string>
+    <string name="scanner_dish_macro_sugars">Sugars</string>
+    <string name="scanner_dish_macro_saturated">Saturated</string>
+    <string name="scanner_dish_macro_salt">Salt</string>
+
+    <string name="scanner_ing_decrease_5g_cd">Decrease 5g</string>
+    <string name="scanner_ing_increase_5g_cd">Increase 5g</string>
+    <string name="scanner_ing_editable_cd">Editable</string>
+    <string name="scanner_ing_unit_g">g</string>
+    <string name="scanner_ing_category_weight">%1$s · %2$dg</string>
+    <string name="scanner_ing_kcal">%1$d kcal</string>
+
+    <string name="scanner_micros_title">Micronutrients</string>
+    <string name="scanner_micros_pct">%1$d%%</string>
+    <string name="scanner_allergens_title">Potential allergens</string>
+    <string name="scanner_allergens_separator"> · </string>
+
+    <string name="scanner_history_meta">%1$s · %2$d kcal</string>
+    <string name="scanner_history_score_unit">/10</string>
+    <string name="scanner_history_delete_cd">Delete</string>
+
+    <string name="scanner_capture_title">Analyze a meal</string>
+    <string name="scanner_capture_desc">Shreddy identifies ingredients and computes macros + micronutrients. Photo or description: same precision.</string>
+    <string name="scanner_capture_take_photo">Take a photo</string>
+    <string name="scanner_capture_pick_gallery">Pick from gallery</string>
+    <string name="scanner_capture_or">or</string>
+    <string name="scanner_capture_describe_text">Describe my meal as text</string>
+
+    <string name="scanner_text_title">Describe your meal</string>
+    <string name="scanner_text_subtitle">Be precise about quantities for a good estimate</string>
+    <string name="scanner_text_back_cd">Back</string>
+    <string name="scanner_text_placeholder">e.g. 2 fried eggs, 80g grilled bacon, 2 buttered whole-grain bread slices, 1 glass of orange juice</string>
+    <string name="scanner_text_tip">💡 Mention quantities (grams, units, portions)</string>
+    <string name="scanner_text_count">%1$d/1000</string>
+
+    <string name="scanner_dt_title">Meal date and time</string>
+    <string name="scanner_dt_late_warning">You scanned late. Set the actual meal time for proper classification (breakfast, lunch, dinner...).</string>
+    <string name="scanner_dt_classified_as">Classified: %1$s</string>
+    <string name="scanner_dt_picker_time_title">Meal time</string>
+    <string name="scanner_dt_picker_ok">OK</string>
+    <string name="scanner_dt_picker_cancel">Cancel</string>
+
+    <!-- MealTypeClassifier categories -->
+    <string name="meal_cat_breakfast">Breakfast</string>
+    <string name="meal_cat_lunch">Lunch</string>
+    <string name="meal_cat_snack_afternoon">Afternoon snack</string>
+    <string name="meal_cat_dinner">Dinner</string>
+    <string name="meal_cat_snacking">Snacking</string>
+    <string name="meal_cat_pretraining">Pre-training</string>
+
     <!-- IngredientCategory enum -->
     <string name="ingredient_cat_animal_proteins">Animal proteins</string>
     <string name="ingredient_cat_plant_proteins">Plant proteins</string>
