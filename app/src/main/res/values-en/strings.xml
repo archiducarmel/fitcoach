@@ -59,15 +59,54 @@
     <string name="exercise_isolation">Isolation</string>
 
     <!-- Muscle Groups -->
-    <string name="muscle_quads">Quads</string>
+    <string name="muscle_warmup">Warmup</string>
+    <string name="muscle_quads">Quads / Glutes</string>
     <string name="muscle_hamstrings">Hamstrings</string>
     <string name="muscle_chest">Chest</string>
-    <string name="muscle_back">Back</string>
+    <string name="muscle_chest_upper">Upper chest</string>
+    <string name="muscle_back_width">Back (width)</string>
+    <string name="muscle_back_thickness">Back (thickness)</string>
     <string name="muscle_shoulders">Shoulders</string>
     <string name="muscle_biceps">Biceps</string>
     <string name="muscle_triceps">Triceps</string>
-    <string name="muscle_abs">Abs</string>
+    <string name="muscle_abs_upper">Upper abs</string>
+    <string name="muscle_abs_lower">Lower abs &amp; Obliques</string>
     <string name="muscle_calves">Calves</string>
+    <string name="muscle_adductors">Adductors / Abductors</string>
+    <string name="muscle_traps">Traps</string>
+    <string name="muscle_forearms">Forearms</string>
+    <string name="muscle_lower_back">Lower back</string>
+    <string name="muscle_cardio">Cardio</string>
+    <string name="muscle_back">Back</string>
+    <string name="muscle_abs">Abs</string>
+
+    <string name="variant_machine">Machine</string>
+    <string name="variant_weights">Dumbbells / Barbell</string>
+    <string name="variant_bodyweight">Bodyweight</string>
+    <string name="variant_isolation">Isolation</string>
+
+    <string name="meal_type_breakfast">Breakfast</string>
+    <string name="meal_type_lunch">Lunch</string>
+    <string name="meal_type_dinner">Dinner</string>
+    <string name="meal_type_snack">Snack</string>
+    <string name="meal_type_pre_workout">Pre-workout</string>
+    <string name="meal_type_post_workout">Post-workout</string>
+    <string name="meal_type_shake">Shake</string>
+
+    <string name="photo_type_front">Front</string>
+    <string name="photo_type_side">Side</string>
+    <string name="photo_type_back">Back</string>
+
+    <string name="notif_type_meal_debrief">Meal debrief</string>
+    <string name="notif_type_workout_debrief">Session debrief</string>
+    <string name="notif_type_meal_reminder">Meal reminder</string>
+    <string name="notif_type_shaker_reminder">Shaker reminder</string>
+    <string name="notif_type_bedtime_reminder">Bedtime reminder</string>
+    <string name="notif_type_workout_reminder">Workout reminder</string>
+    <string name="notif_type_motivation">Motivation</string>
+    <string name="notif_type_coach_proactive">Shreddy coach</string>
+    <string name="notif_type_weekly_recap">Weekly recap</string>
+    <string name="notif_type_other">Info</string>
 
     <!-- ════════════════════════════════════════════════════════════ -->
     <!-- Home screen -->

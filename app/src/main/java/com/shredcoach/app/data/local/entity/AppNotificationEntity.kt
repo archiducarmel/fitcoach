@@ -1,10 +1,12 @@
 ﻿package com.shredcoach.app.data.local.entity
 
 
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.shredcoach.app.R
 import java.time.LocalDateTime
 
 /**
@@ -28,17 +30,21 @@ data class AppNotificationEntity(
     val deeplink: String? = null
 )
 
-enum class NotifType(val displayName: String, val icon: String) {
-    MEAL_DEBRIEF("Débrief repas", "🍽"),
-    WORKOUT_DEBRIEF("Débrief séance", "💪"),
-    MEAL_REMINDER("Rappel repas", "⏰"),
-    SHAKER_REMINDER("Rappel shaker", "🥤"),
-    BEDTIME_REMINDER("Rappel coucher", "😴"),
-    WORKOUT_REMINDER("Rappel séance", "🏋"),
-    MOTIVATION("Motivation", "🔥"),
+enum class NotifType(
+    val displayName: String,
+    @StringRes val displayNameRes: Int,
+    val icon: String,
+) {
+    MEAL_DEBRIEF("Débrief repas", R.string.notif_type_meal_debrief, "🍽"),
+    WORKOUT_DEBRIEF("Débrief séance", R.string.notif_type_workout_debrief, "💪"),
+    MEAL_REMINDER("Rappel repas", R.string.notif_type_meal_reminder, "⏰"),
+    SHAKER_REMINDER("Rappel shaker", R.string.notif_type_shaker_reminder, "🥤"),
+    BEDTIME_REMINDER("Rappel coucher", R.string.notif_type_bedtime_reminder, "😴"),
+    WORKOUT_REMINDER("Rappel séance", R.string.notif_type_workout_reminder, "🏋"),
+    MOTIVATION("Motivation", R.string.notif_type_motivation, "🔥"),
     /** Notification proactive du coach IA (catégorie dédiée pour analytics + canal). */
-    COACH_PROACTIVE("Coach Shreddy", "🧠"),
+    COACH_PROACTIVE("Coach Shreddy", R.string.notif_type_coach_proactive, "🧠"),
     /** Récap hebdomadaire (dimanche soir). */
-    WEEKLY_RECAP("Récap de la semaine", "📊"),
-    OTHER("Info", "ℹ")
+    WEEKLY_RECAP("Récap de la semaine", R.string.notif_type_weekly_recap, "📊"),
+    OTHER("Info", R.string.notif_type_other, "ℹ")
 }

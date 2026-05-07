@@ -57,16 +57,60 @@
     <string name="exercise_bodyweight">Poids du corps</string>
     <string name="exercise_isolation">Isolation</string>
 
-    <!-- Muscle Groups -->
-    <string name="muscle_quads">Quadriceps</string>
+    <!-- Muscle Groups (Phase 2 - aligné enum MuscleGroup) -->
+    <string name="muscle_warmup">Échauffement</string>
+    <string name="muscle_quads">Quadriceps / Fessiers</string>
     <string name="muscle_hamstrings">Ischio-jambiers</string>
     <string name="muscle_chest">Pectoraux</string>
-    <string name="muscle_back">Dos</string>
+    <string name="muscle_chest_upper">Pectoraux supérieurs</string>
+    <string name="muscle_back_width">Dos (largeur)</string>
+    <string name="muscle_back_thickness">Dos (épaisseur)</string>
     <string name="muscle_shoulders">Épaules</string>
     <string name="muscle_biceps">Biceps</string>
     <string name="muscle_triceps">Triceps</string>
-    <string name="muscle_abs">Abdominaux</string>
+    <string name="muscle_abs_upper">Abdos supérieurs</string>
+    <string name="muscle_abs_lower">Abdos inférieurs &amp; Obliques</string>
     <string name="muscle_calves">Mollets</string>
+    <string name="muscle_adductors">Adducteurs / Abducteurs</string>
+    <string name="muscle_traps">Trapèzes</string>
+    <string name="muscle_forearms">Avant-bras</string>
+    <string name="muscle_lower_back">Lombaires</string>
+    <string name="muscle_cardio">Cardio</string>
+    <!-- Alias legacy (gardés pour rétrocompat — sunset progressif) -->
+    <string name="muscle_back">Dos</string>
+    <string name="muscle_abs">Abdominaux</string>
+
+    <!-- ExerciseVariant (Phase 2) — clés normalisées variant_* -->
+    <string name="variant_machine">Machine</string>
+    <string name="variant_weights">Haltères / Barre</string>
+    <string name="variant_bodyweight">Poids du corps</string>
+    <string name="variant_isolation">Isolation</string>
+
+    <!-- MealType (Phase 2) -->
+    <string name="meal_type_breakfast">Petit-déjeuner</string>
+    <string name="meal_type_lunch">Déjeuner</string>
+    <string name="meal_type_dinner">Dîner</string>
+    <string name="meal_type_snack">Snack</string>
+    <string name="meal_type_pre_workout">Pré-training</string>
+    <string name="meal_type_post_workout">Post-training</string>
+    <string name="meal_type_shake">Shaker</string>
+
+    <!-- PhotoType (Phase 2) -->
+    <string name="photo_type_front">Face</string>
+    <string name="photo_type_side">Profil</string>
+    <string name="photo_type_back">Dos</string>
+
+    <!-- NotifType (Phase 2) -->
+    <string name="notif_type_meal_debrief">Débrief repas</string>
+    <string name="notif_type_workout_debrief">Débrief séance</string>
+    <string name="notif_type_meal_reminder">Rappel repas</string>
+    <string name="notif_type_shaker_reminder">Rappel shaker</string>
+    <string name="notif_type_bedtime_reminder">Rappel coucher</string>
+    <string name="notif_type_workout_reminder">Rappel séance</string>
+    <string name="notif_type_motivation">Motivation</string>
+    <string name="notif_type_coach_proactive">Coach Shreddy</string>
+    <string name="notif_type_weekly_recap">Récap de la semaine</string>
+    <string name="notif_type_other">Info</string>
 
     <!-- ════════════════════════════════════════════════════════════ -->
     <!-- Home screen (Phase 1) -->

@@ -1,22 +1,28 @@
-﻿package com.shredcoach.app.data.local.entity
+package com.shredcoach.app.data.local.entity
 
 
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.shredcoach.app.R
 import java.time.LocalDate
 import java.time.LocalTime
 
-enum class MealType(val displayName: String, val icon: String) {
-    BREAKFAST("Petit-déjeuner", "\uD83C\uDF05"),
-    LUNCH("Déjeuner", "☀\uFE0F"),
-    DINNER("Dîner", "\uD83C\uDF19"),
-    SNACK("Snack", "\uD83C\uDF4E"),
-    PRE_WORKOUT("Pré-training", "⚡"),
-    POST_WORKOUT("Post-training", "\uD83D\uDCAA"),
-    SHAKE("Shaker", "\uD83E\uDD64")
+enum class MealType(
+    val displayName: String,
+    @StringRes val displayNameRes: Int,
+    val icon: String,
+) {
+    BREAKFAST("Petit-déjeuner", R.string.meal_type_breakfast, "🌅"),
+    LUNCH("Déjeuner", R.string.meal_type_lunch, "☀️"),
+    DINNER("Dîner", R.string.meal_type_dinner, "🌙"),
+    SNACK("Snack", R.string.meal_type_snack, "🍎"),
+    PRE_WORKOUT("Pré-training", R.string.meal_type_pre_workout, "⚡"),
+    POST_WORKOUT("Post-training", R.string.meal_type_post_workout, "💪"),
+    SHAKE("Shaker", R.string.meal_type_shake, "🥤")
 }
 
 @Entity(
