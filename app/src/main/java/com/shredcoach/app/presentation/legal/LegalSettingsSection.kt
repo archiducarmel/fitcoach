@@ -26,9 +26,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.shredcoach.app.R
 import com.shredcoach.app.presentation.navigation.Screen
 
 /**
@@ -55,15 +58,16 @@ fun LegalSettingsSection(
     val event by viewModel.events.collectAsState()
     var showPurgeDialog by remember { mutableStateOf(false) }
 
+    val ctx = LocalContext.current
     LaunchedEffect(event) {
         when (event) {
             null -> Unit
             LegalSettingsViewModel.UiEvent.PurgeOk -> {
-                snackbar.showSnackbar("Toutes tes données ont été supprimées. Relance l'app.")
+                snackbar.showSnackbar(ctx.getString(R.string.legal_purge_ok_snackbar))
                 viewModel.consumeEvent()
             }
             is LegalSettingsViewModel.UiEvent.PurgeFailed -> {
-                snackbar.showSnackbar("Suppression incomplète : ${(event as LegalSettingsViewModel.UiEvent.PurgeFailed).message}")
+                snackbar.showSnackbar(ctx.getString(R.string.legal_purge_failed_snackbar, (event as LegalSettingsViewModel.UiEvent.PurgeFailed).message))
                 viewModel.consumeEvent()
             }
         }
@@ -80,7 +84,7 @@ fun LegalSettingsSection(
         ) {
             Icon(Icons.AutoMirrored.Filled.OpenInNew, null, Modifier.size(18.dp))
             Spacer(Modifier.size(8.dp))
-            Text("Politique de confidentialité")
+            Text(stringResource(R.string.legal_btn_privacy_policy))
         }
 
         OutlinedButton(
@@ -95,11 +99,11 @@ fun LegalSettingsSection(
             if (running) {
                 CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.error)
                 Spacer(Modifier.size(8.dp))
-                Text("Suppression en cours…")
+                Text(stringResource(R.string.legal_btn_purge_running))
             } else {
                 Icon(Icons.Default.DeleteForever, null, Modifier.size(18.dp))
                 Spacer(Modifier.size(8.dp))
-                Text("Supprimer toutes mes données")
+                Text(stringResource(R.string.legal_btn_purge))
             }
         }
     }
@@ -118,21 +122,18 @@ fun LegalSettingsSection(
 @Composable
 private fun PurgeConfirmDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     var typed by remember { mutableStateOf("") }
-    val canConfirm = typed.equals(MAGIC_WORD, ignoreCase = false)
+    val magicWord = stringResource(R.string.legal_purge_dialog_magic_word)
+    val canConfirm = typed.equals(magicWord, ignoreCase = false)
 
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Default.DeleteForever, null, tint = MaterialTheme.colorScheme.error) },
-        title = { Text("Tout supprimer ?") },
+        title = { Text(stringResource(R.string.legal_purge_dialog_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(R.string.legal_purge_dialog_body))
                 Text(
-                    "Cette action est IRRÉVERSIBLE. Tout disparaît : séances, repas, photos, " +
-                        "conversations Shreddy, clés API, paramètres. Les sauvegardes existantes " +
-                        "dans ton cloud ne sont PAS touchées (tu pourras restaurer plus tard).",
-                )
-                Text(
-                    "Pour confirmer, écris exactement « $MAGIC_WORD » ci-dessous :",
+                    stringResource(R.string.legal_purge_dialog_confirm_prompt, magicWord),
                     style = MaterialTheme.typography.bodySmall,
                 )
                 OutlinedTextField(
@@ -148,10 +149,8 @@ private fun PurgeConfirmDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
                 onClick = onConfirm,
                 enabled = canConfirm,
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-            ) { Text("Tout supprimer") }
+            ) { Text(stringResource(R.string.legal_purge_dialog_confirm)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) } },
     )
 }
-
-private const val MAGIC_WORD = "SUPPRIMER"

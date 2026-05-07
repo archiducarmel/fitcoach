@@ -16,11 +16,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.AppNotificationEntity
 import com.shredcoach.app.data.local.entity.NotifType
 import com.shredcoach.app.presentation.theme.NeonGreen
@@ -43,15 +46,15 @@ fun NotificationsScreen(
         AlertDialog(
             onDismissRequest = { showClearAllConfirm = false },
             icon = { Icon(Icons.Default.DeleteSweep, null, tint = MaterialTheme.colorScheme.error) },
-            title = { Text("Tout supprimer ?", fontWeight = FontWeight.Bold) },
-            text = { Text("${state.notifications.size} notifications seront définitivement supprimées.") },
+            title = { Text(stringResource(R.string.notif_clearall_dialog_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.notif_clearall_dialog_body, state.notifications.size)) },
             confirmButton = {
                 Button(
                     onClick = { viewModel.deleteAll(); showClearAllConfirm = false },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) { Text("Tout supprimer") }
+                ) { Text(stringResource(R.string.notif_clearall_confirm)) }
             },
-            dismissButton = { TextButton(onClick = { showClearAllConfirm = false }) { Text("Annuler") } }
+            dismissButton = { TextButton(onClick = { showClearAllConfirm = false }) { Text(stringResource(R.string.common_cancel)) } }
         )
     }
 
@@ -60,7 +63,7 @@ fun NotificationsScreen(
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Notifications", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.notif_screen_title), fontWeight = FontWeight.Bold)
                         if (state.unreadCount > 0) {
                             Badge(containerColor = OrangeVibrant) {
                                 Text("${state.unreadCount}", color = Color.White, fontWeight = FontWeight.Bold)
@@ -73,12 +76,12 @@ fun NotificationsScreen(
                         TextButton(onClick = { viewModel.markAllAsRead() }) {
                             Icon(Icons.Default.DoneAll, null, Modifier.size(18.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("Tout lu")
+                            Text(stringResource(R.string.notif_mark_all_read))
                         }
                     }
                     if (state.notifications.isNotEmpty()) {
                         IconButton(onClick = { showClearAllConfirm = true }) {
-                            Icon(Icons.Default.DeleteSweep, "Tout supprimer",
+                            Icon(Icons.Default.DeleteSweep, stringResource(R.string.notif_clearall_cd),
                                 tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                         }
                     }
@@ -97,8 +100,8 @@ fun NotificationsScreen(
             Box(Modifier.fillMaxSize().padding(pad)) {
                 com.shredcoach.app.presentation.common.EmptyState(
                     icon = Icons.Default.NotificationsNone,
-                    title = "Aucune notification",
-                    description = "Shreddy t'enverra des débriefs ici après tes repas et séances."
+                    title = stringResource(R.string.notif_empty_title),
+                    description = stringResource(R.string.notif_empty_desc)
                 )
             }
         } else {
@@ -182,8 +185,9 @@ private fun NotificationCard(
                 )
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        val ctx = LocalContext.current
                         Text(
-                            formatRelativeTime(notif.timestamp),
+                            formatRelativeTime(notif.timestamp, ctx),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                         )
@@ -192,14 +196,14 @@ private fun NotificationCard(
                                 shape = RoundedCornerShape(4.dp),
                                 color = accent.copy(alpha = 0.15f)
                             ) {
-                                Text("IA", Modifier.padding(horizontal = 5.dp, vertical = 1.dp),
+                                Text(stringResource(R.string.notif_card_ai_badge), Modifier.padding(horizontal = 5.dp, vertical = 1.dp),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = accent, fontWeight = FontWeight.Bold, fontSize = 9.sp)
                             }
                         }
                     }
                     IconButton(onClick = onDelete, Modifier.size(24.dp)) {
-                        Icon(Icons.Default.Close, "Supprimer", Modifier.size(14.dp),
+                        Icon(Icons.Default.Close, stringResource(R.string.notif_card_delete_cd), Modifier.size(14.dp),
                             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
                     }
                 }
@@ -208,14 +212,14 @@ private fun NotificationCard(
     }
 }
 
-private fun formatRelativeTime(timestamp: LocalDateTime): String {
+private fun formatRelativeTime(timestamp: LocalDateTime, ctx: android.content.Context): String {
     val now = LocalDateTime.now()
     val minutes = Duration.between(timestamp, now).toMinutes()
     return when {
-        minutes < 1 -> "À l'instant"
-        minutes < 60 -> "Il y a ${minutes}min"
-        minutes < 1440 -> "Il y a ${minutes / 60}h"
-        minutes < 2880 -> "Hier"
-        else -> timestamp.format(DateTimeFormatter.ofPattern("dd MMM", Locale.FRANCE))
+        minutes < 1 -> ctx.getString(R.string.notif_relative_now)
+        minutes < 60 -> ctx.getString(R.string.notif_relative_min, minutes.toInt())
+        minutes < 1440 -> ctx.getString(R.string.notif_relative_hour, (minutes / 60).toInt())
+        minutes < 2880 -> ctx.getString(R.string.notif_relative_yesterday)
+        else -> timestamp.format(DateTimeFormatter.ofPattern("dd MMM", Locale.getDefault()))
     }
 }

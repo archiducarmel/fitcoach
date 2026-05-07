@@ -1184,6 +1184,87 @@
     <string name="meal_cat_snacking">Snacking</string>
     <string name="meal_cat_pretraining">Pre-training</string>
 
+    <!-- Notifications screen -->
+    <string name="notif_screen_title">Notifications</string>
+    <string name="notif_clearall_dialog_title">Clear all?</string>
+    <string name="notif_clearall_dialog_body">%1$d notifications will be permanently deleted.</string>
+    <string name="notif_clearall_confirm">Clear all</string>
+    <string name="notif_mark_all_read">All read</string>
+    <string name="notif_clearall_cd">Clear all</string>
+    <string name="notif_empty_title">No notification</string>
+    <string name="notif_empty_desc">Shreddy will send you debriefs here after meals and sessions.</string>
+    <string name="notif_card_ai_badge">AI</string>
+    <string name="notif_card_delete_cd">Delete</string>
+    <string name="notif_relative_now">Just now</string>
+    <string name="notif_relative_min">%1$d min ago</string>
+    <string name="notif_relative_hour">%1$d h ago</string>
+    <string name="notif_relative_yesterday">Yesterday</string>
+
+    <!-- Chat screen -->
+    <string name="chat_assistant_name">Shreddy</string>
+    <string name="chat_assistant_writing">typing...</string>
+    <string name="chat_assistant_subtitle">AI Coach · %1$s</string>
+    <string name="chat_new_conversation_cd">New conversation</string>
+    <string name="chat_conversations_cd">Conversations</string>
+    <string name="chat_options_cd">Options</string>
+    <string name="chat_menu_clear">Clear this conversation</string>
+    <string name="chat_menu_settings">AI settings</string>
+
+    <string name="chat_conversations_title">My conversations</string>
+    <string name="chat_new_conversation_short">New</string>
+    <string name="chat_conversations_empty_title">No conversation</string>
+    <string name="chat_conversations_empty_desc">Start a new conversation with Shreddy for nutrition and lifting tips.</string>
+    <string name="chat_conversations_empty_cta">New conversation</string>
+    <string name="chat_conversation_default_title">Conversation</string>
+    <string name="chat_conversation_msg_count">%1$d msg</string>
+    <string name="chat_conversation_delete_cd">Delete conversation</string>
+
+    <string name="chat_welcome_title">Hi, I\'m Shreddy!</string>
+    <string name="chat_welcome_desc">Your personal AI coach. Ask me anything about lifting, nutrition, exercises, recovery...</string>
+    <string name="chat_welcome_suggestion_1">How do I bench press properly?</string>
+    <string name="chat_welcome_suggestion_2">How much protein per day in a cut?</string>
+    <string name="chat_welcome_suggestion_3">Effective warmup routine</string>
+
+    <string name="chat_input_placeholder">Ask Shreddy...</string>
+    <string name="chat_send_cd">Send</string>
+
+    <!-- Legal: Privacy policy + purge data -->
+    <string name="legal_purge_ok_snackbar">All your data has been deleted. Restart the app.</string>
+    <string name="legal_purge_failed_snackbar">Incomplete deletion: %1$s</string>
+    <string name="legal_btn_privacy_policy">Privacy policy</string>
+    <string name="legal_btn_purge_running">Deleting…</string>
+    <string name="legal_btn_purge">Delete all my data</string>
+    <string name="legal_purge_dialog_title">Delete everything?</string>
+    <string name="legal_purge_dialog_body">This action is IRREVERSIBLE. Everything goes: sessions, meals, photos, Shreddy conversations, API keys, settings. Existing backups in your cloud are NOT touched (you can restore later).</string>
+    <string name="legal_purge_dialog_confirm_prompt">To confirm, type exactly "%1$s" below:</string>
+    <string name="legal_purge_dialog_confirm">Delete everything</string>
+    <string name="legal_purge_dialog_magic_word">DELETE</string>
+
+    <string name="privacy_title">Privacy policy</string>
+    <string name="privacy_section_summary_title">In short</string>
+    <string name="privacy_section_summary_body">ShredCoach stores your data (sessions, meals, photos, conversations) only on your phone. No ShredCoach server receives your information. The only exceptions: Shreddy AI (chat) and meal/body scans, which send your text or photos to third-party AI providers (Groq, OpenAI, Claude, Gemini, Mistral) that you explicitly choose in settings.</string>
+    <string name="privacy_section_controller_title">1. Data controller</string>
+    <string name="privacy_section_controller_body">[TO COMPLETE: name, legal entity, address, GDPR email of the data controller. e.g. Sitou — contact@example.com]</string>
+    <string name="privacy_section_data_title">2. Data collected and purposes</string>
+    <string name="privacy_section_data_body">Data stored locally on your device:\n• Profile: first name, last name, age, weight, goals, level, injuries\n• Sessions: exercises, sets, weights, duration, history\n• Nutrition: meals, macros, scans, program\n• Shreddy AI conversations: your messages and replies\n• Photos: progression photos, meal scans, gym scans\n\nPurposes: support your cut, compute your stats, personalize recommendations.</string>
+    <string name="privacy_section_transfers_title">3. Transfers to third-party AI providers</string>
+    <string name="privacy_section_transfers_body">When you use Shreddy (chat) or an AI scan, your message or photo is sent directly (no ShredCoach intermediary) to the provider you chose. You provide your own API key. Providers have their own policies:\n\n• Groq (United States) — https://groq.com/privacy-policy\n• OpenAI (United States) — https://openai.com/policies/privacy-policy\n• Anthropic Claude (United States) — https://www.anthropic.com/privacy\n• Google Gemini — https://policies.google.com/privacy\n• Mistral (France) — https://mistral.ai/terms/\n\nThese non-EU transfers rely on Art. 49.1.a GDPR (explicit consent). You can refuse: the app works without these features.</string>
+    <string name="privacy_section_backup_title">4. Local backup</string>
+    <string name="privacy_section_backup_body">If you enable backup, ShredCoach writes a ZIP archive into the folder YOU choose (Drive, OneDrive, Dropbox, local). The contents and security of that folder depend on the provider you selected — their policy applies to the archive. ShredCoach does not read the archive after writing.</string>
+    <string name="privacy_section_rights_title">5. Your GDPR rights</string>
+    <string name="privacy_section_rights_body">• **Access**: you can export all your data via Settings > Backup > Backup now (open JSON archive + readable photos).\n\n• **Rectification**: edit your data directly in the app.\n\n• **Erasure**: Settings > Delete all my data. Everything is wiped from the phone in one atomic operation.\n\n• **Portability**: backup archive is open JSON + JPEG photos.\n\n• **Objection / consent withdrawal**: disable Shreddy or AI scans in settings to stop transfers to third-party providers.</string>
+    <string name="privacy_section_retention_title">6. Retention</string>
+    <string name="privacy_section_retention_body">Data stays on your phone as long as you use the app. You can wipe it any time via Settings. When you uninstall the app, Android automatically deletes all local data (except backups you exported to your cloud).</string>
+    <string name="privacy_section_security_title">7. Security</string>
+    <string name="privacy_section_security_body">Your AI API keys are encrypted via Android Keystore (AES-256-GCM, hardware-backed on most devices). Network traffic uses TLS 1.2+. The Room database is protected by Android disk encryption (FBE) if enabled on your device.</string>
+    <string name="privacy_section_cookies_title">8. Cookies, trackers, analytics</string>
+    <string name="privacy_section_cookies_body">ShredCoach uses NO cookies, NO trackers, NO analytics tools. No advertising.</string>
+    <string name="privacy_section_complaint_title">9. Complaint</string>
+    <string name="privacy_section_complaint_body">If you believe ShredCoach handles your data improperly, you can contact the controller (see section 1) or file a complaint with your local data protection authority (e.g. CNIL in France — cnil.fr).</string>
+    <string name="privacy_section_changes_title">10. Changes</string>
+    <string name="privacy_section_changes_body">This policy may evolve. Any substantial change will trigger a consent refresh on the next app launch.</string>
+    <string name="privacy_version_footer">Version 1 — 2026-05-05</string>
+
     <!-- IngredientCategory enum -->
     <string name="ingredient_cat_animal_proteins">Animal proteins</string>
     <string name="ingredient_cat_plant_proteins">Plant proteins</string>

@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.shredcoach.app.R
 import com.shredcoach.app.data.local.dao.ConversationSummary
 import com.shredcoach.app.data.local.entity.ChatMessageEntity
 import com.shredcoach.app.presentation.common.EmptyState
@@ -65,9 +67,10 @@ fun ChatScreen(
                             }
                         }
                         Column {
-                            Text("Shreddy", fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.chat_assistant_name), fontWeight = FontWeight.Bold)
                             Text(
-                                if (state.isLoading) "écrit..." else "Coach IA · ${state.providerName}",
+                                if (state.isLoading) stringResource(R.string.chat_assistant_writing)
+                                    else stringResource(R.string.chat_assistant_subtitle, state.providerName),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = if (state.isLoading) NeonGreen else MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -76,33 +79,33 @@ fun ChatScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.common_back))
                     }
                 },
                 actions = {
                     // Bouton nouvelle conversation
                     IconButton(onClick = { viewModel.startNewConversation() }) {
-                        Icon(Icons.Default.NoteAdd, "Nouvelle conversation",
+                        Icon(Icons.Default.NoteAdd, stringResource(R.string.chat_new_conversation_cd),
                             tint = OrangeVibrant)
                     }
                     // Bouton historique des conversations
                     IconButton(onClick = { viewModel.toggleConversationList() }) {
                         Icon(
                             if (state.showConversationList) Icons.Default.ChatBubble else Icons.Default.Forum,
-                            "Conversations"
+                            stringResource(R.string.chat_conversations_cd)
                         )
                     }
                     // Menu
                     var showMenu by remember { mutableStateOf(false) }
-                    IconButton(onClick = { showMenu = true }) { Icon(Icons.Default.MoreVert, "Options") }
+                    IconButton(onClick = { showMenu = true }) { Icon(Icons.Default.MoreVert, stringResource(R.string.chat_options_cd)) }
                     DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                         DropdownMenuItem(
-                            text = { Text("Effacer cette conversation") },
+                            text = { Text(stringResource(R.string.chat_menu_clear)) },
                             onClick = { viewModel.clearHistory(); showMenu = false },
                             leadingIcon = { Icon(Icons.Default.DeleteOutline, null) }
                         )
                         DropdownMenuItem(
-                            text = { Text("Paramètres IA") },
+                            text = { Text(stringResource(R.string.chat_menu_settings)) },
                             onClick = {
                                 navController.navigate(com.shredcoach.app.presentation.navigation.Screen.Settings.route)
                                 showMenu = false
@@ -189,20 +192,20 @@ private fun ConversationListPanel(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Mes conversations", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.chat_conversations_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             FilledTonalButton(onClick = onNewConversation) {
                 Icon(Icons.Default.Add, null, Modifier.size(18.dp))
                 Spacer(Modifier.width(4.dp))
-                Text("Nouvelle", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.chat_new_conversation_short), fontWeight = FontWeight.Bold)
             }
         }
 
         if (conversations.isEmpty()) {
             EmptyState(
                 icon = Icons.Default.Forum,
-                title = "Aucune conversation",
-                description = "Démarre une nouvelle conversation avec Shreddy pour des conseils nutrition et muscu.",
-                ctaLabel = "Nouvelle conversation",
+                title = stringResource(R.string.chat_conversations_empty_title),
+                description = stringResource(R.string.chat_conversations_empty_desc),
+                ctaLabel = stringResource(R.string.chat_conversations_empty_cta),
                 ctaIcon = Icons.Default.Add,
                 onCtaClick = onNewConversation
             )
@@ -229,7 +232,7 @@ private fun ConversationCard(
     onOpen: () -> Unit,
     onDelete: () -> Unit
 ) {
-    val title = convo.firstUserMessage?.take(60) ?: "Conversation"
+    val title = convo.firstUserMessage?.take(60) ?: stringResource(R.string.chat_conversation_default_title)
     val dateStr = try {
         LocalDateTime.parse(convo.lastTimestamp).format(DateTimeFormatter.ofPattern("dd/MM · HH:mm"))
     } catch (_: Exception) { "" }
@@ -265,14 +268,14 @@ private fun ConversationCard(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(dateStr, style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f))
-                    Text("${convo.messageCount} msg", style = MaterialTheme.typography.labelSmall,
+                    Text(stringResource(R.string.chat_conversation_msg_count, convo.messageCount), style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f))
                 }
             }
             // Delete — IconButton garde sa taille default 48dp pour respecter
             // le min touch target WCAG AA. L'icône reste petite (16dp) au centre.
             IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Close, "Supprimer la conversation", Modifier.size(16.dp),
+                Icon(Icons.Default.Close, stringResource(R.string.chat_conversation_delete_cd), Modifier.size(16.dp),
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
             }
         }
@@ -297,17 +300,17 @@ private fun WelcomeCard(onSuggestionTap: (String) -> Unit = {}) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             com.shredcoach.app.presentation.common.ShredCoachLogo(size = 56.dp)
-            Text("Salut, je suis Shreddy !",
+            Text(stringResource(R.string.chat_welcome_title),
                 style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text("Ton coach IA personnel. Pose-moi tes questions sur la muscu, la nutrition, les exercices, la récupération...",
+            Text(stringResource(R.string.chat_welcome_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center)
 
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                SuggestionChip("Comment bien faire un développé couché ?", onSuggestionTap)
-                SuggestionChip("Combien de protéines par jour en sèche ?", onSuggestionTap)
-                SuggestionChip("Programme d'échauffement efficace", onSuggestionTap)
+                SuggestionChip(stringResource(R.string.chat_welcome_suggestion_1), onSuggestionTap)
+                SuggestionChip(stringResource(R.string.chat_welcome_suggestion_2), onSuggestionTap)
+                SuggestionChip(stringResource(R.string.chat_welcome_suggestion_3), onSuggestionTap)
             }
         }
     }
@@ -484,7 +487,7 @@ private fun ChatInputBar(value: String, onValueChange: (String) -> Unit, onSend:
             OutlinedTextField(
                 value = value, onValueChange = onValueChange,
                 modifier = Modifier.weight(1f).heightIn(min = 48.dp, max = 120.dp),
-                placeholder = { Text("Demande à Shreddy...", style = MaterialTheme.typography.bodyMedium) },
+                placeholder = { Text(stringResource(R.string.chat_input_placeholder), style = MaterialTheme.typography.bodyMedium) },
                 shape = RoundedCornerShape(24.dp),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                 keyboardActions = KeyboardActions(onSend = { if (!isLoading) onSend() }),
@@ -504,7 +507,7 @@ private fun ChatInputBar(value: String, onValueChange: (String) -> Unit, onSend:
                 )
             ) {
                 if (isLoading) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = Color.White)
-                else Icon(Icons.Default.Send, "Envoyer", Modifier.size(20.dp))
+                else Icon(Icons.Default.Send, stringResource(R.string.chat_send_cd), Modifier.size(20.dp))
             }
         }
     }

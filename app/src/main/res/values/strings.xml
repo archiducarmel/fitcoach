@@ -1345,6 +1345,98 @@
     <string name="meal_cat_snacking">Grignotage</string>
     <string name="meal_cat_pretraining">Pré-training</string>
 
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Notifications screen -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <string name="notif_screen_title">Notifications</string>
+    <string name="notif_clearall_dialog_title">Tout supprimer ?</string>
+    <string name="notif_clearall_dialog_body">%1$d notifications seront définitivement supprimées.</string>
+    <string name="notif_clearall_confirm">Tout supprimer</string>
+    <string name="notif_mark_all_read">Tout lu</string>
+    <string name="notif_clearall_cd">Tout supprimer</string>
+    <string name="notif_empty_title">Aucune notification</string>
+    <string name="notif_empty_desc">Shreddy t\'enverra des débriefs ici après tes repas et séances.</string>
+    <string name="notif_card_ai_badge">IA</string>
+    <string name="notif_card_delete_cd">Supprimer</string>
+    <string name="notif_relative_now">À l\'instant</string>
+    <string name="notif_relative_min">Il y a %1$dmin</string>
+    <string name="notif_relative_hour">Il y a %1$dh</string>
+    <string name="notif_relative_yesterday">Hier</string>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Chat screen -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <string name="chat_assistant_name">Shreddy</string>
+    <string name="chat_assistant_writing">écrit...</string>
+    <string name="chat_assistant_subtitle">Coach IA · %1$s</string>
+    <string name="chat_new_conversation_cd">Nouvelle conversation</string>
+    <string name="chat_conversations_cd">Conversations</string>
+    <string name="chat_options_cd">Options</string>
+    <string name="chat_menu_clear">Effacer cette conversation</string>
+    <string name="chat_menu_settings">Paramètres IA</string>
+
+    <!-- Conversation list -->
+    <string name="chat_conversations_title">Mes conversations</string>
+    <string name="chat_new_conversation_short">Nouvelle</string>
+    <string name="chat_conversations_empty_title">Aucune conversation</string>
+    <string name="chat_conversations_empty_desc">Démarre une nouvelle conversation avec Shreddy pour des conseils nutrition et muscu.</string>
+    <string name="chat_conversations_empty_cta">Nouvelle conversation</string>
+    <string name="chat_conversation_default_title">Conversation</string>
+    <string name="chat_conversation_msg_count">%1$d msg</string>
+    <string name="chat_conversation_delete_cd">Supprimer la conversation</string>
+
+    <!-- Welcome card -->
+    <string name="chat_welcome_title">Salut, je suis Shreddy !</string>
+    <string name="chat_welcome_desc">Ton coach IA personnel. Pose-moi tes questions sur la muscu, la nutrition, les exercices, la récupération...</string>
+    <string name="chat_welcome_suggestion_1">Comment bien faire un développé couché ?</string>
+    <string name="chat_welcome_suggestion_2">Combien de protéines par jour en sèche ?</string>
+    <string name="chat_welcome_suggestion_3">Programme d\'échauffement efficace</string>
+
+    <!-- Input bar -->
+    <string name="chat_input_placeholder">Demande à Shreddy...</string>
+    <string name="chat_send_cd">Envoyer</string>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Legal: Privacy policy + purge data -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- LegalSettingsSection -->
+    <string name="legal_purge_ok_snackbar">Toutes tes données ont été supprimées. Relance l\'app.</string>
+    <string name="legal_purge_failed_snackbar">Suppression incomplète : %1$s</string>
+    <string name="legal_btn_privacy_policy">Politique de confidentialité</string>
+    <string name="legal_btn_purge_running">Suppression en cours…</string>
+    <string name="legal_btn_purge">Supprimer toutes mes données</string>
+    <string name="legal_purge_dialog_title">Tout supprimer ?</string>
+    <string name="legal_purge_dialog_body">Cette action est IRRÉVERSIBLE. Tout disparaît : séances, repas, photos, conversations Shreddy, clés API, paramètres. Les sauvegardes existantes dans ton cloud ne sont PAS touchées (tu pourras restaurer plus tard).</string>
+    <string name="legal_purge_dialog_confirm_prompt">Pour confirmer, écris exactement « %1$s » ci-dessous :</string>
+    <string name="legal_purge_dialog_confirm">Tout supprimer</string>
+    <string name="legal_purge_dialog_magic_word">SUPPRIMER</string>
+
+    <!-- Privacy policy screen -->
+    <string name="privacy_title">Politique de confidentialité</string>
+    <string name="privacy_section_summary_title">En résumé</string>
+    <string name="privacy_section_summary_body">ShredCoach stocke tes données (séances, repas, photos, conversations) uniquement sur ton téléphone. Aucun serveur ShredCoach ne reçoit tes informations. Les seules exceptions : Shreddy IA (chat) et le scan repas/corps, qui envoient ton texte ou tes photos à des fournisseurs IA tiers (Groq, OpenAI, Claude, Gemini, Mistral) que tu choisis explicitement dans les paramètres.</string>
+    <string name="privacy_section_controller_title">1. Responsable de traitement</string>
+    <string name="privacy_section_controller_body">[À COMPLÉTER : nom, raison sociale, adresse, email RGPD du responsable de traitement. Ex : Sitou — contact@example.com]</string>
+    <string name="privacy_section_data_title">2. Données collectées et finalités</string>
+    <string name="privacy_section_data_body">Données stockées localement sur ton appareil :\n• Profil : prénom, nom, âge, poids, objectifs, niveau, blessures\n• Séances : exercices, séries, poids, durée, historique\n• Nutrition : repas, macros, scans, programme\n• Conversations Shreddy IA : tes messages et les réponses\n• Photos : photos de progression, scans repas, scans gym\n\nFinalités : t\'accompagner dans ta sèche, calculer tes statistiques, personnaliser tes recommandations.</string>
+    <string name="privacy_section_transfers_title">3. Transferts vers des fournisseurs IA tiers</string>
+    <string name="privacy_section_transfers_body">Lorsque tu utilises Shreddy (chat) ou un scan IA, ton message ou ta photo est envoyé directement (sans intermédiaire ShredCoach) au fournisseur que tu as choisi. Tu fournis ta propre clé API. Les fournisseurs ont leurs propres politiques :\n\n• Groq (États-Unis) — https://groq.com/privacy-policy\n• OpenAI (États-Unis) — https://openai.com/policies/privacy-policy\n• Anthropic Claude (États-Unis) — https://www.anthropic.com/privacy\n• Google Gemini — https://policies.google.com/privacy\n• Mistral (France) — https://mistral.ai/terms/\n\nCes transferts hors UE sont fondés sur l\'art. 49.1.a RGPD (consentement explicite). Tu peux refuser : l\'app fonctionnera sans ces fonctions.</string>
+    <string name="privacy_section_backup_title">4. Sauvegarde locale</string>
+    <string name="privacy_section_backup_body">Si tu actives la sauvegarde, ShredCoach écrit une archive ZIP dans le dossier que TU choisis (Drive, OneDrive, Dropbox, local). Le contenu et la sécurité de ce dossier dépendent du fournisseur que tu as sélectionné — leur politique s\'applique à l\'archive. ShredCoach ne lit pas l\'archive après écriture.</string>
+    <string name="privacy_section_rights_title">5. Tes droits RGPD</string>
+    <string name="privacy_section_rights_body">• **Accès** : tu peux exporter toutes tes données via Paramètres > Sauvegarde > Sauvegarder maintenant (archive JSON + photos lisibles).\n\n• **Rectification** : tu modifies directement tes données dans l\'app.\n\n• **Effacement** : Paramètres > Supprimer toutes mes données. Tout est effacé du téléphone en une opération atomique.\n\n• **Portabilité** : l\'archive de sauvegarde est en JSON ouvert + photos JPEG.\n\n• **Opposition / retrait du consentement** : désactive Shreddy ou les scans IA dans les paramètres pour stopper les transferts vers les fournisseurs tiers.</string>
+    <string name="privacy_section_retention_title">6. Durée de conservation</string>
+    <string name="privacy_section_retention_body">Les données restent sur ton téléphone tant que tu utilises l\'app. Tu peux les effacer à tout moment via Paramètres. Lors de la désinstallation de l\'app, Android supprime automatiquement toutes les données locales (sauf les sauvegardes que tu as exportées dans ton cloud).</string>
+    <string name="privacy_section_security_title">7. Sécurité</string>
+    <string name="privacy_section_security_body">Tes clés API IA sont chiffrées via Android Keystore (AES-256-GCM, hardware-backed sur la majorité des appareils). Le trafic réseau utilise TLS 1.2+. La base de données Room est protégée par le chiffrement disque Android (FBE) si activé sur ton appareil.</string>
+    <string name="privacy_section_cookies_title">8. Cookies, traceurs, analytics</string>
+    <string name="privacy_section_cookies_body">ShredCoach n\'utilise AUCUN cookie, AUCUN tracker, AUCUN outil d\'analytics. Aucune publicité.</string>
+    <string name="privacy_section_complaint_title">9. Réclamation</string>
+    <string name="privacy_section_complaint_body">Si tu estimes que ShredCoach traite tes données de manière non conforme, tu peux contacter le responsable (cf. section 1) ou déposer une réclamation auprès de la CNIL (cnil.fr).</string>
+    <string name="privacy_section_changes_title">10. Modifications</string>
+    <string name="privacy_section_changes_body">Cette politique peut évoluer. Toute modification substantielle déclenchera un renouvellement de consentement à la prochaine ouverture de l\'app.</string>
+    <string name="privacy_version_footer">Version 1 — 2026-05-05</string>
+
     <!-- IngredientCategory enum -->
     <string name="ingredient_cat_animal_proteins">Protéines animales</string>
     <string name="ingredient_cat_plant_proteins">Protéines végétales</string>
