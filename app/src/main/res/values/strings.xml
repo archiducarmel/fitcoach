@@ -7,7 +7,7 @@
     Convention de nommage : feature_screen_purpose_action (snake_case).
     En Phase 1 ce fichier sera massivement enrichi avec TOUTES les strings UI.
 -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">ShredCoach</string>
 
     <!-- Navigation -->
@@ -686,7 +686,7 @@
     <string name="custom_mode_template_label">Modèle suggéré</string>
     <string name="custom_mode_template_subtitle">Équilibré, personnalisable</string>
     <string name="custom_mode_blank_label">Partir de zéro</string>
-    <string name="custom_mode_blank_subtitle">100% personnalisé</string>
+    <string name="custom_mode_blank_subtitle" tools:ignore="StringFormatInvalid">100% personnalisé</string>
 
     <!-- Section header -->
     <string name="custom_section_header_summary_one">%1$d exercice · %2$d min</string>

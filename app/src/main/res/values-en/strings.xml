@@ -8,7 +8,7 @@
     ici, Android fallback automatiquement sur values/ (FR) — c'est utile pour
     la transition Phase 1 où on ajoute les clés progressivement.
 -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">ShredCoach</string>
 
     <!-- Navigation -->
@@ -597,7 +597,7 @@
     <string name="custom_mode_template_label">Suggested template</string>
     <string name="custom_mode_template_subtitle">Balanced, customizable</string>
     <string name="custom_mode_blank_label">Start from scratch</string>
-    <string name="custom_mode_blank_subtitle">100% custom</string>
+    <string name="custom_mode_blank_subtitle" tools:ignore="StringFormatInvalid">100% custom</string>
 
     <string name="custom_section_header_summary_one">%1$d exercise · %2$d min</string>
     <string name="custom_section_header_summary_many">%1$d exercises · %2$d min</string>

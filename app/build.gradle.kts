@@ -22,12 +22,11 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-        // i18n : on déclare officiellement les locales supportées. Cela exclut
-        // toutes les autres locales des libraries tierces (AndroidX, Material)
-        // de l'APK final → APK plus petit + cohérence des strings utilisateur.
-        // Quand on ajoutera l'anglais, créer values-en/strings.xml et ajouter
-        // "en" ici. Pour l'instant, app FR-only.
-        resourceConfigurations += listOf("fr")
+        // i18n : locales supportées V1 = FR + EN. Cela exclut toutes les autres
+        // locales des libraries tierces (AndroidX, Material) de l'APK final →
+        // APK plus petit + cohérence des strings utilisateur. Vague 2 ajoutera
+        // "es", "it", "pt", "de".
+        resourceConfigurations += listOf("fr", "en")
     }
 
     buildTypes {
@@ -124,6 +123,33 @@ android {
     // du source set androidTest (ils sont packagés dans le test APK).
     sourceSets {
         getByName("androidTest").assets.srcDir("$projectDir/schemas")
+    }
+
+    // Phase 7 — Quality gate i18n
+    // ─────────────────────────────────────────────────────────────────
+    // MissingTranslation : escalé en error → CI casse si une string FR
+    //   n'a pas de traduction EN (ou inverse). Empêche les régressions.
+    //   Baseline lint-baseline.xml liste les violations connues à corriger
+    //   progressivement (notamment les exo_* EN-only par design — la FR
+    //   reste dans la DB en source de vérité).
+    // HardcodedText : escalé en warning → visible dans Android Studio +
+    //   échec CI si on l'escale plus tard. Détecte les littéraux Compose
+    //   non extraits.
+    lint {
+        warningsAsErrors = false
+        abortOnError = true
+        checkDependencies = false
+        // i18n : strings sans traduction = erreur (sauf baseline)
+        error += "MissingTranslation"
+        // Garde-fou pour les nouveaux écrans (ne pas remonter sur l'existant
+        // déjà nettoyé via Vagues 1A-1E).
+        warning += "HardcodedText"
+        // Fichier baseline = "violations connues, à corriger plus tard".
+        // Sans baseline, l'app casserait sur les exo_* EN-only.
+        baseline = file("lint-baseline.xml")
+        // Génère les rapports en HTML/XML pour CI / inspection locale.
+        htmlReport = true
+        xmlReport = true
     }
 }
 
