@@ -11,6 +11,7 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.shredcoach.app.data.backup.provider.ProviderId
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
@@ -49,27 +50,55 @@ class BackupWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val repository: BackupRepository,
     private val settings: BackupSettingsStore,
+    private val notifier: BackupNotifier,
 ) : CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result {
         // Honorer le toggle utilisateur même si le worker est encore enqueued
         // — évite les backups après que l'utilisateur ait désactivé le feature.
         val snap = settings.snapshot.first()
-        if (!snap.autoBackupEnabled || snap.folderUri == null) {
-            Log.d(TAG, "Auto-backup disabled or no folder — skipping run")
+        if (!snap.autoBackupEnabled) {
+            Log.d(TAG, "Auto-backup disabled — skipping run")
+            return Result.success()
+        }
+        // Pre-flight provider-aware : SAF a besoin d'un folderUri, Drive d'un
+        // compte linké (vérifié par le provider lui-même via isConfigured()).
+        // Pour Drive on ne peut pas faire le check ici (besoin du repository),
+        // donc on délègue : si non-configuré, runBackup() retourne Failure
+        // immédiatement avec un message explicite.
+        if (snap.providerId == ProviderId.LOCAL_SAF && snap.folderUri == null) {
+            Log.d(TAG, "SAF auto-backup but no folder configured — skipping run")
             return Result.success()
         }
 
         return when (val result = repository.runBackup()) {
             is BackupRepository.BackupResult.Success -> {
                 Log.i(TAG, "Backup périodique OK : ${result.fileName}")
+                notifier.notifySuccess(photosCount = result.photosCount, sizeBytes = result.sizeBytes)
                 Result.success()
             }
             is BackupRepository.BackupResult.Failure -> {
                 Log.w(TAG, "Backup périodique échoué : ${result.message} — retry")
+                // On notifie SEULEMENT si le retry est probablement vain
+                // (auth expirée → l'user doit intervenir). Pour les erreurs
+                // transitoires (réseau, quota momentané), on laisse le backoff
+                // faire son boulot sans spam de notifs.
+                if (looksUnrecoverable(result.message)) {
+                    notifier.notifyFailure(result.message)
+                }
                 Result.retry()
             }
         }
+    }
+
+    /**
+     * Hint à propos des erreurs : si le message évoque une intervention user
+     * (token expiré, déconnexion), on notifie pour qu'il reconnecte. Pour les
+     * erreurs réseau/quota, on suppose que le retry suivant passera.
+     */
+    private fun looksUnrecoverable(message: String): Boolean {
+        val lower = message.lowercase()
+        return "expir" in lower || "reconnec" in lower || "non config" in lower || "non configuré" in lower
     }
 
     companion object {

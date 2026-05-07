@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.shredcoach.app.data.backup.provider.ProviderId
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -53,16 +54,33 @@ class BackupSettingsStore @Inject constructor(
      * deux champs ainsi que [setEncryptionEnabled] et [setPasswordVerifier].
      */
     data class Snapshot(
+        /**
+         * Provider sélectionné par l'utilisateur. Default = LOCAL_SAF pour la
+         * compat ascendante (les utilisateurs existants gardent leur folder SAF).
+         * On bascule sur GOOGLE_DRIVE quand l'user link son compte ; il peut
+         * revenir manuellement à LOCAL_SAF dans les Settings.
+         */
+        val providerId: ProviderId,
         val folderUri: Uri?,
         val lastBackupAt: Instant?,
         val autoBackupEnabled: Boolean,
         val encryptionEnabled: Boolean,
         val passwordVerifier: String?,
     ) {
-        val isConfigured: Boolean get() = folderUri != null
+        /**
+         * "Configuré" dépend du provider :
+         *  - SAF : il faut un folderUri
+         *  - Drive : il faut être linké (vérifié côté GoogleAuthRepository)
+         *
+         * Pour SAF on peut le tester ici. Pour Drive, le caller doit cumuler
+         * avec l'état GoogleAuthStore (raison : on évite une dépendance
+         * circulaire BackupSettingsStore ↔ GoogleAuthStore).
+         */
+        val isSafConfigured: Boolean get() = providerId == ProviderId.LOCAL_SAF && folderUri != null
     }
 
     private object Keys {
+        val PROVIDER_ID = stringPreferencesKey("provider_id")
         val FOLDER_URI = stringPreferencesKey("folder_uri")
         val LAST_BACKUP_AT = longPreferencesKey("last_backup_at_epoch_ms")
         val AUTO_BACKUP_ENABLED = booleanPreferencesKey("auto_backup_enabled")
@@ -72,12 +90,17 @@ class BackupSettingsStore @Inject constructor(
 
     val snapshot: Flow<Snapshot> = context.backupDataStore.data.map { prefs ->
         Snapshot(
+            providerId = ProviderId.fromStorageKey(prefs[Keys.PROVIDER_ID]),
             folderUri = prefs[Keys.FOLDER_URI]?.let(Uri::parse),
             lastBackupAt = prefs[Keys.LAST_BACKUP_AT]?.let(Instant::ofEpochMilli),
             autoBackupEnabled = prefs[Keys.AUTO_BACKUP_ENABLED] ?: false,
             encryptionEnabled = prefs[Keys.ENCRYPTION_ENABLED] ?: false,
             passwordVerifier = prefs[Keys.PASSWORD_VERIFIER],
         )
+    }
+
+    suspend fun setProviderId(provider: ProviderId) {
+        context.backupDataStore.edit { prefs -> prefs[Keys.PROVIDER_ID] = provider.storageKey }
     }
 
     suspend fun setFolderUri(uri: Uri?) {

@@ -3,12 +3,15 @@ package com.shredcoach.app.data.backup
 import android.content.Context
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
+import com.shredcoach.app.data.backup.crypto.BackupCrypto
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -97,6 +100,7 @@ class BackupArchive @Inject constructor(
         fileName: String,
         manifestJson: String,
         photoFiles: List<Pair<PhotoEntry, File>>,
+        encryptionKey: ByteArray? = null,
     ): Uri {
         val folder = DocumentFile.fromTreeUri(context, folderUri)
             ?: throw IOException("Dossier de backup inaccessible : $folderUri")
@@ -110,54 +114,160 @@ class BackupArchive @Inject constructor(
 
         val outUri = zipFile.uri
         context.contentResolver.openOutputStream(outUri, "w")?.use { rawOut ->
-            ZipOutputStream(BufferedOutputStream(rawOut)).use { zip ->
-                // 1. manifest.json EN PREMIER (cf. fail-fast).
-                zip.putNextEntry(ZipEntry(MANIFEST_NAME))
-                zip.write(manifestJson.toByteArray(Charsets.UTF_8))
-                zip.closeEntry()
-
-                // 2. photos en streaming (chunks 64KB, mémoire constante).
-                val buffer = ByteArray(64 * 1024)
-                for ((entry, file) in photoFiles) {
-                    zip.putNextEntry(ZipEntry(entry.archivePath))
-                    FileInputStream(file).use { input ->
-                        while (true) {
-                            val n = input.read(buffer)
-                            if (n <= 0) break
-                            zip.write(buffer, 0, n)
-                        }
-                    }
-                    zip.closeEntry()
-                }
-            }
+            writePack(rawOut, manifestJson, photoFiles, encryptionKey)
         } ?: throw IOException("Impossible d'ouvrir un OutputStream sur $outUri")
 
         return outUri
     }
 
     /**
+     * Pack un ZIP vers un fichier local. Utilisé par les providers cloud
+     * (Google Drive notamment) qui ne peuvent pas streamer en direct vers
+     * l'API distante : la SDK Drive demande un File pour l'upload resumable
+     * (chunked, retry-friendly). Donc on matérialise un ZIP temporaire en
+     * cache, on upload, puis on supprime le fichier.
+     *
+     * **Coût stockage** : ce mode requiert temporairement ~taille_backup en
+     * cache local. Pour un power user 600Mo, ça consomme 600Mo de cache
+     * pendant l'upload — acceptable mais limite. Si on veut éviter ça plus
+     * tard, basculer sur l'API Drive resumable upload via stream chunks de
+     * 256Ko (plus complexe, à benchmarker).
+     */
+    fun packToFile(
+        targetFile: File,
+        manifestJson: String,
+        photoFiles: List<Pair<PhotoEntry, File>>,
+        encryptionKey: ByteArray? = null,
+    ) {
+        targetFile.parentFile?.mkdirs()
+        targetFile.outputStream().use { out ->
+            writePack(out, manifestJson, photoFiles, encryptionKey)
+        }
+    }
+
+    /**
+     * Wrap optionnel encryption + délégation au streaming ZIP. Si [key] est
+     * fourni, on enveloppe `rawOut` avec [BackupCrypto.encryptStream] qui écrit
+     * d'abord le header (magic + IV) puis chiffre tout ce qui suit. Sinon,
+     * écriture en clair (back-compat avec les backups pré-encryption).
+     *
+     * **Critique** : on close() le wrapper crypto AVANT de close() rawOut, sinon
+     * le tag GCM n'est pas finalisé. Le `use` imbriqué assure cet ordre.
+     */
+    private fun writePack(
+        rawOut: OutputStream,
+        manifestJson: String,
+        photoFiles: List<Pair<PhotoEntry, File>>,
+        key: ByteArray?,
+    ) {
+        if (key == null) {
+            packToStream(rawOut, manifestJson, photoFiles)
+            return
+        }
+        BackupCrypto.encryptStream(rawOut, key).use { encrypted ->
+            packToStream(encrypted, manifestJson, photoFiles)
+        }
+    }
+
+    /**
+     * Cœur du streaming ZIP — provider-agnostique. Tous les `pack*` finissent
+     * ici. Manifest en première entry (fail-fast restore), photos en chunks
+     * 64Ko (mémoire constante).
+     */
+    private fun packToStream(
+        rawOut: OutputStream,
+        manifestJson: String,
+        photoFiles: List<Pair<PhotoEntry, File>>,
+    ) {
+        ZipOutputStream(BufferedOutputStream(rawOut)).use { zip ->
+            // 1. manifest.json EN PREMIER (cf. fail-fast restore).
+            zip.putNextEntry(ZipEntry(MANIFEST_NAME))
+            zip.write(manifestJson.toByteArray(Charsets.UTF_8))
+            zip.closeEntry()
+
+            // 2. photos en streaming (chunks 64KB, mémoire constante).
+            val buffer = ByteArray(64 * 1024)
+            for ((entry, file) in photoFiles) {
+                zip.putNextEntry(ZipEntry(entry.archivePath))
+                FileInputStream(file).use { input ->
+                    while (true) {
+                        val n = input.read(buffer)
+                        if (n <= 0) break
+                        zip.write(buffer, 0, n)
+                    }
+                }
+                zip.closeEntry()
+            }
+        }
+    }
+
+    /**
+     * Variante de [unpack] qui prend un fichier local (utilisée par les
+     * providers cloud après avoir téléchargé l'archive). Délègue à la version
+     * URI en passant l'URI du fichier local.
+     */
+    fun unpack(localFile: File, decryptionKey: ByteArray? = null): UnpackResult =
+        unpack(Uri.fromFile(localFile), decryptionKey)
+
+    /**
+     * Détecte si une archive est chiffrée sans la déchiffrer. Utilisé par le
+     * pipeline restore pour décider s'il faut prompter l'user pour son
+     * recovery code, ou si la clé locale suffit.
+     */
+    fun isEncrypted(archiveUri: Uri): Boolean {
+        return try {
+            context.contentResolver.openInputStream(archiveUri)?.use { rawIn ->
+                BackupCrypto.isEncryptedStream(BufferedInputStream(rawIn))
+            } ?: false
+        } catch (_: IOException) {
+            false
+        }
+    }
+
+    fun isEncrypted(localFile: File): Boolean = isEncrypted(Uri.fromFile(localFile))
+
+    /**
      * Lit un ZIP de backup et restaure ses contenus.
      *
      * Workflow :
-     * 1. Lit `manifest.json` (1ère entry) → on peut **fail-fast** sur la version.
-     * 2. Itère les photos : extrait chaque entry vers [PhotoArchiver.restoredPhotosDir].
-     * 3. Vérifie le SHA-256 ; si mismatch → skip l'extraction (photo corrompue
+     * 1. Détecte le magic crypto. Si présent ET clé fournie → décrypte ; si
+     *    présent SANS clé → throw (caller doit prompter recovery code).
+     * 2. Lit `manifest.json` (1ère entry) → on peut **fail-fast** sur la version.
+     * 3. Itère les photos : extrait chaque entry vers [PhotoArchiver.restoredPhotosDir].
+     * 4. Vérifie le SHA-256 ; si mismatch → skip l'extraction (photo corrompue
      *    en transit). La row DB pointera vers un fichier absent, l'UI affichera
      *    un placeholder ; mais le restore continue.
      *
+     * **Si la clé est fausse** : `AEADBadTagException` remonte sous forme
+     * d'IOException quand on lit la fin du ZIP — pas avant. C'est intrinsèque
+     * à AES-GCM streaming.
+     *
      * @param archiveUri URI du fichier ZIP (sélectionné par l'utilisateur via
      *   le picker OPEN_DOCUMENT).
+     * @param decryptionKey Clé maître (32 bytes) si l'archive est chiffrée.
+     *   Null pour les archives en clair (back-compat ou user qui n'a pas
+     *   activé l'encryption).
      * @return [UnpackResult] contenant le manifest brut JSON + le mapping
      *   archivePath → localPath effectif.
      */
-    fun unpack(archiveUri: Uri): UnpackResult {
+    fun unpack(archiveUri: Uri, decryptionKey: ByteArray? = null): UnpackResult {
         val targetDir = photoArchiver.restoredPhotosDir()
         var manifestJson: String? = null
         val extracted = mutableMapOf<String, String>()
         val skipped = mutableListOf<String>()
 
         context.contentResolver.openInputStream(archiveUri)?.use { rawIn ->
-            ZipInputStream(BufferedInputStream(rawIn)).use { zip ->
+            val buffered = BufferedInputStream(rawIn)
+            val zipSource: InputStream = if (BackupCrypto.isEncryptedStream(buffered)) {
+                val key = decryptionKey
+                    ?: throw EncryptedArchiveException(
+                        "Cette sauvegarde est chiffrée. Saisis ton code de récupération pour la restaurer."
+                    )
+                BackupCrypto.decryptStream(buffered, key)
+            } else {
+                buffered
+            }
+            ZipInputStream(zipSource).use { zip ->
                 while (true) {
                     val entry = zip.nextEntry ?: break
                     val name = entry.name
@@ -195,6 +305,13 @@ class BackupArchive @Inject constructor(
             skippedEntries = skipped,
         )
     }
+
+    /**
+     * Levée par [unpack] quand l'archive est chiffrée mais qu'aucune clé n'a
+     * été fournie. Le caller (BackupRepository) doit catch et signaler à l'UI
+     * de prompter le recovery code.
+     */
+    class EncryptedArchiveException(message: String) : IOException(message)
 
     /**
      * Liste les archives de backup présentes dans le dossier SAF, triées par

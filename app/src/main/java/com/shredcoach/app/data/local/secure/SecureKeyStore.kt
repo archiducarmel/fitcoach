@@ -39,7 +39,9 @@ class SecureKeyStore @Inject constructor(
         /** Groq image-capable : alternative au scan repas. */
         GROQ_MEAL,
         /** Mistral vision : alternative au scan repas. */
-        MISTRAL
+        MISTRAL,
+        /** Google Cloud Text-to-Speech (Chirp 3 HD) — voix Shreddy premium. */
+        GOOGLE_TTS,
     }
 
     private val masterKey: MasterKey = MasterKey.Builder(context)
