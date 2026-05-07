@@ -86,3 +86,10 @@ lint/tmp/
 
 # Android Profiling
 *.hprof
+
+# Claude Code internal state (lock files, session config local)
+.claude/scheduled_tasks.lock
+
+# Workspace assets — GIFs source pour build des Releases (pas du source code,
+# 488 Mo binaire). Streamés depuis GitHub Releases en prod via GifUrlResolver.
+gifs-app/
