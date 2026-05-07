@@ -2855,4 +2855,910 @@
     <string name="exo_dips_aux_anneaux_execution">Arms extended, shoulders down. Lower until elbows at 90°. Upright torso = triceps, leaning = pecs. Press to return.</string>
     <string name="exo_dips_aux_anneaux_tips">Catalog variant. Adapt the load to your level.</string>
     <string name="exo_dips_aux_anneaux_starting_weight">Bodyweight</string>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Phase 3 wave 4 — 150 exos contigus (source lignes 1484-1633) -->
+    <!-- Batch 3 templated essentiellement (FR auto-générées) →        -->
+    <!-- traductions EN via templates partagés par pattern de mouvement-->
+    <!-- ════════════════════════════════════════════════════════════ -->
+
+    <string name="exo_dips_sur_banc_name">Dips on bench</string>
+    <string name="exo_dips_sur_banc_equipment">None (bodyweight).</string>
+    <string name="exo_dips_sur_banc_execution">Arms extended, shoulders down. Lower until elbows at 90°. Upright torso = triceps, leaning = pecs. Press to return.</string>
+    <string name="exo_dips_sur_banc_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_dips_sur_banc_starting_weight">Bodyweight</string>
+
+    <string name="exo_dips_sur_une_chaise_name">Chair dips</string>
+    <string name="exo_dips_sur_une_chaise_equipment">None (bodyweight).</string>
+    <string name="exo_dips_sur_une_chaise_execution">Arms extended, shoulders down. Lower until elbows at 90°. Upright torso = triceps, leaning = pecs. Press to return.</string>
+    <string name="exo_dips_sur_une_chaise_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_dips_sur_une_chaise_starting_weight">Bodyweight</string>
+
+    <string name="exo_donkey_kick_name">Donkey kick</string>
+    <string name="exo_donkey_kick_equipment">None (bodyweight).</string>
+    <string name="exo_donkey_kick_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_donkey_kick_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_donkey_kick_starting_weight">Bodyweight</string>
+
+    <string name="exo_drag_curl_name">Drag curl</string>
+    <string name="exo_drag_curl_equipment">None (bodyweight).</string>
+    <string name="exo_drag_curl_execution">Elbows fixed at your sides. Raise contracting the biceps. 3-sec descent, full extension at the bottom.</string>
+    <string name="exo_drag_curl_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_drag_curl_starting_weight">Bodyweight</string>
+
+    <string name="exo_drag_curl_avec_halteres_name">Dumbbell drag curl</string>
+    <string name="exo_drag_curl_avec_halteres_equipment">Dumbbells.</string>
+    <string name="exo_drag_curl_avec_halteres_execution">Elbows fixed at your sides. Raise contracting the biceps. 3-sec descent, full extension at the bottom.</string>
+    <string name="exo_drag_curl_avec_halteres_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_drag_curl_avec_halteres_starting_weight">Moderate load</string>
+
+    <string name="exo_drag_curl_a_la_smith_machine_name">Smith machine drag curl</string>
+    <string name="exo_drag_curl_a_la_smith_machine_equipment">Guided machine.</string>
+    <string name="exo_drag_curl_a_la_smith_machine_execution">Elbows fixed at your sides. Raise contracting the biceps. 3-sec descent, full extension at the bottom.</string>
+    <string name="exo_drag_curl_a_la_smith_machine_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_drag_curl_a_la_smith_machine_starting_weight">45–90 lb</string>
+
+    <string name="exo_developpe_couche_au_sol_avec_kettlebell_name">Floor press with kettlebell</string>
+    <string name="exo_developpe_couche_au_sol_avec_kettlebell_equipment">Kettlebell.</string>
+    <string name="exo_developpe_couche_au_sol_avec_kettlebell_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_developpe_couche_au_sol_avec_kettlebell_tips">Explosive functional work. Preferred for power + cardio.</string>
+    <string name="exo_developpe_couche_au_sol_avec_kettlebell_starting_weight">Moderate load</string>
+
+    <string name="exo_developpe_couche_avec_chaines_name">Bench press with chains</string>
+    <string name="exo_developpe_couche_avec_chaines_equipment">None (bodyweight).</string>
+    <string name="exo_developpe_couche_avec_chaines_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_developpe_couche_avec_chaines_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_developpe_couche_avec_chaines_starting_weight">Bodyweight</string>
+
+    <string name="exo_developpe_couche_avec_elastique_name">Band bench press</string>
+    <string name="exo_developpe_couche_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_developpe_couche_avec_elastique_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_developpe_couche_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_developpe_couche_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_developpe_couche_halteres_name">Dumbbell bench press</string>
+    <string name="exo_developpe_couche_halteres_equipment">Dumbbells.</string>
+    <string name="exo_developpe_couche_halteres_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_developpe_couche_halteres_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_developpe_couche_halteres_starting_weight">Moderate load</string>
+
+    <string name="exo_developpe_couche_serre_avec_halteres_name">Close-grip dumbbell bench press</string>
+    <string name="exo_developpe_couche_serre_avec_halteres_equipment">Dumbbells.</string>
+    <string name="exo_developpe_couche_serre_avec_halteres_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_developpe_couche_serre_avec_halteres_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_developpe_couche_serre_avec_halteres_starting_weight">Moderate load</string>
+
+    <string name="exo_developpe_couche_unilateral_avec_kettlebell_name">Single-arm kettlebell bench press</string>
+    <string name="exo_developpe_couche_unilateral_avec_kettlebell_equipment">Kettlebell.</string>
+    <string name="exo_developpe_couche_unilateral_avec_kettlebell_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_developpe_couche_unilateral_avec_kettlebell_tips">Explosive functional work. Preferred for power + cardio.</string>
+    <string name="exo_developpe_couche_unilateral_avec_kettlebell_starting_weight">Moderate load</string>
+
+    <string name="exo_developpe_couche_a_la_smith_machine_name">Smith machine bench press</string>
+    <string name="exo_developpe_couche_a_la_smith_machine_equipment">Guided machine.</string>
+    <string name="exo_developpe_couche_a_la_smith_machine_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_developpe_couche_a_la_smith_machine_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_developpe_couche_a_la_smith_machine_starting_weight">45–90 lb</string>
+
+    <string name="exo_developpe_debout_avec_elastique_name">Standing band press</string>
+    <string name="exo_developpe_debout_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_developpe_debout_avec_elastique_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_developpe_debout_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_developpe_debout_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_developpe_decline_avec_haltere_name">Decline dumbbell press</string>
+    <string name="exo_developpe_decline_avec_haltere_equipment">Dumbbells.</string>
+    <string name="exo_developpe_decline_avec_haltere_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_developpe_decline_avec_haltere_tips">Decline bench = targets the lower pecs.</string>
+    <string name="exo_developpe_decline_avec_haltere_starting_weight">Moderate load</string>
+
+    <string name="exo_developpe_decline_avec_elastique_name">Decline band press</string>
+    <string name="exo_developpe_decline_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_developpe_decline_avec_elastique_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_developpe_decline_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_developpe_decline_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_developpe_decline_a_la_barre_name">Decline barbell press</string>
+    <string name="exo_developpe_decline_a_la_barre_equipment">Olympic barbell.</string>
+    <string name="exo_developpe_decline_a_la_barre_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_developpe_decline_a_la_barre_tips">Decline bench = targets the lower pecs.</string>
+    <string name="exo_developpe_decline_a_la_barre_starting_weight">Moderate load</string>
+
+    <string name="exo_developpe_incline_a_la_barre_name">Incline barbell press</string>
+    <string name="exo_developpe_incline_a_la_barre_equipment">Olympic barbell.</string>
+    <string name="exo_developpe_incline_a_la_barre_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_developpe_incline_a_la_barre_tips">Incline bench = recruits the upper pecs / front delt more.</string>
+    <string name="exo_developpe_incline_a_la_barre_starting_weight">Moderate load</string>
+
+    <string name="exo_developpe_incline_a_la_poulie_name">Incline cable press</string>
+    <string name="exo_developpe_incline_a_la_poulie_equipment">Pulley + attachment.</string>
+    <string name="exo_developpe_incline_a_la_poulie_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_developpe_incline_a_la_poulie_tips">Incline bench = recruits the upper pecs / front delt more.</string>
+    <string name="exo_developpe_incline_a_la_poulie_starting_weight">Light load</string>
+
+    <string name="exo_developpe_militaire_name">Military press</string>
+    <string name="exo_developpe_militaire_equipment">None (bodyweight).</string>
+    <string name="exo_developpe_militaire_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_developpe_militaire_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_developpe_militaire_starting_weight">Bodyweight</string>
+
+    <string name="exo_developpe_nuque_barre_guidee_name">Behind-the-neck Smith press</string>
+    <string name="exo_developpe_nuque_barre_guidee_equipment">Olympic barbell.</string>
+    <string name="exo_developpe_nuque_barre_guidee_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_developpe_nuque_barre_guidee_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_developpe_nuque_barre_guidee_starting_weight">Moderate load</string>
+
+    <string name="exo_developpe_epaule_unilateral_avec_elastique_name">Single-arm band shoulder press</string>
+    <string name="exo_developpe_epaule_unilateral_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_developpe_epaule_unilateral_avec_elastique_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_developpe_epaule_unilateral_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_developpe_epaule_unilateral_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_developpe_epaule_unilateral_a_genou_avec_landmine_name">Kneeling single-arm landmine shoulder press</string>
+    <string name="exo_developpe_epaule_unilateral_a_genou_avec_landmine_equipment">Landmine + bar.</string>
+    <string name="exo_developpe_epaule_unilateral_a_genou_avec_landmine_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_developpe_epaule_unilateral_a_genou_avec_landmine_tips">Unilateral: corrects left/right imbalances.</string>
+    <string name="exo_developpe_epaule_unilateral_a_genou_avec_landmine_starting_weight">Moderate load</string>
+
+    <string name="exo_developpe_epaules_assis_name">Seated shoulder press</string>
+    <string name="exo_developpe_epaules_assis_equipment">None (bodyweight).</string>
+    <string name="exo_developpe_epaules_assis_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_developpe_epaules_assis_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_developpe_epaules_assis_starting_weight">Bodyweight</string>
+
+    <string name="exo_developpe_epaules_assis_avec_elastique_name">Seated band shoulder press</string>
+    <string name="exo_developpe_epaules_assis_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_developpe_epaules_assis_avec_elastique_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_developpe_epaules_assis_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_developpe_epaules_assis_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_developpe_epaules_avec_elastique_name">Band shoulder press</string>
+    <string name="exo_developpe_epaules_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_developpe_epaules_avec_elastique_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_developpe_epaules_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_developpe_epaules_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_developpe_epaules_a_la_smith_machine_name">Smith machine shoulder press</string>
+    <string name="exo_developpe_epaules_a_la_smith_machine_equipment">Guided machine.</string>
+    <string name="exo_developpe_epaules_a_la_smith_machine_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_developpe_epaules_a_la_smith_machine_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_developpe_epaules_a_la_smith_machine_starting_weight">45–90 lb</string>
+
+    <string name="exo_extension_de_jambe_unilaterale_sur_une_machine_a_dips_assistes_name">Single-leg extension on assisted dip machine</string>
+    <string name="exo_extension_de_jambe_unilaterale_sur_une_machine_a_dips_assistes_equipment">Guided machine.</string>
+    <string name="exo_extension_de_jambe_unilaterale_sur_une_machine_a_dips_assistes_execution">Arms extended, shoulders down. Lower until elbows at 90°. Upright torso = triceps, leaning = pecs. Press to return.</string>
+    <string name="exo_extension_de_jambe_unilaterale_sur_une_machine_a_dips_assistes_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_extension_de_jambe_unilaterale_sur_une_machine_a_dips_assistes_starting_weight">45–90 lb</string>
+
+    <string name="exo_extension_des_triceps_au_dessus_de_la_tete_avec_elastique_name">Overhead band triceps extension</string>
+    <string name="exo_extension_des_triceps_au_dessus_de_la_tete_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_extension_des_triceps_au_dessus_de_la_tete_avec_elastique_execution">Elbows tucked, fixed. Full arm extension. Controlled descent 2–3 sec without moving the elbows.</string>
+    <string name="exo_extension_des_triceps_au_dessus_de_la_tete_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_extension_des_triceps_au_dessus_de_la_tete_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_extension_des_triceps_en_planche_name">Plank triceps extension</string>
+    <string name="exo_extension_des_triceps_en_planche_equipment">None (bodyweight).</string>
+    <string name="exo_extension_des_triceps_en_planche_execution">Elbows tucked, fixed. Full arm extension. Controlled descent 2–3 sec without moving the elbows.</string>
+    <string name="exo_extension_des_triceps_en_planche_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_extension_des_triceps_en_planche_starting_weight">Bodyweight</string>
+
+    <string name="exo_extension_horizontale_des_epaules_avec_elastique_name">Horizontal band shoulder extension</string>
+    <string name="exo_extension_horizontale_des_epaules_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_extension_horizontale_des_epaules_avec_elastique_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_extension_horizontale_des_epaules_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_extension_horizontale_des_epaules_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_extension_horizontale_a_la_poulie_name">Horizontal cable extension</string>
+    <string name="exo_extension_horizontale_a_la_poulie_equipment">Pulley + attachment.</string>
+    <string name="exo_extension_horizontale_a_la_poulie_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_extension_horizontale_a_la_poulie_tips">Constant cable tension: zero dead spots in the motion.</string>
+    <string name="exo_extension_horizontale_a_la_poulie_starting_weight">Light load</string>
+
+    <string name="exo_extension_lombaire_a_la_machine_name">Lower back extension machine</string>
+    <string name="exo_extension_lombaire_a_la_machine_equipment">Guided machine.</string>
+    <string name="exo_extension_lombaire_a_la_machine_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_extension_lombaire_a_la_machine_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_extension_lombaire_a_la_machine_starting_weight">45–90 lb</string>
+
+    <string name="exo_extension_verticale_assis_a_la_barre_name">Seated overhead barbell extension</string>
+    <string name="exo_extension_verticale_assis_a_la_barre_equipment">Olympic barbell.</string>
+    <string name="exo_extension_verticale_assis_a_la_barre_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_extension_verticale_assis_a_la_barre_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_extension_verticale_assis_a_la_barre_starting_weight">Moderate load</string>
+
+    <string name="exo_extension_verticale_des_triceps_avec_elastique_name">Overhead band triceps extension (vertical)</string>
+    <string name="exo_extension_verticale_des_triceps_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_extension_verticale_des_triceps_avec_elastique_execution">Elbows tucked, fixed. Full arm extension. Controlled descent 2–3 sec without moving the elbows.</string>
+    <string name="exo_extension_verticale_des_triceps_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_extension_verticale_des_triceps_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_extension_a_la_presse_a_mollets_assis_name">Seated calf press extension</string>
+    <string name="exo_extension_a_la_presse_a_mollets_assis_equipment">None (bodyweight).</string>
+    <string name="exo_extension_a_la_presse_a_mollets_assis_execution">Balls of the feet on the edge. Rise on the toes with maximum range. Full descent with the heels low. Slow tempo.</string>
+    <string name="exo_extension_a_la_presse_a_mollets_assis_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_extension_a_la_presse_a_mollets_assis_starting_weight">Bodyweight</string>
+
+    <string name="exo_extensions_concentrees_des_triceps_a_la_poulie_name">Concentration cable triceps extension</string>
+    <string name="exo_extensions_concentrees_des_triceps_a_la_poulie_equipment">Pulley + attachment.</string>
+    <string name="exo_extensions_concentrees_des_triceps_a_la_poulie_execution">Elbows tucked, fixed. Full arm extension. Controlled descent 2–3 sec without moving the elbows.</string>
+    <string name="exo_extensions_concentrees_des_triceps_a_la_poulie_tips">Constant cable tension: zero dead spots in the motion.</string>
+    <string name="exo_extensions_concentrees_des_triceps_a_la_poulie_starting_weight">Light load</string>
+
+    <string name="exo_extensions_des_mollets_assis_avec_barre_name">Seated barbell calf raise</string>
+    <string name="exo_extensions_des_mollets_assis_avec_barre_equipment">Olympic barbell.</string>
+    <string name="exo_extensions_des_mollets_assis_avec_barre_execution">Balls of the feet on the edge. Rise on the toes with maximum range. Full descent with the heels low. Slow tempo.</string>
+    <string name="exo_extensions_des_mollets_assis_avec_barre_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_extensions_des_mollets_assis_avec_barre_starting_weight">Moderate load</string>
+
+    <string name="exo_extensions_des_mollets_assis_a_la_smith_machine_name">Seated Smith machine calf raise</string>
+    <string name="exo_extensions_des_mollets_assis_a_la_smith_machine_equipment">Guided machine.</string>
+    <string name="exo_extensions_des_mollets_assis_a_la_smith_machine_execution">Balls of the feet on the edge. Rise on the toes with maximum range. Full descent with the heels low. Slow tempo.</string>
+    <string name="exo_extensions_des_mollets_assis_a_la_smith_machine_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_extensions_des_mollets_assis_a_la_smith_machine_starting_weight">45–90 lb</string>
+
+    <string name="exo_extensions_des_mollets_au_hack_squat_name">Hack squat calf raise</string>
+    <string name="exo_extensions_des_mollets_au_hack_squat_equipment">None (bodyweight).</string>
+    <string name="exo_extensions_des_mollets_au_hack_squat_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_extensions_des_mollets_au_hack_squat_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_extensions_des_mollets_au_hack_squat_starting_weight">Bodyweight</string>
+
+    <string name="exo_extensions_des_mollets_avec_partenaire_name">Partner calf raise</string>
+    <string name="exo_extensions_des_mollets_avec_partenaire_equipment">None (bodyweight).</string>
+    <string name="exo_extensions_des_mollets_avec_partenaire_execution">Balls of the feet on the edge. Rise on the toes with maximum range. Full descent with the heels low. Slow tempo.</string>
+    <string name="exo_extensions_des_mollets_avec_partenaire_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_extensions_des_mollets_avec_partenaire_starting_weight">Bodyweight</string>
+
+    <string name="exo_extensions_des_triceps_avec_sangles_de_suspension_name">Suspension triceps extension</string>
+    <string name="exo_extensions_des_triceps_avec_sangles_de_suspension_equipment">Cable or band.</string>
+    <string name="exo_extensions_des_triceps_avec_sangles_de_suspension_execution">Elbows tucked, fixed. Full arm extension. Controlled descent 2–3 sec without moving the elbows.</string>
+    <string name="exo_extensions_des_triceps_avec_sangles_de_suspension_tips">Unstable work: recruits the stabilizers in addition to the target muscle.</string>
+    <string name="exo_extensions_des_triceps_avec_sangles_de_suspension_starting_weight">Light load</string>
+
+    <string name="exo_extensions_des_triceps_couche_avec_halteres_name">Lying dumbbell triceps extension</string>
+    <string name="exo_extensions_des_triceps_couche_avec_halteres_equipment">Dumbbells.</string>
+    <string name="exo_extensions_des_triceps_couche_avec_halteres_execution">Elbows tucked, fixed. Full arm extension. Controlled descent 2–3 sec without moving the elbows.</string>
+    <string name="exo_extensions_des_triceps_couche_avec_halteres_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_extensions_des_triceps_couche_avec_halteres_starting_weight">Moderate load</string>
+
+    <string name="exo_extensions_des_triceps_decline_avec_halteres_name">Decline dumbbell triceps extension</string>
+    <string name="exo_extensions_des_triceps_decline_avec_halteres_equipment">Dumbbells.</string>
+    <string name="exo_extensions_des_triceps_decline_avec_halteres_execution">Elbows tucked, fixed. Full arm extension. Controlled descent 2–3 sec without moving the elbows.</string>
+    <string name="exo_extensions_des_triceps_decline_avec_halteres_tips">Decline bench = targets the lower pecs.</string>
+    <string name="exo_extensions_des_triceps_decline_avec_halteres_starting_weight">Moderate load</string>
+
+    <string name="exo_extensions_des_triceps_incline_avec_halteres_name">Incline dumbbell triceps extension</string>
+    <string name="exo_extensions_des_triceps_incline_avec_halteres_equipment">Dumbbells.</string>
+    <string name="exo_extensions_des_triceps_incline_avec_halteres_execution">Elbows tucked, fixed. Full arm extension. Controlled descent 2–3 sec without moving the elbows.</string>
+    <string name="exo_extensions_des_triceps_incline_avec_halteres_tips">Incline bench = recruits the upper pecs / front delt more.</string>
+    <string name="exo_extensions_des_triceps_incline_avec_halteres_starting_weight">Moderate load</string>
+
+    <string name="exo_extensions_des_triceps_incline_a_la_smith_machine_name">Incline Smith machine triceps extension</string>
+    <string name="exo_extensions_des_triceps_incline_a_la_smith_machine_equipment">Guided machine.</string>
+    <string name="exo_extensions_des_triceps_incline_a_la_smith_machine_execution">Elbows tucked, fixed. Full arm extension. Controlled descent 2–3 sec without moving the elbows.</string>
+    <string name="exo_extensions_des_triceps_incline_a_la_smith_machine_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_extensions_des_triceps_incline_a_la_smith_machine_starting_weight">45–90 lb</string>
+
+    <string name="exo_extensions_des_triceps_incline_a_la_poulie_basse_name">Incline low cable triceps extension</string>
+    <string name="exo_extensions_des_triceps_incline_a_la_poulie_basse_equipment">Pulley + attachment.</string>
+    <string name="exo_extensions_des_triceps_incline_a_la_poulie_basse_execution">Elbows tucked, fixed. Full arm extension. Controlled descent 2–3 sec without moving the elbows.</string>
+    <string name="exo_extensions_des_triceps_incline_a_la_poulie_basse_tips">Incline bench = recruits the upper pecs / front delt more.</string>
+    <string name="exo_extensions_des_triceps_incline_a_la_poulie_basse_starting_weight">Light load</string>
+
+    <string name="exo_extensions_des_triceps_a_la_machine_technogym_name">Triceps extension (Technogym machine)</string>
+    <string name="exo_extensions_des_triceps_a_la_machine_technogym_equipment">Guided machine.</string>
+    <string name="exo_extensions_des_triceps_a_la_machine_technogym_execution">Elbows tucked, fixed. Full arm extension. Controlled descent 2–3 sec without moving the elbows.</string>
+    <string name="exo_extensions_des_triceps_a_la_machine_technogym_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_extensions_des_triceps_a_la_machine_technogym_starting_weight">45–90 lb</string>
+
+    <string name="exo_extensions_lombaires_sur_swiss_ball_name">Swiss ball back extensions</string>
+    <string name="exo_extensions_lombaires_sur_swiss_ball_equipment">Swiss ball.</string>
+    <string name="exo_extensions_lombaires_sur_swiss_ball_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_extensions_lombaires_sur_swiss_ball_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_extensions_lombaires_sur_swiss_ball_starting_weight">Bodyweight</string>
+
+    <string name="exo_extensions_verticales_d_un_bras_avec_haltere_name">Single-arm overhead dumbbell extension</string>
+    <string name="exo_extensions_verticales_d_un_bras_avec_haltere_equipment">Dumbbells.</string>
+    <string name="exo_extensions_verticales_d_un_bras_avec_haltere_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_extensions_verticales_d_un_bras_avec_haltere_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_extensions_verticales_d_un_bras_avec_haltere_starting_weight">Moderate load</string>
+
+    <string name="exo_extensions_verticales_a_deux_mains_avec_haltere_name">Two-hand overhead dumbbell extension</string>
+    <string name="exo_extensions_verticales_a_deux_mains_avec_haltere_equipment">Dumbbells.</string>
+    <string name="exo_extensions_verticales_a_deux_mains_avec_haltere_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_extensions_verticales_a_deux_mains_avec_haltere_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_extensions_verticales_a_deux_mains_avec_haltere_starting_weight">Moderate load</string>
+
+    <string name="exo_extensions_verticales_a_la_poulie_haute_name">High cable overhead extension</string>
+    <string name="exo_extensions_verticales_a_la_poulie_haute_equipment">Pulley + attachment.</string>
+    <string name="exo_extensions_verticales_a_la_poulie_haute_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_extensions_verticales_a_la_poulie_haute_tips">Constant cable tension: zero dead spots in the motion.</string>
+    <string name="exo_extensions_verticales_a_la_poulie_haute_starting_weight">Light load</string>
+
+    <string name="exo_face_pull_couche_a_la_poulie_name">Lying cable face pull</string>
+    <string name="exo_face_pull_couche_a_la_poulie_equipment">Pulley + attachment.</string>
+    <string name="exo_face_pull_couche_a_la_poulie_execution">Pull the rope toward the face spreading the hands. Elbows high. Double-biceps pose at the end.</string>
+    <string name="exo_face_pull_couche_a_la_poulie_tips">Constant cable tension: zero dead spots in the motion.</string>
+    <string name="exo_face_pull_couche_a_la_poulie_starting_weight">Light load</string>
+
+    <string name="exo_fente_profonde_avec_etirement_des_ischios_name">Deep lunge with hamstring stretch</string>
+    <string name="exo_fente_profonde_avec_etirement_des_ischios_equipment">None (bodyweight).</string>
+    <string name="exo_fente_profonde_avec_etirement_des_ischios_execution">Big step forward, back knee close to the floor. Front knee aligned with the ankle. Push back to return.</string>
+    <string name="exo_fente_profonde_avec_etirement_des_ischios_tips">Mobility movement. No pain, just stretch tension.</string>
+    <string name="exo_fente_profonde_avec_etirement_des_ischios_starting_weight">Bodyweight</string>
+
+    <string name="exo_fentes_avant_avec_barre_name">Barbell forward lunges</string>
+    <string name="exo_fentes_avant_avec_barre_equipment">Olympic barbell.</string>
+    <string name="exo_fentes_avant_avec_barre_execution">Big step forward, back knee close to the floor. Front knee aligned with the ankle. Push back to return.</string>
+    <string name="exo_fentes_avant_avec_barre_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_fentes_avant_avec_barre_starting_weight">Moderate load</string>
+
+    <string name="exo_fentes_avant_avec_halteres_name">Dumbbell forward lunges</string>
+    <string name="exo_fentes_avant_avec_halteres_equipment">Dumbbells.</string>
+    <string name="exo_fentes_avant_avec_halteres_execution">Big step forward, back knee close to the floor. Front knee aligned with the ankle. Push back to return.</string>
+    <string name="exo_fentes_avant_avec_halteres_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_fentes_avant_avec_halteres_starting_weight">Moderate load</string>
+
+    <string name="exo_fentes_avant_avec_kettlebell_name">Kettlebell forward lunges</string>
+    <string name="exo_fentes_avant_avec_kettlebell_equipment">Kettlebell.</string>
+    <string name="exo_fentes_avant_avec_kettlebell_execution">Big step forward, back knee close to the floor. Front knee aligned with the ankle. Push back to return.</string>
+    <string name="exo_fentes_avant_avec_kettlebell_tips">Explosive functional work. Preferred for power + cardio.</string>
+    <string name="exo_fentes_avant_avec_kettlebell_starting_weight">Moderate load</string>
+
+    <string name="exo_fentes_croisees_name">Curtsy lunges</string>
+    <string name="exo_fentes_croisees_equipment">None (bodyweight).</string>
+    <string name="exo_fentes_croisees_execution">Big step forward, back knee close to the floor. Front knee aligned with the ankle. Push back to return.</string>
+    <string name="exo_fentes_croisees_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_fentes_croisees_starting_weight">Bodyweight</string>
+
+    <string name="exo_fentes_inversees_avec_landmine_name">Landmine reverse lunges</string>
+    <string name="exo_fentes_inversees_avec_landmine_equipment">Landmine + bar.</string>
+    <string name="exo_fentes_inversees_avec_landmine_execution">Big step forward, back knee close to the floor. Front knee aligned with the ankle. Push back to return.</string>
+    <string name="exo_fentes_inversees_avec_landmine_tips">Landmine: arc trajectory, demands stabilization. Versatile.</string>
+    <string name="exo_fentes_inversees_avec_landmine_starting_weight">Moderate load</string>
+
+    <string name="exo_fire_hydrant_name">Fire hydrant</string>
+    <string name="exo_fire_hydrant_equipment">None (bodyweight).</string>
+    <string name="exo_fire_hydrant_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_fire_hydrant_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_fire_hydrant_starting_weight">Bodyweight</string>
+
+    <string name="exo_flexion_et_extension_de_la_colonne_name">Spine flexion/extension</string>
+    <string name="exo_flexion_et_extension_de_la_colonne_equipment">None (bodyweight).</string>
+    <string name="exo_flexion_et_extension_de_la_colonne_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_flexion_et_extension_de_la_colonne_tips">Mobility movement. No pain, just stretch tension.</string>
+    <string name="exo_flexion_et_extension_de_la_colonne_starting_weight">Bodyweight</string>
+
+    <string name="exo_flexions_des_obliques_au_banc_a_lombaire_a_45_name">Oblique flexions on 45° back bench</string>
+    <string name="exo_flexions_des_obliques_au_banc_a_lombaire_a_45_equipment">None (bodyweight).</string>
+    <string name="exo_flexions_des_obliques_au_banc_a_lombaire_a_45_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_flexions_des_obliques_au_banc_a_lombaire_a_45_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_flexions_des_obliques_au_banc_a_lombaire_a_45_starting_weight">Bodyweight</string>
+
+    <string name="exo_flexions_laterales_avec_haltere_name">Dumbbell side bends</string>
+    <string name="exo_flexions_laterales_avec_haltere_equipment">Dumbbells.</string>
+    <string name="exo_flexions_laterales_avec_haltere_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_flexions_laterales_avec_haltere_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_flexions_laterales_avec_haltere_starting_weight">Moderate load</string>
+
+    <string name="exo_flexions_laterales_a_la_poulie_basse_name">Low cable side bends</string>
+    <string name="exo_flexions_laterales_a_la_poulie_basse_equipment">Pulley + attachment.</string>
+    <string name="exo_flexions_laterales_a_la_poulie_basse_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_flexions_laterales_a_la_poulie_basse_tips">Constant cable tension: zero dead spots in the motion.</string>
+    <string name="exo_flexions_laterales_a_la_poulie_basse_starting_weight">Light load</string>
+
+    <string name="exo_front_squat_avec_halteres_name">Dumbbell front squat</string>
+    <string name="exo_front_squat_avec_halteres_equipment">Dumbbells.</string>
+    <string name="exo_front_squat_avec_halteres_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_front_squat_avec_halteres_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_front_squat_avec_halteres_starting_weight">Moderate load</string>
+
+    <string name="exo_goblet_squat_avec_haltere_name">Dumbbell goblet squat</string>
+    <string name="exo_goblet_squat_avec_haltere_equipment">Dumbbells.</string>
+    <string name="exo_goblet_squat_avec_haltere_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_goblet_squat_avec_haltere_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_goblet_squat_avec_haltere_starting_weight">Moderate load</string>
+
+    <string name="exo_good_morning_avec_elastique_name">Band good morning</string>
+    <string name="exo_good_morning_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_good_morning_avec_elastique_execution">Bar on the traps. Hips back keeping legs slightly bent. Torso lowers to 90°. Stand up squeezing the glutes.</string>
+    <string name="exo_good_morning_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_good_morning_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_hack_squat_inverse_name">Reverse hack squat</string>
+    <string name="exo_hack_squat_inverse_equipment">None (bodyweight).</string>
+    <string name="exo_hack_squat_inverse_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_hack_squat_inverse_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_hack_squat_inverse_starting_weight">Bodyweight</string>
+
+    <string name="exo_hip_thrust_avec_sangles_de_suspension_name">Suspension hip thrust</string>
+    <string name="exo_hip_thrust_avec_sangles_de_suspension_equipment">Cable or band.</string>
+    <string name="exo_hip_thrust_avec_sangles_de_suspension_execution">Back on the bench, feet on the floor, load on the hips. Drive the hips toward the ceiling, contract the glutes at the top.</string>
+    <string name="exo_hip_thrust_avec_sangles_de_suspension_tips">Unstable work: recruits the stabilizers in addition to the target muscle.</string>
+    <string name="exo_hip_thrust_avec_sangles_de_suspension_starting_weight">Light load</string>
+
+    <string name="exo_hip_thrust_unilateral_name">Single-leg hip thrust</string>
+    <string name="exo_hip_thrust_unilateral_equipment">None (bodyweight).</string>
+    <string name="exo_hip_thrust_unilateral_execution">Back on the bench, feet on the floor, load on the hips. Drive the hips toward the ceiling, contract the glutes at the top.</string>
+    <string name="exo_hip_thrust_unilateral_tips">Unilateral: corrects left/right imbalances.</string>
+    <string name="exo_hip_thrust_unilateral_starting_weight">Bodyweight</string>
+
+    <string name="exo_hip_thrust_a_la_machine_name">Hip thrust machine</string>
+    <string name="exo_hip_thrust_a_la_machine_equipment">Guided machine.</string>
+    <string name="exo_hip_thrust_a_la_machine_execution">Back on the bench, feet on the floor, load on the hips. Drive the hips toward the ceiling, contract the glutes at the top.</string>
+    <string name="exo_hip_thrust_a_la_machine_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_hip_thrust_a_la_machine_starting_weight">45–90 lb</string>
+
+    <string name="exo_hip_thrust_a_la_smith_machine_name">Smith machine hip thrust</string>
+    <string name="exo_hip_thrust_a_la_smith_machine_equipment">Guided machine.</string>
+    <string name="exo_hip_thrust_a_la_smith_machine_execution">Back on the bench, feet on the floor, load on the hips. Drive the hips toward the ceiling, contract the glutes at the top.</string>
+    <string name="exo_hip_thrust_a_la_smith_machine_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_hip_thrust_a_la_smith_machine_starting_weight">45–90 lb</string>
+
+    <string name="exo_hip_thrusts_a_genoux_avec_elastique_name">Kneeling band hip thrust</string>
+    <string name="exo_hip_thrusts_a_genoux_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_hip_thrusts_a_genoux_avec_elastique_execution">Back on the bench, feet on the floor, load on the hips. Drive the hips toward the ceiling, contract the glutes at the top.</string>
+    <string name="exo_hip_thrusts_a_genoux_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_hip_thrusts_a_genoux_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_hula_hoop_name">Hula hoop</string>
+    <string name="exo_hula_hoop_equipment">None (bodyweight).</string>
+    <string name="exo_hula_hoop_execution">Continuous pelvic circles. Trains obliques and coordination. Steady rhythm.</string>
+    <string name="exo_hula_hoop_tips">Reps = seconds or minutes depending on intensity. Target 70–80% MHR.</string>
+    <string name="exo_hula_hoop_starting_weight">Bodyweight</string>
+
+    <string name="exo_hyperextension_inversee_au_swiss_ball_name">Swiss ball reverse hyperextension</string>
+    <string name="exo_hyperextension_inversee_au_swiss_ball_equipment">Swiss ball.</string>
+    <string name="exo_hyperextension_inversee_au_swiss_ball_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_hyperextension_inversee_au_swiss_ball_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_hyperextension_inversee_au_swiss_ball_starting_weight">Bodyweight</string>
+
+    <string name="exo_jackknife_sur_swiss_ball_name">Swiss ball jackknife</string>
+    <string name="exo_jackknife_sur_swiss_ball_equipment">Swiss ball.</string>
+    <string name="exo_jackknife_sur_swiss_ball_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_jackknife_sur_swiss_ball_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_jackknife_sur_swiss_ball_starting_weight">Bodyweight</string>
+
+    <string name="exo_jefferson_squat_name">Jefferson squat</string>
+    <string name="exo_jefferson_squat_equipment">None (bodyweight).</string>
+    <string name="exo_jefferson_squat_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_jefferson_squat_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_jefferson_squat_starting_weight">Bodyweight</string>
+
+    <string name="exo_jumping_jack_name">Jumping jacks</string>
+    <string name="exo_jumping_jack_equipment">None (bodyweight).</string>
+    <string name="exo_jumping_jack_execution">Jumps spreading arms and legs simultaneously. Steady rhythm, soft landing.</string>
+    <string name="exo_jumping_jack_tips">Reps = seconds or minutes depending on intensity. Target 70–80% MHR.</string>
+    <string name="exo_jumping_jack_starting_weight">Bodyweight</string>
+
+    <string name="exo_kettlebell_back_squat_name">Kettlebell back squat</string>
+    <string name="exo_kettlebell_back_squat_equipment">Kettlebell.</string>
+    <string name="exo_kettlebell_back_squat_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_kettlebell_back_squat_tips">Explosive functional work. Preferred for power + cardio.</string>
+    <string name="exo_kettlebell_back_squat_starting_weight">Moderate load</string>
+
+    <string name="exo_kickback_alterne_assis_name">Seated alternating kickback</string>
+    <string name="exo_kickback_alterne_assis_equipment">None (bodyweight).</string>
+    <string name="exo_kickback_alterne_assis_execution">Elbow tucked at 90°. Extend the forearm back. Peak contraction 1s. Isolated movement.</string>
+    <string name="exo_kickback_alterne_assis_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_kickback_alterne_assis_starting_weight">Bodyweight</string>
+
+    <string name="exo_kickback_debout_avec_halteres_name">Standing dumbbell kickback</string>
+    <string name="exo_kickback_debout_avec_halteres_equipment">Dumbbells.</string>
+    <string name="exo_kickback_debout_avec_halteres_execution">Elbow tucked at 90°. Extend the forearm back. Peak contraction 1s. Isolated movement.</string>
+    <string name="exo_kickback_debout_avec_halteres_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_kickback_debout_avec_halteres_starting_weight">Moderate load</string>
+
+    <string name="exo_leg_curl_allonge_avec_elastique_name">Lying band leg curl</string>
+    <string name="exo_leg_curl_allonge_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_leg_curl_allonge_avec_elastique_execution">Thighs locked. Curl the knees to bring the heels toward the glutes. 1–2s contraction. Slow descent.</string>
+    <string name="exo_leg_curl_allonge_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_leg_curl_allonge_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_leg_curl_au_ballon_de_gym_name">Gym ball leg curl</string>
+    <string name="exo_leg_curl_au_ballon_de_gym_equipment">None (bodyweight).</string>
+    <string name="exo_leg_curl_au_ballon_de_gym_execution">Thighs locked. Curl the knees to bring the heels toward the glutes. 1–2s contraction. Slow descent.</string>
+    <string name="exo_leg_curl_au_ballon_de_gym_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_leg_curl_au_ballon_de_gym_starting_weight">Bodyweight</string>
+
+    <string name="exo_leg_curl_avec_sangles_de_suspension_name">Suspension leg curl</string>
+    <string name="exo_leg_curl_avec_sangles_de_suspension_equipment">Cable or band.</string>
+    <string name="exo_leg_curl_avec_sangles_de_suspension_execution">Thighs locked. Curl the knees to bring the heels toward the glutes. 1–2s contraction. Slow descent.</string>
+    <string name="exo_leg_curl_avec_sangles_de_suspension_tips">Unstable work: recruits the stabilizers in addition to the target muscle.</string>
+    <string name="exo_leg_curl_avec_sangles_de_suspension_starting_weight">Light load</string>
+
+    <string name="exo_leg_curl_avec_elastique_name">Band leg curl</string>
+    <string name="exo_leg_curl_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_leg_curl_avec_elastique_execution">Thighs locked. Curl the knees to bring the heels toward the glutes. 1–2s contraction. Slow descent.</string>
+    <string name="exo_leg_curl_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_leg_curl_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_leg_curl_decline_avec_haltere_name">Decline dumbbell leg curl</string>
+    <string name="exo_leg_curl_decline_avec_haltere_equipment">Dumbbells.</string>
+    <string name="exo_leg_curl_decline_avec_haltere_execution">Thighs locked. Curl the knees to bring the heels toward the glutes. 1–2s contraction. Slow descent.</string>
+    <string name="exo_leg_curl_decline_avec_haltere_tips">Decline bench = targets the lower pecs.</string>
+    <string name="exo_leg_curl_decline_avec_haltere_starting_weight">Moderate load</string>
+
+    <string name="exo_leg_curl_inverse_sur_le_tirage_vertical_name">Reverse leg curl on lat pulldown</string>
+    <string name="exo_leg_curl_inverse_sur_le_tirage_vertical_equipment">None (bodyweight).</string>
+    <string name="exo_leg_curl_inverse_sur_le_tirage_vertical_execution">Thighs locked. Curl the knees to bring the heels toward the glutes. 1–2s contraction. Slow descent.</string>
+    <string name="exo_leg_curl_inverse_sur_le_tirage_vertical_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_leg_curl_inverse_sur_le_tirage_vertical_starting_weight">Bodyweight</string>
+
+    <string name="exo_leg_curl_unilateral_debout_a_la_machine_name">Single-leg standing leg curl machine</string>
+    <string name="exo_leg_curl_unilateral_debout_a_la_machine_equipment">Guided machine.</string>
+    <string name="exo_leg_curl_unilateral_debout_a_la_machine_execution">Thighs locked. Curl the knees to bring the heels toward the glutes. 1–2s contraction. Slow descent.</string>
+    <string name="exo_leg_curl_unilateral_debout_a_la_machine_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_leg_curl_unilateral_debout_a_la_machine_starting_weight">45–90 lb</string>
+
+    <string name="exo_leg_extension_avec_elastique_name">Band leg extension</string>
+    <string name="exo_leg_extension_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_leg_extension_avec_elastique_execution">Seated, ankles under the roller. Extend the legs fully. Contract the quads 1s. Controlled descent.</string>
+    <string name="exo_leg_extension_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_leg_extension_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_leg_extension_iso_lateral_unilateral_hammer_strenght_name">Iso-lateral single-leg extension (Hammer Strength)</string>
+    <string name="exo_leg_extension_iso_lateral_unilateral_hammer_strenght_equipment">None (bodyweight).</string>
+    <string name="exo_leg_extension_iso_lateral_unilateral_hammer_strenght_execution">Seated, ankles under the roller. Extend the legs fully. Contract the quads 1s. Controlled descent.</string>
+    <string name="exo_leg_extension_iso_lateral_unilateral_hammer_strenght_tips">Unilateral: corrects left/right imbalances.</string>
+    <string name="exo_leg_extension_iso_lateral_unilateral_hammer_strenght_starting_weight">Bodyweight</string>
+
+    <string name="exo_machine_a_escaliers_name">Stair climber</string>
+    <string name="exo_machine_a_escaliers_equipment">Guided machine.</string>
+    <string name="exo_machine_a_escaliers_execution">Steady steps on the machine. Upright torso. Push through the whole leg.</string>
+    <string name="exo_machine_a_escaliers_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_machine_a_escaliers_starting_weight">45–90 lb</string>
+
+    <string name="exo_marche_avec_elastique_name">Banded walk</string>
+    <string name="exo_marche_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_marche_avec_elastique_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_marche_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_marche_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_marche_de_l_ours_name">Bear crawl</string>
+    <string name="exo_marche_de_l_ours_equipment">None (bodyweight).</string>
+    <string name="exo_marche_de_l_ours_execution">On all fours, knees off the floor. Walk forward moving opposite arm / opposite leg.</string>
+    <string name="exo_marche_de_l_ours_tips">Reps = seconds or minutes depending on intensity. Target 70–80% MHR.</string>
+    <string name="exo_marche_de_l_ours_starting_weight">Bodyweight</string>
+
+    <string name="exo_marche_lestee_name">Weighted walk</string>
+    <string name="exo_marche_lestee_equipment">None (bodyweight).</string>
+    <string name="exo_marche_lestee_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_marche_lestee_tips">Reps = seconds or minutes depending on intensity. Target 70–80% MHR.</string>
+    <string name="exo_marche_lestee_starting_weight">Bodyweight</string>
+
+    <string name="exo_montee_a_la_corde_name">Rope climb</string>
+    <string name="exo_montee_a_la_corde_equipment">None (bodyweight).</string>
+    <string name="exo_montee_a_la_corde_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_montee_a_la_corde_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_montee_a_la_corde_starting_weight">Bodyweight</string>
+
+    <string name="exo_montees_sur_banc_laterales_avec_barre_name">Barbell lateral step-ups</string>
+    <string name="exo_montees_sur_banc_laterales_avec_barre_equipment">Olympic barbell.</string>
+    <string name="exo_montees_sur_banc_laterales_avec_barre_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_montees_sur_banc_laterales_avec_barre_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_montees_sur_banc_laterales_avec_barre_starting_weight">Moderate load</string>
+
+    <string name="exo_montees_sur_banc_laterales_avec_halteres_name">Dumbbell lateral step-ups</string>
+    <string name="exo_montees_sur_banc_laterales_avec_halteres_equipment">Dumbbells.</string>
+    <string name="exo_montees_sur_banc_laterales_avec_halteres_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_montees_sur_banc_laterales_avec_halteres_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_montees_sur_banc_laterales_avec_halteres_starting_weight">Moderate load</string>
+
+    <string name="exo_muscle_up_name">Muscle-up</string>
+    <string name="exo_muscle_up_equipment">None (bodyweight).</string>
+    <string name="exo_muscle_up_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_muscle_up_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_muscle_up_starting_weight">Bodyweight</string>
+
+    <string name="exo_natation_name">Swimming</string>
+    <string name="exo_natation_equipment">None (bodyweight).</string>
+    <string name="exo_natation_execution">Breaststroke, freestyle or backstroke. Steady rhythm. Cardio + full-body work simultaneously.</string>
+    <string name="exo_natation_tips">Reps = seconds or minutes depending on intensity. Target 70–80% MHR.</string>
+    <string name="exo_natation_starting_weight">Bodyweight</string>
+
+    <string name="exo_oiseau_avec_elastique_name">Band rear delt fly</string>
+    <string name="exo_oiseau_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_oiseau_avec_elastique_execution">Bent forward. Spread the arms to the sides squeezing the shoulder blades. Slow descent.</string>
+    <string name="exo_oiseau_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_oiseau_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_oiseau_inverse_avec_sangles_de_suspension_name">Suspension reverse fly</string>
+    <string name="exo_oiseau_inverse_avec_sangles_de_suspension_equipment">Cable or band.</string>
+    <string name="exo_oiseau_inverse_avec_sangles_de_suspension_execution">Bent forward. Spread the arms to the sides squeezing the shoulder blades. Slow descent.</string>
+    <string name="exo_oiseau_inverse_avec_sangles_de_suspension_tips">Unstable work: recruits the stabilizers in addition to the target muscle.</string>
+    <string name="exo_oiseau_inverse_avec_sangles_de_suspension_starting_weight">Light load</string>
+
+    <string name="exo_oiseau_a_la_poulie_a_45_name">45° cable rear delt fly</string>
+    <string name="exo_oiseau_a_la_poulie_a_45_equipment">Pulley + attachment.</string>
+    <string name="exo_oiseau_a_la_poulie_a_45_execution">Bent forward. Spread the arms to the sides squeezing the shoulder blades. Slow descent.</string>
+    <string name="exo_oiseau_a_la_poulie_a_45_tips">Constant cable tension: zero dead spots in the motion.</string>
+    <string name="exo_oiseau_a_la_poulie_a_45_starting_weight">Light load</string>
+
+    <string name="exo_overhead_shrug_name">Overhead shrug</string>
+    <string name="exo_overhead_shrug_equipment">None (bodyweight).</string>
+    <string name="exo_overhead_shrug_execution">Arms extended, shoulders down. Raise shoulders toward the ears. Hold 1s at the top. Pure vertical motion.</string>
+    <string name="exo_overhead_shrug_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_overhead_shrug_starting_weight">Bodyweight</string>
+
+    <string name="exo_overhead_squat_name">Overhead squat</string>
+    <string name="exo_overhead_squat_equipment">None (bodyweight).</string>
+    <string name="exo_overhead_squat_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_overhead_squat_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_overhead_squat_starting_weight">Bodyweight</string>
+
+    <string name="exo_overhead_squat_avec_halteres_name">Dumbbell overhead squat</string>
+    <string name="exo_overhead_squat_avec_halteres_equipment">Dumbbells.</string>
+    <string name="exo_overhead_squat_avec_halteres_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_overhead_squat_avec_halteres_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_overhead_squat_avec_halteres_starting_weight">Moderate load</string>
+
+    <string name="exo_overhead_squat_avec_elastique_name">Band overhead squat</string>
+    <string name="exo_overhead_squat_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_overhead_squat_avec_elastique_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_overhead_squat_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_overhead_squat_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_passage_d_epaule_avec_elastique_name">Banded shoulder pass-through</string>
+    <string name="exo_passage_d_epaule_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_passage_d_epaule_avec_elastique_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_passage_d_epaule_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_passage_d_epaule_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_pin_squat_name">Pin squat</string>
+    <string name="exo_pin_squat_equipment">None (bodyweight).</string>
+    <string name="exo_pin_squat_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_pin_squat_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_pin_squat_starting_weight">Bodyweight</string>
+
+    <string name="exo_planche_avec_sangles_de_suspension_name">Suspension plank</string>
+    <string name="exo_planche_avec_sangles_de_suspension_equipment">Cable or band.</string>
+    <string name="exo_planche_avec_sangles_de_suspension_execution">Forearms and toes on the floor. Body in a straight line. Full bracing, don\'t sag the lower back.</string>
+    <string name="exo_planche_avec_sangles_de_suspension_tips">Unstable work: recruits the stabilizers in addition to the target muscle.</string>
+    <string name="exo_planche_avec_sangles_de_suspension_starting_weight">Light load</string>
+
+    <string name="exo_planche_chinoise_name">Chinese plank</string>
+    <string name="exo_planche_chinoise_equipment">None (bodyweight).</string>
+    <string name="exo_planche_chinoise_execution">Forearms and toes on the floor. Body in a straight line. Full bracing, don\'t sag the lower back.</string>
+    <string name="exo_planche_chinoise_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_planche_chinoise_starting_weight">Bodyweight</string>
+
+    <string name="exo_planche_de_l_ours_name">Bear plank</string>
+    <string name="exo_planche_de_l_ours_equipment">None (bodyweight).</string>
+    <string name="exo_planche_de_l_ours_execution">Forearms and toes on the floor. Body in a straight line. Full bracing, don\'t sag the lower back.</string>
+    <string name="exo_planche_de_l_ours_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_planche_de_l_ours_starting_weight">Bodyweight</string>
+
+    <string name="exo_planche_inversee_name">Reverse plank</string>
+    <string name="exo_planche_inversee_equipment">None (bodyweight).</string>
+    <string name="exo_planche_inversee_execution">Forearms and toes on the floor. Body in a straight line. Full bracing, don\'t sag the lower back.</string>
+    <string name="exo_planche_inversee_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_planche_inversee_starting_weight">Bodyweight</string>
+
+    <string name="exo_planche_laterale_avec_rotation_name">Side plank with rotation</string>
+    <string name="exo_planche_laterale_avec_rotation_equipment">None (bodyweight).</string>
+    <string name="exo_planche_laterale_avec_rotation_execution">Forearms and toes on the floor. Body in a straight line. Full bracing, don\'t sag the lower back.</string>
+    <string name="exo_planche_laterale_avec_rotation_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_planche_laterale_avec_rotation_starting_weight">Bodyweight</string>
+
+    <string name="exo_planche_sur_swiss_ball_name">Swiss ball plank</string>
+    <string name="exo_planche_sur_swiss_ball_equipment">Swiss ball.</string>
+    <string name="exo_planche_sur_swiss_ball_execution">Forearms and toes on the floor. Body in a straight line. Full bracing, don\'t sag the lower back.</string>
+    <string name="exo_planche_sur_swiss_ball_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_planche_sur_swiss_ball_starting_weight">Bodyweight</string>
+
+    <string name="exo_pompes_inclinees_avec_sangles_de_suspension_name">Suspension incline push-ups</string>
+    <string name="exo_pompes_inclinees_avec_sangles_de_suspension_equipment">Cable or band.</string>
+    <string name="exo_pompes_inclinees_avec_sangles_de_suspension_execution">Hands shoulder-width + 4 in. Body braced in plank. Lower chest to the floor. Press up arms extended.</string>
+    <string name="exo_pompes_inclinees_avec_sangles_de_suspension_tips">Unstable work: recruits the stabilizers in addition to the target muscle.</string>
+    <string name="exo_pompes_inclinees_avec_sangles_de_suspension_starting_weight">Light load</string>
+
+    <string name="exo_pompes_inclinees_sur_smith_machine_name">Smith machine incline push-ups</string>
+    <string name="exo_pompes_inclinees_sur_smith_machine_equipment">Guided machine.</string>
+    <string name="exo_pompes_inclinees_sur_smith_machine_execution">Hands shoulder-width + 4 in. Body braced in plank. Lower chest to the floor. Press up arms extended.</string>
+    <string name="exo_pompes_inclinees_sur_smith_machine_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_pompes_inclinees_sur_smith_machine_starting_weight">45–90 lb</string>
+
+    <string name="exo_presse_a_cuisse_sur_le_cote_name">Side leg press</string>
+    <string name="exo_presse_a_cuisse_sur_le_cote_equipment">None (bodyweight).</string>
+    <string name="exo_presse_a_cuisse_sur_le_cote_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_presse_a_cuisse_sur_le_cote_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_presse_a_cuisse_sur_le_cote_starting_weight">Bodyweight</string>
+
+    <string name="exo_presse_a_cuisses_horizontale_name">Horizontal leg press</string>
+    <string name="exo_presse_a_cuisses_horizontale_equipment">None (bodyweight).</string>
+    <string name="exo_presse_a_cuisses_horizontale_execution">Back flat. Feet centered on the platform, shoulder-width. Descend to 90°. Don\'t lock the knees at the top.</string>
+    <string name="exo_presse_a_cuisses_horizontale_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_presse_a_cuisses_horizontale_starting_weight">Bodyweight</string>
+
+    <string name="exo_presse_a_cuisses_iso_laterale_name">Iso-lateral leg press</string>
+    <string name="exo_presse_a_cuisses_iso_laterale_equipment">None (bodyweight).</string>
+    <string name="exo_presse_a_cuisses_iso_laterale_execution">Back flat. Feet centered on the platform, shoulder-width. Descend to 90°. Don\'t lock the knees at the top.</string>
+    <string name="exo_presse_a_cuisses_iso_laterale_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_presse_a_cuisses_iso_laterale_starting_weight">Bodyweight</string>
+
+    <string name="exo_presse_a_cuisses_verticale_name">Vertical leg press</string>
+    <string name="exo_presse_a_cuisses_verticale_equipment">None (bodyweight).</string>
+    <string name="exo_presse_a_cuisses_verticale_execution">Back flat. Feet centered on the platform, shoulder-width. Descend to 90°. Don\'t lock the knees at the top.</string>
+    <string name="exo_presse_a_cuisses_verticale_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_presse_a_cuisses_verticale_starting_weight">Bodyweight</string>
+
+    <string name="exo_presse_a_epaules_inclinee_name">Incline shoulder press</string>
+    <string name="exo_presse_a_epaules_inclinee_equipment">None (bodyweight).</string>
+    <string name="exo_presse_a_epaules_inclinee_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_presse_a_epaules_inclinee_tips">Incline bench = recruits the upper pecs / front delt more.</string>
+    <string name="exo_presse_a_epaules_inclinee_starting_weight">Bodyweight</string>
+
+    <string name="exo_pull_over_assis_a_la_machine_name">Seated machine pull-over</string>
+    <string name="exo_pull_over_assis_a_la_machine_equipment">Guided machine.</string>
+    <string name="exo_pull_over_assis_a_la_machine_execution">Lying down, arms semi-extended above the chest. Lower the load behind the head. Press up with the pecs/lats.</string>
+    <string name="exo_pull_over_assis_a_la_machine_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_pull_over_assis_a_la_machine_starting_weight">45–90 lb</string>
+
+    <string name="exo_pull_over_avec_barre_name">Barbell pull-over</string>
+    <string name="exo_pull_over_avec_barre_equipment">Olympic barbell.</string>
+    <string name="exo_pull_over_avec_barre_execution">Lying down, arms semi-extended above the chest. Lower the load behind the head. Press up with the pecs/lats.</string>
+    <string name="exo_pull_over_avec_barre_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_pull_over_avec_barre_starting_weight">Moderate load</string>
+
+    <string name="exo_pull_over_decline_a_la_barre_name">Decline barbell pull-over</string>
+    <string name="exo_pull_over_decline_a_la_barre_equipment">Olympic barbell.</string>
+    <string name="exo_pull_over_decline_a_la_barre_execution">Lying down, arms semi-extended above the chest. Lower the load behind the head. Press up with the pecs/lats.</string>
+    <string name="exo_pull_over_decline_a_la_barre_tips">Decline bench = targets the lower pecs.</string>
+    <string name="exo_pull_over_decline_a_la_barre_starting_weight">Moderate load</string>
+
+    <string name="exo_pull_through_avec_elastique_name">Banded pull-through</string>
+    <string name="exo_pull_through_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_pull_through_avec_elastique_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_pull_through_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_pull_through_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_pull_through_a_la_poulie_name">Cable pull-through</string>
+    <string name="exo_pull_through_a_la_poulie_equipment">Pulley + attachment.</string>
+    <string name="exo_pull_through_a_la_poulie_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_pull_through_a_la_poulie_tips">Constant cable tension: zero dead spots in the motion.</string>
+    <string name="exo_pull_through_a_la_poulie_starting_weight">Light load</string>
+
+    <string name="exo_pullover_avec_haltere_name">Dumbbell pullover</string>
+    <string name="exo_pullover_avec_haltere_equipment">Dumbbells.</string>
+    <string name="exo_pullover_avec_haltere_execution">Lying down, arms semi-extended above the chest. Lower the load behind the head. Press up with the pecs/lats.</string>
+    <string name="exo_pullover_avec_haltere_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_pullover_avec_haltere_starting_weight">Moderate load</string>
+
+    <string name="exo_releve_de_genoux_suspendu_name">Hanging knee raise</string>
+    <string name="exo_releve_de_genoux_suspendu_equipment">None (bodyweight).</string>
+    <string name="exo_releve_de_genoux_suspendu_execution">Hanging or lying. Raise the legs by curling the pelvis. 3-sec descent without momentum.</string>
+    <string name="exo_releve_de_genoux_suspendu_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_releve_de_genoux_suspendu_starting_weight">Bodyweight</string>
+
+    <string name="exo_releve_de_jambes_assis_name">Seated leg raise</string>
+    <string name="exo_releve_de_jambes_assis_equipment">None (bodyweight).</string>
+    <string name="exo_releve_de_jambes_assis_execution">Hanging or lying. Raise the legs by curling the pelvis. 3-sec descent without momentum.</string>
+    <string name="exo_releve_de_jambes_assis_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_releve_de_jambes_assis_starting_weight">Bodyweight</string>
+
+    <string name="exo_releve_de_jambes_suspendu_variante_2_name">Hanging leg raise (variant 2)</string>
+    <string name="exo_releve_de_jambes_suspendu_variante_2_equipment">None (bodyweight).</string>
+    <string name="exo_releve_de_jambes_suspendu_variante_2_execution">Hanging or lying. Raise the legs by curling the pelvis. 3-sec descent without momentum.</string>
+    <string name="exo_releve_de_jambes_suspendu_variante_2_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_releve_de_jambes_suspendu_variante_2_starting_weight">Bodyweight</string>
+
+    <string name="exo_reverse_hyperextension_name">Reverse hyperextension</string>
+    <string name="exo_reverse_hyperextension_equipment">None (bodyweight).</string>
+    <string name="exo_reverse_hyperextension_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_reverse_hyperextension_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_reverse_hyperextension_starting_weight">Bodyweight</string>
+
+    <string name="exo_rollers_en_ligne_name">Inline skating</string>
+    <string name="exo_rollers_en_ligne_equipment">None (bodyweight).</string>
+    <string name="exo_rollers_en_ligne_execution">Continuous skating, low posture, alternating pushes. Not too technical for beginners.</string>
+    <string name="exo_rollers_en_ligne_tips">Reps = seconds or minutes depending on intensity. Target 70–80% MHR.</string>
+    <string name="exo_rollers_en_ligne_starting_weight">Bodyweight</string>
+
+    <string name="exo_rotation_du_buste_allonge_name">Lying torso rotation</string>
+    <string name="exo_rotation_du_buste_allonge_equipment">None (bodyweight).</string>
+    <string name="exo_rotation_du_buste_allonge_execution">Torso fixed, rotate against the resistance. Controlled motion, no jerking. Trains the obliques.</string>
+    <string name="exo_rotation_du_buste_allonge_tips">Mobility movement. No pain, just stretch tension.</string>
+    <string name="exo_rotation_du_buste_allonge_starting_weight">Bodyweight</string>
+
+    <string name="exo_rotation_du_buste_avec_elastique_name">Banded torso rotation</string>
+    <string name="exo_rotation_du_buste_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_rotation_du_buste_avec_elastique_execution">Torso fixed, rotate against the resistance. Controlled motion, no jerking. Trains the obliques.</string>
+    <string name="exo_rotation_du_buste_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_rotation_du_buste_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_rotation_dynamique_des_hanches_en_90_90_name">90-90 dynamic hip rotation</string>
+    <string name="exo_rotation_dynamique_des_hanches_en_90_90_equipment">None (bodyweight).</string>
+    <string name="exo_rotation_dynamique_des_hanches_en_90_90_execution">Torso fixed, rotate against the resistance. Controlled motion, no jerking. Trains the obliques.</string>
+    <string name="exo_rotation_dynamique_des_hanches_en_90_90_tips">Mobility movement. No pain, just stretch tension.</string>
+    <string name="exo_rotation_dynamique_des_hanches_en_90_90_starting_weight">Bodyweight</string>
+
+    <string name="exo_rotation_externe_de_l_epaule_couchee_avec_haltere_name">Lying dumbbell shoulder external rotation</string>
+    <string name="exo_rotation_externe_de_l_epaule_couchee_avec_haltere_equipment">Dumbbells.</string>
+    <string name="exo_rotation_externe_de_l_epaule_couchee_avec_haltere_execution">Torso fixed, rotate against the resistance. Controlled motion, no jerking. Trains the obliques.</string>
+    <string name="exo_rotation_externe_de_l_epaule_couchee_avec_haltere_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_rotation_externe_de_l_epaule_couchee_avec_haltere_starting_weight">Moderate load</string>
+
+    <string name="exo_rotation_externe_de_l_epaule_a_la_poulie_name">Cable shoulder external rotation</string>
+    <string name="exo_rotation_externe_de_l_epaule_a_la_poulie_equipment">Pulley + attachment.</string>
+    <string name="exo_rotation_externe_de_l_epaule_a_la_poulie_execution">Torso fixed, rotate against the resistance. Controlled motion, no jerking. Trains the obliques.</string>
+    <string name="exo_rotation_externe_de_l_epaule_a_la_poulie_tips">Constant cable tension: zero dead spots in the motion.</string>
+    <string name="exo_rotation_externe_de_l_epaule_a_la_poulie_starting_weight">Light load</string>
+
+    <string name="exo_rotation_interne_a_90_a_la_poulie_name">90° cable internal rotation</string>
+    <string name="exo_rotation_interne_a_90_a_la_poulie_equipment">Pulley + attachment.</string>
+    <string name="exo_rotation_interne_a_90_a_la_poulie_execution">Torso fixed, rotate against the resistance. Controlled motion, no jerking. Trains the obliques.</string>
+    <string name="exo_rotation_interne_a_90_a_la_poulie_tips">Constant cable tension: zero dead spots in the motion.</string>
+    <string name="exo_rotation_interne_a_90_a_la_poulie_starting_weight">Light load</string>
+
+    <string name="exo_rotations_des_abdominaux_suspendu_name">Hanging abdominal rotations</string>
+    <string name="exo_rotations_des_abdominaux_suspendu_equipment">None (bodyweight).</string>
+    <string name="exo_rotations_des_abdominaux_suspendu_execution">Torso fixed, rotate against the resistance. Controlled motion, no jerking. Trains the obliques.</string>
+    <string name="exo_rotations_des_abdominaux_suspendu_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_rotations_des_abdominaux_suspendu_starting_weight">Bodyweight</string>
+
+    <string name="exo_rotations_du_buste_avec_barre_name">Barbell torso rotations</string>
+    <string name="exo_rotations_du_buste_avec_barre_equipment">Olympic barbell.</string>
+    <string name="exo_rotations_du_buste_avec_barre_execution">Torso fixed, rotate against the resistance. Controlled motion, no jerking. Trains the obliques.</string>
+    <string name="exo_rotations_du_buste_avec_barre_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_rotations_du_buste_avec_barre_starting_weight">Moderate load</string>
+
+    <string name="exo_rotations_du_buste_avec_landmine_name">Landmine torso rotations</string>
+    <string name="exo_rotations_du_buste_avec_landmine_equipment">Landmine + bar.</string>
+    <string name="exo_rotations_du_buste_avec_landmine_execution">Torso fixed, rotate against the resistance. Controlled motion, no jerking. Trains the obliques.</string>
+    <string name="exo_rotations_du_buste_avec_landmine_tips">Landmine: arc trajectory, demands stabilization. Versatile.</string>
+    <string name="exo_rotations_du_buste_avec_landmine_starting_weight">Moderate load</string>
+
+    <string name="exo_rotations_externes_de_l_epaule_avec_elastique_name">Banded shoulder external rotations</string>
+    <string name="exo_rotations_externes_de_l_epaule_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_rotations_externes_de_l_epaule_avec_elastique_execution">Torso fixed, rotate against the resistance. Controlled motion, no jerking. Trains the obliques.</string>
+    <string name="exo_rotations_externes_de_l_epaule_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_rotations_externes_de_l_epaule_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_rotations_internes_de_l_epaule_avec_elastique_name">Banded shoulder internal rotations</string>
+    <string name="exo_rotations_internes_de_l_epaule_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_rotations_internes_de_l_epaule_avec_elastique_execution">Torso fixed, rotate against the resistance. Controlled motion, no jerking. Trains the obliques.</string>
+    <string name="exo_rotations_internes_de_l_epaule_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_rotations_internes_de_l_epaule_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_roulage_avec_une_barre_name">Barbell roll-out</string>
+    <string name="exo_roulage_avec_une_barre_equipment">Olympic barbell.</string>
+    <string name="exo_roulage_avec_une_barre_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_roulage_avec_une_barre_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_roulage_avec_une_barre_starting_weight">Moderate load</string>
+
+    <string name="exo_rowing_avec_halteres_name">Dumbbell row</string>
+    <string name="exo_rowing_avec_halteres_equipment">Dumbbells.</string>
+    <string name="exo_rowing_avec_halteres_execution">Torso fixed, pull to the navel. Elbows pass behind the back. Squeeze shoulder blades 1s. Controlled descent.</string>
+    <string name="exo_rowing_avec_halteres_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_rowing_avec_halteres_starting_weight">Moderate load</string>
+
+    <string name="exo_rowing_avec_sangles_de_suspension_name">Suspension row</string>
+    <string name="exo_rowing_avec_sangles_de_suspension_equipment">Cable or band.</string>
+    <string name="exo_rowing_avec_sangles_de_suspension_execution">Torso fixed, pull to the navel. Elbows pass behind the back. Squeeze shoulder blades 1s. Controlled descent.</string>
+    <string name="exo_rowing_avec_sangles_de_suspension_tips">Unstable work: recruits the stabilizers in addition to the target muscle.</string>
+    <string name="exo_rowing_avec_sangles_de_suspension_starting_weight">Light load</string>
+
+    <string name="exo_rowing_buste_penche_avec_elastique_name">Bent-over band row</string>
+    <string name="exo_rowing_buste_penche_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_rowing_buste_penche_avec_elastique_execution">Torso fixed, pull to the navel. Elbows pass behind the back. Squeeze shoulder blades 1s. Controlled descent.</string>
+    <string name="exo_rowing_buste_penche_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_rowing_buste_penche_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_rowing_en_prise_neutre_assis_a_la_machine_name">Seated machine neutral-grip row</string>
+    <string name="exo_rowing_en_prise_neutre_assis_a_la_machine_equipment">Guided machine.</string>
+    <string name="exo_rowing_en_prise_neutre_assis_a_la_machine_execution">Torso fixed, pull to the navel. Elbows pass behind the back. Squeeze shoulder blades 1s. Controlled descent.</string>
+    <string name="exo_rowing_en_prise_neutre_assis_a_la_machine_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_rowing_en_prise_neutre_assis_a_la_machine_starting_weight">45–90 lb</string>
+
+    <string name="exo_rowing_en_pronation_assis_a_la_machine_technogym_name">Seated overhand row (Technogym)</string>
+    <string name="exo_rowing_en_pronation_assis_a_la_machine_technogym_equipment">Guided machine.</string>
+    <string name="exo_rowing_en_pronation_assis_a_la_machine_technogym_execution">Torso fixed, pull to the navel. Elbows pass behind the back. Squeeze shoulder blades 1s. Controlled descent.</string>
+    <string name="exo_rowing_en_pronation_assis_a_la_machine_technogym_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_rowing_en_pronation_assis_a_la_machine_technogym_starting_weight">45–90 lb</string>
+
+    <string name="exo_rowing_halteres_sur_banc_incline_name">Incline bench dumbbell row</string>
+    <string name="exo_rowing_halteres_sur_banc_incline_equipment">Dumbbells.</string>
+    <string name="exo_rowing_halteres_sur_banc_incline_execution">Torso fixed, pull to the navel. Elbows pass behind the back. Squeeze shoulder blades 1s. Controlled descent.</string>
+    <string name="exo_rowing_halteres_sur_banc_incline_tips">Incline bench = recruits the upper pecs / front delt more.</string>
+    <string name="exo_rowing_halteres_sur_banc_incline_starting_weight">Moderate load</string>
 </resources>
