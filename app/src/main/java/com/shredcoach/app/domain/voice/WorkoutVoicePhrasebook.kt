@@ -128,11 +128,17 @@ object WorkoutVoicePhrasebook {
      * Locale.getDefault() reflète l'overlay [AppCompatDelegate.setApplicationLocales]
      * appliqué au boot par [LocaleManager], donc le bon provider est résolu
      * automatiquement après un changement de langue.
+     *
+     * **V2 fallback** : ES/IT/PT/DE n'ont pas (encore) de phrasebook dédié et
+     * retombent sur EN (langue véhiculaire) plutôt que FR. Cohérent avec la
+     * cascade prompts LLM ([PromptLocale.pickCascade]). Mieux vaut un coach
+     * qui parle anglais qu'un coach qui parle français à un user hispanophone.
      */
     private fun providerForCurrentLocale(): VoicePhraseProvider {
         return when (Locale.getDefault().language.lowercase()) {
-            "en" -> EnglishVoicePhrases
-            else -> FrenchVoicePhrases
+            "fr" -> FrenchVoicePhrases
+            "en", "es", "it", "pt", "de" -> EnglishVoicePhrases
+            else -> EnglishVoicePhrases
         }
     }
 }

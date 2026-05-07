@@ -18,7 +18,7 @@ object ExerciseDbTranslations {
     private fun displayLocaleAware(value: String, frMap: Map<String, String>): String {
         val key = value.lowercase()
         return when {
-            !PromptLocale.isEn() -> frMap[key] ?: value.replaceFirstChar { it.uppercase() }
+            PromptLocale.isFr() -> frMap[key] ?: value.replaceFirstChar { it.uppercase() }
             else -> value.replaceFirstChar { it.uppercase() }
         }
     }
@@ -511,7 +511,10 @@ object ExerciseDbTranslations {
      */
     fun translateExerciseName(name: String): String {
         if (name.isBlank()) return name
-        if (PromptLocale.isEn()) {
+        if (!PromptLocale.isFr()) {
+            // Non-FR (EN + V2 ES/IT/PT/DE) : on retourne le nom EN source en Title Case.
+            // Le dataset est nativement EN, donc EN véhiculaire est plus utile que FR
+            // pour un user hispanophone/italophone/etc.
             return name.split(Regex("\\s+"))
                 .joinToString(" ") { it.replaceFirstChar { c -> c.titlecase() } }
         }
