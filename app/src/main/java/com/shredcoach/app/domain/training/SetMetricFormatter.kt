@@ -133,10 +133,10 @@ object SetMetricFormatter {
         return if (r == 0) "${m}m" else "${m}m${r.toString().padStart(2, '0')}"
     }
 
-    /** "80.0" → "80", "80.5" → "80.5". Pas de zéro parasite après le point. */
+    /** "80.0" → "80", "80.5" → "80.5" (FR : "80,5"). Pas de zéro parasite après le point. */
     fun formatWeight(kg: Double): String {
         val rounded = (kg * 10).toInt() / 10.0
         return if (rounded == rounded.toInt().toDouble()) "${rounded.toInt()}"
-        else "%.1f".format(java.util.Locale.FRANCE, rounded)
+        else "%.1f".format(java.util.Locale.getDefault(), rounded)
     }
 }
