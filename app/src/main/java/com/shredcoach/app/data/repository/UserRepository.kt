@@ -36,6 +36,9 @@ class UserRepository @Inject constructor(
     suspend fun updateLastUsedRoutineId(routineId: String) =
         userProfileDao.updateLastUsedRoutineId(routineId)
 
+    suspend fun updateLanguageTag(tag: String?) =
+        userProfileDao.updateLanguageTag(tag)
+
     // Weight logs
     fun getAllWeightLogs() = userProfileDao.getAllWeightLogs()
     suspend fun getWeightLogsSince(since: LocalDate) = userProfileDao.getWeightLogsSince(since)

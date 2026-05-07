@@ -45,4 +45,5 @@ sealed class Screen(val route: String) {
         }
     }
     object PrivacyPolicy : Screen("privacy_policy")
+    object LanguageSettings : Screen("language_settings")
 }

@@ -127,6 +127,27 @@ object Migrations {
         }
     }
 
+    /**
+     * v37 → v38 : ajout du support **i18n** — `user_profile.languageTag` (BCP-47)
+     * pour stocker la langue choisie par l'utilisateur.
+     *
+     * - Colonne **nullable** (vs default `'fr'`) car :
+     *   - Null = "pas encore choisi" → trigger auto-détection système au premier
+     *     launch après migration. Plus naturel que de présumer FR pour tout le
+     *     monde — un user qui a installé en EN sur un device EN aurait été
+     *     surpris de voir l'UI rester FR.
+     *   - L'auto-détect au premier launch persiste le choix automatiquement,
+     *     donc la valeur null se résout en moins de 1 seconde après migration.
+     *
+     * ALTER TABLE ADD COLUMN simple — pas de table-rebuild, aucune donnée
+     * existante affectée.
+     */
+    fun migration37to38(): Migration = object : Migration(37, 38) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `user_profile` ADD COLUMN `languageTag` TEXT")
+        }
+    }
+
     private fun copyApiKeysToSecureStore(context: Context, db: SupportSQLiteDatabase) {
         try {
             val masterKey = MasterKey.Builder(context)

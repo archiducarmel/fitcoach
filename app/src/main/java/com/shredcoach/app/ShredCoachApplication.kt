@@ -15,6 +15,7 @@ import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
 import com.shredcoach.app.data.repository.UserRepository
+import com.shredcoach.app.domain.locale.LocaleManager
 import com.shredcoach.app.notification.NotificationScheduler
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -29,6 +30,7 @@ class ShredCoachApplication : Application(), Configuration.Provider, ImageLoader
     @Inject lateinit var workerFactory: HiltWorkerFactory
     @Inject lateinit var shreddyVoice: com.shredcoach.app.domain.voice.ShreddyVoice
     @Inject lateinit var userRepository: UserRepository
+    @Inject lateinit var localeManager: LocaleManager
 
     /**
      * Scope long-vie pour les bootstrap tasks (rescheduling alarmes au cold-start).
@@ -60,6 +62,21 @@ class ShredCoachApplication : Application(), Configuration.Provider, ImageLoader
         // refuse de tirer (ex: app non encore lancée post-reboot et user ouvre
         // l'app — alors c'est ici qu'on rattrape) (3) update Play Store (idem
         // BootReceiver via MY_PACKAGE_REPLACED, fallback ici).
+        // Applique le locale persisté en DB (ou auto-détect au premier launch)
+        // AU PLUS TÔT pour que toute Activity démarre déjà dans la bonne langue.
+        // Le coroutine ici tourne en parallèle de la création de MainActivity ;
+        // au 1er launch (langue jamais choisie), AppCompatDelegate triggers un
+        // recreate de MainActivity quand le locale s'applique → léger flicker
+        // d'une frame, acceptable. Aux launches suivants, AppCompat a déjà
+        // restauré le locale (autoStoreLocales=true) AVANT cette callback, donc
+        // applyPersistedOrDetect est un no-op et l'UI démarre direct OK.
+        bootstrapScope.launch {
+            try {
+                localeManager.applyPersistedOrDetect()
+            } catch (t: Throwable) {
+                android.util.Log.e("ShredCoachApp", "Locale apply failed at boot", t)
+            }
+        }
         bootstrapScope.launch {
             try {
                 // **Migration v1→v2 du système de notif** : avant on utilisait

@@ -88,7 +88,19 @@ data class UserProfileEntity(
      * l'utilisateur — sert de pré-sélection sur le RoutinePicker au prochain
      * lancement. Default `"full_body"` (rétro-compat).
      */
-    val lastUsedRoutineId: String = "full_body"
+    val lastUsedRoutineId: String = "full_body",
+    // ── i18n (v38) ──
+    /**
+     * Tag BCP-47 de la langue choisie (ex: `"fr"`, `"en"`, `"es"`). `null` ou
+     * blank = pas encore choisi → l'auto-détection système s'applique au
+     * premier launch et persiste silencieusement le choix détecté.
+     *
+     * **Pourquoi pas un enum** : un enum couplerait la migration DB à l'enum
+     * Kotlin (suppression d'une langue = migration nécessaire). En `String`
+     * on reste flexible — un id inconnu retombe sur [com.shredcoach.app.domain.locale.AppLocale.Default]
+     * via [com.shredcoach.app.domain.locale.AppLocale.fromTag], jamais d'exception.
+     */
+    val languageTag: String? = null,
     // NOTE : les clés API (llmApiKey, geminiApiKey, groqMealApiKey, mistralApiKey)
     // ont été retirées en v34 et déplacées vers SecureKeyStore (Phase C).
     // Voir ShredCoachDatabase.DropLegacyApiKeyColumns pour la migration.

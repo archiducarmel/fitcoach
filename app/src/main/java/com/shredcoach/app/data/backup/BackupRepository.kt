@@ -381,7 +381,7 @@ class BackupRepository @Inject constructor(
          * propre — `db.openHelper.readableDatabase.version` fonctionne mais
          * c'est un round-trip SQLite à chaque export, peu utile.
          */
-        const val ROOM_DB_VERSION = 37
+        const val ROOM_DB_VERSION = 38
         val ISO_FILE: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss'Z'")
     }
 }

@@ -138,6 +138,10 @@ ksp {
 dependencies {
     // Core Android
     implementation("androidx.core:core-ktx:1.12.0")
+    // Per-app locales API (AppCompatDelegate.setApplicationLocales) + auto-store
+    // via AppLocalesMetadataHolderService. Requis pour l'i18n runtime sans
+    // restart d'app explicite.
+    implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     // ProcessLifecycleOwner — détecte foreground/background du process pour

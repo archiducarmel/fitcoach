@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Liste des locales supportées par l'app (API 33+).
+
+    Référencée depuis AndroidManifest via android:localeConfig=. Permet à Android
+    d'afficher l'app dans le picker système Settings → System → Languages →
+    App languages → ShredCoach. L'utilisateur peut ainsi changer la langue
+    de l'app sans même ouvrir l'app.
+
+    **Doit rester synchronisé avec [com.shredcoach.app.domain.locale.AppLocale]** :
+    chaque entrée ici correspond à un dossier res/values-{tag}/.
+
+    V1 : fr + en. V2 ajoutera es + it + pt + de.
+-->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="fr" />
+    <locale android:name="en" />
+    <locale android:name="es" />
+    <locale android:name="it" />
+    <locale android:name="pt" />
+    <locale android:name="de" />
+</locale-config>

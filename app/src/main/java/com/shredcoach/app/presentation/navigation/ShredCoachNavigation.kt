@@ -489,6 +489,12 @@ fun ShredCoachNavigation(
                 com.shredcoach.app.presentation.legal.PrivacyPolicyScreen(navController = navController)
             }
 
+            composable(Screen.LanguageSettings.route) {
+                com.shredcoach.app.presentation.settings.language.LanguageSettingsScreen(
+                    onBack = { navController.navigateUp() }
+                )
+            }
+
             composable(
                 Screen.WorkoutHistory.route,
                 enterTransition = { tabEnter(this) },

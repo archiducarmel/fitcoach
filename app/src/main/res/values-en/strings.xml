@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    English translations. Phase 0 = foundation strings (language picker,
+    settings entry, onboarding step, navigation/common). Phase 1 ajoutera la
+    totalité des strings UI extraites des Composables.
+
+    Convention : suit le mapping 1:1 avec values/strings.xml. Si une clé manque
+    ici, Android fallback automatiquement sur values/ (FR) — c'est utile pour
+    la transition Phase 1 où on ajoute les clés progressivement.
+-->
+<resources>
+    <string name="app_name">ShredCoach</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_workout">Workout</string>
+    <string name="nav_exercises">Exercises</string>
+    <string name="nav_stats">Stats</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Common -->
+    <string name="common_start">Start</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_save">Save</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_edit">Edit</string>
+    <string name="common_continue">Continue</string>
+    <string name="common_back">Back</string>
+
+    <!-- Legacy keys -->
+    <string name="start">Start</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+
+    <!-- ────────── Language picker ────────── -->
+    <string name="settings_section_language_title">Language</string>
+    <string name="settings_section_language_subtitle">Change the language of the app, notifications and voice coach</string>
+    <string name="language_picker_title">App language</string>
+    <string name="language_picker_subtitle">The whole app, notifications and voice coach will switch to your language</string>
+    <string name="language_picker_hint_v2">Coming soon</string>
+    <string name="language_picker_apply">Apply</string>
+    <string name="language_picker_change_confirmed">Language updated</string>
+    <string name="onboarding_language_title">Pick your language</string>
+    <string name="onboarding_language_subtitle">You can change it later in settings</string>
+
+    <!-- Workout -->
+    <string name="workout_duration">Duration: %d min</string>
+    <string name="workout_exercises">%d exercises</string>
+    <string name="series">Set %d/%d</string>
+    <string name="reps">%d-%d reps</string>
+    <string name="rest_time">Rest: %ds</string>
+
+    <!-- Exercise variants -->
+    <string name="exercise_machine">Machine</string>
+    <string name="exercise_weights">Dumbbells/Barbell</string>
+    <string name="exercise_bodyweight">Bodyweight</string>
+    <string name="exercise_isolation">Isolation</string>
+
+    <!-- Muscle Groups -->
+    <string name="muscle_quads">Quads</string>
+    <string name="muscle_hamstrings">Hamstrings</string>
+    <string name="muscle_chest">Chest</string>
+    <string name="muscle_back">Back</string>
+    <string name="muscle_shoulders">Shoulders</string>
+    <string name="muscle_biceps">Biceps</string>
+    <string name="muscle_triceps">Triceps</string>
+    <string name="muscle_abs">Abs</string>
+    <string name="muscle_calves">Calves</string>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Home screen -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+
+    <!-- Greetings -->
+    <string name="home_greeting_morning">Good morning</string>
+    <string name="home_greeting_afternoon">Good afternoon</string>
+    <string name="home_greeting_evening">Good evening</string>
+    <string name="home_greeting_default_name">Champion</string>
+    <string name="home_greeting_full">%1$s, %2$s</string>
+
+    <!-- Subtitles -->
+    <string name="home_subtitle_workout_done">Nice job today!</string>
+    <string name="home_subtitle_workout_day">It\'s training day!</string>
+    <string name="home_subtitle_yesterday_volume">Great session yesterday, %1$d kg lifted</string>
+    <string name="home_subtitle_default">Ready to roll?</string>
+    <string name="home_sessions_this_week">%1$d/%2$d this week</string>
+
+    <!-- TopBar accessibility -->
+    <string name="home_topbar_profile_cd">%1$s\'s profile</string>
+    <string name="home_topbar_notifications_cd">Notifications</string>
+
+    <!-- Section headers -->
+    <string name="home_section_workout_title">Train</string>
+    <string name="home_section_other_options_expand">More options</string>
+    <string name="home_section_other_options_collapse">Fewer options</string>
+    <string name="home_section_more_expand">More</string>
+    <string name="home_section_more_collapse">Collapse</string>
+
+    <!-- CTA cards -->
+    <string name="home_cta_generate_title">GENERATE A SESSION</string>
+    <string name="home_cta_generate_subtitle">%1$d min • Tailored to your level</string>
+    <string name="home_cta_freestyle_title">Freestyle session</string>
+    <string name="home_cta_freestyle_subtitle">Build your session on the fly, exercise by exercise</string>
+    <string name="home_cta_favorites_title">My favorites</string>
+    <string name="home_cta_favorites_subtitle">Restart a session</string>
+    <string name="home_cta_create_title">Create</string>
+    <string name="home_cta_create_subtitle">Build my session</string>
+
+    <!-- ActionCards (More section) -->
+    <string name="home_action_exercises">Exercises</string>
+    <string name="home_action_stats">My stats</string>
+    <string name="home_action_nutrition">Nutrition</string>
+    <string name="home_action_photos">Photos</string>
+    <string name="home_action_calendar">Calendar</string>
+
+    <!-- Next session widget -->
+    <string name="home_next_session_today">Today</string>
+    <string name="home_next_session_tomorrow">Tomorrow</string>
+    <string name="home_next_session_label">Next session · %1$s</string>
+    <string name="home_next_session_default_title">Scheduled session</string>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Settings screen -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_notifications_updated">Notifications updated</string>
+
+    <string name="settings_section_during_workout">During workout</string>
+    <string name="settings_workout_autostart_title">Auto-start after rest</string>
+    <string name="settings_workout_autostart_subtitle">Automatically start the next set when rest ends</string>
+    <string name="settings_workout_vibration_title">Vibration</string>
+    <string name="settings_workout_vibration_subtitle">End of rest + tactile feedback on buttons</string>
+    <string name="settings_workout_sound_title">Sound</string>
+    <string name="settings_workout_sound_subtitle">Play a sound at the end of rest time</string>
+    <string name="settings_workout_voice_title">Shreddy voice</string>
+    <string name="settings_workout_voice_subtitle">Shreddy announces the end of rest with a natural voice</string>
+    <string name="settings_workout_coach_tips_title">Coach tips</string>
+    <string name="settings_workout_coach_tips_subtitle">Display tips and execution instructions</string>
+    <string name="settings_workout_bonus_title">Bonus set suggestion</string>
+    <string name="settings_workout_bonus_subtitle">Offer to add an extra set after the last set of each exercise</string>
+    <string name="settings_workout_default_rest_title">Default rest</string>
+    <string name="settings_unit_seconds">s</string>
+
+    <string name="settings_section_voice">Shreddy voice</string>
+
+    <string name="settings_section_health">Health &amp; limitations</string>
+    <string name="settings_health_notes_label">Health notes / injuries</string>
+    <string name="settings_health_notes_placeholder">E.g. left shoulder pain, knee tendinitis...</string>
+    <string name="settings_health_notes_support">Shreddy will adapt his advice accordingly</string>
+
+    <string name="settings_section_duration">Session duration</string>
+    <string name="settings_duration_preferred">Preferred duration</string>
+    <string name="settings_unit_minutes">min</string>
+
+    <string name="settings_section_notifications">Notifications</string>
+    <string name="settings_notifs_enabled_title">Notifications enabled</string>
+    <string name="settings_notifs_enabled_subtitle">Enable/disable all notifications</string>
+    <string name="settings_notifs_meals_label">Meals</string>
+    <string name="settings_notifs_breakfast">Breakfast</string>
+    <string name="settings_notifs_lunch">Lunch</string>
+    <string name="settings_notifs_snack">Pre-training snack</string>
+    <string name="settings_notifs_dinner">Dinner</string>
+    <string name="settings_notifs_reminder_at">Reminder at %1$s</string>
+    <string name="settings_notifs_shakers_label">Protein shakers</string>
+    <string name="settings_notifs_shakers_title">Morning &amp; evening shakers</string>
+    <string name="settings_notifs_shakers_subtitle">Morning %1$s / Evening %2$s</string>
+    <string name="settings_notifs_others_label">Others</string>
+    <string name="settings_notifs_bedtime_title">Bedtime reminder</string>
+    <string name="settings_notifs_bedtime_subtitle">30 min before target time</string>
+    <string name="settings_notifs_motivation_title">Motivation</string>
+    <string name="settings_notifs_motivation_subtitle">Reminder if no session for 3 days</string>
+    <string name="settings_notifs_debrief_label">Shreddy AI debriefs</string>
+    <string name="settings_notifs_meal_debrief_title">Meal debrief</string>
+    <string name="settings_notifs_meal_debrief_subtitle">After each meal scan · humorous &amp; personalized</string>
+    <string name="settings_notifs_meal_debrief_delay">Delay after scan</string>
+    <string name="settings_notifs_workout_debrief_title">Session debrief</string>
+    <string name="settings_notifs_workout_debrief_subtitle">After each session · quality &amp; dynamics</string>
+    <string name="settings_notifs_workout_debrief_delay">Delay after session</string>
+
+    <string name="settings_section_appearance">Display</string>
+    <string name="settings_appearance_mode_title">Theme</string>
+    <string name="settings_appearance_mode_light">Light</string>
+    <string name="settings_appearance_mode_dark">Dark</string>
+    <string name="settings_appearance_mode_auto">Auto</string>
+    <string name="settings_appearance_palette_title">Palette</string>
+    <string name="settings_appearance_palette_subtitle">The main color is used across all screens</string>
+    <string name="settings_appearance_palette_system">System</string>
+    <string name="settings_appearance_imperial_title">Imperial units</string>
+    <string name="settings_appearance_imperial_subtitle">Use lbs/inches instead of kg/cm</string>
+
+    <string name="settings_section_backup">Backup</string>
+    <string name="settings_section_coach">Proactive coach</string>
+
+    <string name="settings_section_meal_scanner">Meal Scanner</string>
+    <string name="settings_meal_scanner_provider_label">Vision provider</string>
+    <string name="settings_meal_scanner_gemini_model_label">Gemini model</string>
+    <string name="settings_meal_scanner_api_key_gemini">Gemini API key</string>
+    <string name="settings_meal_scanner_api_key_groq">Groq API key</string>
+    <string name="settings_meal_scanner_api_key_mistral">Mistral API key</string>
+    <string name="settings_meal_scanner_groq_model">Llama 4 Scout 17B</string>
+    <string name="settings_meal_scanner_mistral_model">Mistral Small (free)</string>
+    <string name="settings_meal_scanner_gemini_support">Free at aistudio.google.com/apikey</string>
+    <string name="settings_meal_scanner_groq_support">Free at console.groq.com/keys</string>
+    <string name="settings_meal_scanner_mistral_support">Free (Experiment plan) at console.mistral.ai</string>
+
+    <string name="settings_section_assistant">Shreddy assistant</string>
+    <string name="settings_assistant_provider_label">AI provider</string>
+    <string name="settings_assistant_api_key">API key</string>
+    <string name="settings_assistant_api_key_placeholder">sk-… or gsk-…</string>
+    <string name="settings_assistant_model_label">Model (optional)</string>
+    <string name="settings_assistant_model_default">Default: %1$s</string>
+
+    <string name="settings_section_privacy">Privacy &amp; data</string>
+    <string name="settings_section_about">About</string>
+    <string name="settings_about_version_label">Version</string>
+
+    <string name="settings_profile_header_greeting">Hello 👋</string>
+    <string name="settings_profile_header_default_name">Athlete</string>
+    <string name="settings_profile_header_stat_kg">kg</string>
+    <string name="settings_profile_header_stat_target">target</string>
+    <string name="settings_profile_header_stat_workouts">sessions</string>
+    <string name="settings_profile_header_stat_streak">streak</string>
+
+    <string name="cd_paste">Paste</string>
+    <string name="cd_show_password">Show</string>
+    <string name="cd_toggle_password">Show/hide</string>
+    <string name="cd_toggle">Toggle</string>
+    <string name="cd_profile_photo">Profile photo</string>
+
+    <!-- Domain enums (FitnessGoal / FitnessLevel / EquipmentType) -->
+    <string name="fitness_goal_shred">Shred</string>
+    <string name="fitness_goal_bulk">Bulk</string>
+    <string name="fitness_goal_maintain">Maintain</string>
+
+    <string name="fitness_level_beginner">Beginner</string>
+    <string name="fitness_level_intermediate">Intermediate</string>
+    <string name="fitness_level_advanced">Advanced</string>
+
+    <string name="equipment_full_gym">Full gym</string>
+    <string name="equipment_home_gym">Home gym</string>
+    <string name="equipment_bodyweight">Bodyweight</string>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Onboarding screen -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+
+    <string name="onboarding_nav_back">Back</string>
+    <string name="onboarding_nav_next">Next</string>
+    <string name="onboarding_nav_finish">Let\'s go!</string>
+
+    <string name="onboarding_welcome_tagline">Your sport &amp; nutrition coach</string>
+    <string name="onboarding_welcome_pitch">Reach your dream physique with a personalized program, smart tracking and real-time coaching.</string>
+
+    <string name="onboarding_features_title">What ShredCoach does for you</string>
+    <string name="onboarding_features_workout_title">Full Body &amp; Split sessions</string>
+    <string name="onboarding_features_workout_desc">Smart generator (Full Body, Push/Pull/Legs, …), timer, weight tracking</string>
+    <string name="onboarding_features_nutrition_title">Nutrition tracking</string>
+    <string name="onboarding_features_nutrition_desc">57 foods, macro tracking, personalized goals</string>
+    <string name="onboarding_features_stats_title">BI Dashboard</string>
+    <string name="onboarding_features_stats_desc">Charts, records, trends, comparisons, CSV export</string>
+    <string name="onboarding_features_coach_title">24/7 coach</string>
+    <string name="onboarding_features_coach_desc">Meal &amp; shaker reminders, motivation, sleep tracking</string>
+
+    <string name="onboarding_name_title">What\'s your name?</string>
+    <string name="onboarding_name_subtitle">To personalize your experience</string>
+    <string name="onboarding_name_first_label">First name *</string>
+    <string name="onboarding_name_last_label">Last name (optional)</string>
+
+    <string name="onboarding_body_title">Your current physique</string>
+    <string name="onboarding_body_subtitle">To compute your needs and track your progress</string>
+    <string name="onboarding_body_scanner_title">AI scanner (optional)</string>
+    <string name="onboarding_body_scanner_subtitle">Photo → measures auto-filled</string>
+    <string name="onboarding_body_sex_male">Male</string>
+    <string name="onboarding_body_sex_female">Female</string>
+    <string name="onboarding_body_age_label">Age</string>
+    <string name="onboarding_body_height_label">Height (cm)</string>
+    <string name="onboarding_body_weight_label">Current weight (kg)</string>
+
+    <string name="onboarding_goal_title">Your goal</string>
+    <string name="onboarding_goal_subtitle">What do you want to achieve?</string>
+    <string name="onboarding_goal_shred_desc">Lose fat, visible abs</string>
+    <string name="onboarding_goal_bulk_desc">Gain muscle and strength</string>
+    <string name="onboarding_goal_maintain_desc">Keep your shape and condition</string>
+
+    <string name="onboarding_level_title">Your level &amp; equipment</string>
+    <string name="onboarding_level_section_label">Level</string>
+    <string name="onboarding_level_beginner_short">Beginner</string>
+    <string name="onboarding_level_intermediate_short">Inter\nmediate</string>
+    <string name="onboarding_level_advanced_short">Advanced</string>
+    <string name="onboarding_equipment_section_label">Available equipment</string>
+    <string name="onboarding_equipment_full_gym_desc">Machines + free weights</string>
+    <string name="onboarding_equipment_home_gym_desc">Dumbbells and barbells</string>
+    <string name="onboarding_equipment_bodyweight_desc">No equipment</string>
+
+    <string name="onboarding_nutrition_title">Nutrition goals</string>
+    <string name="onboarding_nutrition_subtitle">Computed automatically from your profile</string>
+    <string name="onboarding_nutrition_tdee_label">Estimated TDEE</string>
+    <string name="onboarding_nutrition_tdee_value">%1$d kcal/day</string>
+    <string name="onboarding_nutrition_goal_shred_hint">400 kcal deficit for shred</string>
+    <string name="onboarding_nutrition_goal_bulk_hint">300 kcal surplus for bulk</string>
+    <string name="onboarding_nutrition_goal_maintain_hint">Calorie maintenance</string>
+    <string name="onboarding_nutrition_calories_label">Target calories (kcal)</string>
+    <string name="onboarding_nutrition_proteins_label">Target proteins (g)</string>
+    <string name="onboarding_nutrition_proteins_hint">Recommended: 2.2g per kg of bodyweight</string>
+    <string name="onboarding_nutrition_editable_later">You can change all this later in settings.</string>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Workout session screen -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+
+    <string name="workout_rest_almost_label">Go!</string>
+    <string name="workout_rest_skip">Skip</string>
+    <string name="workout_rest_go">Let\'s go!</string>
+
+    <string name="workout_stepper_weight">Weight (kg)</string>
+    <string name="workout_stepper_reps">Reps</string>
+    <string name="workout_stepper_rest">Rest</string>
+    <string name="workout_stepper_duration_s">Duration (s)</string>
+    <string name="workout_last_time_value">Last time: %1$s</string>
+    <string name="workout_record_value">Record: %1$s</string>
+
+    <string name="workout_transition_skipped">Skipped</string>
+    <string name="workout_transition_sets">Sets</string>
+    <string name="workout_transition_reps">Reps</string>
+    <string name="workout_transition_volume">Volume</string>
+    <string name="workout_transition_duration">Duration</string>
+
+    <string name="workout_action_close">Close</string>
+    <string name="workout_action_back">Back</string>
+    <string name="workout_action_cancel">Cancel</string>
+    <string name="workout_action_add">Add</string>
+    <string name="workout_action_remove">Remove</string>
+    <string name="workout_action_redo">Redo</string>
+
+    <string name="workout_stop_dialog_title">End the session?</string>
+    <string name="workout_stop_dialog_body">You can resume later. Completed sets are saved.</string>
+    <string name="workout_stop_dialog_confirm">End</string>
+
+    <string name="workout_add_exo_confirm_title">Add this exercise?</string>
+    <string name="workout_add_exo_summary">%1$d sets · %2$d-%3$d reps · %4$ds rest</string>
+    <string name="workout_add_exo_placement">Placement: %1$s</string>
+    <string name="workout_add_exo_placement_start">as warmup (start)</string>
+    <string name="workout_add_exo_placement_after_current">after current exercise</string>
+    <string name="workout_add_exo_placement_end">at the end of session</string>
+
+    <string name="workout_add_exo_dialog_title">Add an exercise</string>
+    <string name="workout_add_exo_step_choose_group">Pick the muscle group</string>
+    <string name="workout_add_exo_step_choose_exercise">Pick the exercise to add</string>
+    <string name="workout_add_exo_search_placeholder">Search an exercise…</string>
+    <string name="workout_add_exo_clear_search">Clear</string>
+    <string name="workout_add_exo_recommended_for">Recommended for %1$s</string>
+    <string name="workout_add_exo_other_groups">Other groups</string>
+    <string name="workout_add_exo_empty_group">All exercises in this group are already in your session</string>
+    <string name="workout_add_exo_summary_compact">%1$d×%2$d-%3$d · %4$ds</string>
+    <string name="workout_add_exo_btn_add_warmup">Add as warmup</string>
+    <string name="workout_add_exo_btn_add_end">Add at end</string>
+    <string name="workout_add_exo_btn_after_current">After this one</string>
+    <string name="workout_add_exo_btn_at_end">At end</string>
+
+    <string name="workout_loading">Preparing your session…</string>
+
+    <string name="workout_freestyle_empty_title">Freestyle session</string>
+    <string name="workout_freestyle_empty_subtitle">Add your first exercise to get started!</string>
+
+    <string name="workout_warmup_title">WARMUP</string>
+    <string name="workout_warmup_step_progress">Step %1$d of %2$d</string>
+    <string name="workout_warmup_step_done">WARMUP DONE</string>
+    <string name="workout_warmup_step_next">NEXT STEP</string>
+
+    <string name="workout_series_number">Set %1$d</string>
+    <string name="workout_series_skipped">Set %1$d — Skipped</string>
+    <string name="workout_series_current_total">Set %1$d / %2$d</string>
+    <string name="workout_series_in_progress">IN PROGRESS</string>
+    <string name="workout_series_done">DONE</string>
+    <string name="workout_series_rest">REST</string>
+    <string name="workout_series_add_extra">Add a set</string>
+    <string name="workout_series_start_button">START SET %1$d</string>
+    <string name="workout_series_metric_weight_kg">%1$s kg</string>
+    <string name="workout_series_metric_weight_extra">+%1$s kg</string>
+    <string name="workout_series_metric_reps">%1$d reps</string>
+
+    <string name="workout_cardio_session">Cardio session</string>
+    <string name="workout_cardio_target">Target: %1$d–%2$d min</string>
+    <string name="workout_cardio_start">START</string>
+    <string name="workout_cardio_finish">FINISH CARDIO</string>
+
+    <string name="workout_all_sets_done_title">All sets completed!</string>
+    <string name="workout_all_sets_done_body">Want to do a bonus set or move to the next exercise?</string>
+    <string name="workout_all_sets_done_bonus">One more bonus set</string>
+    <string name="workout_all_sets_done_continue_next">Move to next exercise</string>
+    <string name="workout_all_sets_done_finish_freestyle">Finish exercise</string>
+
+    <string name="workout_remove_exo_title">Remove this exercise?</string>
+    <string name="workout_remove_exo_body">"%1$s" will be removed from the current session.</string>
+
+    <string name="workout_overview_title">Overview</string>
+    <string name="workout_overview_back">Back</string>
+    <string name="workout_overview_finish">End session</string>
+    <string name="workout_overview_sets_done">%1$d sets done</string>
+
+    <string name="workout_inc_5kg">+5 kg</string>
+
+    <string name="workout_coach_label">Coach</string>
+    <string name="workout_coach_thinking">Shreddy is thinking</string>
+
+    <string name="workout_share_button">Share</string>
+    <string name="workout_share_title_in_progress">Session in progress</string>
+    <string name="workout_share_summary_label">Exercise summary</string>
+    <string name="workout_share_exercises_progress">%1$d / %2$d exercises</string>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Onboarding screen — Page 7: Google Backup -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+
+    <string name="onboarding_backup_title">Protect your data</string>
+    <string name="onboarding_backup_subtitle">Connect your Google account to automatically back up your sessions, meals, photos and chats to your private Drive folder.</string>
+    <string name="onboarding_backup_benefit_auto">Auto-backup every night at 3 AM</string>
+    <string name="onboarding_backup_benefit_restore">Restore everything on any device</string>
+    <string name="onboarding_backup_benefit_private">Private Drive folder, invisible to you</string>
+    <string name="onboarding_backup_connecting">Connecting…</string>
+    <string name="onboarding_backup_continue_with_google">Continue with Google</string>
+    <string name="onboarding_backup_skip_hint">Later — you can do it from settings</string>
+    <string name="onboarding_backup_linked_title">Connected to Google Drive</string>
+    <string name="onboarding_backup_encrypted_title">Encrypted backup</string>
+    <string name="onboarding_backup_encrypted_body">This backup is encrypted. Finish your onboarding first (a few quick infos), then go to Settings → Backup → Restore to recover it with your recovery code.</string>
+    <string name="onboarding_backup_encrypted_ack">Got it</string>
+    <string name="onboarding_backup_found_title">Backup found</string>
+    <string name="onboarding_backup_found_body">We found a backup on your Drive. Restore it? All your current onboarding info will be replaced by the backup.</string>
+    <string name="onboarding_backup_found_restore">Restore</string>
+    <string name="onboarding_backup_found_later">Later</string>
+</resources>

@@ -30,6 +30,9 @@ interface UserProfileDao {
     @Query("UPDATE user_profile SET lastUsedRoutineId = :routineId WHERE id = 1")
     suspend fun updateLastUsedRoutineId(routineId: String)
 
+    @Query("UPDATE user_profile SET languageTag = :tag WHERE id = 1")
+    suspend fun updateLanguageTag(tag: String?)
+
     // ── Weight Logs ──
     @Query("SELECT * FROM weight_logs ORDER BY date DESC")
     fun getAllWeightLogs(): Flow<List<WeightLogEntity>>
