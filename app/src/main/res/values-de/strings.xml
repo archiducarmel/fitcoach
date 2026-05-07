@@ -1,0 +1,1969 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Traduction allemande (DE) — V2.
+    Source-of-truth : values/strings.xml (FR).
+    Tonalité : tutoiement (du), motivante, registre fitness allemand.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">ShredCoach</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Start</string>
+    <string name="nav_workout">Workout</string>
+    <string name="nav_exercises">Übungen</string>
+    <string name="nav_stats">Stats</string>
+    <string name="nav_profile">Profil</string>
+    <string name="nav_nutrition">Ernährung</string>
+    <string name="nav_history">Verlauf</string>
+    <string name="nav_settings">Einstellungen</string>
+
+    <!-- Common -->
+    <string name="common_start">Starten</string>
+    <string name="common_cancel">Abbrechen</string>
+    <string name="common_save">Speichern</string>
+    <string name="common_delete">Löschen</string>
+    <string name="common_edit">Bearbeiten</string>
+    <string name="common_continue">Weiter</string>
+    <string name="common_back">Zurück</string>
+
+    <!-- Legacy keys -->
+    <string name="start">Starten</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="save">Speichern</string>
+    <string name="delete">Löschen</string>
+    <string name="edit">Bearbeiten</string>
+
+    <!-- Language picker -->
+    <string name="settings_section_language_title">Sprache</string>
+    <string name="settings_section_language_subtitle">Ändert die Sprache der App, der Benachrichtigungen und des Sprach-Coaches</string>
+    <string name="language_picker_title">App-Sprache</string>
+    <string name="language_picker_subtitle">Die ganze App, die Benachrichtigungen und der Sprach-Coach passen sich deiner Sprache an</string>
+    <string name="language_picker_hint_v2">Bald verfügbar</string>
+    <string name="language_picker_apply">Anwenden</string>
+    <string name="language_picker_change_confirmed">Sprache aktualisiert</string>
+    <string name="onboarding_language_title">Wähle deine Sprache</string>
+    <string name="onboarding_language_subtitle">Du kannst sie später in den Einstellungen ändern</string>
+
+    <!-- Workout legacy -->
+    <string name="workout_duration">Dauer: %d Min</string>
+    <string name="workout_exercises">%d Übungen</string>
+    <string name="series">Satz %d/%d</string>
+    <string name="reps">%d-%d Wdh</string>
+    <string name="rest_time">Pause: %ds</string>
+
+    <!-- Exercise variants -->
+    <string name="exercise_machine">Maschine</string>
+    <string name="exercise_weights">Hanteln/Langhantel</string>
+    <string name="exercise_bodyweight">Eigengewicht</string>
+    <string name="exercise_isolation">Isolation</string>
+
+    <!-- Muscle Groups -->
+    <string name="muscle_warmup">Aufwärmen</string>
+    <string name="muscle_quads">Quadrizeps / Gesäß</string>
+    <string name="muscle_hamstrings">Beinbeuger</string>
+    <string name="muscle_chest">Brust</string>
+    <string name="muscle_chest_upper">Obere Brust</string>
+    <string name="muscle_back_width">Rücken (Breite)</string>
+    <string name="muscle_back_thickness">Rücken (Dicke)</string>
+    <string name="muscle_shoulders">Schultern</string>
+    <string name="muscle_biceps">Bizeps</string>
+    <string name="muscle_triceps">Trizeps</string>
+    <string name="muscle_abs_upper">Obere Bauchmuskeln</string>
+    <string name="muscle_abs_lower">Untere Bauchmuskeln &amp; Schräge</string>
+    <string name="muscle_calves">Waden</string>
+    <string name="muscle_adductors">Adduktoren / Abduktoren</string>
+    <string name="muscle_traps">Trapezius</string>
+    <string name="muscle_forearms">Unterarme</string>
+    <string name="muscle_lower_back">Unterer Rücken</string>
+    <string name="muscle_cardio">Cardio</string>
+    <string name="muscle_back">Rücken</string>
+    <string name="muscle_abs">Bauchmuskeln</string>
+
+    <!-- ExerciseVariant -->
+    <string name="variant_machine">Maschine</string>
+    <string name="variant_weights">Hanteln / Langhantel</string>
+    <string name="variant_bodyweight">Eigengewicht</string>
+    <string name="variant_isolation">Isolation</string>
+
+    <!-- MealType -->
+    <string name="meal_type_breakfast">Frühstück</string>
+    <string name="meal_type_lunch">Mittagessen</string>
+    <string name="meal_type_dinner">Abendessen</string>
+    <string name="meal_type_snack">Snack</string>
+    <string name="meal_type_pre_workout">Pre-Workout</string>
+    <string name="meal_type_post_workout">Post-Workout</string>
+    <string name="meal_type_shake">Shaker</string>
+
+    <!-- PhotoType -->
+    <string name="photo_type_front">Vorne</string>
+    <string name="photo_type_side">Seite</string>
+    <string name="photo_type_back">Rücken</string>
+
+    <!-- Notification content -->
+    <string name="notif_meal_breakfast_title">🌅 Frühstück</string>
+    <string name="notif_meal_breakfast_body">Zeit fürs Frühstück! Eiweiß wartet nicht.</string>
+    <string name="notif_meal_lunch_title">☀️ Mittagessen</string>
+    <string name="notif_meal_lunch_body">Mittagspause! Denk an Eiweiß und Kohlenhydrate.</string>
+    <string name="notif_meal_snack_title">🍎 Snack</string>
+    <string name="notif_meal_snack_body">Pre-Workout-Snack? Banane + Erdnussbutter!</string>
+    <string name="notif_meal_dinner_title">🌙 Abendessen</string>
+    <string name="notif_meal_dinner_body">Zeit fürs Abendessen. Eiweiß + Gemüse für die Regeneration!</string>
+    <string name="notif_shaker_morning_title">🥤 Eiweißshake</string>
+    <string name="notif_shaker_morning_body">Vergiss deinen Morgenshake nicht! 30g Whey.</string>
+    <string name="notif_shaker_evening_title">🥤 Shake vorm Schlafen</string>
+    <string name="notif_shaker_evening_body">Casein + Wasser: Muskelregeneration über Nacht.</string>
+    <string name="notif_bedtime_title">😴 Bald Schlafenszeit</string>
+    <string name="notif_bedtime_body">Schlaf macht 80%% der Regeneration aus. Mindestens 7-8 Std!</string>
+    <string name="notif_motivation_title">💪 Nicht aufgeben!</string>
+    <string name="notif_motivation_body">3 Tage ohne Workout. Heute ne kleine Session?</string>
+
+    <string name="notif_session_default_title">Workout</string>
+    <string name="notif_session_fallback_default">Workout</string>
+    <string name="notif_shaker_pretraining_title">🥤 Pre-Workout-Shake</string>
+    <string name="notif_workout_start_title">🔥 Es geht los!</string>
+    <string name="notif_workout_upcoming_title">Workout kommt</string>
+    <string name="notif_shaker_in_2h">In 2h: %1$s. Denk an deinen Shake 🥤 (Whey + Banane = top Pre-Workout).</string>
+    <string name="notif_start_in_30min">In 30 Min: %1$s. Mach dich bereit und entzünde das Feuer! 🔥</string>
+
+    <string name="coach_first_name_fallback">du</string>
+
+    <string name="meal_debrief_action_view_day">Tag ansehen</string>
+    <string name="meal_debrief_default_dish">deine Mahlzeit</string>
+    <string name="meal_debrief_title_breakfast">🥐 Frühstück analysiert</string>
+    <string name="meal_debrief_title_lunch">🥗 Mittagessen unter der Lupe</string>
+    <string name="meal_debrief_title_snack">🍪 Snack analysiert</string>
+    <string name="meal_debrief_title_dinner">🍽 Abendessen seziert</string>
+    <string name="meal_debrief_title_pretraining">🥤 Pre-Workout-Shake</string>
+    <string name="meal_debrief_title_grignotage">🍿 Naschen analysiert</string>
+    <string name="meal_debrief_title_default">🍽 Mahlzeit analysiert</string>
+    <string name="meal_debrief_title_with_count">%1$s (%2$d Gerichte)</string>
+    <string name="meal_debrief_fallback_eod_shred_over">%1$dkcal von %2$d Ziel (Überschreitung).</string>
+    <string name="meal_debrief_fallback_eod_shred_aligned">%1$d/%2$dkcal — Bilanz im Plan.</string>
+    <string name="meal_debrief_fallback_eod_shred">Tag abgeschlossen: %1$s Eiweiß-Pause %2$dg, hydriere dich vor dem Schlafen.</string>
+    <string name="meal_debrief_fallback_eod_general">Tagesbilanz: %1$d/%2$dkcal, %3$d/%4$dg Eiweiß. Gute Erholung.</string>
+    <string name="meal_debrief_fallback_post_workout">Nach dem Workout liefert %1$s heute %2$dg Eiweiß. Ziel +%3$dg bis Tagesende für optimale Regeneration.</string>
+    <string name="meal_debrief_fallback_low_prot">%1$s gegessen: %2$d/%3$dg Eiweiß. %4$dg fehlen — setze auf eine dichte Quelle bei der nächsten Mahlzeit.</string>
+    <string name="meal_debrief_fallback_near_target_shred">%1$d/%2$dkcal — du bist nah am Ziel. Nächste Mahlzeit leicht halten, um sauber abzuschließen.</string>
+    <string name="meal_debrief_fallback_default">%1$s verbucht. Summe: %2$d/%3$dkcal · %4$d/%5$dg Eiweiß. %6$d Mahlzeiten übrig.</string>
+
+    <string name="workout_debrief_session_fallback_name">Freies Workout</string>
+    <string name="workout_debrief_title">💪 Debrief: %1$s</string>
+    <plurals name="workout_debrief_fallback_local">
+        <item quantity="one">Workout fertig: %1$d Sätze, %2$dkg Volumen. %3$d Workout diese Woche. Gute Erholung!</item>
+        <item quantity="other">Workout fertig: %1$d Sätze, %2$dkg Volumen. %3$d Workouts diese Woche. Gute Erholung!</item>
+    </plurals>
+
+    <!-- Notification channels -->
+    <string name="notif_channel_meals_name">Mahlzeit-Erinnerungen</string>
+    <string name="notif_channel_meals_desc">Erinnerungen für Mahlzeiten und Eiweißshakes</string>
+    <string name="notif_channel_workout_name">Workout-Erinnerungen</string>
+    <string name="notif_channel_workout_desc">Motivation und Workout-Erinnerungen</string>
+    <string name="notif_channel_bedtime_name">Schlafenserinnerung</string>
+    <string name="notif_channel_bedtime_desc">Erinnerung zum Schlafengehen</string>
+    <string name="notif_channel_debrief_name">Shreddy Debriefs</string>
+    <string name="notif_channel_debrief_desc">Personalisierte KI-Debriefs nach Mahlzeiten und Workouts</string>
+    <string name="notif_channel_backup_name">Cloud-Backup</string>
+    <string name="notif_channel_backup_desc">Status der Google Drive Backups (Erfolg und Fehler)</string>
+
+    <!-- NotifType -->
+    <string name="notif_type_meal_debrief">Mahlzeit-Debrief</string>
+    <string name="notif_type_workout_debrief">Workout-Debrief</string>
+    <string name="notif_type_meal_reminder">Mahlzeit-Erinnerung</string>
+    <string name="notif_type_shaker_reminder">Shake-Erinnerung</string>
+    <string name="notif_type_bedtime_reminder">Schlafenserinnerung</string>
+    <string name="notif_type_workout_reminder">Workout-Erinnerung</string>
+    <string name="notif_type_motivation">Motivation</string>
+    <string name="notif_type_coach_proactive">Coach Shreddy</string>
+    <string name="notif_type_weekly_recap">Wochenrückblick</string>
+    <string name="notif_type_other">Info</string>
+
+    <!-- Home screen -->
+    <string name="home_greeting_morning">Guten Morgen</string>
+    <string name="home_greeting_afternoon">Guten Tag</string>
+    <string name="home_greeting_evening">Guten Abend</string>
+    <string name="home_greeting_default_name">Champion</string>
+    <string name="home_greeting_full">%1$s, %2$s</string>
+
+    <string name="home_subtitle_workout_done">Heute gut gemacht!</string>
+    <string name="home_subtitle_workout_day">Workout-Tag!</string>
+    <string name="home_subtitle_yesterday_volume">Top-Workout gestern, %1$d kg gehoben</string>
+    <string name="home_subtitle_default">Lass uns loslegen?</string>
+    <string name="home_sessions_this_week">%1$d/%2$d diese Woche</string>
+
+    <string name="home_topbar_profile_cd">Profil von %1$s</string>
+    <string name="home_topbar_notifications_cd">Benachrichtigungen</string>
+
+    <string name="home_section_workout_title">Trainieren</string>
+    <string name="home_section_other_options_expand">Weitere Optionen</string>
+    <string name="home_section_other_options_collapse">Weniger Optionen</string>
+    <string name="home_section_more_expand">Mehr</string>
+    <string name="home_section_more_collapse">Weniger</string>
+
+    <string name="home_cta_generate_title">WORKOUT GENERIEREN</string>
+    <string name="home_cta_generate_subtitle">%1$d Min • An dein Niveau angepasst</string>
+    <string name="home_cta_freestyle_title">Freies Workout</string>
+    <string name="home_cta_freestyle_subtitle">Stelle dein Workout nach Gefühl zusammen, Übung für Übung</string>
+    <string name="home_cta_favorites_title">Meine Favoriten</string>
+    <string name="home_cta_favorites_subtitle">Workout neu starten</string>
+    <string name="home_cta_create_title">Erstellen</string>
+    <string name="home_cta_create_subtitle">Mein Workout zusammenstellen</string>
+
+    <string name="home_action_exercises">Übungen</string>
+    <string name="home_action_stats">Meine Stats</string>
+    <string name="home_action_nutrition">Ernährung</string>
+    <string name="home_action_photos">Fotos</string>
+    <string name="home_action_calendar">Kalender</string>
+
+    <string name="home_next_session_today">Heute</string>
+    <string name="home_next_session_tomorrow">Morgen</string>
+    <string name="home_next_session_label">Nächstes Workout · %1$s</string>
+    <string name="home_next_session_default_title">Geplantes Workout</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_notifications_updated">Benachrichtigungen aktualisiert</string>
+
+    <string name="settings_section_during_workout">Während des Workouts</string>
+    <string name="settings_workout_autostart_title">Auto-Start nach Pause</string>
+    <string name="settings_workout_autostart_subtitle">Den nächsten Satz automatisch starten, wenn die Pause vorbei ist</string>
+    <string name="settings_workout_vibration_title">Vibration</string>
+    <string name="settings_workout_vibration_subtitle">Pausenende + haptisches Feedback bei Buttons</string>
+    <string name="settings_workout_sound_title">Sound</string>
+    <string name="settings_workout_sound_subtitle">Sound am Ende der Pause abspielen</string>
+    <string name="settings_workout_voice_title">Shreddy-Stimme</string>
+    <string name="settings_workout_voice_subtitle">Shreddy sagt das Pausenende ansagen (natürliche Stimme)</string>
+    <string name="settings_workout_coach_tips_title">Coach-Tipps</string>
+    <string name="settings_workout_coach_tips_subtitle">Tipps und Ausführungsanleitungen anzeigen</string>
+    <string name="settings_workout_bonus_title">Bonus-Satz vorschlagen</string>
+    <string name="settings_workout_bonus_subtitle">Nach dem letzten Satz jeder Übung einen Bonus-Satz vorschlagen</string>
+    <string name="settings_workout_default_rest_title">Standard-Pause</string>
+    <string name="settings_unit_seconds">s</string>
+
+    <string name="settings_section_voice">Shreddy-Stimme</string>
+
+    <string name="settings_section_health">Gesundheit &amp; Einschränkungen</string>
+    <string name="settings_health_notes_label">Gesundheitsnotizen / Verletzungen</string>
+    <string name="settings_health_notes_placeholder">z.B.: Schmerz linke Schulter, Knie-Sehnenentzündung...</string>
+    <string name="settings_health_notes_support">Shreddy passt seine Tipps entsprechend an</string>
+
+    <string name="settings_section_duration">Workout-Dauer</string>
+    <string name="settings_duration_preferred">Bevorzugte Dauer</string>
+    <string name="settings_unit_minutes">Min</string>
+
+    <string name="settings_section_notifications">Benachrichtigungen</string>
+    <string name="settings_notifs_enabled_title">Benachrichtigungen aktiviert</string>
+    <string name="settings_notifs_enabled_subtitle">Alle Benachrichtigungen aktivieren/deaktivieren</string>
+    <string name="settings_notifs_meals_label">Mahlzeiten</string>
+    <string name="settings_notifs_breakfast">Frühstück</string>
+    <string name="settings_notifs_lunch">Mittagessen</string>
+    <string name="settings_notifs_snack">Pre-Workout-Snack</string>
+    <string name="settings_notifs_dinner">Abendessen</string>
+    <string name="settings_notifs_reminder_at">Erinnerung um %1$s</string>
+    <string name="settings_notifs_shakers_label">Eiweißshakes</string>
+    <string name="settings_notifs_shakers_title">Shakes morgens &amp; abends</string>
+    <string name="settings_notifs_shakers_subtitle">Morgens %1$s / Abends %2$s</string>
+    <string name="settings_notifs_others_label">Sonstiges</string>
+    <string name="settings_notifs_bedtime_title">Schlafenserinnerung</string>
+    <string name="settings_notifs_bedtime_subtitle">30 Min vor Zielzeit</string>
+    <string name="settings_notifs_motivation_title">Motivation</string>
+    <string name="settings_notifs_motivation_subtitle">Erinnerung bei 3 Tagen ohne Workout</string>
+    <string name="settings_notifs_debrief_label">Shreddy KI-Debriefs</string>
+    <string name="settings_notifs_meal_debrief_title">Mahlzeit-Debrief</string>
+    <string name="settings_notifs_meal_debrief_subtitle">Nach jedem Mahlzeit-Scan · humorvoll &amp; persönlich</string>
+    <string name="settings_notifs_meal_debrief_delay">Verzögerung nach Scan</string>
+    <string name="settings_notifs_workout_debrief_title">Workout-Debrief</string>
+    <string name="settings_notifs_workout_debrief_subtitle">Nach jedem Workout · Qualität &amp; Dynamik</string>
+    <string name="settings_notifs_workout_debrief_delay">Verzögerung nach Workout</string>
+
+    <string name="settings_section_appearance">Darstellung</string>
+    <string name="settings_appearance_mode_title">Aussehen</string>
+    <string name="settings_appearance_mode_light">Hell</string>
+    <string name="settings_appearance_mode_dark">Dunkel</string>
+    <string name="settings_appearance_mode_auto">Auto</string>
+    <string name="settings_appearance_palette_title">Palette</string>
+    <string name="settings_appearance_palette_subtitle">Die Hauptfarbe wird auf allen Bildschirmen verwendet</string>
+    <string name="settings_appearance_palette_system">System</string>
+    <string name="settings_appearance_imperial_title">Imperiale Einheiten</string>
+    <string name="settings_appearance_imperial_subtitle">lbs/inches statt kg/cm verwenden</string>
+
+    <string name="settings_section_backup">Backup</string>
+    <string name="settings_section_coach">Proaktiver Coach</string>
+
+    <string name="settings_section_meal_scanner">Meal Scanner</string>
+    <string name="settings_meal_scanner_provider_label">Vision-Anbieter</string>
+    <string name="settings_meal_scanner_gemini_model_label">Gemini-Modell</string>
+    <string name="settings_meal_scanner_api_key_gemini">Gemini API-Schlüssel</string>
+    <string name="settings_meal_scanner_api_key_groq">Groq API-Schlüssel</string>
+    <string name="settings_meal_scanner_api_key_mistral">Mistral API-Schlüssel</string>
+    <string name="settings_meal_scanner_groq_model">Llama 4 Scout 17B</string>
+    <string name="settings_meal_scanner_mistral_model">Mistral Small (kostenlos)</string>
+    <string name="settings_meal_scanner_gemini_support">Kostenlos auf aistudio.google.com/apikey</string>
+    <string name="settings_meal_scanner_groq_support">Kostenlos auf console.groq.com/keys</string>
+    <string name="settings_meal_scanner_mistral_support">Kostenlos (Experiment-Plan) auf console.mistral.ai</string>
+
+    <string name="settings_section_assistant">Shreddy Assistant</string>
+    <string name="settings_assistant_provider_label">KI-Anbieter</string>
+    <string name="settings_assistant_api_key">API-Schlüssel</string>
+    <string name="settings_assistant_api_key_placeholder">sk-… oder gsk-…</string>
+    <string name="settings_assistant_model_label">Modell (optional)</string>
+    <string name="settings_assistant_model_default">Standard: %1$s</string>
+
+    <string name="settings_section_privacy">Datenschutz &amp; Daten</string>
+    <string name="settings_section_about">Über</string>
+    <string name="settings_about_version_label">Version</string>
+
+    <string name="settings_profile_header_greeting">Hallo 👋</string>
+    <string name="settings_profile_header_default_name">Athlet</string>
+    <string name="settings_profile_header_stat_kg">kg</string>
+    <string name="settings_profile_header_stat_target">Ziel</string>
+    <string name="settings_profile_header_stat_workouts">Workouts</string>
+    <string name="settings_profile_header_stat_streak">Streak</string>
+
+    <string name="cd_paste">Einfügen</string>
+    <string name="cd_show_password">Anzeigen</string>
+    <string name="cd_toggle_password">Anzeigen/verbergen</string>
+    <string name="cd_toggle">Toggle</string>
+    <string name="cd_profile_photo">Profilfoto</string>
+
+    <!-- Domain enums -->
+    <string name="fitness_goal_shred">Cut</string>
+    <string name="fitness_goal_bulk">Muskelaufbau</string>
+    <string name="fitness_goal_maintain">Erhalten</string>
+
+    <string name="fitness_level_beginner">Anfänger</string>
+    <string name="fitness_level_intermediate">Mittel</string>
+    <string name="fitness_level_advanced">Fortgeschritten</string>
+
+    <string name="equipment_full_gym">Komplettes Studio</string>
+    <string name="equipment_home_gym">Home Gym</string>
+    <string name="equipment_bodyweight">Eigengewicht</string>
+
+    <!-- Coach tones -->
+    <string name="coach_tone_gentle">Sanft</string>
+    <string name="coach_tone_gentle_desc">Wohlwollend, formuliert um ohne Druck</string>
+    <string name="coach_tone_direct">Direkt</string>
+    <string name="coach_tone_direct_desc">Faktisch, klare Aktion, neutraler Ton</string>
+    <string name="coach_tone_drill">Pro-Coach max</string>
+    <string name="coach_tone_drill_desc">Energisch, fordernd, Sport-Vokabular</string>
+
+    <!-- Voice engines -->
+    <string name="voice_engine_android">Android (System)</string>
+    <string name="voice_engine_android_tagline">Kostenlos · offline</string>
+    <string name="voice_engine_chirp3">Google Cloud · Chirp 3 HD</string>
+    <string name="voice_engine_chirp3_tagline">Studio-Grade neuronale Stimme</string>
+
+    <string name="voice_persona_marcus_android_tagline">Ruhiger Coach, tiefe Stimme</string>
+    <string name="voice_persona_lea_android_tagline">Spritzig, motivierend</string>
+    <string name="voice_persona_hugo_android_tagline">Energisch, dynamisch</string>
+    <string name="voice_persona_sophie_android_tagline">Klar, strukturiert</string>
+    <string name="voice_persona_marcus_chirp_tagline">Tiefe Stimme, ruhiger Ton</string>
+    <string name="voice_persona_lea_chirp_tagline">Vibrierend, ermutigend</string>
+    <string name="voice_persona_hugo_chirp_tagline">Energisch, prägnant</string>
+    <string name="voice_persona_sophie_chirp_tagline">Klar, strukturiert</string>
+    <string name="voice_gender_male_short">Mä.</string>
+    <string name="voice_gender_female_short">Wb.</string>
+
+    <!-- Plate types -->
+    <string name="plate_type_none">Nicht angegeben</string>
+    <string name="plate_type_large">Flacher Teller</string>
+    <string name="plate_type_deep">Suppenteller</string>
+    <string name="plate_type_dessert">Dessertteller</string>
+    <string name="plate_type_small">Kleiner Teller</string>
+
+    <!-- Bowl types -->
+    <string name="bowl_type_none">Nicht angegeben</string>
+    <string name="bowl_type_mini">Mini-Schüssel</string>
+    <string name="bowl_type_small">Kleine Schüssel</string>
+    <string name="bowl_type_standard">Standard-Schüssel</string>
+    <string name="bowl_type_saladier">Salatschüssel</string>
+
+    <!-- Export formats -->
+    <string name="export_format_csv">CSV</string>
+    <string name="export_format_csv_desc">Tabellenkalkulation (Excel, Numbers, Sheets)</string>
+    <string name="export_format_json">JSON</string>
+    <string name="export_format_json_desc">Für Entwickler, APIs, Skripte</string>
+    <string name="export_format_txt">Text</string>
+    <string name="export_format_txt_desc">Menschenlesbar, kopieren-einfügen</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_nav_back">Zurück</string>
+    <string name="onboarding_nav_next">Weiter</string>
+    <string name="onboarding_nav_finish">Los geht\'s!</string>
+
+    <string name="onboarding_welcome_tagline">Dein Sport- &amp; Ernährungscoach</string>
+    <string name="onboarding_welcome_pitch">Erreiche deinen Traumkörper mit einem persönlichen Plan, intelligentem Tracking und Echtzeit-Coaching.</string>
+
+    <string name="onboarding_features_title">Was ShredCoach für dich tut</string>
+    <string name="onboarding_features_workout_title">Full Body &amp; Split Workouts</string>
+    <string name="onboarding_features_workout_desc">Intelligenter Generator (Full Body, Push/Pull/Legs, …), Timer, Gewichts-Tracking</string>
+    <string name="onboarding_features_nutrition_title">Ernährungs-Tracking</string>
+    <string name="onboarding_features_nutrition_desc">57 Lebensmittel, Makro-Tracking, persönliche Ziele</string>
+    <string name="onboarding_features_stats_title">BI-Dashboard</string>
+    <string name="onboarding_features_stats_desc">Diagramme, Rekorde, Trends, Vergleiche, CSV-Export</string>
+    <string name="onboarding_features_coach_title">Coach 24/7</string>
+    <string name="onboarding_features_coach_desc">Mahlzeit- &amp; Shake-Erinnerungen, Motivation, Schlaf-Tracking</string>
+
+    <string name="onboarding_name_title">Wie heißt du?</string>
+    <string name="onboarding_name_subtitle">Um dein Erlebnis zu personalisieren</string>
+    <string name="onboarding_name_first_label">Vorname *</string>
+    <string name="onboarding_name_last_label">Nachname (optional)</string>
+
+    <string name="onboarding_body_title">Dein aktueller Körper</string>
+    <string name="onboarding_body_subtitle">Um deinen Bedarf zu berechnen und Fortschritt zu verfolgen</string>
+    <string name="onboarding_body_scanner_title">KI-Scanner (optional)</string>
+    <string name="onboarding_body_scanner_subtitle">Foto → Maße automatisch ausgefüllt</string>
+    <string name="onboarding_body_sex_male">Mann</string>
+    <string name="onboarding_body_sex_female">Frau</string>
+    <string name="onboarding_body_age_label">Alter</string>
+    <string name="onboarding_body_height_label">Größe (cm)</string>
+    <string name="onboarding_body_weight_label">Aktuelles Gewicht (kg)</string>
+
+    <string name="onboarding_goal_title">Dein Ziel</string>
+    <string name="onboarding_goal_subtitle">Was willst du erreichen?</string>
+    <string name="onboarding_goal_shred_desc">Fett verlieren, sichtbare Bauchmuskeln</string>
+    <string name="onboarding_goal_bulk_desc">Muskeln und Kraft aufbauen</string>
+    <string name="onboarding_goal_maintain_desc">Form und Kondition halten</string>
+
+    <string name="onboarding_level_title">Dein Niveau &amp; Equipment</string>
+    <string name="onboarding_level_section_label">Niveau</string>
+    <string name="onboarding_level_beginner_short">Anfänger</string>
+    <string name="onboarding_level_intermediate_short">Mittel</string>
+    <string name="onboarding_level_advanced_short">Fortgeschr.</string>
+    <string name="onboarding_equipment_section_label">Verfügbares Equipment</string>
+    <string name="onboarding_equipment_full_gym_desc">Maschinen + Freihanteln</string>
+    <string name="onboarding_equipment_home_gym_desc">Hanteln und Stangen</string>
+    <string name="onboarding_equipment_bodyweight_desc">Kein Equipment</string>
+
+    <string name="onboarding_nutrition_title">Ernährungsziele</string>
+    <string name="onboarding_nutrition_subtitle">Automatisch nach deinem Profil berechnet</string>
+    <string name="onboarding_nutrition_tdee_label">Geschätzter TDEE</string>
+    <string name="onboarding_nutrition_tdee_value">%1$d kcal/Tag</string>
+    <string name="onboarding_nutrition_goal_shred_hint">400 kcal Defizit für Cut</string>
+    <string name="onboarding_nutrition_goal_bulk_hint">300 kcal Überschuss für Muskelaufbau</string>
+    <string name="onboarding_nutrition_goal_maintain_hint">Kalorische Erhaltung</string>
+    <string name="onboarding_nutrition_calories_label">Kalorienziel (kcal)</string>
+    <string name="onboarding_nutrition_proteins_label">Eiweißziel (g)</string>
+    <string name="onboarding_nutrition_proteins_hint">Empfohlen: 2.2g pro kg Körpergewicht</string>
+    <string name="onboarding_nutrition_editable_later">Du kannst das alles später in den Einstellungen ändern.</string>
+
+    <!-- Workout session -->
+    <string name="workout_rest_almost_label">Los!</string>
+    <string name="workout_rest_skip">Überspringen</string>
+    <string name="workout_rest_go">Los geht\'s!</string>
+
+    <string name="workout_stepper_weight">Gewicht (kg)</string>
+    <string name="workout_stepper_reps">Wdh</string>
+    <string name="workout_stepper_rest">Pause</string>
+    <string name="workout_stepper_duration_s">Dauer (s)</string>
+    <string name="workout_last_time_value">Letztes Mal: %1$s</string>
+    <string name="workout_record_value">Rekord: %1$s</string>
+
+    <!-- Workout Generator -->
+    <string name="generator_title">Workout generieren</string>
+    <string name="generator_subtitle">%1$s personalisiert</string>
+    <string name="generator_hero_title">Intelligentes %1$s Workout</string>
+
+    <string name="generator_section_routine">Workout-Typ</string>
+    <string name="generator_section_duration">Workout-Dauer</string>
+    <string name="generator_section_level">Dein Niveau</string>
+    <string name="generator_section_equipment">Verfügbares Equipment</string>
+
+    <string name="generator_duration_exo_count">%1$d Übungen</string>
+    <string name="generator_duration_value">%1$d Min</string>
+
+    <string name="generator_equipment_full_gym_desc">Maschinen + Hanteln + Stangen</string>
+    <string name="generator_equipment_home_gym_desc">Nur Hanteln und Stangen</string>
+    <string name="generator_equipment_bodyweight_desc">Kein Equipment</string>
+
+    <string name="generator_button_generating">Generiere…</string>
+    <string name="generator_button_generate">MEIN WORKOUT GENERIEREN</string>
+
+    <!-- Workout Summary -->
+    <string name="summary_title">Workout fertig!</string>
+    <string name="summary_share_cd">Workout teilen</string>
+    <string name="summary_share_card_title">Workout abgeschlossen</string>
+    <string name="summary_share_card_subtitle">Bravo Champion!</string>
+    <string name="summary_default_message">Gut gemacht!</string>
+
+    <string name="summary_stats_title">Statistiken</string>
+    <string name="summary_stat_duration">Echte Dauer</string>
+    <string name="summary_stat_sets">Sätze</string>
+    <string name="summary_stat_volume">Gesamtvolumen</string>
+    <string name="summary_stat_reps">Gesamt-Wdh</string>
+    <string name="summary_stat_rest">Pause gesamt</string>
+    <string name="summary_stat_skipped">Übersprungen</string>
+
+    <string name="summary_cta_view_stats">Stats ansehen</string>
+    <string name="summary_cta_new_session">Neues Workout</string>
+
+    <string name="summary_book_next_title">Nächstes Workout buchen</string>
+    <string name="summary_book_next_subtitle">Plane es jetzt, um regelmäßig zu bleiben</string>
+
+    <string name="summary_finish_button">FERTIG</string>
+
+    <!-- Favorites -->
+    <string name="favorites_title">Meine Lieblings-Workouts</string>
+    <string name="favorites_empty_title">Speichere deine besten Workouts</string>
+    <string name="favorites_empty_desc">Generiere oder erstelle ein Workout, dann füge es mit dem ❤️ zu Favoriten hinzu. Du kannst es jedes Mal mit 1 Klick neu starten.</string>
+    <string name="favorites_empty_cta">Workout generieren</string>
+    <string name="favorites_card_exos_count">%1$d Üb.</string>
+    <string name="favorites_card_duration">%1$d Min</string>
+    <string name="favorites_card_custom_label">Custom</string>
+    <string name="favorites_card_added_at">Hinzugefügt am %1$s</string>
+    <string name="favorites_card_exos_count_full">%1$d Übungen</string>
+    <string name="favorites_remove_dialog_title">Aus Favoriten entfernen?</string>
+    <string name="favorites_remove_dialog_body">„%1$s\" wird aus deinen Favoriten entfernt.</string>
+    <string name="favorites_card_launch_button">DIESES WORKOUT STARTEN</string>
+
+    <string name="favorite_preview_title">Workout-Vorschau</string>
+    <string name="favorite_preview_empty_title">Keine Übung</string>
+    <string name="favorite_preview_empty_desc">Dieser Favorit enthält keine Übungen. Erstelle einen neuen Favoriten über den Workout-Tab.</string>
+    <string name="favorite_preview_subtitle">Parameter vor dem Start anpassen</string>
+    <string name="favorite_preview_launch">WORKOUT STARTEN</string>
+
+    <!-- Custom workout -->
+    <string name="workout_section_warmup">Aufwärmen</string>
+    <string name="workout_section_strength">Krafttraining</string>
+    <string name="workout_section_cardio">Cardio</string>
+
+    <string name="custom_title">Workout erstellen</string>
+    <string name="custom_favorite_cd">Favorit</string>
+    <string name="custom_launch_button">WORKOUT STARTEN</string>
+
+    <string name="custom_mode_switch_title">Modus wechseln?</string>
+    <string name="custom_mode_switch_to_template">Dein aktuelles Workout wird durch das vorgeschlagene Modell ersetzt (4 Aufwärmen + 7 Kraft + 1 Cardio).</string>
+    <string name="custom_mode_switch_to_blank">Dein aktuelles Workout wird gelöscht und du startest mit einer leeren Seite.</string>
+    <string name="custom_mode_switch_continue">Weiter</string>
+
+    <string name="custom_section_routine">Workout-Typ</string>
+    <string name="custom_field_name_label">Workout-Name</string>
+
+    <string name="custom_slot_pick_exercise">Übung wählen</string>
+    <string name="custom_slot_move_up_cd">Hoch</string>
+    <string name="custom_slot_move_down_cd">Runter</string>
+    <string name="custom_slot_remove_cd">Entfernen</string>
+    <string name="custom_stepper_series">Sätze</string>
+    <string name="custom_stepper_reps">Wdh</string>
+    <string name="custom_stepper_rest">Pause</string>
+    <string name="custom_stepper_duration">Dauer</string>
+    <string name="custom_stepper_rest_value">%1$ds</string>
+    <string name="custom_stepper_duration_value">%1$d Min</string>
+    <string name="custom_stepper_reps_value">%1$d-%2$d</string>
+
+    <string name="custom_picker_title">Wählen: %1$s</string>
+    <string name="custom_picker_summary">%1$d×%2$d-%3$d · %4$ds</string>
+
+    <string name="custom_add_slot_title">Hinzufügen zu %1$s</string>
+
+    <string name="custom_hero_estimated">Geschätzte Dauer</string>
+    <string name="custom_hero_target_label">/ Ziel %1$d Min</string>
+    <string name="custom_hero_delta_ok">OK</string>
+    <string name="custom_hero_delta_min">Min</string>
+    <string name="custom_hero_target_chips">Ziel:</string>
+    <string name="custom_hero_chip_min">%1$d Min</string>
+    <string name="custom_hero_rebalance">Kraft-Übungen ausbalancieren</string>
+    <string name="custom_breakdown_warmup">Aufw.</string>
+    <string name="custom_breakdown_strength">Kraft</string>
+    <string name="custom_breakdown_cardio">Cardio</string>
+    <string name="custom_breakdown_transitions">Übergänge</string>
+    <string name="custom_breakdown_item">%1$s · %2$d\'</string>
+
+    <string name="custom_mode_template_label">Vorgeschlagene Vorlage</string>
+    <string name="custom_mode_template_subtitle">Ausgewogen, anpassbar</string>
+    <string name="custom_mode_blank_label">Bei Null anfangen</string>
+    <string name="custom_mode_blank_subtitle" tools:ignore="StringFormatInvalid">100% individuell</string>
+
+    <string name="custom_section_header_summary_one">%1$d Übung · %2$d Min</string>
+    <string name="custom_section_header_summary_many">%1$d Übungen · %2$d Min</string>
+
+    <string name="custom_empty_warmup">Füge Aufwärmübungen hinzu, um deinen Körper vorzubereiten</string>
+    <string name="custom_empty_strength">Füge Kraftübungen nach Muskelgruppe hinzu</string>
+    <string name="custom_empty_cardio">Füge Cardio am Ende des Workouts hinzu (optional)</string>
+
+    <string name="fmt_minutes_h">%1$dh%2$s</string>
+    <string name="fmt_minutes_only">%1$d Min</string>
+
+    <string name="fmt_duration_h_m">%1$dh %2$dmin</string>
+    <string name="fmt_duration_m">%1$dmin</string>
+    <string name="fmt_duration_s">%1$ds</string>
+    <string name="fmt_volume_k">%1$.1fk kg</string>
+    <string name="fmt_volume_kg">%1$.0f kg</string>
+
+    <string name="workout_transition_skipped">Übersprungen</string>
+    <string name="workout_transition_sets">Sätze</string>
+    <string name="workout_transition_reps">Wdh</string>
+    <string name="workout_transition_volume">Volumen</string>
+    <string name="workout_transition_duration">Dauer</string>
+
+    <string name="workout_action_close">Schließen</string>
+    <string name="workout_action_back">Zurück</string>
+    <string name="workout_action_cancel">Abbrechen</string>
+    <string name="workout_action_add">Hinzufügen</string>
+    <string name="workout_action_remove">Entfernen</string>
+    <string name="workout_action_redo">Wiederholen</string>
+
+    <string name="workout_stop_dialog_title">Workout beenden?</string>
+    <string name="workout_stop_dialog_body">Du kannst später fortsetzen. Erledigte Sätze werden gespeichert.</string>
+    <string name="workout_stop_dialog_confirm">Beenden</string>
+
+    <string name="workout_add_exo_confirm_title">Diese Übung hinzufügen?</string>
+    <string name="workout_add_exo_summary">%1$d Sätze · %2$d-%3$d Wdh · %4$ds Pause</string>
+    <string name="workout_add_exo_placement">Position: %1$s</string>
+    <string name="workout_add_exo_placement_start">beim Aufwärmen (Anfang)</string>
+    <string name="workout_add_exo_placement_after_current">nach der aktuellen Übung</string>
+    <string name="workout_add_exo_placement_end">am Ende des Workouts</string>
+
+    <string name="workout_add_exo_dialog_title">Übung hinzufügen</string>
+    <string name="workout_add_exo_step_choose_group">Wähle die Muskelgruppe</string>
+    <string name="workout_add_exo_step_choose_exercise">Wähle die hinzuzufügende Übung</string>
+    <string name="workout_add_exo_search_placeholder">Übung suchen…</string>
+    <string name="workout_add_exo_clear_search">Löschen</string>
+    <string name="workout_add_exo_recommended_for">Empfohlen für %1$s</string>
+    <string name="workout_add_exo_other_groups">Andere Gruppen</string>
+    <string name="workout_add_exo_empty_group">Alle Übungen dieser Gruppe sind bereits in deinem Workout</string>
+    <string name="workout_add_exo_summary_compact">%1$d×%2$d-%3$d · %4$ds</string>
+    <string name="workout_add_exo_btn_add_warmup">Beim Aufwärmen hinzufügen</string>
+    <string name="workout_add_exo_btn_add_end">Am Ende hinzufügen</string>
+    <string name="workout_add_exo_btn_after_current">Nach dieser hier</string>
+    <string name="workout_add_exo_btn_at_end">Am Ende</string>
+
+    <string name="workout_loading">Bereite dein Workout vor…</string>
+
+    <string name="workout_freestyle_empty_title">Freies Workout</string>
+    <string name="workout_freestyle_empty_subtitle">Füge deine erste Übung hinzu, um zu starten!</string>
+
+    <string name="workout_warmup_title">AUFWÄRMEN</string>
+    <string name="workout_warmup_step_progress">Schritt %1$d von %2$d</string>
+    <string name="workout_warmup_step_done">AUFWÄRMEN BEENDET</string>
+    <string name="workout_warmup_step_next">NÄCHSTER SCHRITT</string>
+
+    <string name="workout_series_number">Satz %1$d</string>
+    <string name="workout_series_skipped">Satz %1$d — Übersprungen</string>
+    <string name="workout_series_current_total">Satz %1$d / %2$d</string>
+    <string name="workout_series_in_progress">LÄUFT</string>
+    <string name="workout_series_done">FERTIG</string>
+    <string name="workout_series_rest">PAUSE</string>
+    <string name="workout_series_add_extra">Satz hinzufügen</string>
+    <string name="workout_series_start_button">SATZ %1$d STARTEN</string>
+    <string name="workout_series_metric_weight_kg">%1$s kg</string>
+    <string name="workout_series_metric_weight_extra">+%1$s kg</string>
+    <string name="workout_series_metric_reps">%1$d Wdh</string>
+
+    <string name="workout_cardio_session">Cardio-Session</string>
+    <string name="workout_cardio_target">Ziel: %1$d–%2$d Min</string>
+    <string name="workout_cardio_start">STARTEN</string>
+    <string name="workout_cardio_finish">CARDIO BEENDEN</string>
+
+    <string name="workout_all_sets_done_title">Alle Sätze erledigt!</string>
+    <string name="workout_all_sets_done_body">Willst du einen Bonus-Satz dranhängen oder zur nächsten Übung?</string>
+    <string name="workout_all_sets_done_bonus">Noch ein Bonus-Satz</string>
+    <string name="workout_all_sets_done_continue_next">Zur nächsten Übung</string>
+    <string name="workout_all_sets_done_finish_freestyle">Übung beenden</string>
+
+    <string name="workout_remove_exo_title">Diese Übung entfernen?</string>
+    <string name="workout_remove_exo_body">„%1$s\" wird aus dem laufenden Workout entfernt.</string>
+
+    <string name="workout_overview_title">Übersicht</string>
+    <string name="workout_overview_back">Zurück</string>
+    <string name="workout_overview_finish">Workout beenden</string>
+    <string name="workout_overview_sets_done">%1$d Sätze gemacht</string>
+
+    <string name="workout_inc_5kg">+5 kg</string>
+
+    <string name="workout_coach_label">Coach</string>
+    <string name="workout_coach_thinking">Shreddy denkt nach</string>
+
+    <string name="workout_share_button">Teilen</string>
+    <string name="workout_share_title_in_progress">Workout läuft</string>
+    <string name="workout_share_summary_label">Übungs-Zusammenfassung</string>
+    <string name="workout_share_exercises_progress">%1$d / %2$d Übungen</string>
+
+    <!-- Onboarding backup -->
+    <string name="onboarding_backup_title">Schütze deine Daten</string>
+    <string name="onboarding_backup_subtitle">Verbinde dein Google-Konto, um deine Workouts, Mahlzeiten, Fotos und Gespräche automatisch in deinem privaten Drive zu sichern.</string>
+    <string name="onboarding_backup_benefit_auto">Auto-Backup jede Nacht um 3 Uhr</string>
+    <string name="onboarding_backup_benefit_restore">Wiederherstellung auf jedem Gerät</string>
+    <string name="onboarding_backup_benefit_private">Privater Drive-Ordner, für dich unsichtbar</string>
+    <string name="onboarding_backup_connecting">Verbinde…</string>
+    <string name="onboarding_backup_continue_with_google">Mit Google fortfahren</string>
+    <string name="onboarding_backup_skip_hint">Später — du kannst es in den Einstellungen tun</string>
+    <string name="onboarding_backup_linked_title">Mit Google Drive verbunden</string>
+    <string name="onboarding_backup_encrypted_title">Verschlüsseltes Backup</string>
+    <string name="onboarding_backup_encrypted_body">Dieses Backup ist verschlüsselt. Beende zuerst dein Onboarding (ein paar schnelle Infos), gehe dann zu Einstellungen → Backup → Wiederherstellen, um es mit deinem Recovery-Code wiederherzustellen.</string>
+    <string name="onboarding_backup_encrypted_ack">Verstanden</string>
+    <string name="onboarding_backup_found_title">Backup gefunden</string>
+    <string name="onboarding_backup_found_body">Wir haben ein Backup auf deinem Drive gefunden. Möchtest du es wiederherstellen? Alle deine aktuellen Onboarding-Infos werden durch die des Backups ersetzt.</string>
+    <string name="onboarding_backup_found_restore">Wiederherstellen</string>
+    <string name="onboarding_backup_found_later">Später</string>
+
+    <!-- Workout preview -->
+    <string name="preview_topbar_title">Dein Workout</string>
+    <string name="preview_share_card_title">Mein heutiges Workout</string>
+    <string name="preview_share_subtitle">%1$d Min · %2$s</string>
+    <string name="preview_share_cd">Workout teilen</string>
+    <string name="preview_favorite_cd">Favorit</string>
+    <string name="preview_fav_added">Workout zu Favoriten hinzugefügt</string>
+    <string name="preview_fav_removed">Workout aus Favoriten entfernt</string>
+    <string name="preview_empty_title">Kein Workout generiert</string>
+    <string name="preview_empty_desc">Generiere ein Workout, das zu deiner verfügbaren Zeit passt.</string>
+    <string name="preview_section_warmup">Aufwärmen (%1$d Min)</string>
+    <string name="preview_section_strength">Kraftübungen (%1$d Übungen)</string>
+    <string name="preview_section_cardio">Cardio (%1$d Min)</string>
+    <string name="preview_error_unknown">Unbekannter Fehler</string>
+    <string name="preview_error_start_failed">Workout konnte nicht gestartet werden</string>
+    <string name="preview_error_prefix">Fehler: %1$s</string>
+    <string name="preview_start_button">WORKOUT STARTEN</string>
+    <string name="preview_summary_title">Workout %1$s</string>
+    <string name="preview_summary_total">%1$d Min insgesamt</string>
+    <string name="preview_summary_compact">%1$s · %2$d Min</string>
+    <string name="preview_summary_exos_count">%1$d Üb.</string>
+    <string name="preview_breakdown_warmup_label">Aufw.</string>
+    <string name="preview_breakdown_strength_label">Üb.</string>
+    <string name="preview_breakdown_cardio_label">Cardio</string>
+    <string name="preview_breakdown_minutes">%1$dmin</string>
+    <string name="preview_swap_cd">Ersetzen</string>
+    <string name="preview_settings_cd">Einstellungen</string>
+    <string name="preview_stepper_series">Sätze</string>
+    <string name="preview_stepper_reps">Wdh</string>
+    <string name="preview_stepper_rest">Pause</string>
+    <string name="preview_card_summary_format">%1$d×%2$d-%3$d · %4$ds</string>
+    <string name="preview_card_reps_range">%1$d-%2$d</string>
+    <string name="preview_card_rest_seconds">%1$ds</string>
+    <string name="preview_cardio_minutes">%1$d Minuten</string>
+    <string name="preview_routine_default">Full Body</string>
+
+    <string name="swap_dialog_title">Übung ersetzen</string>
+    <string name="swap_dialog_current">Aktuelle Übung: %1$s (%2$s)</string>
+    <string name="swap_dialog_no_alternatives">Keine Alternative verfügbar</string>
+    <string name="swap_dialog_choose">Wähle einen Ersatz:</string>
+    <string name="swap_dialog_close">Schließen</string>
+
+    <!-- Calendar -->
+    <string name="calendar_title">Kalender</string>
+    <string name="calendar_today_cd">Heute</string>
+    <string name="calendar_ai_suggestion_cd">KI-Vorschlag</string>
+    <string name="calendar_fab_schedule">Planen</string>
+    <string name="calendar_stat_streak_label">Streak</string>
+    <string name="calendar_stat_streak_unit">Tage</string>
+    <string name="calendar_stat_adherence_label">Treue</string>
+    <string name="calendar_stat_adherence_count">%1$d/%2$d diesen Monat</string>
+    <string name="calendar_stat_next_label">Nächste</string>
+    <string name="calendar_stat_next_none">Keine</string>
+    <string name="calendar_nav_prev_month_cd">Vormonat</string>
+    <string name="calendar_nav_next_month_cd">Nächster Monat</string>
+    <string name="calendar_school_holiday_badge">Ferien</string>
+    <string name="calendar_day_no_session">Heute kein Workout</string>
+    <string name="calendar_day_schedule_cta">Workout planen</string>
+    <string name="calendar_sched_default_title">Workout</string>
+    <string name="calendar_sched_status_completed">Erledigt</string>
+    <string name="calendar_sched_status_skipped">Nicht gemacht</string>
+    <string name="calendar_sched_status_canceled">Abgesagt</string>
+    <string name="calendar_sched_action_start">Starten</string>
+    <string name="calendar_sched_action_skip">Skip</string>
+    <string name="calendar_sched_action_delete_cd">Geplantes Workout löschen</string>
+    <string name="calendar_log_completed">Workout erledigt</string>
+    <string name="calendar_log_subtitle">%1$d Sätze · %2$d Min · %3$dkg</string>
+
+    <!-- Quick Schedule Sheet -->
+    <string name="schedule_dialog_ok">OK</string>
+    <string name="schedule_dialog_cancel">Abbrechen</string>
+    <string name="schedule_time_picker_title">Workout-Uhrzeit</string>
+    <string name="schedule_sheet_title">Workout planen</string>
+    <string name="schedule_field_date">Datum</string>
+    <string name="schedule_field_time">Uhrzeit</string>
+    <string name="schedule_time_empty">—</string>
+    <string name="schedule_clear_time_cd">Uhrzeit löschen</string>
+    <string name="schedule_reminders_hint">Auto-Erinnerungen: Shake 2h vorher + Start 30 Min vorher</string>
+    <string name="schedule_type_label">Typ</string>
+    <string name="schedule_type_generated">🎲 Generiert</string>
+    <string name="schedule_type_favorite">⭐ Favorit</string>
+    <string name="schedule_type_free">⚡ Frei</string>
+    <string name="schedule_no_favorite">Kein Favorit gespeichert. Nutze \'Generiert\' oder \'Frei\'.</string>
+    <string name="schedule_favorite_subtitle">%1$dmin · %2$d Üb.</string>
+    <string name="schedule_field_title_label">Titel (optional)</string>
+    <string name="schedule_field_note_label">Notiz (optional)</string>
+    <string name="schedule_default_favorite_title">Lieblings-Workout</string>
+    <string name="schedule_default_free_title">Freies Workout</string>
+    <string name="schedule_default_generated_title">Generiertes Workout</string>
+    <string name="schedule_confirm_button">Planen</string>
+
+    <!-- AI Suggestions -->
+    <string name="ai_sugg_title">Shreddy-Vorschläge</string>
+    <string name="ai_sugg_subtitle">Basierend auf deinen Gewohnheiten</string>
+    <string name="ai_sugg_loading">Shreddy denkt nach…</string>
+    <string name="ai_sugg_dates_label">Vorgeschlagene Termine</string>
+    <string name="ai_sugg_later">Später</string>
+    <string name="ai_sugg_accept_all">Alle akzeptieren</string>
+    <string name="ai_sugg_fallback">%d vorgeschlagene Workouts an deinen Lieblingstagen. Let\'s go!</string>
+
+    <!-- History -->
+    <string name="history_title">Verlauf</string>
+    <string name="history_share_cd">Verlauf teilen</string>
+    <string name="history_export_cd">Exportieren</string>
+    <string name="history_tab_workouts">Workouts</string>
+    <string name="history_tab_nutrition">Ernährung</string>
+    <string name="history_workouts_empty_title">Kein Workout im Verlauf</string>
+    <string name="history_workouts_empty_desc">Beende dein erstes Workout und es erscheint hier mit allen Metriken.</string>
+    <string name="history_workouts_empty_cta">Workout generieren</string>
+    <string name="history_nutrition_empty_title">Keine gescannten Mahlzeiten</string>
+    <string name="history_nutrition_empty_desc">Scanne deine erste Mahlzeit mit dem Meal Scanner, um deinen Ernährungsverlauf hier zu sehen.</string>
+    <string name="history_nutrition_empty_cta">Mahlzeit scannen</string>
+    <string name="history_no_match">Kein passendes Workout</string>
+    <string name="history_freestyle_session_name">Freies Workout</string>
+
+    <string name="history_filter_all">Alle</string>
+    <string name="history_filter_completed">Erledigt</string>
+    <string name="history_filter_abandoned">Abgebrochen</string>
+    <string name="history_routine_filter_all">Alle Routinen</string>
+
+    <string name="history_hero_title">Mein Weg</string>
+    <string name="history_hero_label_seances">Workouts</string>
+    <string name="history_hero_label_volume">Volumen</string>
+    <string name="history_hero_label_time">Zeit</string>
+
+    <string name="history_metric_duration">Dauer</string>
+    <string name="history_metric_exos">Üb.</string>
+    <string name="history_metric_sets">Sätze</string>
+    <string name="history_metric_volume">Volumen</string>
+    <string name="history_status_completed">Erledigt</string>
+    <string name="history_status_abandoned">Abgebrochen</string>
+
+    <string name="history_bucket_today">Heute</string>
+    <string name="history_bucket_yesterday">Gestern</string>
+    <string name="history_bucket_this_week">Diese Woche</string>
+    <string name="history_bucket_this_month">Diesen Monat</string>
+    <string name="history_bucket_3_months">Letzte 3 Monate</string>
+    <string name="history_bucket_older">Älter</string>
+
+    <string name="history_meal_calories">%1$d kcal</string>
+    <string name="history_meal_calories_card">%1$d kcal</string>
+    <string name="history_meal_weight">%1$dg</string>
+    <string name="history_meal_grams">%1$.1fg</string>
+    <string name="history_meal_macro_proteins">Eiweiß</string>
+    <string name="history_meal_macro_carbs">Kohlenhydrate</string>
+    <string name="history_meal_macro_fats">Fette</string>
+    <string name="history_meal_macro_fibers">Ballaststoffe</string>
+    <string name="history_meal_full_analysis">Vollständige Analyse ansehen</string>
+    <string name="history_meal_delete_cd">Löschen</string>
+    <string name="history_meal_delete_dialog_title">Diese Mahlzeit löschen?</string>
+    <string name="history_meal_delete_dialog_body">„%1$s\" wird aus deinem Verlauf und Ernährungs-Tracking entfernt.</string>
+
+    <string name="history_export_workouts_title">Workout-Verlauf</string>
+    <string name="history_export_nutrition_title">Verlauf gescannter Mahlzeiten</string>
+    <string name="history_share_workouts_title">Mein Workout-Verlauf</string>
+    <string name="history_share_workouts_subtitle">Gesamt</string>
+    <string name="history_share_workouts_count_label">Workouts</string>
+    <string name="history_share_metric_volume">Volumen</string>
+    <string name="history_share_metric_sets">Sätze</string>
+    <string name="history_share_metric_reps">Wdh</string>
+    <string name="history_share_metric_duration">Dauer</string>
+    <string name="history_share_nutrition_title">Mein Mahlzeit-Verlauf</string>
+    <string name="history_share_nutrition_subtitle">Alle meine Scans</string>
+    <string name="history_share_nutrition_count_label">gescannte Mahlzeiten</string>
+    <string name="history_share_metric_total_kcal">Gesamt kcal</string>
+    <string name="history_share_metric_avg_score">Ø Score</string>
+    <string name="history_share_metric_avg_protein">Eiweiß/Mahlzeit</string>
+    <string name="history_export_workouts_payload_title">ShredCoach — Workout-Verlauf</string>
+    <string name="history_export_workouts_payload_desc">%1$d Workouts exportiert</string>
+    <string name="history_export_col_date">Datum</string>
+    <string name="history_export_col_session">Workout</string>
+    <string name="history_export_col_duration_min">Dauer (Min)</string>
+    <string name="history_export_col_volume_kg">Volumen (kg)</string>
+    <string name="history_export_col_sets">Sätze</string>
+    <string name="history_export_col_reps">Wdh</string>
+    <string name="history_export_col_rest_total_s">Pause gesamt (s)</string>
+    <string name="history_export_col_exos_done">Übungen erledigt</string>
+    <string name="history_export_col_exos_skipped">Übungen übersprungen</string>
+    <string name="history_export_col_status">Status</string>
+    <string name="history_export_summary_total_sessions">Workouts gesamt</string>
+    <string name="history_export_summary_total_volume">Gesamtvolumen</string>
+    <string name="history_export_summary_total_duration">Gesamtdauer</string>
+    <string name="history_export_nutrition_payload_title">ShredCoach — Ernährungsverlauf (Scans)</string>
+    <string name="history_export_nutrition_payload_desc">%1$d gescannte Mahlzeiten</string>
+    <string name="history_export_col_meal_type">Mahlzeit-Typ</string>
+    <string name="history_export_col_dish">Gericht</string>
+    <string name="history_export_col_cuisine">Küche</string>
+    <string name="history_export_col_kcal">Kcal</string>
+    <string name="history_export_col_proteins_g">Eiweiß (g)</string>
+    <string name="history_export_col_carbs_g">Kohlenhydrate (g)</string>
+    <string name="history_export_col_fats_g">Fette (g)</string>
+    <string name="history_export_col_fibers_g">Ballaststoffe (g)</string>
+    <string name="history_export_col_weight_g">Gewicht (g)</string>
+    <string name="history_export_col_health_score">Gesundheitsscore</string>
+    <string name="history_export_col_nutri_score">Nutri-Score</string>
+    <string name="history_export_col_verdict">Bewertung</string>
+    <string name="history_export_col_added_to_tracking">Zum Tracking hinzugefügt</string>
+    <string name="history_export_summary_total_scans">Scans gesamt</string>
+    <string name="history_export_summary_total_kcal">Kcal gesamt</string>
+    <string name="history_export_summary_avg_health_score">Ø Gesundheitsscore</string>
+    <string name="history_export_yes">Ja</string>
+    <string name="history_export_no">Nein</string>
+
+    <string name="history_detail_title">Details</string>
+    <string name="history_detail_share_cd">Teilen</string>
+    <string name="history_detail_delete_cd">Löschen</string>
+    <string name="history_detail_relaunch">DIESES WORKOUT WIEDERHOLEN</string>
+    <string name="history_detail_not_found">Workout nicht gefunden</string>
+    <string name="history_detail_perf_section">Leistung pro Übung</string>
+    <string name="history_detail_delete_dialog_title">Dieses Workout löschen?</string>
+    <string name="history_detail_delete_dialog_body">Diese Aktion ist endgültig. Alle Sätze und zugehörige Metriken gehen verloren.</string>
+    <string name="history_detail_delete_confirm">Löschen</string>
+    <string name="history_detail_delete_cancel">Abbrechen</string>
+    <string name="history_detail_session_completed">Workout erledigt</string>
+    <string name="history_detail_session_abandoned">Workout abgebrochen</string>
+    <string name="history_detail_default_share_title">Workout</string>
+    <string name="history_detail_share_sets_only">%1$d Sätze</string>
+
+    <string name="history_detail_stat_duration">Dauer</string>
+    <string name="history_detail_stat_volume">Volumen</string>
+    <string name="history_detail_stat_exos">Übungen</string>
+    <string name="history_detail_stat_sets">Sätze</string>
+    <string name="history_detail_stat_rest_total">Pause gesamt</string>
+    <string name="history_detail_stat_active_time">Aktive Zeit</string>
+    <string name="history_detail_subtitle_skipped">%1$d übersprungen</string>
+    <string name="history_detail_subtitle_reps">%1$d Wdh</string>
+    <string name="history_detail_notes_label">Workout-Notizen</string>
+
+    <string name="history_detail_mini_total">gesamt</string>
+    <string name="history_detail_mini_max_hold">max Halten</string>
+    <string name="history_detail_mini_sets">Sätze</string>
+    <string name="history_detail_mini_total_reps">Wdh gesamt</string>
+    <string name="history_detail_mini_max_per_set">max/Satz</string>
+    <string name="history_detail_mini_reps">Wdh</string>
+    <string name="history_detail_mini_max">max</string>
+    <string name="history_detail_mini_volume">Volumen</string>
+    <string name="history_detail_dash">—</string>
+
+    <!-- Stats / Dashboard -->
+    <string name="period_week">7T</string>
+    <string name="period_month">30T</string>
+    <string name="period_quarter">90T</string>
+    <string name="period_year">1 Jahr</string>
+    <string name="period_all">Alles</string>
+
+    <string name="dashboard_title">Meine Statistiken</string>
+    <string name="dashboard_share_cd">Stats teilen</string>
+    <string name="dashboard_export_cd">Exportieren</string>
+    <string name="dashboard_tab_workouts">Workouts</string>
+    <string name="dashboard_tab_nutrition">Ernährung</string>
+    <string name="dashboard_export_workouts_title">Workout-Statistiken</string>
+    <string name="dashboard_export_nutrition_title">Ernährungs-Statistiken</string>
+    <string name="dashboard_empty_title">Dein erstes Workout wird deine Referenz!</string>
+    <string name="dashboard_empty_desc">Beende dein erstes Workout, um Statistiken, persönliche Rekorde und Fortschrittsdiagramme freizuschalten.</string>
+    <string name="dashboard_empty_cta">Workout starten</string>
+
+    <string name="dashboard_chip_summary">Übersicht</string>
+    <string name="dashboard_chip_records">Rekorde</string>
+    <string name="dashboard_chip_charts">Diagramme</string>
+    <string name="dashboard_chip_trends">Trends</string>
+    <string name="dashboard_chip_frequency">Frequenz</string>
+    <string name="dashboard_section_summary">Übersicht</string>
+    <string name="dashboard_section_records">Rekorde</string>
+    <string name="dashboard_section_progressions">Fortschritt pro Übung</string>
+    <string name="dashboard_section_charts">Diagramme</string>
+    <string name="dashboard_section_trends">Trends</string>
+    <string name="dashboard_section_frequency">Frequenz</string>
+
+    <string name="dashboard_summary_sessions_period">Workouts (%1$s)</string>
+    <string name="dashboard_summary_volume">Volumen</string>
+    <string name="dashboard_summary_this_month">Diesen Monat</string>
+    <string name="dashboard_summary_calories_estim">Kalorien (gesch.)</string>
+    <string name="dashboard_summary_total_sessions">Workouts gesamt</string>
+    <string name="dashboard_summary_total_time">Gesamtzeit</string>
+    <string name="dashboard_summary_no_data">Noch keine Daten</string>
+    <string name="dashboard_summary_most_trained">Meist trainierter Muskel</string>
+    <string name="dashboard_summary_total_volume">Gesamtvolumen</string>
+    <string name="dashboard_summary_time_breakdown">Zeitaufteilung</string>
+    <string name="dashboard_breakdown_warmup">Aufwärmen</string>
+    <string name="dashboard_breakdown_strength">Krafttraining</string>
+    <string name="dashboard_breakdown_cardio">Cardio</string>
+
+    <string name="dashboard_comparison_title">Vergleich vs. vorherige Periode</string>
+    <string name="dashboard_comparison_label_sessions">Workouts</string>
+    <string name="dashboard_comparison_label_volume">Volumen</string>
+    <string name="dashboard_records_title">Persönliche Rekorde</string>
+    <string name="dashboard_records_subtitle_1rm">1RM: %1$.0f kg</string>
+    <string name="dashboard_records_subtitle_loaded">+%1$s kg Zusatzgewicht</string>
+    <string name="dashboard_records_subtitle_bodyweight">Eigengewicht</string>
+    <string name="dashboard_records_subtitle_max_hold">Maximales Halten</string>
+    <string name="dashboard_records_unit_reps">Wdh</string>
+    <string name="dashboard_records_unit_hold">Halten</string>
+
+    <string name="dashboard_progression_title">Fortschritt pro Übung</string>
+    <string name="dashboard_trend_progression">Fortschritt</string>
+    <string name="dashboard_trend_projected_4w">Erwartet in 4 W.</string>
+    <string name="dashboard_trend_plateau">Plateau erkannt (%1$d Wochen)</string>
+    <string name="dashboard_volume_change_vs_prev_week">%1$s%2$d%% vs. Vorwoche</string>
+    <string name="dashboard_freq_sessions_count">%1$d Workouts</string>
+    <string name="dashboard_freq_total_volume_kg">%1$d kg gesamt</string>
+    <string name="dashboard_freq_types_plural">%1$d Typen</string>
+    <string name="dashboard_freq_types_singular">%1$d Typ</string>
+
+    <!-- Nutrition dashboard -->
+    <string name="nutri_dashboard_avg_daily">Tagesdurchschnitt (%1$s)</string>
+    <string name="nutri_dashboard_kcal_per_day">kcal / Tag</string>
+    <string name="nutri_dashboard_vs_target">vs. Ziel</string>
+    <string name="nutri_dashboard_days_tracked">getrackte Tage</string>
+    <string name="nutri_dashboard_days_in_target">im Ziel</string>
+    <string name="nutri_dashboard_total_scans">Mahlzeit-Scans</string>
+    <string name="nutri_dashboard_macros_avg">Ø Makros / Tag</string>
+    <string name="nutri_dashboard_macro_proteins">Eiweiß</string>
+    <string name="nutri_dashboard_macro_carbs">Kohlenhydrate</string>
+    <string name="nutri_dashboard_macro_fats">Fette</string>
+    <string name="nutri_dashboard_protein_per_kg_label">Eiweiß / kg</string>
+    <string name="nutri_dashboard_protein_per_kg_value">%1$s g/kg</string>
+    <string name="nutri_dashboard_protein_recommended">Empfohlen: 1.6 – 2.2 g/kg im Cut</string>
+    <string name="nutri_dashboard_avg_health_score">Ø Gesundheitsscore</string>
+    <string name="nutri_dashboard_on_n_meals">Auf %1$d gescannten Mahlzeiten</string>
+    <string name="nutri_dashboard_target_kcal">Ziel: %1$d kcal</string>
+    <string name="nutri_dashboard_target_g">/ %1$dg</string>
+
+    <!-- A11y -->
+    <string name="a11y_macro_ring">%1$s: %2$dg konsumiert von %3$d g Ziel, %4$d Prozent</string>
+    <string name="a11y_chart_calories_week">Wochen-Kaloriendiagramm: %1$s. Tagesziel %2$d Kalorien.</string>
+    <string name="a11y_day_zero_cals">%1$s nichts</string>
+    <string name="a11y_day_with_cals">%1$s %2$d Kalorien</string>
+
+    <!-- Nutrition stats widgets -->
+    <string name="nutri_widget_coaching_title">Persönliches Coaching</string>
+    <string name="nutri_widget_evolution_title">Entwicklung vs. vorherige Periode</string>
+    <string name="nutri_widget_comp_calories">Kalorien</string>
+    <string name="nutri_widget_comp_proteins">Eiweiß</string>
+    <string name="nutri_widget_comp_target_reached">Ziel erreicht</string>
+    <string name="nutri_widget_comp_unit_kcal">kcal</string>
+    <string name="nutri_widget_comp_unit_g">g</string>
+    <string name="nutri_widget_comp_unit_days">T</string>
+    <string name="nutri_widget_macro_split_title">Makro-Aufteilung (%% kcal)</string>
+    <string name="nutri_widget_kcal_per_day_short">kcal/Tag</string>
+    <string name="nutri_widget_macro_proteins">Eiweiß</string>
+    <string name="nutri_widget_macro_carbs">Kohlenhydrate</string>
+    <string name="nutri_widget_macro_fats">Fette</string>
+    <string name="nutri_widget_quality_title">Qualität deiner Mahlzeiten</string>
+    <string name="nutri_widget_quality_excellent">Exzellentes Nährwertprofil</string>
+    <string name="nutri_widget_quality_good">Gutes Gleichgewicht · noch Luft nach oben</string>
+    <string name="nutri_widget_quality_mixed">Gemischt · ziele auf mehr A und B</string>
+    <string name="nutri_widget_quality_poor">Verbesserungsbedarf · setze auf A und B</string>
+    <string name="nutri_widget_quality_ab_share">%1$d%% A+B</string>
+    <string name="nutri_widget_meal_hours_title">Wann du isst</string>
+    <string name="nutri_widget_meals_count">%1$d Mahlzeiten</string>
+    <string name="nutri_widget_meals_count_pct">%1$d Mahlzeiten · %2$d%%</string>
+    <string name="nutri_widget_late_meal_insight">💡 %1$d%% deiner Mahlzeiten nach 23 Uhr — passe an für bessere Erholung</string>
+    <string name="nutri_widget_calories_chart_title">Kalorien über %1$d Tage</string>
+    <string name="nutri_widget_chart_no_data">Nicht genug Daten für die Kurve — füge mehr Mahlzeiten hinzu</string>
+    <string name="nutri_widget_record_label">Rekord</string>
+
+    <string name="meal_hour_morning">Morgen</string>
+    <string name="meal_hour_lunch">Mittag</string>
+    <string name="meal_hour_afternoon">Nachmittag</string>
+    <string name="meal_hour_dinner">Abend</string>
+    <string name="meal_hour_night">Nacht</string>
+
+    <!-- Nutrition -->
+    <string name="nutrition_title">Ernährung</string>
+    <string name="nutrition_scan_meal_cd">Mahlzeit scannen</string>
+    <string name="nutrition_add_meal_cd">Mahlzeit hinzufügen</string>
+    <string name="nutrition_empty_title">Was essen wir heute?</string>
+    <string name="nutrition_empty_desc">Füge deine Mahlzeiten hinzu, um Kalorien, Eiweiß, Kohlenhydrate und Fette in Echtzeit zu tracken.</string>
+    <string name="nutrition_empty_cta">Mahlzeit hinzufügen</string>
+    <string name="nutrition_meal_type_header">%1$s %2$s</string>
+    <string name="nutrition_quickadd_title">Mahlzeit hinzufügen</string>
+    <string name="nutrition_meal_delete_dialog_title">Diese Mahlzeit löschen?</string>
+    <string name="nutrition_meal_delete_dialog_body">„%1$s\" (%2$dg) wird aus deinem Ernährungs-Tracking entfernt.</string>
+    <string name="nutrition_date_today">Heute</string>
+    <string name="nutrition_date_prev_cd">Vortag</string>
+    <string name="nutrition_date_next_cd">Nächster Tag</string>
+
+    <string name="nutrition_activity_trained_one">Trainiert · %1$d Min</string>
+    <string name="nutrition_activity_trained_many">Trainiert · %1$d Workouts · %2$d Min</string>
+    <string name="nutrition_activity_pending">Aktivität ausstehend</string>
+    <string name="nutrition_activity_rested">Ruhetag</string>
+
+    <string name="nutrition_energy_base">Sitzender Grundumsatz: %1$d kcal</string>
+    <string name="nutrition_energy_goal_delta">Ziel %1$s%2$d kcal</string>
+    <string name="nutrition_energy_session_bonus_one">Workout +%1$d kcal</string>
+    <string name="nutrition_energy_session_bonus_many">Workouts +%1$d kcal</string>
+    <string name="nutrition_energy_separator"> · </string>
+
+    <string name="nutrition_hero_calories_label">Kalorien</string>
+    <string name="nutrition_hero_calories_target">/ %1$d kcal</string>
+    <string name="nutrition_hero_remaining">übrig</string>
+    <string name="nutrition_hero_excess">über Ziel</string>
+
+    <string name="nutrition_macro_proteins">Eiweiß</string>
+    <string name="nutrition_macro_carbs">Kohlenhydrate</string>
+    <string name="nutrition_macro_fats">Fette</string>
+    <string name="nutrition_macro_target_g">/ %1$dg</string>
+    <string name="nutrition_macro_grams">%1$dg</string>
+
+    <string name="nutrition_meal_kcal">%1$d kcal</string>
+    <string name="nutrition_meal_details">%1$dg · %2$s</string>
+    <string name="nutrition_meal_details_with_time">%1$s · %2$dg · %3$s</string>
+    <string name="nutrition_meal_delete_cd">Mahlzeit löschen</string>
+    <string name="nutrition_macro_label_prot">Eiw</string>
+    <string name="nutrition_macro_label_gluc">Kh</string>
+    <string name="nutrition_macro_label_lip">Fett</string>
+
+    <string name="nutrition_addmeal_search_label">Lebensmittel suchen</string>
+    <string name="nutrition_addmeal_search_placeholder">z.B.: Hähnchen, Reis, Banane...</string>
+    <string name="nutrition_addmeal_food_kcal_per100">%1$d kcal/100g • E%2$d K%3$d F%4$d</string>
+    <string name="nutrition_addmeal_quantity_label">Menge (g)</string>
+    <string name="nutrition_addmeal_portion_hint">Portion: %1$s (%2$dg)</string>
+    <string name="nutrition_addmeal_kcal_unit">kcal</string>
+    <string name="nutrition_addmeal_added_snackbar">Mahlzeit hinzugefügt</string>
+    <string name="nutrition_addmeal_add_cta">Hinzufügen</string>
+    <string name="nutrition_addmeal_cancel">Abbrechen</string>
+
+    <!-- Meal scan detail -->
+    <string name="mealdetail_title">Mahlzeit-Detail</string>
+    <string name="mealdetail_not_found">Analyse nicht gefunden</string>
+    <string name="mealdetail_photo_cd">Foto der analysierten Mahlzeit</string>
+
+    <!-- Insights -->
+    <string name="insights_section_title">Ernährungs-Insights</string>
+    <string name="insights_section_subtitle">%1$d Mahlzeiten analysiert · %2$d verschiedene Lebensmittel</string>
+    <string name="insights_section_period_days">%1$d Tage</string>
+    <string name="insights_wordcloud_title">Was du isst</string>
+    <string name="insights_wordcloud_subtitle">Größe = Gesamtmenge, Farbe = Kategorie</string>
+    <string name="insights_donut_title">Aufteilung nach Kategorie</string>
+    <string name="insights_donut_center_label">verzehrt</string>
+    <string name="insights_top_title">Deine Lebensmittel-Stars</string>
+    <string name="insights_top_subline">In %1$d Mahlzeiten · %2$d kcal beigetragen</string>
+    <string name="insights_nutri_title">Qualität deiner Mahlzeiten</string>
+    <string name="insights_nutri_verdict_excellent">Exzellentes Nährwertprofil</string>
+    <string name="insights_nutri_verdict_good">Gutes Gleichgewicht · noch Luft nach oben</string>
+    <string name="insights_nutri_verdict_mixed">Gemischt · ziele auf mehr A und B</string>
+    <string name="insights_nutri_verdict_poor">Verbesserungsbedarf · setze auf A und B</string>
+    <string name="insights_nutri_ab_share">%1$d%% A+B</string>
+
+    <!-- Meal scanner -->
+    <string name="scanner_title">Meal Scanner</string>
+    <string name="scanner_subtitle">KI-Nährwertanalyse</string>
+    <string name="scanner_history_cd">Verlauf</string>
+    <string name="scanner_history_empty">Kein Scan gespeichert</string>
+    <string name="scanner_analyze_cta">Diese Mahlzeit analysieren</string>
+    <string name="scanner_analyzing_title">Shreddy analysiert deine Mahlzeit...</string>
+    <string name="scanner_analyzing_desc">Identifizierung, Berechnung von Makros und Mikronährstoffen</string>
+    <string name="scanner_auto_added">Automatisch zum Ernährungs-Tracking hinzugefügt</string>
+    <string name="scanner_scan_other_cta">Andere Mahlzeit scannen</string>
+
+    <string name="scanner_hints_title">Hilfe zur Analyse</string>
+    <string name="scanner_hints_active">Hinweise eingegeben · Shreddy berücksichtigt sie</string>
+    <string name="scanner_hints_optional">Optional · Verbessert die Analyse-Genauigkeit</string>
+    <string name="scanner_hint_plate_label">Tellertyp</string>
+    <string name="scanner_hint_plate_help_text">Hilft, deine Portion anhand des Behälters zu dimensionieren</string>
+    <string name="scanner_hint_plate_help_photo">Hilft, das Gewicht des Essens über den Durchmesser zu schätzen</string>
+    <string name="scanner_hint_plate_chip">%1$s (%2$d cm)</string>
+    <string name="scanner_hint_bowl_label">Schüsseltyp</string>
+    <string name="scanner_hint_bowl_help_text">Hilft, deine Portion anhand des Schüsselvolumens zu dimensionieren</string>
+    <string name="scanner_hint_bowl_help_photo">Hilft, das Gewicht über das Volumen zu schätzen</string>
+    <string name="scanner_hint_bowl_chip">%1$s (%2$s)</string>
+    <string name="scanner_hint_bowl_volume_ml">%1$d ml</string>
+    <string name="scanner_hint_bowl_saladier">≥ 1.5 L</string>
+    <string name="scanner_hint_desc_label">Präzisierungen (optional)</string>
+    <string name="scanner_hint_desc_help">Beseitigt visuelle Mehrdeutigkeiten (z.B.: Yams-Pommes vs. Kartoffel, Niébé-Bohne, Quark)</string>
+    <string name="scanner_hint_desc_placeholder">z.B.: Yams-Pommes, Niébé-Bohnen, Magerquark 0%%...</string>
+    <string name="scanner_hint_desc_count">%1$d/300</string>
+    <string name="scanner_hint_clear">Alles löschen</string>
+
+    <string name="scanner_hero_default_name">Mahlzeit analysiert</string>
+    <string name="scanner_hero_dishes_count">%1$d Gerichte erkannt</string>
+    <string name="scanner_hero_score_unit">/10</string>
+    <string name="scanner_quick_kcal_label">kcal</string>
+    <string name="scanner_quick_weight_label">Gewicht</string>
+    <string name="scanner_quick_dishes_label">Gericht(e)</string>
+
+    <string name="scanner_macros_title">Makronährstoffe</string>
+    <string name="scanner_macros_kcal_split">Kalorische Aufteilung</string>
+    <string name="scanner_macro_proteins">Eiweiß</string>
+    <string name="scanner_macro_carbs">Kohlenhydrate</string>
+    <string name="scanner_macro_fats">Fette</string>
+    <string name="scanner_macro_fibers">Ballaststoffe</string>
+    <string name="scanner_macro_grams">%1$.0fg</string>
+    <string name="scanner_macro_grams_one_decimal">%1$.1fg</string>
+    <string name="scanner_macro_ajr_pct">%1$d%% RDA</string>
+    <string name="scanner_macro_pct_value">%1$d%%</string>
+    <string name="scanner_macro_kcal_unit">kcal</string>
+
+    <string name="scanner_dish_weight">%1$d g</string>
+    <string name="scanner_dish_kcal">%1$d</string>
+    <string name="scanner_dish_macro_sugars">Zucker</string>
+    <string name="scanner_dish_macro_saturated">Gesättigte</string>
+    <string name="scanner_dish_macro_salt">Salz</string>
+
+    <string name="scanner_ing_decrease_5g_cd">5g verringern</string>
+    <string name="scanner_ing_increase_5g_cd">5g erhöhen</string>
+    <string name="scanner_ing_editable_cd">Bearbeitbar</string>
+    <string name="scanner_ing_unit_g">g</string>
+    <string name="scanner_ing_category_weight">%1$s · %2$dg</string>
+    <string name="scanner_ing_kcal">%1$d kcal</string>
+
+    <string name="scanner_micros_title">Mikronährstoffe</string>
+    <string name="scanner_micros_pct">%1$d%%</string>
+    <string name="scanner_allergens_title">Mögliche Allergene</string>
+    <string name="scanner_allergens_separator"> · </string>
+
+    <string name="scanner_history_meta">%1$s · %2$d kcal</string>
+    <string name="scanner_history_score_unit">/10</string>
+    <string name="scanner_history_delete_cd">Löschen</string>
+
+    <string name="scanner_capture_title">Mahlzeit analysieren</string>
+    <string name="scanner_capture_desc">Shreddy identifiziert die Zutaten und berechnet Makros + Mikronährstoffe. Foto oder Beschreibung: gleiche Genauigkeit.</string>
+    <string name="scanner_capture_take_photo">Foto aufnehmen</string>
+    <string name="scanner_capture_pick_gallery">Aus Galerie wählen</string>
+    <string name="scanner_capture_or">oder</string>
+    <string name="scanner_capture_describe_text">Mahlzeit per Text beschreiben</string>
+
+    <string name="scanner_text_title">Beschreibe deine Mahlzeit</string>
+    <string name="scanner_text_subtitle">Sei genau bei den Mengen für eine gute Schätzung</string>
+    <string name="scanner_text_back_cd">Zurück</string>
+    <string name="scanner_text_placeholder">z.B.: 2 Spiegeleier, 80g gegrillter Speck, 2 Scheiben Vollkornbrot mit Butter, 1 Glas Orangensaft</string>
+    <string name="scanner_text_tip">💡 Nenne die Mengen (Gramm, Stück, Portionen)</string>
+    <string name="scanner_text_count">%1$d/1000</string>
+
+    <string name="scanner_dt_title">Datum und Uhrzeit der Mahlzeit</string>
+    <string name="scanner_dt_late_warning">Du hast nachträglich gescannt. Gib die echte Uhrzeit der Mahlzeit an für korrekte Klassifizierung (Frühstück, Mittag, Abendessen...).</string>
+    <string name="scanner_dt_classified_as">Klassifiziert: %1$s</string>
+    <string name="scanner_dt_picker_time_title">Mahlzeit-Uhrzeit</string>
+    <string name="scanner_dt_picker_ok">OK</string>
+    <string name="scanner_dt_picker_cancel">Abbrechen</string>
+
+    <string name="meal_cat_breakfast">Frühstück</string>
+    <string name="meal_cat_lunch">Mittagessen</string>
+    <string name="meal_cat_snack_afternoon">Nachmittagssnack</string>
+    <string name="meal_cat_dinner">Abendessen</string>
+    <string name="meal_cat_snacking">Naschen</string>
+    <string name="meal_cat_pretraining">Pre-Workout</string>
+
+    <!-- Notifications screen -->
+    <string name="notif_screen_title">Benachrichtigungen</string>
+    <string name="notif_clearall_dialog_title">Alle löschen?</string>
+    <string name="notif_clearall_dialog_body">%1$d Benachrichtigungen werden endgültig gelöscht.</string>
+    <string name="notif_clearall_confirm">Alle löschen</string>
+    <string name="notif_mark_all_read">Alle gelesen</string>
+    <string name="notif_clearall_cd">Alle löschen</string>
+    <string name="notif_empty_title">Keine Benachrichtigung</string>
+    <string name="notif_empty_desc">Shreddy schickt dir hier Debriefs nach deinen Mahlzeiten und Workouts.</string>
+    <string name="notif_card_ai_badge">KI</string>
+    <string name="notif_card_delete_cd">Löschen</string>
+    <string name="notif_relative_now">Gerade eben</string>
+    <string name="notif_relative_min">Vor %1$d Min</string>
+    <string name="notif_relative_hour">Vor %1$dh</string>
+    <string name="notif_relative_yesterday">Gestern</string>
+
+    <!-- Chat -->
+    <string name="chat_assistant_name">Shreddy</string>
+    <string name="chat_assistant_writing">schreibt...</string>
+    <string name="chat_assistant_subtitle">KI-Coach · %1$s</string>
+    <string name="chat_new_conversation_cd">Neue Konversation</string>
+    <string name="chat_conversations_cd">Konversationen</string>
+    <string name="chat_options_cd">Optionen</string>
+    <string name="chat_menu_clear">Diese Konversation löschen</string>
+    <string name="chat_menu_settings">KI-Einstellungen</string>
+
+    <string name="chat_conversations_title">Meine Konversationen</string>
+    <string name="chat_new_conversation_short">Neu</string>
+    <string name="chat_conversations_empty_title">Keine Konversation</string>
+    <string name="chat_conversations_empty_desc">Starte eine neue Konversation mit Shreddy für Tipps zu Ernährung und Training.</string>
+    <string name="chat_conversations_empty_cta">Neue Konversation</string>
+    <string name="chat_conversation_default_title">Konversation</string>
+    <string name="chat_conversation_msg_count">%1$d Nachr.</string>
+    <string name="chat_conversation_delete_cd">Konversation löschen</string>
+
+    <string name="chat_welcome_title">Hi, ich bin Shreddy!</string>
+    <string name="chat_welcome_desc">Dein persönlicher KI-Coach. Stell mir Fragen zu Training, Ernährung, Übungen, Erholung...</string>
+    <string name="chat_welcome_suggestion_1">Wie führt man ein Bankdrücken richtig aus?</string>
+    <string name="chat_welcome_suggestion_2">Wie viel Eiweiß pro Tag im Cut?</string>
+    <string name="chat_welcome_suggestion_3">Effektives Aufwärmprogramm</string>
+
+    <string name="chat_input_placeholder">Frag Shreddy...</string>
+    <string name="chat_send_cd">Senden</string>
+
+    <!-- Legal -->
+    <string name="legal_purge_ok_snackbar">Alle deine Daten wurden gelöscht. Starte die App neu.</string>
+    <string name="legal_purge_failed_snackbar">Löschung unvollständig: %1$s</string>
+    <string name="legal_btn_privacy_policy">Datenschutzerklärung</string>
+    <string name="legal_btn_purge_running">Lösche…</string>
+    <string name="legal_btn_purge">Alle meine Daten löschen</string>
+    <string name="legal_purge_dialog_title">Alles löschen?</string>
+    <string name="legal_purge_dialog_body">Diese Aktion ist UNUMKEHRBAR. Alles verschwindet: Workouts, Mahlzeiten, Fotos, Shreddy-Konversationen, API-Schlüssel, Einstellungen. Bestehende Backups in deiner Cloud werden NICHT angetastet (du kannst sie später wiederherstellen).</string>
+    <string name="legal_purge_dialog_confirm_prompt">Zur Bestätigung schreibe genau „%1$s\" unten:</string>
+    <string name="legal_purge_dialog_confirm">Alles löschen</string>
+    <string name="legal_purge_dialog_magic_word">LÖSCHEN</string>
+
+    <!-- Privacy policy -->
+    <string name="privacy_title">Datenschutzerklärung</string>
+    <string name="privacy_section_summary_title">Zusammenfassung</string>
+    <string name="privacy_section_summary_body">ShredCoach speichert deine Daten (Workouts, Mahlzeiten, Fotos, Konversationen) ausschließlich auf deinem Telefon. Kein ShredCoach-Server erhält deine Informationen. Die einzigen Ausnahmen: Shreddy KI (Chat) und der Mahlzeit-/Körperscan, die deinen Text oder deine Fotos an dritte KI-Anbieter (Groq, OpenAI, Claude, Gemini, Mistral) senden, die du explizit in den Einstellungen wählst.</string>
+    <string name="privacy_section_controller_title">1. Verantwortlicher</string>
+    <string name="privacy_section_controller_body">[AUSZUFÜLLEN: Name, Firma, Adresse, DSGVO-E-Mail des Verantwortlichen. z.B.: Sitou — contact@example.com]</string>
+    <string name="privacy_section_data_title">2. Erhobene Daten und Zwecke</string>
+    <string name="privacy_section_data_body">Lokal auf deinem Gerät gespeicherte Daten:\n• Profil: Vorname, Nachname, Alter, Gewicht, Ziele, Niveau, Verletzungen\n• Workouts: Übungen, Sätze, Gewichte, Dauer, Verlauf\n• Ernährung: Mahlzeiten, Makros, Scans, Programm\n• Shreddy KI-Konversationen: deine Nachrichten und Antworten\n• Fotos: Fortschrittsfotos, Mahlzeit-Scans, Gym-Scans\n\nZwecke: dich beim Cut begleiten, Statistiken berechnen, Empfehlungen personalisieren.</string>
+    <string name="privacy_section_transfers_title">3. Übermittlungen an dritte KI-Anbieter</string>
+    <string name="privacy_section_transfers_body">Wenn du Shreddy (Chat) oder einen KI-Scan nutzt, wird deine Nachricht oder dein Foto direkt (ohne ShredCoach-Vermittler) an den von dir gewählten Anbieter gesendet. Du stellst deinen eigenen API-Schlüssel bereit. Die Anbieter haben eigene Richtlinien:\n\n• Groq (USA) — https://groq.com/privacy-policy\n• OpenAI (USA) — https://openai.com/policies/privacy-policy\n• Anthropic Claude (USA) — https://www.anthropic.com/privacy\n• Google Gemini — https://policies.google.com/privacy\n• Mistral (Frankreich) — https://mistral.ai/terms/\n\nDiese Übermittlungen außerhalb der EU stützen sich auf Art. 49.1.a DSGVO (ausdrückliche Einwilligung). Du kannst ablehnen: Die App funktioniert ohne diese Funktionen.</string>
+    <string name="privacy_section_backup_title">4. Lokales Backup</string>
+    <string name="privacy_section_backup_body">Wenn du das Backup aktivierst, schreibt ShredCoach ein ZIP-Archiv in den von DIR gewählten Ordner (Drive, OneDrive, Dropbox, lokal). Inhalt und Sicherheit dieses Ordners hängen vom gewählten Anbieter ab — dessen Richtlinie gilt für das Archiv. ShredCoach liest das Archiv nach dem Schreiben nicht mehr.</string>
+    <string name="privacy_section_rights_title">5. Deine DSGVO-Rechte</string>
+    <string name="privacy_section_rights_body">• **Auskunft**: Du kannst alle deine Daten über Einstellungen > Backup > Jetzt sichern exportieren (offenes JSON-Archiv + lesbare Fotos).\n\n• **Berichtigung**: Du änderst deine Daten direkt in der App.\n\n• **Löschung**: Einstellungen > Alle meine Daten löschen. Alles wird in einer atomaren Operation vom Telefon entfernt.\n\n• **Datenübertragbarkeit**: Das Backup-Archiv ist offenes JSON + JPEG-Fotos.\n\n• **Widerspruch / Widerruf der Einwilligung**: Deaktiviere Shreddy oder die KI-Scans in den Einstellungen, um Übermittlungen an Drittanbieter zu stoppen.</string>
+    <string name="privacy_section_retention_title">6. Aufbewahrungsdauer</string>
+    <string name="privacy_section_retention_body">Die Daten bleiben auf deinem Telefon, solange du die App nutzt. Du kannst sie jederzeit über Einstellungen löschen. Bei Deinstallation der App entfernt Android automatisch alle lokalen Daten (außer Backups, die du in deine Cloud exportiert hast).</string>
+    <string name="privacy_section_security_title">7. Sicherheit</string>
+    <string name="privacy_section_security_body">Deine KI-API-Schlüssel sind über Android Keystore (AES-256-GCM, hardware-backed auf den meisten Geräten) verschlüsselt. Der Netzwerkverkehr nutzt TLS 1.2+. Die Room-Datenbank ist durch Android-Disk-Verschlüsselung (FBE) geschützt, falls auf deinem Gerät aktiviert.</string>
+    <string name="privacy_section_cookies_title">8. Cookies, Tracker, Analytics</string>
+    <string name="privacy_section_cookies_body">ShredCoach nutzt KEINE Cookies, KEINE Tracker, KEINE Analytics-Tools. Keine Werbung.</string>
+    <string name="privacy_section_complaint_title">9. Beschwerde</string>
+    <string name="privacy_section_complaint_body">Falls du der Meinung bist, dass ShredCoach deine Daten nicht regelkonform verarbeitet, kannst du den Verantwortlichen (siehe Abschnitt 1) kontaktieren oder eine Beschwerde bei der zuständigen Datenschutzbehörde (in DE: BfDI bzw. Landesbehörde) einreichen.</string>
+    <string name="privacy_section_changes_title">10. Änderungen</string>
+    <string name="privacy_section_changes_body">Diese Richtlinie kann sich ändern. Jede wesentliche Änderung löst beim nächsten App-Start eine erneute Einwilligungseinholung aus.</string>
+    <string name="privacy_version_footer">Version 1 — 2026-05-05</string>
+
+    <!-- Profile -->
+    <string name="profile_screen_title">Mein Profil</string>
+    <string name="profile_action_settings_cd">Einstellungen</string>
+    <string name="profile_action_more_cd">Weitere Optionen</string>
+    <string name="profile_menu_photos">Fortschrittsfotos</string>
+    <string name="profile_menu_export">Exportieren / Sichern</string>
+    <string name="profile_menu_delete">Daten löschen</string>
+    <string name="profile_snack_exported">Daten exportiert</string>
+    <string name="profile_photo_avatar_cd">Profilfoto</string>
+    <string name="profile_photo_sheet_title">Profilfoto</string>
+    <string name="profile_photo_sheet_camera">Foto aufnehmen</string>
+    <string name="profile_photo_sheet_gallery">Aus Galerie wählen</string>
+    <string name="profile_photo_sheet_remove">Foto entfernen</string>
+    <string name="profile_snack_photo_updated">Profilfoto aktualisiert</string>
+    <string name="profile_snack_photo_removed">Foto entfernt</string>
+    <string name="profile_snack_import_error">Fehler beim Import</string>
+    <string name="profile_change_photo_cd">Foto ändern</string>
+    <string name="profile_default_name">Dein Name</string>
+    <string name="profile_avatar_meta">%1$s kg • %2$d cm • %3$d Jahre</string>
+    <string name="profile_weight_sheet_title">Neue Wägung</string>
+    <string name="profile_weight_field_label">Gewicht (kg)</string>
+    <string name="profile_snack_weight_added">Wägung hinzugefügt: %s kg</string>
+    <string name="profile_delete_dialog_title">Alle Daten löschen?</string>
+    <string name="profile_delete_dialog_body">Diese Aktion ist UNUMKEHRBAR. Alle deine Workouts, Mahlzeiten und dein Profil werden gelöscht.</string>
+    <string name="profile_delete_dialog_confirm">Alles löschen</string>
+    <string name="profile_tab_infos">Infos</string>
+    <string name="profile_tab_weight">Gewicht</string>
+    <string name="profile_tab_measures">Maße</string>
+    <string name="profile_section_info">Informationen</string>
+    <string name="profile_field_firstname">Vorname</string>
+    <string name="profile_field_lastname">Nachname</string>
+    <string name="profile_field_age">Alter</string>
+    <string name="profile_field_height">Größe (cm)</string>
+    <string name="profile_sex_male">Mann</string>
+    <string name="profile_sex_female">Frau</string>
+    <string name="profile_snack_profile_saved">Profil aktualisiert</string>
+    <string name="profile_section_goals">Meine Ziele</string>
+    <string name="profile_label_level">Niveau</string>
+    <string name="profile_level_beginner">Anfänger</string>
+    <string name="profile_level_intermediate">Mittel</string>
+    <string name="profile_level_advanced">Fortgeschr.</string>
+    <string name="profile_label_equipment">Equipment</string>
+    <string name="profile_equip_full_gym">Komplett-\nstudio</string>
+    <string name="profile_equip_home_gym">Home\nGym</string>
+    <string name="profile_equip_bodyweight">Eigen-\ngewicht</string>
+    <string name="profile_label_goal">Ziel</string>
+    <string name="profile_goal_shred">Cut</string>
+    <string name="profile_goal_bulk">Muskel-\naufbau</string>
+    <string name="profile_goal_maintain">Erhalten</string>
+    <string name="profile_bodyscan_title">KI Body Scanner</string>
+    <string name="profile_bodyscan_subtitle">Foto → automatische Maße + 3D-Visualisierung</string>
+    <string name="profile_measure_hint">Maßband-Messung morgens nüchtern.</string>
+    <string name="profile_measure_waist">Taillenumfang</string>
+    <string name="profile_measure_chest">Brust</string>
+    <string name="profile_measure_arm">Arm</string>
+    <string name="profile_measure_thigh">Oberschenkel</string>
+    <string name="profile_measure_hip">Hüfte</string>
+    <string name="profile_measure_calf">Wade</string>
+    <string name="profile_btn_save_measures">Maße speichern</string>
+    <string name="profile_snack_measures_saved">Maße gespeichert</string>
+    <string name="profile_measure_unit_cm">cm</string>
+
+    <!-- Progress photos -->
+    <string name="photos_screen_title">Fortschrittsfotos</string>
+    <string name="photos_card_new_title">Neues Foto</string>
+    <string name="photos_card_new_desc">Mache ein Foto von vorne, der Seite und hinten, um deine Transformation zu verfolgen.</string>
+    <string name="photos_btn_camera_cd">Kamera</string>
+    <string name="photos_btn_gallery_cd">Galerie</string>
+    <string name="photos_section_count">%1$s (%2$d)</string>
+    <string name="photos_empty_title">Halte deine Transformation fest</string>
+    <string name="photos_empty_desc">Ein Bild sagt mehr als tausend Wdh. Mach dein erstes Foto, um deinen Fortschritt visuell Woche für Woche zu verfolgen.</string>
+    <string name="photos_empty_cta">Mein erstes Foto machen</string>
+    <string name="photos_comparison_title">Vorher / Nachher</string>
+    <string name="photos_comparison_before">Vorher</string>
+    <string name="photos_comparison_after">Nachher</string>
+    <string name="photos_action_delete_cd">Löschen</string>
+    <string name="photos_action_close">Schließen</string>
+
+    <!-- Weight tracking -->
+    <string name="weight_tab_title">Gewichts-Tracking</string>
+    <plurals name="weight_logs_count">
+        <item quantity="one">%d Wägung</item>
+        <item quantity="other">%d Wägungen</item>
+    </plurals>
+    <string name="weight_tab_subtitle">%1$s · Ziel %2$s</string>
+    <string name="weight_btn_log">Wiegen</string>
+    <string name="weight_hero_title">Dein Fortschritt</string>
+    <string name="weight_label_start">Start</string>
+    <string name="weight_label_target">Ziel</string>
+    <string name="weight_verdict_reached_title">Ziel erreicht! 🎉</string>
+    <string name="weight_verdict_reached_subtitle">Bravo, du hast dein Ziel erreicht</string>
+    <string name="weight_verdict_losing_good">Auf dem richtigen Weg</string>
+    <string name="weight_verdict_losing_bad">Du nimmst zu — anpassen</string>
+    <string name="weight_verdict_gaining_good">Guter Fortschritt</string>
+    <string name="weight_verdict_gaining_bad">Du verlierst — anpassen</string>
+    <string name="weight_verdict_stable">Aktuell stabil</string>
+    <string name="weight_verdict_remaining_only">Noch %s zu schaffen</string>
+    <string name="weight_verdict_remaining">%s übrig</string>
+    <plurals name="weight_verdict_eta">
+        <item quantity="one">%1$s übrig · ETA ~%2$d Woche</item>
+        <item quantity="other">%1$s übrig · ETA ~%2$d Wochen</item>
+    </plurals>
+    <string name="weight_target_title">Mein Ziel</string>
+    <string name="weight_target_saving">Speichere…</string>
+    <string name="weight_target_saved">Gespeichert</string>
+    <string name="weight_target_field_label">Ziel (kg)</string>
+    <string name="weight_target_field_supporting">Automatisches Speichern nach Eingabe</string>
+    <string name="weight_chart_title">Entwicklung</string>
+    <string name="weight_chart_period_week">7 T</string>
+    <string name="weight_chart_period_month">30 T</string>
+    <string name="weight_chart_period_quarter">90 T</string>
+    <string name="weight_chart_period_all">Alles</string>
+    <string name="weight_chart_empty">Keine Wägung in diesem Zeitraum</string>
+    <string name="weight_chart_stat_delta">Veränderung</string>
+    <string name="weight_chart_stat_min">Min</string>
+    <string name="weight_chart_stat_max">Max</string>
+    <string name="weight_chart_stat_per_week">/ Woche</string>
+    <string name="weight_empty_title">Starte dein Tracking</string>
+    <string name="weight_empty_desc">Wiege dich morgens nüchtern, immer zur gleichen Zeit für zuverlässige Daten.</string>
+    <string name="weight_empty_cta">Meine erste Wägung</string>
+    <string name="weight_history_title">Deine Wägungen</string>
+    <string name="weight_history_total">%d insgesamt</string>
+
+    <!-- Exercises -->
+    <string name="exercises_title">Übungen</string>
+    <plurals name="exercises_count">
+        <item quantity="one">%d Übung</item>
+        <item quantity="other">%d Übungen</item>
+    </plurals>
+    <string name="exercises_search_hint">Suchen…</string>
+    <string name="exercises_search_clear_cd">Löschen</string>
+    <string name="exercises_filter_reset_cd">Filter zurücksetzen</string>
+    <string name="exercises_empty_title">Keine Übung gefunden</string>
+    <string name="exercises_empty_desc">Verfeinere deine Suche oder setze die Filter zurück.</string>
+    <string name="exercises_empty_cta">Filter zurücksetzen</string>
+    <string name="exercises_stat_series">Sätze</string>
+    <string name="exercises_stat_reps">Wdh</string>
+    <string name="exercises_stat_rest">Pause</string>
+    <string name="exercises_db_cta_title">Mehr entdecken</string>
+    <string name="exercises_db_cta_badge">FREE</string>
+    <string name="exercises_db_cta_subtitle">873 Übungen mit HD-Fotos</string>
+    <string name="exercises_db_cta_caption">Free Exercise DB · Filter Muskel, Equipment, Niveau</string>
+    <string name="exercises_gymscan_cta_title">GymScan</string>
+    <string name="exercises_gymscan_cta_badge">KI</string>
+    <string name="exercises_gymscan_cta_subtitle">Identifiziert jede Maschine per Foto</string>
+    <string name="exercises_gymscan_cta_caption">KI analysiert + matcht mit der animierten Übungs-Datenbank</string>
+
+    <!-- Exercise detail -->
+    <string name="exercise_detail_title_default">Detail</string>
+    <string name="exercise_detail_not_found">Übung nicht gefunden</string>
+    <string name="exercise_difficulty_beginner">Anfänger</string>
+    <string name="exercise_difficulty_intermediate">Mittel</string>
+    <string name="exercise_difficulty_advanced">Fortgeschritten</string>
+    <string name="exercise_detail_section_programming">Programmierung</string>
+    <string name="exercise_detail_param_weight">Startgewicht</string>
+    <string name="exercise_detail_param_tempo">Tempo</string>
+    <string name="exercise_detail_param_equipment">Equipment</string>
+    <string name="exercise_detail_section_execution">Korrekte Ausführung</string>
+    <string name="exercise_detail_section_tips">Coach-Tipps</string>
+    <string name="exercise_detail_variant_type_label">Typ: %s</string>
+    <string name="exercise_detail_gif_placeholder">Demonstration</string>
+
+    <string name="variant_machine_desc">Geführt, sicher, ideal für Einsteiger und um sicher schwer zu laden</string>
+    <string name="variant_weights_desc">Freie Gewichte, maximale Muskelaktivierung, erfordert Stabilisation</string>
+    <string name="variant_bodyweight_desc">Kein Equipment, funktional, trainiert Koordination und Core</string>
+    <string name="variant_isolation_desc">Trifft einen einzelnen Muskel präzise, Finishing und Sculpting</string>
+
+    <!-- BodyScanner -->
+    <string name="bodyscan_title">Body Scanner</string>
+    <string name="bodyscan_subtitle">KI-Analyse deiner Körpermaße</string>
+    <string name="bodyscan_action_mesh_cd">Mesh-Visualisierung</string>
+    <string name="bodyscan_btn_analyze">Meinen Körper analysieren</string>
+    <string name="bodyscan_analyzing_title">Shreddy analysiert deinen Körper…</string>
+    <string name="bodyscan_analyzing_subtitle">Proportionsschätzung + Körperfettanteil + Morphologie</string>
+    <string name="bodyscan_btn_applied">Aufs Profil angewendet</string>
+    <string name="bodyscan_btn_apply">Aufs Profil anwenden</string>
+    <string name="bodyscan_capture_title">Scanne deinen Körper</string>
+    <string name="bodyscan_capture_desc">Ganzkörperfoto von vorne, eng anliegende Kleidung, Arme leicht gespreizt. Shreddy schätzt automatisch alle deine Maße.</string>
+    <string name="bodyscan_btn_camera">Kamera</string>
+    <string name="bodyscan_btn_gallery">Galerie</string>
+    <string name="bodyscan_capture_privacy">🔒 Dein Foto wird nur für die Analyse verarbeitet und lokal gespeichert.</string>
+    <string name="bodyscan_card_measures_title">Körpermaße</string>
+    <string name="bodyscan_field_height">Größe</string>
+    <string name="bodyscan_field_weight">Gewicht</string>
+    <string name="bodyscan_confidence_high">Hohe Zuverlässigkeit</string>
+    <string name="bodyscan_confidence_medium">Mittlere Zuverlässigkeit</string>
+    <string name="bodyscan_confidence_low">Geringe Zuverlässigkeit</string>
+    <string name="bodyscan_bmi_label">BMI</string>
+    <string name="bodyscan_bodyfat_label">Fett</string>
+    <string name="bodyscan_bodyfat_caption">Visuell geschätzt</string>
+    <string name="bodyscan_mesh_title">3D-Mesh-Visualisierung</string>
+    <string name="bodyscan_mesh_subtitle">Sci-Fi-Hologramm KI-generiert</string>
+    <string name="bodyscan_btn_view_mesh">Visualisierung ansehen</string>
+    <string name="bodyscan_btn_regenerate">Neu generieren</string>
+    <string name="bodyscan_mesh_generating">Mesh wird generiert…</string>
+    <string name="bodyscan_btn_generate_mesh">KI-Mesh generieren</string>
+    <string name="bodyscan_mesh_caption">⚡ Erfordert Gemini API-Schlüssel · Modell gemini-2.5-flash-image</string>
+
+    <!-- BodyMesh -->
+    <string name="bodymesh_image_cd">Body mesh</string>
+    <string name="bodymesh_title">BODY MESH SCAN</string>
+    <string name="bodymesh_subtitle">Powered by Shreddy AI</string>
+    <string name="bodymesh_empty_title">MESH NICHT GENERIERT</string>
+    <string name="bodymesh_empty_desc">Geh zurück zum Body Scanner, um das Mesh zu generieren</string>
+    <string name="bodymesh_panel_title">BIOMETRIC READOUT</string>
+    <string name="bodymesh_panel_status">SYSTEM ONLINE</string>
+
+    <!-- GymScan -->
+    <string name="gymscan_title">GymScan</string>
+    <string name="gymscan_subtitle">KI + Übungs-Datenbank</string>
+    <string name="gymscan_action_new_cd">Neuer Scan</string>
+    <string name="gymscan_capture_title">Maschine identifizieren</string>
+    <string name="gymscan_capture_subtitle">KI + Datenbank mit 873 Übungen</string>
+    <string name="gymscan_capture_desc">Fotografiere ein Equipment, das du im Studio nicht kennst. Die KI identifiziert die Maschine, zeigt dir die Bedienung und schlägt zugehörige Übungen mit animierten Demos vor.</string>
+    <string name="gymscan_btn_camera">Foto aufnehmen</string>
+    <string name="gymscan_btn_gallery">Aus Galerie wählen</string>
+    <string name="gymscan_tips_title">Tipps für optimale Analyse</string>
+    <string name="gymscan_tip_frame">Rahme die Maschine komplett ein, gut zentriert</string>
+    <string name="gymscan_tip_lighting">Vermeide Reflexionen und Gegenlicht</string>
+    <string name="gymscan_tip_close">Geh näher ran für sichtbare Etiketten</string>
+    <string name="gymscan_tip_accessories">Inkludiere Zubehör (Griffe, Gurte) wenn vorhanden</string>
+    <string name="gymscan_image_cd">Aufgenommenes Foto</string>
+    <string name="gymscan_btn_analyze">Mit KI analysieren</string>
+    <string name="gymscan_btn_retake">Neu aufnehmen</string>
+    <string name="gymscan_btn_pick_short">Galerie</string>
+    <string name="gymscan_state_loading_db">Lade Übungsdatenbank…</string>
+    <string name="gymscan_state_analyzing">Die KI identifiziert die Maschine und wählt Übungen…</string>
+    <string name="gymscan_state_subtitle">Das kann ein paar Sekunden dauern</string>
+    <string name="gymscan_error_title">Analyse nicht möglich</string>
+    <string name="gymscan_btn_retry">Erneut versuchen</string>
+    <string name="gymscan_btn_other_photo">Anderes Foto</string>
+    <string name="gymscan_result_machine_label">Identifizierte Maschine</string>
+    <string name="gymscan_cta_view_demo">Animierte Demo + komplettes Tutorial ansehen</string>
+    <string name="gymscan_section_setup">Einrichtung</string>
+    <string name="gymscan_section_safety">Sicherheitstipps</string>
+    <string name="gymscan_section_secondary_muscles">Sekundäre Muskeln</string>
+    <string name="gymscan_section_matched_exercises">Zugehörige Übungen (%d)</string>
+    <string name="gymscan_matched_caption">Animierte Demos in der Übungsdatenbank (tippe, um die Bewegung zu sehen)</string>
+    <string name="gymscan_conf_high">Hohe Sicherheit</string>
+    <string name="gymscan_conf_medium">Gute Sicherheit</string>
+    <string name="gymscan_conf_low">Unsicher</string>
+    <string name="gymscan_overlay_loading">LOADING DB</string>
+    <string name="gymscan_overlay_analyzing">KI-ANALYSE</string>
+
+    <!-- IngredientCategory -->
+    <string name="ingredient_cat_animal_proteins">Tierische Proteine</string>
+    <string name="ingredient_cat_plant_proteins">Pflanzliche Proteine</string>
+    <string name="ingredient_cat_vegetables">Gemüse</string>
+    <string name="ingredient_cat_starches">Stärkebeilagen</string>
+    <string name="ingredient_cat_fruits">Obst</string>
+    <string name="ingredient_cat_dairy">Milchprodukte</string>
+    <string name="ingredient_cat_fats">Fette</string>
+    <string name="ingredient_cat_drinks">Getränke</string>
+    <string name="ingredient_cat_sweets">Süßes &amp; Desserts</string>
+    <string name="ingredient_cat_other">Sonstiges</string>
+
+    <!-- Backup -->
+    <string name="backup_status_not_configured">Kein Backup eingerichtet</string>
+    <string name="backup_status_subtitle_drive">Verbinde dein Google-Konto, um Drive-Backup zu aktivieren.</string>
+    <string name="backup_status_subtitle_local">Wähle einen Ordner (Drive, OneDrive, lokal), um deine Daten zu schützen.</string>
+    <string name="backup_status_configured_never">Eingerichtet, noch nicht gesichert</string>
+    <string name="backup_status_configured_never_subtitle">Starte ein manuelles Backup oder aktiviere das tägliche Backup.</string>
+    <string name="backup_status_active">Backup aktiv</string>
+    <string name="backup_status_active_subtitle">Letztes: %1$s</string>
+    <string name="backup_provider_local">Lokaler Speicher</string>
+    <string name="backup_provider_drive">Google Drive</string>
+    <string name="backup_change_folder">Ordner ändern</string>
+    <string name="backup_pick_folder">Ordner wählen</string>
+    <string name="backup_auto_title">Automatisches Backup</string>
+    <string name="backup_auto_subtitle">Einmal pro Nacht um 3 Uhr, Akku OK</string>
+    <string name="backup_running">Backup läuft…</string>
+    <string name="backup_now">Jetzt sichern</string>
+    <string name="backup_restoring">Wiederherstellung läuft…</string>
+    <string name="backup_restore">Backup wiederherstellen</string>
+    <string name="backup_disconnect_local">Backup trennen</string>
+    <string name="backup_restore_dialog_title">Dieses Archiv wiederherstellen?</string>
+    <string name="backup_restore_dialog_text">Alle deine aktuellen Daten (Workouts, Mahlzeiten, Shreddy-Konversationen, Fotos…) werden durch die des Archivs ERSETZT. Diese Operation ist unumkehrbar.</string>
+    <string name="backup_restore_dialog_text_with_date">Alle deine aktuellen Daten (Workouts, Mahlzeiten, Shreddy-Konversationen, Fotos…) werden durch die des Archivs vom %1$s ERSETZT. Diese Operation ist unumkehrbar.</string>
+    <string name="backup_restore_confirm">Wiederherstellen</string>
+    <string name="common_cancel_short">Abbrechen</string>
+    <string name="backup_disconnect_dialog_title">Backup trennen?</string>
+    <string name="backup_disconnect_dialog_text">Wir werden deinen Backup-Ordner vergessen und das Auto-Backup stoppen. Deine bestehenden Archive werden nicht gelöscht — du kannst sie später aus deiner Cloud wiederherstellen.</string>
+    <string name="backup_disconnect_confirm">Trennen</string>
+    <string name="backup_disconnect_drive_dialog_title">Google Drive trennen?</string>
+    <string name="backup_disconnect_drive_dialog_text">Deine bestehenden Backups bleiben in deinem Drive (versteckter App-Ordner) — du findest sie wieder, wenn du dich erneut verbindest. Aber das Auto-Backup ist deaktiviert, bis du dich neu verbindest.</string>
+    <string name="backup_encryption_enable_title">Verschlüsselung aktivieren?</string>
+    <string name="backup_encryption_enable_text">Deine Backups werden mit einem AES-256-Schlüssel verschlüsselt, der einzigartig für dein Gerät ist. Niemand (auch nicht Google) kann sie ohne diesen Schlüssel lesen.\n\n⚠️ Du erhältst einen Recovery-Code — bewahre ihn sorgfältig auf. Ohne ihn gehen deine Backups verloren, wenn du das Telefon wechselst.</string>
+    <string name="backup_encryption_enable_confirm">Aktivieren</string>
+    <string name="backup_encryption_disable_title">Verschlüsselung deaktivieren?</string>
+    <string name="backup_encryption_disable_text">ZUKÜNFTIGE Backups werden im Klartext sein (HTTPS-Transport + Drive-Verschlüsselung Google-seitig trotzdem). Bestehende verschlüsselte Backups bleiben lesbar, solange du deinen Recovery-Code hast.</string>
+    <string name="backup_encryption_disable_confirm">Deaktivieren</string>
+    <string name="backup_encryption_title">Ende-zu-Ende-Verschlüsselung</string>
+    <string name="backup_encryption_subtitle_on">AES-256 — nur dein Gerät kann die Backups lesen</string>
+    <string name="backup_encryption_subtitle_off">Verschlüssle deine Backups mit deinem eigenen Schlüssel</string>
+    <string name="backup_encryption_view_code">Meinen Recovery-Code ansehen</string>
+    <string name="backup_recovery_code_title">Dein Recovery-Code</string>
+    <string name="backup_recovery_code_text">Bewahre diesen Code an einem sicheren Ort auf (Passwort-Manager, Papier, Foto in privater Cloud). Damit kannst du deine verschlüsselten Backups auf einem anderen Telefon wiederherstellen.</string>
+    <string name="backup_recovery_code_copy_cd">Kopieren</string>
+    <string name="backup_recovery_code_warning">Ohne diesen Code keine Wiederherstellung auf einem anderen Gerät möglich.</string>
+    <string name="backup_recovery_code_saved">Ich habe meinen Code gesichert</string>
+    <string name="backup_recovery_code_input_title">Recovery-Code erforderlich</string>
+    <string name="backup_recovery_code_input_text">Dieses Backup ist verschlüsselt. Gib den Recovery-Code ein, den du beim Aktivieren der Verschlüsselung notiert hast.</string>
+    <string name="backup_recovery_code_input_placeholder">AbCd-EfGh-IjKl-…</string>
+    <string name="backup_snack_folder_set">Backup-Ordner eingerichtet</string>
+    <string name="backup_snack_ok">Backup erfolgreich · %1$d Fotos</string>
+    <string name="backup_snack_restore_ok">Wiederherstellung OK · %1$d Fotos</string>
+    <string name="backup_snack_restore_skipped">(%1$d übersprungen)</string>
+    <string name="backup_snack_error">Fehler: %1$s</string>
+    <string name="backup_snack_disconnected">Backup getrennt</string>
+    <string name="backup_snack_drive_linked">Mit Google Drive verbunden</string>
+    <string name="backup_snack_drive_unlinked">Von Google Drive getrennt</string>
+    <string name="backup_snack_encryption_disabled">Verschlüsselung deaktiviert</string>
+    <string name="backup_google_linking">Verbindung läuft…</string>
+    <string name="backup_google_no_account">Kein verbundenes Konto</string>
+    <string name="backup_google_linking_subtitle">Wir synchronisieren deine Google-Identität.</string>
+    <string name="backup_google_no_account_subtitle">Verbinde dein Konto, um Drive-Backup zu aktivieren.</string>
+    <string name="backup_google_connecting">Verbinde…</string>
+    <string name="backup_google_connect">Mit Google fortfahren</string>
+    <string name="backup_google_account_fallback">Google-Konto</string>
+    <string name="backup_google_secure">Sicheres privates Drive</string>
+    <string name="backup_picker_title">Backup auswählen</string>
+    <string name="backup_picker_loading">Lade Backups…</string>
+    <string name="backup_picker_empty">Kein Backup auf deinem Drive gefunden. Starte zuerst ein manuelles Backup.</string>
+    <string name="backup_picker_close">Schließen</string>
+    <string name="backup_picker_size_kb">%1$d KB</string>
+    <string name="backup_time_now">gerade eben</string>
+    <string name="backup_time_minutes_ago">vor %1$d Min</string>
+    <string name="backup_time_hours_ago">vor %1$d Std</string>
+    <string name="backup_time_days_ago">vor %1$d T</string>
+    <string name="backup_time_weeks_ago">vor %1$d Wo</string>
+    <string name="backup_notif_success_title">Backup erfolgreich</string>
+    <string name="backup_notif_success_body">%1$d Fotos · %2$s mit Google Drive synchronisiert</string>
+    <string name="backup_notif_failure_title">Backup nicht möglich</string>
+    <string name="backup_notif_failure_body">%1$s — tippen zum Prüfen</string>
+    <string name="backup_bytes_o">%1$d B</string>
+    <string name="backup_bytes_ko">%1$.0f KB</string>
+    <string name="backup_bytes_mo">%1$.1f MB</string>
+    <string name="backup_bytes_go">%1$.2f GB</string>
+    <string name="backup_error_not_configured">Backup nicht eingerichtet (Provider %1$s). Geh zu Einstellungen → Backup.</string>
+    <string name="backup_error_download_failed">Download des Archivs nicht möglich: %1$s</string>
+    <string name="backup_error_manifest_corrupt">Manifest unlesbar (JSON beschädigt)</string>
+    <string name="backup_error_format_too_recent">Backup im Format v%1$d, App unterstützt v%2$d max. Aktualisiere ShredCoach.</string>
+    <string name="backup_error_db_too_recent">Backup einer neueren App-Version (DB v%1$d &gt; v%2$d). Aktualisiere ShredCoach.</string>
+    <string name="backup_error_unknown">Unbekannter Fehler</string>
+    <string name="backup_error_needs_recovery_code">Verschlüsseltes Archiv — Recovery-Code erforderlich</string>
+
+    <!-- ExerciseDB Explorer -->
+    <string name="exo_db_title">Entdecken</string>
+    <string name="exo_db_loading">Lade…</string>
+    <string name="exo_db_subtitle_brand">Free Exercise DB</string>
+    <string name="exo_db_count_subtitle">%1$d / %2$d Übungen</string>
+    <string name="exo_db_back_cd">Zurück</string>
+    <string name="exo_db_reset">Reset</string>
+    <string name="exo_db_reload_cd">Neu laden</string>
+    <string name="exo_db_search_placeholder">Suchen (Squat, Bench, Curl…)</string>
+    <string name="exo_db_clear_cd">Löschen</string>
+    <string name="exo_db_diag_error">⚠ FEHLER</string>
+    <string name="exo_db_diag_loading">⏳ Lade…</string>
+    <string name="exo_db_diag_ok">✓ OK · %1$d/%2$d Üb.</string>
+    <string name="exo_db_diag_empty">○ Leer</string>
+    <string name="exo_db_hero_title">Free Exercise DB Bibliothek</string>
+    <string name="exo_db_hero_subtitle">%1$d Übungen · HD-Fotos</string>
+    <string name="exo_db_hero_loading">Bibliothek wird geladen…</string>
+    <string name="exo_db_hero_badge">FREE</string>
+    <string name="exo_db_filter_muscle">Zielmuskel</string>
+    <string name="exo_db_filter_equipment">Equipment</string>
+    <string name="exo_db_filter_category">Kategorie</string>
+    <string name="exo_db_filter_level">Niveau</string>
+    <string name="exo_db_filter_remove_cd">Filter %1$s entfernen</string>
+    <string name="exo_db_results_shown">✦ %1$d Ergebnisse angezeigt</string>
+    <string name="exo_db_empty_title">Keine Übung gefunden</string>
+    <string name="exo_db_empty_subtitle">Passe deine Filter oder Suche an</string>
+    <string name="exo_db_error_title">Download nicht möglich</string>
+    <string name="exo_db_retry">Erneut versuchen</string>
+    <string name="exo_db_error_hint">Prüfe deine Internetverbindung — die Bibliothek kommt von GitHub</string>
+    <string name="exo_db_anim_badge">ANIM</string>
+    <string name="exo_db_detail_fallback_title">Detail</string>
+    <string name="exo_db_detail_error">Fehler</string>
+    <string name="exo_db_detail_anim_badge">Animierte Demo</string>
+    <string name="exo_db_detail_pos_start">Startposition</string>
+    <string name="exo_db_detail_pos_end">Endposition</string>
+    <string name="exo_db_detail_save_done">Zu meiner Bibliothek hinzugefügt</string>
+    <string name="exo_db_detail_save_action">In meiner Bibliothek speichern</string>
+    <string name="exo_db_detail_primary_muscles">Hauptmuskeln</string>
+    <string name="exo_db_detail_secondary_muscles">Sekundäre Muskeln</string>
+    <string name="exo_db_detail_steps">Schritt-für-Schritt-Ausführung</string>
+    <string name="exo_db_detail_translating">Übersetze…</string>
+    <string name="exo_db_detail_translated">Automatisch von KI übersetzt</string>
+    <string name="exo_db_detail_native_lang">Anleitungen auf Englisch</string>
+    <string name="exo_db_detail_translation_unavailable">Anleitungen auf Englisch (Übersetzung nicht verfügbar)</string>
+    <string name="exo_db_detail_flag">🇩🇪</string>
+    <string name="exo_db_detail_flag_native">🇺🇸</string>
+    <string name="exo_db_save_default_execution">Siehe Demo-Bilder.</string>
+    <string name="exo_db_save_category_line">Kategorie: %1$s</string>
+    <string name="exo_db_save_mechanic_line">Mechanik: %1$s</string>
+    <string name="exo_db_save_force_line">Kraft: %1$s</string>
+    <string name="exo_db_save_level_line">Niveau: %1$s</string>
+
+    <!-- Stats & Dashboard -->
+    <string name="dashboard_section_weight_progression">Gewichtsentwicklung</string>
+    <string name="dashboard_section_trends_predictions">Trends &amp; Prognosen</string>
+    <string name="dashboard_section_weekly_volume">Wochenvolumen</string>
+    <string name="dashboard_section_routine_breakdown">Volumen pro Routine (%1$s)</string>
+    <string name="dashboard_section_muscle_distribution">Muskelverteilung</string>
+    <string name="dashboard_section_training_frequency">Trainingsfrequenz</string>
+    <string name="dashboard_chart_no_data">Nicht genug Daten</string>
+    <string name="dashboard_freq_more_routines">+ %1$d weitere Routinen · %2$d× · %3$d kg (%4$d%%)</string>
+    <string name="dashboard_freq_unit_day">Tag</string>
+    <string name="dashboard_freq_unit_days">Tage</string>
+    <string name="dashboard_freq_label_current_streak">Aktuelle Streak</string>
+    <string name="dashboard_freq_label_record">Rekord</string>
+    <string name="dashboard_freq_label_compliance">Treue</string>
+    <string name="period_label_week">Letzte 7 Tage</string>
+    <string name="period_label_month">Letzte 30 Tage</string>
+    <string name="period_label_quarter">Letzte 90 Tage</string>
+    <string name="period_label_year">Letzte 365 Tage</string>
+    <string name="period_label_all">Gesamter Zeitraum</string>
+    <string name="share_workouts_title">Meine Workout-Stats</string>
+    <string name="share_nutrition_title">Meine Ernährungs-Stats</string>
+    <string name="share_metric_sessions">Workouts</string>
+    <string name="share_metric_volume">Volumen</string>
+    <string name="share_metric_reps">Wdh</string>
+    <string name="share_metric_duration">Dauer</string>
+    <string name="share_metric_kcal_per_day">Kcal/Tag</string>
+    <string name="share_metric_proteins">Eiweiß</string>
+    <string name="share_metric_compliance">Treue</string>
+    <string name="share_metric_health_score">Gesundheitsscore</string>
+    <string name="share_unit_min">Min</string>
+    <string name="share_unit_kg">kg</string>
+    <string name="share_unit_g">g</string>
+    <string name="share_unit_kcal">kcal</string>
+    <string name="share_unit_days_short">T</string>
+    <string name="share_unit_per_100">/100</string>
+    <string name="export_workouts_title">ShredCoach — Workout-Statistiken</string>
+    <string name="export_nutrition_title">ShredCoach — Ernährungs-Statistiken</string>
+    <string name="export_period_prefix">Zeitraum: %1$s</string>
+    <string name="export_columns_metric">Metrik</string>
+    <string name="export_columns_value">Wert</string>
+    <string name="export_columns_unit">Einheit</string>
+    <string name="export_row_workouts_count">Anzahl Workouts</string>
+    <string name="export_row_total_volume">Gesamtvolumen</string>
+    <string name="export_row_total_duration">Gesamtdauer</string>
+    <string name="export_row_total_reps">Gesamt-Wdh</string>
+    <string name="export_row_estimated_calories">Geschätzte Kalorien</string>
+    <string name="export_row_month_workouts">Workouts diesen Monat</string>
+    <string name="export_row_month_volume">Volumen diesen Monat</string>
+    <string name="export_row_alltime_workouts">Workouts all-time</string>
+    <string name="export_row_alltime_volume">Volumen all-time</string>
+    <string name="export_row_alltime_duration">Dauer all-time</string>
+    <string name="export_row_most_trained_muscle">Meist trainierter Muskel</string>
+    <string name="export_row_most_done_exercise">Häufigste Übung</string>
+    <string name="export_row_warmup_time">Aufwärm-Zeit (alle)</string>
+    <string name="export_row_cardio_time">Cardio-Zeit (alle)</string>
+    <string name="export_row_strength_time">Krafttrainings-Zeit (alle)</string>
+    <string name="export_row_avg_calories">Ø Kalorien/Tag</string>
+    <string name="export_row_avg_proteins">Ø Eiweiß/Tag</string>
+    <string name="export_row_avg_carbs">Ø Kohlenhydrate/Tag</string>
+    <string name="export_row_avg_fats">Ø Fette/Tag</string>
+    <string name="export_row_days_tracked">Getrackte Tage</string>
+    <string name="export_row_target_calories">Kalorien-Ziel</string>
+    <string name="export_row_target_proteins">Eiweiß-Ziel</string>
+    <string name="export_row_compliance_days">Treue-Tage</string>
+    <string name="export_row_total_scans">Scans gesamt</string>
+    <string name="export_row_avg_health_score">Ø Gesundheitsscore</string>
+    <string name="export_row_protein_per_kg">Eiweiß/kg Körpergewicht</string>
+    <string name="export_row_kcal_proteins_pct">%% kcal Eiweiß</string>
+    <string name="export_row_kcal_carbs_pct">%% kcal Kohlenhydrate</string>
+    <string name="export_row_kcal_fats_pct">%% kcal Fette</string>
+    <string name="export_row_nutri_a">Nutri-Score A</string>
+    <string name="export_row_nutri_b">Nutri-Score B</string>
+    <string name="export_row_nutri_c">Nutri-Score C</string>
+    <string name="export_row_nutri_d">Nutri-Score D</string>
+    <string name="export_row_nutri_e">Nutri-Score E</string>
+    <string name="export_unit_seconds">Sekunden</string>
+    <string name="export_summary_period">Zeitraum</string>
+    <string name="export_summary_total_workouts">Workouts gesamt</string>
+    <string name="export_summary_total_volume">Gesamtvolumen</string>
+    <string name="export_summary_total_volume_value">%1$d kg</string>
+    <string name="export_summary_kcal_per_day">Kcal/Tag</string>
+    <string name="export_summary_kcal_per_day_value">%1$d kcal</string>
+    <string name="export_summary_compliance">Treue</string>
+    <string name="export_summary_compliance_value">%1$d/%2$d Tage</string>
+    <string name="stats_export_csv_header">Datum,Übung,Satz,Wdh,Gewicht(kg),Pause(s),Tempo,Volumen</string>
+    <string name="stats_export_csv_subject">ShredCoach - Datenexport</string>
+    <string name="stats_export_csv_chooser">Export teilen</string>
+    <string name="stats_period_insight_strong_progress">Du hast +%1$d%% beim Volumen zugelegt!</string>
+    <string name="stats_period_insight_progress">Schöner Fortschritt: +%1$d%% Volumen</string>
+    <string name="stats_period_insight_stable">Volumen stabil, gute Regelmäßigkeit</string>
+    <string name="stats_period_insight_slight_drop">Leichter Rückgang von %1$d%%. Müde?</string>
+    <string name="stats_period_insight_drop">Volumen %1$d%% gesunken. Denk an eine Deload</string>
+    <string name="stats_trend_plateau">Plateau erkannt! Variiere die Übung oder erhöhe das Volumen</string>
+    <string name="stats_trend_fast">Schneller Fortschritt! Pass auf, dass du nichts überstürzt</string>
+    <string name="stats_trend_steady">Schöner gleichmäßiger Fortschritt, weiter so!</string>
+    <string name="stats_trend_slow">Langsamer aber konstanter Fortschritt</string>
+    <string name="stats_trend_regression">Rückschritt erkannt. Müde? Denk an eine Deload-Woche</string>
+    <string name="stats_trend_stagnation">Stagnation. Versuche die Lasten progressiv zu erhöhen</string>
+    <string name="stats_macro_shred_low_prot">Nicht genug Eiweiß für den Cut</string>
+    <string name="stats_macro_shred_high_fat">Zu viel Fett — reduziere, um das Defizit zu vertiefen</string>
+    <string name="stats_macro_shred_high_carb">Kohlenhydrate etwas hoch — verteile sie um die Workouts</string>
+    <string name="stats_macro_shred_optimal">Optimaler Split für den Cut</string>
+    <string name="stats_macro_shred_balanced">Gutes Gleichgewicht, noch Luft nach oben</string>
+    <string name="stats_macro_bulk_low_carb">Mangel an Kohlenhydraten für Muskelaufbau</string>
+    <string name="stats_macro_bulk_low_prot">Mehr Eiweiß für Muskelproteinsynthese</string>
+    <string name="stats_macro_bulk_optimal">Split passend für Muskelaufbau</string>
+    <string name="stats_macro_maintain_low_prot">Mehr Eiweiß für Sättigung und Muskeln</string>
+    <string name="stats_macro_maintain_high_fat">Fette etwas hoch — diversifiziere die Quellen</string>
+    <string name="stats_macro_maintain_balanced">Korrektes Makro-Gleichgewicht</string>
+    <string name="stats_insight_no_data">Tracke deine Mahlzeiten, um persönliche Insights freizuschalten</string>
+    <string name="stats_insight_low_protein">🍗 Unter dem Eiweißziel (%1$s g/kg) — ziele ≥ 1.6 g/kg</string>
+    <string name="stats_insight_compliance_high">🎯 %1$d/%2$d Tage im Ziel — exzellente Regelmäßigkeit</string>
+    <string name="stats_insight_compliance_mid">📈 %1$d/%2$d Tage im Ziel — weiter so</string>
+    <string name="stats_insight_deficit">⚠️ Ø Defizit %1$d kcal/Tag — Risiko für Muskelverlust</string>
+    <string name="stats_insight_surplus">⚠️ %1$d kcal über dem Ziel im Schnitt</string>
+    <string name="stats_insight_kcal_delta">📊 %1$s%2$d kcal/Tag vs. vorherige Periode</string>
+    <string name="stats_insight_protein_delta">💪 +%1$dg Eiweiß/Tag vs. vorherige Periode</string>
+    <string name="stats_insight_nutri_high">✨ %1$d%% deiner Mahlzeiten mit A oder B bewertet</string>
+    <string name="stats_insight_nutri_low">🥗 Ziele auf mehr A- und B-Lebensmittel (Gemüse, Obst, Hülsenfrüchte)</string>
+    <string name="stats_insight_streak">🔥 %1$d Tage in Folge Mahlzeiten getrackt</string>
+    <string name="stats_insight_fasting_16h">🌙 Ø Fasten %1$s — 16-8-Format erreicht</string>
+    <string name="stats_insight_fasting_with_16h">🌙 Ø Fasten %1$s (%2$dT ≥ 16h)</string>
+    <string name="stats_insight_fasting_progress">🌙 Ø Fasten %1$s — ziele auf 16h+ für 16-8</string>
+    <string name="stats_insight_fasting_low">🌙 Fasten %1$s/Tag — öffne ein längeres Fastenfenster</string>
+
+    <!-- Coach proactif -->
+    <string name="coach_settings_title">Proaktiver KI-Coach</string>
+    <string name="coach_settings_subtitle">Smarte Benachrichtigungen: PR-Feier, Workout-Erinnerung, Ernährungsanpassungen, Sonntagabend-Recap.</string>
+    <string name="coach_settings_consent_title">KI-Coach aktivieren?</string>
+    <string name="coach_settings_consent_text">Um seine Nachrichten zu generieren, sendet Shreddy deinen Kontext (Workouts, Makros, Chat-Auszüge) an den konfigurierten KI-Anbieter (Groq, OpenAI oder Claude). Keine Fotos und kein API-Schlüssel werden geteilt. Du kannst jederzeit deaktivieren.</string>
+    <string name="coach_settings_consent_accept">Akzeptieren und aktivieren</string>
+    <string name="coach_settings_consent_dismiss">Später</string>
+    <string name="coach_settings_hour_label">Tägliche Benachrichtigung</string>
+    <string name="coach_settings_hour_value">%1$d Uhr</string>
+    <string name="coach_settings_tone_label">Ton von Shreddy</string>
+    <string name="coach_settings_cap_label">Wöchentliche Obergrenze</string>
+    <string name="coach_settings_cap_subtitle">Max. Anzahl Coach-Nachrichten pro Woche</string>
+    <string name="coach_settings_categories_label">Benachrichtigungs-Kategorien</string>
+    <string name="coach_settings_categories_subtitle">Deaktiviere die, die dir nichts bringen</string>
+    <string name="coach_cat_streak_at_risk_label">Streak in Gefahr</string>
+    <string name="coach_cat_streak_at_risk_desc">Wenn deine Workout-Serie auf dem Spiel steht</string>
+    <string name="coach_cat_missed_workout_label">Verpasstes Workout</string>
+    <string name="coach_cat_missed_workout_desc">Wenn ein geplantes Workout nicht gemacht wurde</string>
+    <string name="coach_cat_pr_celebration_label">PR-Feier</string>
+    <string name="coach_cat_pr_celebration_desc">Wenn du einen persönlichen Rekord brichst</string>
+    <string name="coach_cat_protein_deficit_label">Eiweißmangel</string>
+    <string name="coach_cat_protein_deficit_desc">Im Cut, wenn die Zufuhr unter dem Ziel liegt</string>
+    <string name="coach_cat_plateau_volume_label">Plateau</string>
+    <string name="coach_cat_plateau_volume_desc">Wenn das Volumen 3 Wochen stagniert</string>
+    <string name="coach_cat_comeback_label">Rückkehr nach Pause</string>
+    <string name="coach_cat_comeback_desc">Ermutigung nach 7+ Tagen ohne Workout</string>
+    <string name="coach_cat_body_scan_stale_label">Körperscan veraltet</string>
+    <string name="coach_cat_body_scan_stale_desc">Erinnerung zum Messen wenn &gt; 30 Tage</string>
+    <string name="coach_cat_goal_eta_label">Zielverlauf</string>
+    <string name="coach_cat_goal_eta_desc">Schätzung der Restzeit zum Erreichen des Ziels</string>
+    <string name="coach_cat_weekly_recap_label">Wochenrückblick</string>
+    <string name="coach_cat_weekly_recap_desc">Sonntagabend-Bilanz</string>
+    <string name="coach_cat_motivation_general_label">Allgemeiner Check-in</string>
+    <string name="coach_cat_motivation_general_desc">Neutrale Nachricht wenn nichts anliegt</string>
+    <string name="voice_settings_intro">Wähle die Sprachsynthese-Engine + die Stimme, die dich am meisten motiviert. Die Änderung gilt ab der nächsten Sprachansage.</string>
+    <string name="voice_settings_persona_label">Charakter</string>
+    <string name="voice_settings_test_button">Stimme testen</string>
+    <string name="voice_settings_engine_warning_api_key">API-Schlüssel erforderlich</string>
+    <string name="voice_settings_api_key_label">Google Cloud TTS API-Schlüssel</string>
+    <string name="voice_settings_api_key_placeholder">AIza…</string>
+    <string name="voice_settings_api_key_paste_cd">Einfügen</string>
+    <string name="voice_settings_api_key_visibility_cd">Anzeigen / verbergen</string>
+    <string name="voice_settings_api_key_help">Aktiviere die API „Cloud Text-to-Speech\" auf console.cloud.google.com, dann erstelle einen API-Schlüssel in \"APIs &amp; Services › Credentials\". Der Schlüssel wird verschlüsselt auf dem Gerät gespeichert.</string>
+
+    <!-- WorkoutSession resid -->
+    <string name="workout_cd_add_exercise">Übung hinzufügen</string>
+    <string name="workout_cd_back">Zurück</string>
+    <string name="workout_cd_overview">Übersicht</string>
+    <string name="workout_cd_share_progress">Fortschritt teilen</string>
+    <string name="workout_cd_stop">Stoppen</string>
+    <string name="workout_cd_skip_exercise">Diese Übung überspringen</string>
+    <string name="workout_cd_exercise_demo">Übungs-Demonstration</string>
+    <string name="workout_cd_skip_set">Überspringen</string>
+    <string name="workout_cd_remove">Entfernen</string>
+    <string name="workout_cd_toggle">Toggle</string>
+    <string name="workout_set_countdown_label">SATZ %1$d / %2$d · COUNTDOWN</string>
+    <string name="workout_seconds_label">Sekunden</string>
+    <string name="workout_hold_on">🔥 Halt durch!</string>
+    <string name="workout_hold_position">Halte die Position</string>
+    <string name="workout_cta_stop_now">JETZT STOPPEN</string>
+    <string name="workout_cta_finish_exercise">ÜBUNG BEENDEN</string>
+    <string name="workout_cta_finish_session">WORKOUT BEENDEN</string>
+    <string name="workout_cta_next_exercise">NÄCHSTE ÜBUNG</string>
+    <string name="workout_cta_set_done">SATZ FERTIG</string>
+    <string name="workout_cta_continue">WEITER</string>
+    <string name="workout_cta_next_exercise_label">NÄCHSTE ÜBUNG</string>
+    <string name="workout_post_last_set_continue">Zur nächsten Übung</string>
+    <string name="workout_transition_subtitle">Üb. %1$d/%2$d</string>
+    <string name="workout_vm_session_not_found">Workout nicht gefunden</string>
+    <string name="workout_vm_error_generic">Fehler</string>
+    <string name="workout_vm_save_error">Speicherfehler: %1$s</string>
+    <string name="workout_vm_first_name_fallback">Champion</string>
+
+    <!-- Coach workers -->
+    <string name="coach_proactive_notif_title">🧠 Shreddy</string>
+    <string name="coach_weekly_recap_title">📊 Wochenrückblick</string>
+    <string name="coach_weekly_recap_fallback_with_fasting">Woche abgeschlossen%1$s: %2$d/%3$d Workouts, %4$dkg gesamt, Eiweiß %5$d%%, Ø Fasten %6$s. Auf zur nächsten!</string>
+    <string name="coach_weekly_recap_fallback">Woche abgeschlossen%1$s: %2$d/%3$d Workouts, %4$dkg gesamt, Eiweiß %5$d%%. Auf zur nächsten!</string>
+    <string name="coach_fallback_streak_at_risk">%1$d-Tage-Streak in Gefahr%2$s. Ein kurzes Workout heute rettet sie.</string>
+    <string name="coach_fallback_missed_workout">Du hattest \'%1$s\' geplant%2$s. Verschieben wir es diese Woche?</string>
+    <string name="coach_fallback_pr_celebration">Neuer Rekord bei %1$s: %2$dkg%3$s. Beim nächsten Mal mehr!</string>
+    <string name="coach_fallback_protein_deficit">Gestern %1$dg Eiweiß vs. Ziel %2$dg%3$s. Ein Shake heute hilft.</string>
+    <string name="coach_fallback_plateau_volume">Volumen seit %1$d W. stabil%2$s. Übung wechseln oder Lasten hoch?</string>
+    <string name="coach_fallback_comeback">Kein Workout seit %1$d Tagen%2$s. Eine kurze 30-Min-Session bringt den Rhythmus zurück.</string>
+    <string name="coach_fallback_body_scan_stale">Letzte Messung vor %1$d Tagen%2$s. 30s, um deinen Körper zu scannen und das Tracking anzupassen.</string>
+    <string name="coach_fallback_goal_eta">Nur noch %1$skg bis zum Ziel%2$s. ETA ~%3$d W. im aktuellen Tempo.</string>
+    <string name="coach_fallback_weekly_recap">Wochenbilanz: %1$d/%2$d Workouts, %3$dkg gesamt%4$s. Auf zur nächsten.</string>
+    <string name="coach_fallback_general_motivation">%1$d Workouts diese Woche%2$s. Kleines Tagesziel?</string>
+
+    <!-- Home cards -->
+    <string name="home_resume_session_cta">DEIN WORKOUT FORTSETZEN</string>
+    <string name="home_resume_session_elapsed_label">Vergangen</string>
+    <string name="home_resume_session_exercises_label">Übungen</string>
+    <string name="home_today_label">Heute</string>
+    <string name="home_macro_proteins">Eiweiß</string>
+    <string name="home_macro_carbs">Kohlenhydrate</string>
+    <string name="home_macro_fats">Fette</string>
+    <string name="home_weekly_highlight_title">Dein Wochen-Highlight</string>
+    <string name="home_weekly_force_max_label">Geschätzte Maximalkraft</string>
+    <string name="home_weekly_record_label">Dein Rekord</string>
+    <string name="home_weekly_sessions_analyzed">Analysierte Workouts</string>
+    <string name="home_weekly_trend_estimated">Geschätzter Trend</string>
+    <string name="home_daily_checkin_question">Wie fühlst du dich heute Morgen?</string>
+    <string name="home_daily_checkin_mood_cd">Stimmung %1$s</string>
+    <string name="mood_tired">Müde</string>
+    <string name="mood_meh">Naja</string>
+    <string name="mood_ok">OK</string>
+    <string name="mood_motivated">Motiviert</string>
+    <string name="mood_on_fire">Auf Feuer</string>
+
+    <!-- ShareCard -->
+    <string name="share_card_planned_subtitle">Heutiges Programm</string>
+    <string name="share_card_label_duration">DAUER</string>
+    <string name="share_card_in_live">Live</string>
+    <string name="share_card_label_volume">VOLUMEN</string>
+    <string name="share_card_label_active">AKTIV</string>
+    <string name="share_card_progression_section">FORTSCHRITT</string>
+    <string name="share_card_unit_sets">Sätze</string>
+    <string name="share_card_pr_title">🏆 NEUER REKORD</string>
+    <string name="share_card_done_title">✅ Übung abgeschlossen</string>
+    <string name="share_card_stat_sets">Sätze</string>
+    <string name="share_card_stat_volume">Volumen</string>
+    <string name="share_card_stat_charge">Last</string>
+    <string name="share_card_stat_duration">Dauer</string>
+    <string name="share_card_session_complete">Workout komplett</string>
+    <string name="share_card_exercises_done_section">ERLEDIGTE ÜBUNGEN</string>
+    <string name="share_card_program_section">IM PROGRAMM</string>
+</resources>
