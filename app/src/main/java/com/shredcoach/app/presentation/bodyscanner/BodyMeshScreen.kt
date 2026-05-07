@@ -24,11 +24,13 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.shredcoach.app.R
 import java.io.File
 
 /**
@@ -72,18 +74,18 @@ fun BodyMeshScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour", tint = neonCyan)
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.common_back), tint = neonCyan)
                 }
                 Column(Modifier.weight(1f)) {
                     Text(
-                        "BODY MESH SCAN",
+                        stringResource(R.string.bodymesh_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
                         color = neonCyan,
                         letterSpacing = 3.sp
                     )
                     Text(
-                        "Powered by Shreddy AI",
+                        stringResource(R.string.bodymesh_subtitle),
                         style = MaterialTheme.typography.labelSmall,
                         color = neonCyan.copy(alpha = 0.5f),
                         letterSpacing = 1.sp
@@ -123,7 +125,7 @@ fun BodyMeshScreen(
                     )
                     Image(
                         bitmap = bitmap.asImageBitmap(),
-                        contentDescription = "Body mesh",
+                        contentDescription = stringResource(R.string.bodymesh_image_cd),
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Fit
                     )
@@ -141,14 +143,14 @@ fun BodyMeshScreen(
                             tint = neonCyan.copy(alpha = 0.3f)
                         )
                         Text(
-                            "MESH NON GÉNÉRÉ",
+                            stringResource(R.string.bodymesh_empty_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = neonCyan,
                             letterSpacing = 2.sp
                         )
                         Text(
-                            "Retourne au Body Scanner pour générer le mesh",
+                            stringResource(R.string.bodymesh_empty_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = neonCyan.copy(alpha = 0.5f)
                         )
@@ -280,13 +282,13 @@ private fun HologramStatsPanel(
             // Title
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Default.Analytics, null, Modifier.size(16.dp), tint = neonCyan)
-                Text("BIOMETRIC READOUT",
+                Text(stringResource(R.string.bodymesh_panel_title),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.ExtraBold,
                     color = neonCyan,
                     letterSpacing = 2.sp)
                 Spacer(Modifier.weight(1f))
-                Text("SYSTEM ONLINE",
+                Text(stringResource(R.string.bodymesh_panel_status),
                     style = MaterialTheme.typography.labelSmall,
                     color = neonGreen.copy(alpha = 0.8f),
                     letterSpacing = 1.sp)

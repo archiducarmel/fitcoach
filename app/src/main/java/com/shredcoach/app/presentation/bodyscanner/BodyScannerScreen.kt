@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -42,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.shredcoach.app.R
 import com.shredcoach.app.presentation.navigation.Screen
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
@@ -100,8 +102,8 @@ fun BodyScannerScreen(
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Icon(Icons.Default.Accessibility, null, Modifier.size(24.dp), tint = OrangeVibrant)
                         Column {
-                            Text("Body Scanner", fontWeight = FontWeight.Bold)
-                            Text("Analyse IA de tes mesures corporelles",
+                            Text(stringResource(R.string.bodyscan_title), fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.bodyscan_subtitle),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
@@ -109,7 +111,7 @@ fun BodyScannerScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.common_back))
                     }
                 },
                 actions = {
@@ -117,7 +119,7 @@ fun BodyScannerScreen(
                         IconButton(onClick = {
                             navController.navigate(Screen.BodyMesh.route)
                         }) {
-                            Icon(Icons.Default.GridOn, "Visualisation mesh", tint = NeonGreen)
+                            Icon(Icons.Default.GridOn, stringResource(R.string.bodyscan_action_mesh_cd), tint = NeonGreen)
                         }
                     }
                 }
@@ -168,16 +170,16 @@ fun BodyScannerScreen(
                 ) {
                     Icon(Icons.Default.AutoAwesome, null, Modifier.size(22.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Analyser mon corps", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.bodyscan_btn_analyze), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
             }
 
             // ─── État analysing ───
             if (state.isAnalyzing) {
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Shreddy analyse ton corps...",
+                    Text(stringResource(R.string.bodyscan_analyzing_title),
                         style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
-                    Text("Estimation proportionnelle + taux de gras + morphologie",
+                    Text(stringResource(R.string.bodyscan_analyzing_subtitle),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                         textAlign = TextAlign.Center)
@@ -214,7 +216,7 @@ fun BodyScannerScreen(
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        if (state.applied) "Appliqué au profil" else "Appliquer au profil",
+                        if (state.applied) stringResource(R.string.bodyscan_btn_applied) else stringResource(R.string.bodyscan_btn_apply),
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -250,10 +252,10 @@ private fun BodyCaptureZone(onCamera: () -> Unit, onGallery: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Icon(Icons.Default.Accessibility, null, Modifier.size(56.dp), tint = OrangeVibrant)
-            Text("Scanne ton corps",
+            Text(stringResource(R.string.bodyscan_capture_title),
                 style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
             Text(
-                "Photo corps entier de face, vêtements ajustés, bras légèrement écartés. Shreddy estimera automatiquement toutes tes mesures.",
+                stringResource(R.string.bodyscan_capture_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
                 textAlign = TextAlign.Center
@@ -268,7 +270,7 @@ private fun BodyCaptureZone(onCamera: () -> Unit, onGallery: () -> Unit) {
                 ) {
                     Icon(Icons.Default.CameraAlt, null, Modifier.size(20.dp), tint = OrangeVibrant)
                     Spacer(Modifier.width(6.dp))
-                    Text("Caméra", fontWeight = FontWeight.Bold, color = OrangeVibrant)
+                    Text(stringResource(R.string.bodyscan_btn_camera), fontWeight = FontWeight.Bold, color = OrangeVibrant)
                 }
                 FilledTonalButton(
                     onClick = onGallery,
@@ -277,12 +279,12 @@ private fun BodyCaptureZone(onCamera: () -> Unit, onGallery: () -> Unit) {
                 ) {
                     Icon(Icons.Default.Image, null, Modifier.size(20.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Galerie", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.bodyscan_btn_gallery), fontWeight = FontWeight.Bold)
                 }
             }
             // Note de confidentialité
             Text(
-                "🔒 Ta photo est traitée uniquement pour l'analyse et stockée en local.",
+                stringResource(R.string.bodyscan_capture_privacy),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 textAlign = TextAlign.Center
@@ -340,7 +342,7 @@ private fun MeasurementsEditableCard(state: BodyScannerState, viewModel: BodySca
             // Header
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Icon(Icons.Default.Straighten, null, Modifier.size(22.dp), tint = OrangeVibrant)
-                Text("Mesures corporelles", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.bodyscan_card_measures_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 if (state.result != null) {
                     Spacer(Modifier.weight(1f))
                     ConfidenceBadge(state.result.confidence)
@@ -349,7 +351,7 @@ private fun MeasurementsEditableCard(state: BodyScannerState, viewModel: BodySca
 
             // Sex selector
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("M" to "Homme", "F" to "Femme").forEach { (code, label) ->
+                listOf("M" to stringResource(R.string.profile_sex_male), "F" to stringResource(R.string.profile_sex_female)).forEach { (code, label) ->
                     val sel = state.editSex == code
                     Surface(
                         onClick = { viewModel.setSex(code) },
@@ -370,26 +372,26 @@ private fun MeasurementsEditableCard(state: BodyScannerState, viewModel: BodySca
 
             // Height + Weight
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                MeasureField("Taille", state.editHeightCm, "cm", Modifier.weight(1f)) { viewModel.setHeight(it) }
-                MeasureField("Poids", state.editWeightKg, "kg", Modifier.weight(1f)) { viewModel.setWeight(it) }
+                MeasureField(stringResource(R.string.bodyscan_field_height), state.editHeightCm, "cm", Modifier.weight(1f)) { viewModel.setHeight(it) }
+                MeasureField(stringResource(R.string.bodyscan_field_weight), state.editWeightKg, "kg", Modifier.weight(1f)) { viewModel.setWeight(it) }
             }
 
             // Waist + Chest
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                MeasureField("Tour de taille", state.editWaistCm, "cm", Modifier.weight(1f)) { viewModel.setWaist(it) }
-                MeasureField("Poitrine", state.editChestCm, "cm", Modifier.weight(1f)) { viewModel.setChest(it) }
+                MeasureField(stringResource(R.string.profile_measure_waist), state.editWaistCm, "cm", Modifier.weight(1f)) { viewModel.setWaist(it) }
+                MeasureField(stringResource(R.string.profile_measure_chest), state.editChestCm, "cm", Modifier.weight(1f)) { viewModel.setChest(it) }
             }
 
             // Hip + Arm
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                MeasureField("Hanches", state.editHipCm, "cm", Modifier.weight(1f)) { viewModel.setHip(it) }
-                MeasureField("Bras", state.editArmCm, "cm", Modifier.weight(1f)) { viewModel.setArm(it) }
+                MeasureField(stringResource(R.string.profile_measure_hip), state.editHipCm, "cm", Modifier.weight(1f)) { viewModel.setHip(it) }
+                MeasureField(stringResource(R.string.profile_measure_arm), state.editArmCm, "cm", Modifier.weight(1f)) { viewModel.setArm(it) }
             }
 
             // Thigh + Calf
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                MeasureField("Cuisse", state.editThighCm, "cm", Modifier.weight(1f)) { viewModel.setThigh(it) }
-                MeasureField("Mollet", state.editCalfCm, "cm", Modifier.weight(1f)) { viewModel.setCalf(it) }
+                MeasureField(stringResource(R.string.profile_measure_thigh), state.editThighCm, "cm", Modifier.weight(1f)) { viewModel.setThigh(it) }
+                MeasureField(stringResource(R.string.profile_measure_calf), state.editCalfCm, "cm", Modifier.weight(1f)) { viewModel.setCalf(it) }
             }
 
             // Notes IA
@@ -427,9 +429,9 @@ private fun MeasureField(label: String, value: String, unit: String, modifier: M
 @Composable
 private fun ConfidenceBadge(confidence: String) {
     val (label, color) = when (confidence.lowercase()) {
-        "high" -> "Fiabilité haute" to NeonGreen
-        "low" -> "Fiabilité basse" to MaterialTheme.colorScheme.error
-        else -> "Fiabilité moyenne" to OrangeVibrant
+        "high" -> stringResource(R.string.bodyscan_confidence_high) to NeonGreen
+        "low" -> stringResource(R.string.bodyscan_confidence_low) to MaterialTheme.colorScheme.error
+        else -> stringResource(R.string.bodyscan_confidence_medium) to OrangeVibrant
     }
     Surface(shape = RoundedCornerShape(6.dp), color = color.copy(alpha = 0.15f)) {
         Text(label,
@@ -456,10 +458,10 @@ private fun BmiBodyFatCard(state: BodyScannerState) {
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Icon(Icons.Default.Speed, null, Modifier.size(16.dp), tint = OrangeVibrant)
-                    Text("IMC", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
+                    Text(stringResource(R.string.bodyscan_bmi_label), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
                 }
                 Text(
-                    if (state.computedBmi > 0) String.format(java.util.Locale.FRANCE, "%.1f", state.computedBmi) else "—",
+                    if (state.computedBmi > 0) String.format(java.util.Locale.getDefault(), "%.1f", state.computedBmi) else "—",
                     style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold
                 )
                 Text(state.bmiLabel, style = MaterialTheme.typography.labelSmall,
@@ -475,7 +477,7 @@ private fun BmiBodyFatCard(state: BodyScannerState) {
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Icon(Icons.Default.PieChart, null, Modifier.size(16.dp), tint = NeonGreen)
-                    Text("Gras", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = NeonGreen)
+                    Text(stringResource(R.string.bodyscan_bodyfat_label), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = NeonGreen)
                 }
                 Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
@@ -488,7 +490,7 @@ private fun BmiBodyFatCard(state: BodyScannerState) {
                             modifier = Modifier.padding(bottom = 6.dp))
                     }
                 }
-                Text("Estimé visuel", style = MaterialTheme.typography.labelSmall,
+                Text(stringResource(R.string.bodyscan_bodyfat_caption), style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f))
             }
         }
@@ -515,9 +517,9 @@ private fun GenerateMeshCard(
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Icon(Icons.Default.GridOn, null, Modifier.size(22.dp), tint = Color(0xFF00E5FF))
                 Column {
-                    Text("Visualisation Mesh 3D",
+                    Text(stringResource(R.string.bodyscan_mesh_title),
                         style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
-                    Text("Hologramme sci-fi généré par IA",
+                    Text(stringResource(R.string.bodyscan_mesh_subtitle),
                         style = MaterialTheme.typography.labelSmall, color = Color(0xFF00E5FF).copy(alpha = 0.7f))
                 }
             }
@@ -536,7 +538,7 @@ private fun GenerateMeshCard(
                 ) {
                     Icon(Icons.Default.Visibility, null, Modifier.size(18.dp), tint = Color.Black)
                     Spacer(Modifier.width(6.dp))
-                    Text("Voir la visualisation", fontWeight = FontWeight.Bold, color = Color.Black)
+                    Text(stringResource(R.string.bodyscan_btn_view_mesh), fontWeight = FontWeight.Bold, color = Color.Black)
                 }
                 OutlinedButton(
                     onClick = { viewModel.generateMesh() },
@@ -546,7 +548,7 @@ private fun GenerateMeshCard(
                 ) {
                     Icon(Icons.Default.Refresh, null, Modifier.size(16.dp), tint = Color(0xFF00E5FF))
                     Spacer(Modifier.width(6.dp))
-                    Text("Regénérer", color = Color(0xFF00E5FF), style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.bodyscan_btn_regenerate), color = Color(0xFF00E5FF), style = MaterialTheme.typography.labelLarge)
                 }
             } else if (state.isGeneratingMesh) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -555,7 +557,7 @@ private fun GenerateMeshCard(
                         modifier = Modifier.size(20.dp),
                         strokeWidth = 2.dp
                     )
-                    Text("Génération du mesh en cours...",
+                    Text(stringResource(R.string.bodyscan_mesh_generating),
                         style = MaterialTheme.typography.bodySmall, color = Color(0xFF00E5FF))
                 }
             } else {
@@ -567,10 +569,10 @@ private fun GenerateMeshCard(
                 ) {
                     Icon(Icons.Default.AutoAwesome, null, Modifier.size(18.dp), tint = Color.Black)
                     Spacer(Modifier.width(6.dp))
-                    Text("Générer le mesh IA", fontWeight = FontWeight.Bold, color = Color.Black)
+                    Text(stringResource(R.string.bodyscan_btn_generate_mesh), fontWeight = FontWeight.Bold, color = Color.Black)
                 }
                 Text(
-                    "⚡ Nécessite une clé API Gemini · modèle gemini-2.5-flash-image",
+                    stringResource(R.string.bodyscan_mesh_caption),
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.White.copy(alpha = 0.5f)
                 )

@@ -1605,6 +1605,83 @@
     <string name="variant_bodyweight_desc">Aucun équipement, fonctionnel, travaille la coordination et le gainage</string>
     <string name="variant_isolation_desc">Cible un seul muscle précisément, finition et sculpture</string>
 
+    <!-- ─── BodyScanner screen ─── -->
+    <string name="bodyscan_title">Body Scanner</string>
+    <string name="bodyscan_subtitle">Analyse IA de tes mesures corporelles</string>
+    <string name="bodyscan_action_mesh_cd">Visualisation mesh</string>
+    <string name="bodyscan_btn_analyze">Analyser mon corps</string>
+    <string name="bodyscan_analyzing_title">Shreddy analyse ton corps…</string>
+    <string name="bodyscan_analyzing_subtitle">Estimation proportionnelle + taux de gras + morphologie</string>
+    <string name="bodyscan_btn_applied">Appliqué au profil</string>
+    <string name="bodyscan_btn_apply">Appliquer au profil</string>
+    <string name="bodyscan_capture_title">Scanne ton corps</string>
+    <string name="bodyscan_capture_desc">Photo corps entier de face, vêtements ajustés, bras légèrement écartés. Shreddy estimera automatiquement toutes tes mesures.</string>
+    <string name="bodyscan_btn_camera">Caméra</string>
+    <string name="bodyscan_btn_gallery">Galerie</string>
+    <string name="bodyscan_capture_privacy">🔒 Ta photo est traitée uniquement pour l\'analyse et stockée en local.</string>
+    <string name="bodyscan_card_measures_title">Mesures corporelles</string>
+    <string name="bodyscan_field_height">Taille</string>
+    <string name="bodyscan_field_weight">Poids</string>
+    <string name="bodyscan_confidence_high">Fiabilité haute</string>
+    <string name="bodyscan_confidence_medium">Fiabilité moyenne</string>
+    <string name="bodyscan_confidence_low">Fiabilité basse</string>
+    <string name="bodyscan_bmi_label">IMC</string>
+    <string name="bodyscan_bodyfat_label">Gras</string>
+    <string name="bodyscan_bodyfat_caption">Estimé visuel</string>
+    <string name="bodyscan_mesh_title">Visualisation Mesh 3D</string>
+    <string name="bodyscan_mesh_subtitle">Hologramme sci-fi généré par IA</string>
+    <string name="bodyscan_btn_view_mesh">Voir la visualisation</string>
+    <string name="bodyscan_btn_regenerate">Regénérer</string>
+    <string name="bodyscan_mesh_generating">Génération du mesh en cours…</string>
+    <string name="bodyscan_btn_generate_mesh">Générer le mesh IA</string>
+    <string name="bodyscan_mesh_caption">⚡ Nécessite une clé API Gemini · modèle gemini-2.5-flash-image</string>
+
+    <!-- ─── BodyMesh screen (cyberpunk HUD — same in EN, intentional aesthetic) ─── -->
+    <string name="bodymesh_image_cd">Body mesh</string>
+    <string name="bodymesh_title">BODY MESH SCAN</string>
+    <string name="bodymesh_subtitle">Powered by Shreddy AI</string>
+    <string name="bodymesh_empty_title">MESH NON GÉNÉRÉ</string>
+    <string name="bodymesh_empty_desc">Retourne au Body Scanner pour générer le mesh</string>
+    <string name="bodymesh_panel_title">BIOMETRIC READOUT</string>
+    <string name="bodymesh_panel_status">SYSTEM ONLINE</string>
+
+    <!-- ─── GymScan screen ─── -->
+    <string name="gymscan_title">GymScan</string>
+    <string name="gymscan_subtitle">IA + base d\'exercices</string>
+    <string name="gymscan_action_new_cd">Nouveau scan</string>
+    <string name="gymscan_capture_title">Identifie une machine</string>
+    <string name="gymscan_capture_subtitle">IA + base de 873 exercices</string>
+    <string name="gymscan_capture_desc">Photographie un équipement que tu ne connais pas à la salle. L\'IA identifie la machine, te montre comment l\'utiliser et te propose les exercices associés avec démonstrations animées.</string>
+    <string name="gymscan_btn_camera">Prendre une photo</string>
+    <string name="gymscan_btn_gallery">Choisir depuis la galerie</string>
+    <string name="gymscan_tips_title">Astuces pour une analyse optimale</string>
+    <string name="gymscan_tip_frame">Cadre la machine en entier, bien centrée</string>
+    <string name="gymscan_tip_lighting">Évite les reflets et le contre-jour</string>
+    <string name="gymscan_tip_close">Rapproche-toi pour des étiquettes visibles</string>
+    <string name="gymscan_tip_accessories">Inclus les accessoires (poignées, sangles) si présents</string>
+    <string name="gymscan_image_cd">Photo capturée</string>
+    <string name="gymscan_btn_analyze">Analyser avec l\'IA</string>
+    <string name="gymscan_btn_retake">Reprendre</string>
+    <string name="gymscan_btn_pick_short">Galerie</string>
+    <string name="gymscan_state_loading_db">Chargement de la base d\'exercices…</string>
+    <string name="gymscan_state_analyzing">L\'IA identifie la machine et sélectionne les exercices…</string>
+    <string name="gymscan_state_subtitle">Cela peut prendre quelques secondes</string>
+    <string name="gymscan_error_title">Analyse impossible</string>
+    <string name="gymscan_btn_retry">Réessayer</string>
+    <string name="gymscan_btn_other_photo">Autre photo</string>
+    <string name="gymscan_result_machine_label">Machine identifiée</string>
+    <string name="gymscan_cta_view_demo">Voir la démo animée + tutoriel complet</string>
+    <string name="gymscan_section_setup">Mise en place</string>
+    <string name="gymscan_section_safety">Conseils sécurité</string>
+    <string name="gymscan_section_secondary_muscles">Muscles secondaires</string>
+    <string name="gymscan_section_matched_exercises">Exercices associés (%d)</string>
+    <string name="gymscan_matched_caption">Démonstrations animées dans la base d\'exercices (tap pour voir le mouvement)</string>
+    <string name="gymscan_conf_high">Haute certitude</string>
+    <string name="gymscan_conf_medium">Bonne certitude</string>
+    <string name="gymscan_conf_low">Incertain</string>
+    <string name="gymscan_overlay_loading">LOADING DB</string>
+    <string name="gymscan_overlay_analyzing">ANALYSE IA</string>
+
     <!-- IngredientCategory enum -->
     <string name="ingredient_cat_animal_proteins">Protéines animales</string>
     <string name="ingredient_cat_plant_proteins">Protéines végétales</string>

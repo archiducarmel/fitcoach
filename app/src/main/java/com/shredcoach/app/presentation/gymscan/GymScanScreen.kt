@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -48,6 +49,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
+import com.shredcoach.app.R
 import com.shredcoach.app.data.remote.ExerciseDbExercise
 import com.shredcoach.app.data.remote.GymScanResult
 import com.shredcoach.app.presentation.explorer.ExerciseDbTranslations
@@ -92,20 +94,20 @@ fun GymScanScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("GymScan", fontWeight = FontWeight.ExtraBold)
-                        Text("IA + base d'exercices", style = MaterialTheme.typography.labelSmall,
+                        Text(stringResource(R.string.gymscan_title), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(R.string.gymscan_subtitle), style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f))
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.common_back))
                     }
                 },
                 actions = {
                     if (state.imageBitmap != null) {
                         IconButton(onClick = { viewModel.clear() }) {
-                            Icon(Icons.Default.Refresh, "Nouveau scan")
+                            Icon(Icons.Default.Refresh, stringResource(R.string.gymscan_action_new_cd))
                         }
                     }
                 }
@@ -175,16 +177,14 @@ private fun CaptureZone(onCamera: () -> Unit, onGallery: () -> Unit) {
                             Icon(Icons.Default.CameraAlt, null, tint = Color.White, modifier = Modifier.size(30.dp))
                         }
                         Column(Modifier.weight(1f)) {
-                            Text("Identifie une machine", style = MaterialTheme.typography.titleLarge,
+                            Text(stringResource(R.string.gymscan_capture_title), style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.ExtraBold, color = Color.White)
-                            Text("IA + base de 873 exercices", style = MaterialTheme.typography.bodySmall,
+                            Text(stringResource(R.string.gymscan_capture_subtitle), style = MaterialTheme.typography.bodySmall,
                                 color = Color.White.copy(alpha = 0.92f))
                         }
                     }
                     Text(
-                        "Photographie un équipement que tu ne connais pas à la salle. " +
-                        "L'IA identifie la machine, te montre comment l'utiliser et te propose " +
-                        "les exercices associés avec démonstrations animées.",
+                        stringResource(R.string.gymscan_capture_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White.copy(alpha = 0.92f),
                         lineHeight = 18.sp
@@ -202,7 +202,7 @@ private fun CaptureZone(onCamera: () -> Unit, onGallery: () -> Unit) {
         ) {
             Icon(Icons.Default.CameraAlt, null, modifier = Modifier.size(22.dp))
             Spacer(Modifier.width(10.dp))
-            Text("Prendre une photo", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            Text(stringResource(R.string.gymscan_btn_camera), fontWeight = FontWeight.Bold, fontSize = 15.sp)
         }
         OutlinedButton(
             onClick = onGallery,
@@ -211,7 +211,7 @@ private fun CaptureZone(onCamera: () -> Unit, onGallery: () -> Unit) {
         ) {
             Icon(Icons.Default.PhotoLibrary, null, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(10.dp))
-            Text("Choisir depuis la galerie", fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.gymscan_btn_gallery), fontWeight = FontWeight.SemiBold)
         }
 
         // ── Tips d'utilisation ──
@@ -223,13 +223,13 @@ private fun CaptureZone(onCamera: () -> Unit, onGallery: () -> Unit) {
                 Row(verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Icon(Icons.Default.Lightbulb, null, modifier = Modifier.size(16.dp), tint = OrangeVibrant)
-                    Text("Astuces pour une analyse optimale", fontWeight = FontWeight.Bold,
+                    Text(stringResource(R.string.gymscan_tips_title), fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleSmall)
                 }
-                TipLine("Cadre la machine en entier, bien centrée")
-                TipLine("Évite les reflets et le contre-jour")
-                TipLine("Rapproche-toi pour des étiquettes visibles")
-                TipLine("Inclus les accessoires (poignées, sangles) si présents")
+                TipLine(stringResource(R.string.gymscan_tip_frame))
+                TipLine(stringResource(R.string.gymscan_tip_lighting))
+                TipLine(stringResource(R.string.gymscan_tip_close))
+                TipLine(stringResource(R.string.gymscan_tip_accessories))
             }
         }
     }
@@ -273,7 +273,7 @@ private fun ResultView(
                 state.imageBitmap?.let { bmp ->
                     Image(
                         bitmap = bmp.asImageBitmap(),
-                        contentDescription = "Photo capturée",
+                        contentDescription = stringResource(R.string.gymscan_image_cd),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -281,7 +281,7 @@ private fun ResultView(
                 // Overlay scan holographique pendant tout le pipeline
                 if (state.isLoadingDataset || state.isAnalyzing) {
                     MachineScanOverlay(
-                        label = if (state.isLoadingDataset) "LOADING DB" else "ANALYSE IA",
+                        label = if (state.isLoadingDataset) stringResource(R.string.gymscan_overlay_loading) else stringResource(R.string.gymscan_overlay_analyzing),
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -299,25 +299,25 @@ private fun ResultView(
                 ) {
                     Icon(Icons.Default.AutoAwesome, null, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Analyser avec l'IA", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    Text(stringResource(R.string.gymscan_btn_analyze), fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     OutlinedButton(onClick = onRetake, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
                         Icon(Icons.Default.CameraAlt, null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Reprendre", fontSize = 13.sp)
+                        Text(stringResource(R.string.gymscan_btn_retake), fontSize = 13.sp)
                     }
                     OutlinedButton(onClick = onPickGallery, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
                         Icon(Icons.Default.PhotoLibrary, null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Galerie", fontSize = 13.sp)
+                        Text(stringResource(R.string.gymscan_btn_pick_short), fontSize = 13.sp)
                     }
                 }
             }
 
             // État 2 : pipeline en cours
-            state.isLoadingDataset -> AnalyzingCard("Chargement de la base d'exercices…")
-            state.isAnalyzing -> AnalyzingCard("L'IA identifie la machine et sélectionne les exercices…")
+            state.isLoadingDataset -> AnalyzingCard(stringResource(R.string.gymscan_state_loading_db))
+            state.isAnalyzing -> AnalyzingCard(stringResource(R.string.gymscan_state_analyzing))
 
             // État 3 : erreur
             state.error != null && state.llmResult == null -> ErrorCard(state.error, onAnalyze, onRetake)
@@ -357,7 +357,7 @@ private fun AnalyzingCard(label: String) {
             Column(Modifier.weight(1f)) {
                 Text(label, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.alpha(alpha))
-                Text("Cela peut prendre quelques secondes", style = MaterialTheme.typography.labelSmall,
+                Text(stringResource(R.string.gymscan_state_subtitle), style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             }
         }
@@ -375,7 +375,7 @@ private fun ErrorCard(message: String, onRetry: () -> Unit, onRetake: () -> Unit
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Default.ErrorOutline, null, tint = MaterialTheme.colorScheme.error,
                     modifier = Modifier.size(22.dp))
-                Text("Analyse impossible", fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(R.string.gymscan_error_title), fontWeight = FontWeight.ExtraBold)
             }
             Text(message, style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onErrorContainer)
@@ -383,12 +383,12 @@ private fun ErrorCard(message: String, onRetry: () -> Unit, onRetake: () -> Unit
                 Button(onClick = onRetry, colors = ButtonDefaults.buttonColors(containerColor = OrangeVibrant)) {
                     Icon(Icons.Default.Refresh, null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("Réessayer")
+                    Text(stringResource(R.string.gymscan_btn_retry))
                 }
                 OutlinedButton(onClick = onRetake) {
                     Icon(Icons.Default.CameraAlt, null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("Autre photo")
+                    Text(stringResource(R.string.gymscan_btn_other_photo))
                 }
             }
         }
@@ -427,7 +427,7 @@ private fun AnalysisResult(
                     Row(verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Icon(Icons.Default.CheckCircle, null, tint = Color.White, modifier = Modifier.size(22.dp))
-                        Text("Machine identifiée", style = MaterialTheme.typography.labelMedium,
+                        Text(stringResource(R.string.gymscan_result_machine_label), style = MaterialTheme.typography.labelMedium,
                             color = Color.White.copy(alpha = 0.9f), fontWeight = FontWeight.Bold)
                         Spacer(Modifier.weight(1f))
                         ConfidenceBadge(result.confidence)
@@ -461,7 +461,7 @@ private fun AnalysisResult(
                                         tint = Color.White, modifier = Modifier.size(22.dp))
                                 }
                                 Column(Modifier.weight(1f)) {
-                                    Text("Voir la démo animée + tutoriel complet",
+                                    Text(stringResource(R.string.gymscan_cta_view_demo),
                                         style = MaterialTheme.typography.labelMedium,
                                         fontWeight = FontWeight.ExtraBold,
                                         color = Color.White,
@@ -507,7 +507,7 @@ private fun AnalysisResult(
 
         // ─── SETUP ───
         if (result.setupSteps.isNotEmpty()) {
-            SectionCard(title = "Mise en place", icon = Icons.Default.Build, color = Color(0xFF3B82F6)) {
+            SectionCard(title = stringResource(R.string.gymscan_section_setup), icon = Icons.Default.Build, color = Color(0xFF3B82F6)) {
                 result.setupSteps.forEachIndexed { idx, step ->
                     NumberedStep(idx + 1, step, Color(0xFF3B82F6))
                 }
@@ -516,7 +516,7 @@ private fun AnalysisResult(
 
         // ─── SÉCURITÉ ───
         if (result.safetyTips.isNotEmpty()) {
-            SectionCard(title = "Conseils sécurité", icon = Icons.Default.Shield, color = Color(0xFFEF4444)) {
+            SectionCard(title = stringResource(R.string.gymscan_section_safety), icon = Icons.Default.Shield, color = Color(0xFFEF4444)) {
                 result.safetyTips.forEach { tip ->
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
                         Text("⚠", color = Color(0xFFEF4444), fontWeight = FontWeight.ExtraBold)
@@ -528,7 +528,7 @@ private fun AnalysisResult(
 
         // ─── MUSCLES SECONDAIRES ───
         if (result.secondaryMuscles.isNotEmpty()) {
-            SectionCard(title = "Muscles secondaires", icon = Icons.Default.Tune, color = Color(0xFF8B5CF6)) {
+            SectionCard(title = stringResource(R.string.gymscan_section_secondary_muscles), icon = Icons.Default.Tune, color = Color(0xFF8B5CF6)) {
                 androidx.compose.foundation.layout.FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -555,10 +555,10 @@ private fun AnalysisResult(
                     ) {
                         Icon(Icons.Default.FitnessCenter, null, modifier = Modifier.size(16.dp), tint = OrangeVibrant)
                     }
-                    Text("Exercices associés (${matchedExercises.size})", fontWeight = FontWeight.ExtraBold,
+                    Text(stringResource(R.string.gymscan_section_matched_exercises, matchedExercises.size), fontWeight = FontWeight.ExtraBold,
                         style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
                 }
-                Text("Démonstrations animées dans la base d'exercices (tap pour voir le mouvement)",
+                Text(stringResource(R.string.gymscan_matched_caption),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -574,9 +574,9 @@ private fun AnalysisResult(
 @Composable
 private fun ConfidenceBadge(confidence: Int) {
     val (bg, label) = when {
-        confidence >= 80 -> Color.White.copy(alpha = 0.28f) to "Haute certitude"
-        confidence >= 50 -> Color.White.copy(alpha = 0.20f) to "Bonne certitude"
-        else -> Color.White.copy(alpha = 0.15f) to "Incertain"
+        confidence >= 80 -> Color.White.copy(alpha = 0.28f) to stringResource(R.string.gymscan_conf_high)
+        confidence >= 50 -> Color.White.copy(alpha = 0.20f) to stringResource(R.string.gymscan_conf_medium)
+        else -> Color.White.copy(alpha = 0.15f) to stringResource(R.string.gymscan_conf_low)
     }
     Surface(shape = RoundedCornerShape(8.dp), color = bg) {
         Row(Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
