@@ -14,13 +14,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.shredcoach.app.R
 import com.shredcoach.app.domain.session.ActiveSessionManager
 import com.shredcoach.app.presentation.common.AnimatedCounter
 import com.shredcoach.app.presentation.common.CelebrationTrophy
@@ -53,6 +56,7 @@ fun WorkoutSummaryScreen(
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
     }
 
+    val ctx = LocalContext.current
     var showSharePreview by remember { mutableStateOf(false) }
     if (showSharePreview) {
         // Reconstruit la liste d'exos avec status DONE/SKIPPED depuis les
@@ -74,8 +78,8 @@ fun WorkoutSummaryScreen(
         }
         com.shredcoach.app.presentation.share.ShareSheet(
             data = com.shredcoach.app.presentation.share.ShareCardData.WorkoutFinished(
-                title = "Séance terminée",
-                subtitle = "Bravo Champion !",
+                title = stringResource(R.string.summary_share_card_title),
+                subtitle = stringResource(R.string.summary_share_card_subtitle),
                 durationSeconds = duration,
                 totalVolumeKg = totalVolume,
                 totalSets = totalSets,
@@ -91,12 +95,12 @@ fun WorkoutSummaryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Séance terminée !", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.summary_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
                 actions = {
                     IconButton(onClick = { showSharePreview = true }) {
                         Icon(
                             androidx.compose.material.icons.Icons.Default.Share,
-                            contentDescription = "Partager la séance",
+                            contentDescription = stringResource(R.string.summary_share_cd),
                         )
                     }
                 },
@@ -125,7 +129,7 @@ fun WorkoutSummaryScreen(
                     ) {
                         CelebrationTrophy(size = 80.dp, accentColor = NeonGreen)
                         Text(
-                            "Séance terminée !",
+                            stringResource(R.string.summary_title),
                             style = MaterialTheme.typography.headlineLarge,
                             fontWeight = FontWeight.Bold,
                             color = NeonGreen,
@@ -160,7 +164,7 @@ fun WorkoutSummaryScreen(
                             }
                         } else {
                             Text(
-                                "Bien joué !",
+                                stringResource(R.string.summary_default_message),
                                 style = MaterialTheme.typography.titleMedium,
                                 textAlign = TextAlign.Center,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
@@ -174,25 +178,25 @@ fun WorkoutSummaryScreen(
             StaggeredAppear(index = 1, delayPerItemMs = 200) {
                 Card {
                     Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Text("Statistiques", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.summary_stats_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
 
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
                             AnimatedStatColumn(
                                 icon = Icons.Default.Timer,
                                 targetValue = duration,
-                                label = "Durée réelle",
-                                formatter = { fmtDuration(it.toLong()) }
+                                label = stringResource(R.string.summary_stat_duration),
+                                formatter = { fmtDuration(it.toLong(), ctx) }
                             )
                             AnimatedStatColumn(
                                 icon = Icons.Default.FitnessCenter,
                                 targetValue = totalSets,
-                                label = "Séries"
+                                label = stringResource(R.string.summary_stat_sets)
                             )
                             AnimatedStatColumn(
                                 icon = Icons.Default.MonitorWeight,
                                 targetValue = totalVolume,
-                                label = "Volume total",
-                                formatter = { fmtVolume(it.toDouble()) }
+                                label = stringResource(R.string.summary_stat_volume),
+                                formatter = { fmtVolume(it.toDouble(), ctx) }
                             )
                         }
 
@@ -202,19 +206,19 @@ fun WorkoutSummaryScreen(
                             AnimatedStatColumn(
                                 icon = Icons.Default.RepeatOne,
                                 targetValue = totalReps,
-                                label = "Reps totales"
+                                label = stringResource(R.string.summary_stat_reps)
                             )
                             AnimatedStatColumn(
                                 icon = Icons.Default.Pause,
                                 targetValue = totalRest,
-                                label = "Repos total",
-                                formatter = { fmtDuration(it.toLong()) }
+                                label = stringResource(R.string.summary_stat_rest),
+                                formatter = { fmtDuration(it.toLong(), ctx) }
                             )
                             if (skipped > 0) {
                                 AnimatedStatColumn(
                                     icon = Icons.Default.SkipNext,
                                     targetValue = skipped,
-                                    label = "Skippés"
+                                    label = stringResource(R.string.summary_stat_skipped)
                                 )
                             }
                         }
@@ -232,7 +236,7 @@ fun WorkoutSummaryScreen(
                     ) {
                         Icon(Icons.Default.Analytics, null, Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Voir stats", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.summary_cta_view_stats), fontWeight = FontWeight.SemiBold)
                     }
                     ShredButton(
                         onClick = { navController.navigate(com.shredcoach.app.presentation.navigation.Screen.WorkoutGenerator.route) },
@@ -241,7 +245,7 @@ fun WorkoutSummaryScreen(
                     ) {
                         Icon(Icons.Default.Replay, null, Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Nouvelle séance", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.summary_cta_new_session), fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -270,12 +274,12 @@ fun WorkoutSummaryScreen(
                         }
                         Column(Modifier.weight(1f)) {
                             Text(
-                                "Réserver la prochaine séance",
+                                stringResource(R.string.summary_book_next_title),
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                "Planifie-la maintenant pour rester régulier",
+                                stringResource(R.string.summary_book_next_subtitle),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
                             )
@@ -302,7 +306,7 @@ fun WorkoutSummaryScreen(
             ) {
                 Icon(Icons.Default.Home, null, Modifier.size(24.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("TERMINER", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.summary_finish_button), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -330,16 +334,16 @@ private fun AnimatedStatColumn(
     }
 }
 
-private fun fmtDuration(seconds: Long): String {
+private fun fmtDuration(seconds: Long, ctx: android.content.Context): String {
     val h = seconds / 3600; val m = (seconds % 3600) / 60
     return when {
-        h > 0 -> "${h}h ${m}min"
-        m > 0 -> "${m}min"
-        else -> "${seconds}s"
+        h > 0 -> ctx.getString(R.string.fmt_duration_h_m, h.toInt(), m.toInt())
+        m > 0 -> ctx.getString(R.string.fmt_duration_m, m.toInt())
+        else -> ctx.getString(R.string.fmt_duration_s, seconds.toInt())
     }
 }
 
-private fun fmtVolume(v: Double): String = when {
-    v >= 1000 -> String.format(java.util.Locale.US, "%.1fk kg", v / 1000)
-    else -> "%.0f kg".format(v)
+private fun fmtVolume(v: Double, ctx: android.content.Context): String = when {
+    v >= 1000 -> ctx.getString(R.string.fmt_volume_k, (v / 1000).toFloat())
+    else -> ctx.getString(R.string.fmt_volume_kg, v.toFloat())
 }

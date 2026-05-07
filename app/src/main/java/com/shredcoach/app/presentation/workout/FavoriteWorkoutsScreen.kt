@@ -13,12 +13,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.ExerciseEntity
 import com.shredcoach.app.data.local.entity.WorkoutEntity
 import com.shredcoach.app.data.local.entity.WorkoutLogEntity
@@ -95,8 +97,8 @@ fun FavoriteWorkoutsScreen(navController: NavController, viewModel: FavoriteWork
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mes séances favorites", fontWeight = FontWeight.Bold) },
-                navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour") } }
+                title = { Text(stringResource(R.string.favorites_title), fontWeight = FontWeight.Bold) },
+                navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.common_back)) } }
             )
         }
     ) { pad ->
@@ -108,9 +110,9 @@ fun FavoriteWorkoutsScreen(navController: NavController, viewModel: FavoriteWork
             Box(Modifier.fillMaxSize()) {
                 com.shredcoach.app.presentation.common.EmptyState(
                     icon = Icons.Default.Favorite,
-                    title = "Sauvegarde tes meilleures séances",
-                    description = "Génère ou crée une séance, puis ajoute-la en favori avec le ❤️. Tu pourras la relancer en 1 clic à chaque fois.",
-                    ctaLabel = "Générer une séance",
+                    title = stringResource(R.string.favorites_empty_title),
+                    description = stringResource(R.string.favorites_empty_desc),
+                    ctaLabel = stringResource(R.string.favorites_empty_cta),
                     ctaIcon = Icons.Default.AutoAwesome,
                     onCtaClick = {
                         navController.navigate(com.shredcoach.app.presentation.navigation.Screen.WorkoutGenerator.route) {
@@ -148,35 +150,39 @@ private fun FavoriteWorkoutCard(fav: FavoriteWorkoutWithExercises, onLaunch: () 
                 Column(Modifier.weight(1f)) {
                     Text(fav.workout.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("${fav.workout.exerciseCount} exos", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                        Text(stringResource(R.string.favorites_card_exos_count, fav.workout.exerciseCount),
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                         Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
-                        Text("${fav.workout.durationMinutes} min", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                        Text(stringResource(R.string.favorites_card_duration, fav.workout.durationMinutes),
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                         if (fav.workout.isCustom) {
                             Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
-                            Text("Custom", style = MaterialTheme.typography.labelSmall, color = OrangeVibrant, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.favorites_card_custom_label),
+                                style = MaterialTheme.typography.labelSmall, color = OrangeVibrant, fontWeight = FontWeight.Bold)
                         }
                     }
-                    // Date d'ajout
-                    Text("Ajouté le ${fav.workout.createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm"))}",
+                    // Date d'ajout — locale-aware (Locale.getDefault overlay AppCompatDelegate)
+                    val dateFormat = remember { DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", java.util.Locale.getDefault()) }
+                    Text(stringResource(R.string.favorites_card_added_at, fav.workout.createdAt.format(dateFormat)),
                         style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                 }
                 // Supprimer avec confirmation
                 var showDeleteConfirm by remember { mutableStateOf(false) }
                 IconButton(onClick = { showDeleteConfirm = true }) {
-                    Icon(Icons.Default.Delete, "Supprimer", tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f))
+                    Icon(Icons.Default.Delete, stringResource(R.string.common_delete), tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f))
                 }
                 if (showDeleteConfirm) {
                     AlertDialog(
                         onDismissRequest = { showDeleteConfirm = false },
-                        title = { Text("Retirer des favoris ?", fontWeight = FontWeight.Bold) },
-                        text = { Text("\"${fav.workout.name}\" sera retirée de tes favoris.") },
+                        title = { Text(stringResource(R.string.favorites_remove_dialog_title), fontWeight = FontWeight.Bold) },
+                        text = { Text(stringResource(R.string.favorites_remove_dialog_body, fav.workout.name)) },
                         confirmButton = {
                             Button(onClick = { onRemoveFavorite(); showDeleteConfirm = false },
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
-                                Text("Supprimer")
+                                Text(stringResource(R.string.common_delete))
                             }
                         },
-                        dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text("Annuler") } }
+                        dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text(stringResource(R.string.common_cancel)) } }
                     )
                 }
             }
@@ -189,8 +195,9 @@ private fun FavoriteWorkoutCard(fav: FavoriteWorkoutWithExercises, onLaunch: () 
             ) {
                 Column(Modifier.padding(12.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text("${fav.exercises.size} exercices", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-                        Icon(if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore, "Toggle", Modifier.size(20.dp))
+                        Text(stringResource(R.string.favorites_card_exos_count_full, fav.exercises.size),
+                            style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                        Icon(if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore, stringResource(R.string.cd_toggle), Modifier.size(20.dp))
                     }
                     if (!expanded) {
                         // Aperçu compact
@@ -227,7 +234,7 @@ private fun FavoriteWorkoutCard(fav: FavoriteWorkoutWithExercises, onLaunch: () 
             ) {
                 Icon(Icons.Default.PlayArrow, null, Modifier.size(22.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("LANCER CETTE SÉANCE", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.favorites_card_launch_button), fontWeight = FontWeight.Bold)
             }
         }
     }

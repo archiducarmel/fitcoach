@@ -447,6 +447,96 @@
     <string name="workout_last_time_value">Dernière fois : %1$s</string>
     <string name="workout_record_value">Record : %1$s</string>
 
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Workout Generator screen -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+
+    <string name="generator_title">Générer une séance</string>
+    <!-- "%1$s" = displayName routine (Full Body, Push, Pull, …) -->
+    <string name="generator_subtitle">%1$s personnalisée</string>
+    <string name="generator_hero_title">Séance %1$s Intelligente</string>
+
+    <string name="generator_section_routine">Type de séance</string>
+    <string name="generator_section_duration">Durée de la séance</string>
+    <string name="generator_section_level">Votre niveau</string>
+    <string name="generator_section_equipment">Équipement disponible</string>
+
+    <!-- "%1$d" = nb d'exercices -->
+    <string name="generator_duration_exo_count">%1$d exercices</string>
+    <!-- "%1$d" = durée minutes -->
+    <string name="generator_duration_value">%1$d min</string>
+
+    <!-- Equipment short descriptions (différent des descriptions onboarding plus longues) -->
+    <string name="generator_equipment_full_gym_desc">Machines + Haltères + Barres</string>
+    <string name="generator_equipment_home_gym_desc">Haltères et Barres uniquement</string>
+    <string name="generator_equipment_bodyweight_desc">Aucun équipement</string>
+
+    <string name="generator_button_generating">Génération en cours…</string>
+    <string name="generator_button_generate">GÉNÉRER MA SÉANCE</string>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Workout Summary screen -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+
+    <string name="summary_title">Séance terminée !</string>
+    <string name="summary_share_cd">Partager la séance</string>
+    <string name="summary_share_card_title">Séance terminée</string>
+    <string name="summary_share_card_subtitle">Bravo Champion !</string>
+    <string name="summary_default_message">Bien joué !</string>
+
+    <string name="summary_stats_title">Statistiques</string>
+    <string name="summary_stat_duration">Durée réelle</string>
+    <string name="summary_stat_sets">Séries</string>
+    <string name="summary_stat_volume">Volume total</string>
+    <string name="summary_stat_reps">Reps totales</string>
+    <string name="summary_stat_rest">Repos total</string>
+    <string name="summary_stat_skipped">Skippés</string>
+
+    <string name="summary_cta_view_stats">Voir stats</string>
+    <string name="summary_cta_new_session">Nouvelle séance</string>
+
+    <string name="summary_book_next_title">Réserver la prochaine séance</string>
+    <string name="summary_book_next_subtitle">Planifie-la maintenant pour rester régulier</string>
+
+    <string name="summary_finish_button">TERMINER</string>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Favorite workouts + Favorite preview screens -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+
+    <string name="favorites_title">Mes séances favorites</string>
+    <string name="favorites_empty_title">Sauvegarde tes meilleures séances</string>
+    <string name="favorites_empty_desc">Génère ou crée une séance, puis ajoute-la en favori avec le ❤️. Tu pourras la relancer en 1 clic à chaque fois.</string>
+    <string name="favorites_empty_cta">Générer une séance</string>
+    <!-- "%1$d" = nb d'exos -->
+    <string name="favorites_card_exos_count">%1$d exos</string>
+    <!-- "%1$d" = durée min -->
+    <string name="favorites_card_duration">%1$d min</string>
+    <string name="favorites_card_custom_label">Custom</string>
+    <!-- "%1$s" = date formattée (dd/MM/yyyy à HH:mm) -->
+    <string name="favorites_card_added_at">Ajouté le %1$s</string>
+    <!-- "%1$d" = nb d'exos -->
+    <string name="favorites_card_exos_count_full">%1$d exercices</string>
+    <string name="favorites_remove_dialog_title">Retirer des favoris ?</string>
+    <!-- "%1$s" = nom de la séance -->
+    <string name="favorites_remove_dialog_body">« %1$s » sera retirée de tes favoris.</string>
+    <string name="favorites_card_launch_button">LANCER CETTE SÉANCE</string>
+
+    <!-- Favorite preview -->
+    <string name="favorite_preview_title">Aperçu séance</string>
+    <string name="favorite_preview_empty_title">Aucun exercice</string>
+    <string name="favorite_preview_empty_desc">Ce favori ne contient pas d\'exercices. Crée un nouveau favori depuis l\'onglet séances.</string>
+    <string name="favorite_preview_subtitle">Personnalise les paramètres avant de commencer</string>
+    <string name="favorite_preview_launch">LANCER LA SÉANCE</string>
+
+    <!-- Format helpers : "%1$d" h + "%2$d" min ; m only ; s only -->
+    <string name="fmt_duration_h_m">%1$dh %2$dmin</string>
+    <string name="fmt_duration_m">%1$dmin</string>
+    <string name="fmt_duration_s">%1$ds</string>
+    <!-- "%1$.1f" en kg quand &gt;= 1000 → "1.5k kg" -->
+    <string name="fmt_volume_k">%1$.1fk kg</string>
+    <string name="fmt_volume_kg">%1$.0f kg</string>
+
     <!-- Transition overlay stat labels -->
     <string name="workout_transition_skipped">Passées</string>
     <string name="workout_transition_sets">Séries</string>

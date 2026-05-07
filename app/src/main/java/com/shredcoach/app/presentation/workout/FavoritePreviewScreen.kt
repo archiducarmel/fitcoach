@@ -11,10 +11,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.shredcoach.app.R
 import com.shredcoach.app.presentation.common.EmptyState
 import com.shredcoach.app.presentation.navigation.Screen
 import com.shredcoach.app.presentation.theme.NeonGreen
@@ -43,7 +45,7 @@ fun FavoritePreviewScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Aperçu séance", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.favorite_preview_title), fontWeight = FontWeight.Bold)
                         state.workout?.let {
                             Text(it.name, style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -52,7 +54,7 @@ fun FavoritePreviewScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.common_back))
                     }
                 }
             )
@@ -68,7 +70,7 @@ fun FavoritePreviewScreen(
                 ) {
                     Icon(Icons.Default.PlayArrow, null, Modifier.size(24.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("LANCER LA SÉANCE", style = MaterialTheme.typography.titleMedium,
+                    Text(stringResource(R.string.favorite_preview_launch), style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold)
                 }
             }
@@ -81,8 +83,8 @@ fun FavoritePreviewScreen(
             state.exercises.isEmpty() -> Box(Modifier.fillMaxSize().padding(pad)) {
                 EmptyState(
                     icon = Icons.Default.FitnessCenter,
-                    title = "Aucun exercice",
-                    description = "Ce favori ne contient pas d'exercices. Crée un nouveau favori depuis l'onglet séances."
+                    title = stringResource(R.string.favorite_preview_empty_title),
+                    description = stringResource(R.string.favorite_preview_empty_desc)
                 )
             }
             else -> {
@@ -93,7 +95,7 @@ fun FavoritePreviewScreen(
                 ) {
                     item {
                         Text(
-                            "Personnalise les paramètres avant de commencer",
+                            stringResource(R.string.favorite_preview_subtitle),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                             modifier = Modifier.padding(bottom = 4.dp)

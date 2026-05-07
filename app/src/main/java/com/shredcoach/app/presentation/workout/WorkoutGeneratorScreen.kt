@@ -15,12 +15,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.EquipmentType
 import com.shredcoach.app.data.local.entity.FitnessLevel
 import com.shredcoach.app.domain.workout.RoutineCatalog
@@ -57,9 +59,10 @@ fun WorkoutGeneratorScreen(
                 title = {
                     Column(modifier = Modifier.fillMaxHeight().offset(y = (-6).dp),
                         verticalArrangement = Arrangement.Center) {
-                        Text("Générer une séance", style = MaterialTheme.typography.titleLarge,
+                        Text(stringResource(R.string.generator_title), style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold, lineHeight = 24.sp)
-                        Text("${selectedRoutine.displayName} personnalisée", style = MaterialTheme.typography.bodySmall,
+                        Text(stringResource(R.string.generator_subtitle, selectedRoutine.displayName),
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 16.sp,
                             maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
@@ -97,7 +100,7 @@ fun WorkoutGeneratorScreen(
                     )
                     Column {
                         Text(
-                            "Séance ${selectedRoutine.displayName} Intelligente",
+                            stringResource(R.string.generator_hero_title, selectedRoutine.displayName),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -174,12 +177,12 @@ fun WorkoutGeneratorScreen(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Génération en cours...")
+                    Text(stringResource(R.string.generator_button_generating))
                 } else {
                     Icon(Icons.Default.PlayArrow, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        "GÉNÉRER MA SÉANCE",
+                        stringResource(R.string.generator_button_generate),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -215,7 +218,7 @@ fun RoutineSelectionSection(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                "Type de séance",
+                stringResource(R.string.generator_section_routine),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -288,7 +291,7 @@ fun DurationSelectionSection(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                "Durée de la séance",
+                stringResource(R.string.generator_section_duration),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -300,14 +303,14 @@ fun DurationSelectionSection(
         ) {
             DurationOption(
                 duration = 60,
-                exerciseCount = "6 exercices",
+                exerciseCount = stringResource(R.string.generator_duration_exo_count, 6),
                 isSelected = selectedDuration == 60,
                 onClick = { onDurationSelected(60) },
                 modifier = Modifier.weight(1f)
             )
             DurationOption(
                 duration = 90,
-                exerciseCount = "8 exercices",
+                exerciseCount = stringResource(R.string.generator_duration_exo_count, 8),
                 isSelected = selectedDuration == 90,
                 onClick = { onDurationSelected(90) },
                 modifier = Modifier.weight(1f)
@@ -320,14 +323,14 @@ fun DurationSelectionSection(
         ) {
             DurationOption(
                 duration = 120,
-                exerciseCount = "10 exercices",
+                exerciseCount = stringResource(R.string.generator_duration_exo_count, 10),
                 isSelected = selectedDuration == 120,
                 onClick = { onDurationSelected(120) },
                 modifier = Modifier.weight(1f)
             )
             DurationOption(
                 duration = 180,
-                exerciseCount = "12 exercices",
+                exerciseCount = stringResource(R.string.generator_duration_exo_count, 12),
                 isSelected = selectedDuration == 180,
                 onClick = { onDurationSelected(180) },
                 modifier = Modifier.weight(1f)
@@ -364,7 +367,7 @@ fun DurationOption(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                "$duration min",
+                stringResource(R.string.generator_duration_value, duration),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = if (isSelected) {
@@ -400,7 +403,7 @@ fun LevelSelectionSection(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                "Votre niveau",
+                stringResource(R.string.generator_section_level),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -431,9 +434,9 @@ fun LevelOption(
     modifier: Modifier = Modifier
 ) {
     val levelName = when (level) {
-        FitnessLevel.BEGINNER -> "Débutant"
-        FitnessLevel.INTERMEDIATE -> "Inter\nmédiaire"
-        FitnessLevel.ADVANCED -> "Avancé"
+        FitnessLevel.BEGINNER -> stringResource(R.string.onboarding_level_beginner_short)
+        FitnessLevel.INTERMEDIATE -> stringResource(R.string.onboarding_level_intermediate_short)
+        FitnessLevel.ADVANCED -> stringResource(R.string.onboarding_level_advanced_short)
     }
 
     Surface(
@@ -472,7 +475,7 @@ fun EquipmentSelectionSection(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                "Équipement disponible",
+                stringResource(R.string.generator_section_equipment),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -498,9 +501,9 @@ fun EquipmentOption(
     onClick: () -> Unit
 ) {
     val (name, description) = when (equipment) {
-        EquipmentType.FULL_GYM -> "Salle complète" to "Machines + Haltères + Barres"
-        EquipmentType.HOME_GYM -> "Home Gym" to "Haltères et Barres uniquement"
-        EquipmentType.BODYWEIGHT -> "Poids du corps" to "Aucun équipement"
+        EquipmentType.FULL_GYM -> stringResource(R.string.equipment_full_gym) to stringResource(R.string.generator_equipment_full_gym_desc)
+        EquipmentType.HOME_GYM -> stringResource(R.string.equipment_home_gym) to stringResource(R.string.generator_equipment_home_gym_desc)
+        EquipmentType.BODYWEIGHT -> stringResource(R.string.equipment_bodyweight) to stringResource(R.string.generator_equipment_bodyweight_desc)
     }
 
     Card(

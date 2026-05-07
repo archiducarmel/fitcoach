@@ -400,6 +400,78 @@
     <string name="workout_last_time_value">Last time: %1$s</string>
     <string name="workout_record_value">Record: %1$s</string>
 
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Workout Generator screen -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+
+    <string name="generator_title">Generate a session</string>
+    <string name="generator_subtitle">Custom %1$s</string>
+    <string name="generator_hero_title">Smart %1$s session</string>
+
+    <string name="generator_section_routine">Session type</string>
+    <string name="generator_section_duration">Session duration</string>
+    <string name="generator_section_level">Your level</string>
+    <string name="generator_section_equipment">Available equipment</string>
+
+    <string name="generator_duration_exo_count">%1$d exercises</string>
+    <string name="generator_duration_value">%1$d min</string>
+
+    <string name="generator_equipment_full_gym_desc">Machines + Dumbbells + Barbells</string>
+    <string name="generator_equipment_home_gym_desc">Dumbbells and barbells only</string>
+    <string name="generator_equipment_bodyweight_desc">No equipment</string>
+
+    <string name="generator_button_generating">Generating…</string>
+    <string name="generator_button_generate">GENERATE MY SESSION</string>
+
+    <!-- Workout Summary screen -->
+    <string name="summary_title">Session done!</string>
+    <string name="summary_share_cd">Share session</string>
+    <string name="summary_share_card_title">Session done</string>
+    <string name="summary_share_card_subtitle">Great job, champion!</string>
+    <string name="summary_default_message">Nice work!</string>
+
+    <string name="summary_stats_title">Stats</string>
+    <string name="summary_stat_duration">Actual duration</string>
+    <string name="summary_stat_sets">Sets</string>
+    <string name="summary_stat_volume">Total volume</string>
+    <string name="summary_stat_reps">Total reps</string>
+    <string name="summary_stat_rest">Total rest</string>
+    <string name="summary_stat_skipped">Skipped</string>
+
+    <string name="summary_cta_view_stats">View stats</string>
+    <string name="summary_cta_new_session">New session</string>
+
+    <string name="summary_book_next_title">Book your next session</string>
+    <string name="summary_book_next_subtitle">Plan it now to stay consistent</string>
+
+    <string name="summary_finish_button">FINISH</string>
+
+    <!-- Favorite workouts + Favorite preview -->
+    <string name="favorites_title">My favorite sessions</string>
+    <string name="favorites_empty_title">Save your best sessions</string>
+    <string name="favorites_empty_desc">Generate or create a session, then add it to favorites with ❤️. You\'ll be able to relaunch it in 1 tap.</string>
+    <string name="favorites_empty_cta">Generate a session</string>
+    <string name="favorites_card_exos_count">%1$d exos</string>
+    <string name="favorites_card_duration">%1$d min</string>
+    <string name="favorites_card_custom_label">Custom</string>
+    <string name="favorites_card_added_at">Added on %1$s</string>
+    <string name="favorites_card_exos_count_full">%1$d exercises</string>
+    <string name="favorites_remove_dialog_title">Remove from favorites?</string>
+    <string name="favorites_remove_dialog_body">"%1$s" will be removed from your favorites.</string>
+    <string name="favorites_card_launch_button">LAUNCH THIS SESSION</string>
+
+    <string name="favorite_preview_title">Session preview</string>
+    <string name="favorite_preview_empty_title">No exercise</string>
+    <string name="favorite_preview_empty_desc">This favorite has no exercises. Create a new favorite from the sessions tab.</string>
+    <string name="favorite_preview_subtitle">Tweak the params before starting</string>
+    <string name="favorite_preview_launch">START SESSION</string>
+
+    <string name="fmt_duration_h_m">%1$dh %2$dmin</string>
+    <string name="fmt_duration_m">%1$dmin</string>
+    <string name="fmt_duration_s">%1$ds</string>
+    <string name="fmt_volume_k">%1$.1fk kg</string>
+    <string name="fmt_volume_kg">%1$.0f kg</string>
+
     <string name="workout_transition_skipped">Skipped</string>
     <string name="workout_transition_sets">Sets</string>
     <string name="workout_transition_reps">Reps</string>
