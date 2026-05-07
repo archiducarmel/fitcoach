@@ -97,6 +97,45 @@
     <string name="photo_type_side">Side</string>
     <string name="photo_type_back">Back</string>
 
+    <!-- Notification content -->
+    <string name="notif_meal_breakfast_title">🌅 Breakfast</string>
+    <string name="notif_meal_breakfast_body">Time for breakfast! Protein won\'t wait.</string>
+    <string name="notif_meal_lunch_title">☀️ Lunch</string>
+    <string name="notif_meal_lunch_body">Lunch break! Don\'t forget your protein and carbs.</string>
+    <string name="notif_meal_snack_title">🍎 Snack</string>
+    <string name="notif_meal_snack_body">A pre-workout snack? Banana + peanut butter!</string>
+    <string name="notif_meal_dinner_title">🌙 Dinner</string>
+    <string name="notif_meal_dinner_body">Dinner time. Protein + veggies for recovery!</string>
+    <string name="notif_shaker_morning_title">🥤 Protein shaker</string>
+    <string name="notif_shaker_morning_body">Don\'t forget your morning shaker! 30g whey.</string>
+    <string name="notif_shaker_evening_title">🥤 Pre-bed shaker</string>
+    <string name="notif_shaker_evening_body">Casein + water: overnight muscle recovery.</string>
+    <string name="notif_bedtime_title">😴 Bedtime soon</string>
+    <string name="notif_bedtime_body">Sleep is 80%% of recovery. 7-8h minimum!</string>
+    <string name="notif_motivation_title">💪 Don\'t give up!</string>
+    <string name="notif_motivation_body">It\'s been 3 days without a session. A quick workout today?</string>
+
+    <!-- Scheduled workout reminder fallback -->
+    <string name="notif_session_default_title">Session</string>
+    <string name="notif_session_fallback_default">Session</string>
+    <string name="notif_shaker_pretraining_title">🥤 Pre-workout shaker</string>
+    <string name="notif_workout_start_title">🔥 Time to roll!</string>
+    <string name="notif_workout_upcoming_title">Upcoming session</string>
+    <string name="notif_shaker_in_2h">In 2h: %1$s. Don\'t forget your shaker 🥤 (whey + banana = great pre-workout).</string>
+    <string name="notif_start_in_30min">In 30 min: %1$s. Get ready and light the fire! 🔥</string>
+
+    <!-- Notification channels -->
+    <string name="notif_channel_meals_name">Meal reminders</string>
+    <string name="notif_channel_meals_desc">Reminders for meals and protein shakers</string>
+    <string name="notif_channel_workout_name">Workout reminders</string>
+    <string name="notif_channel_workout_desc">Motivation and workout reminders</string>
+    <string name="notif_channel_bedtime_name">Bedtime reminder</string>
+    <string name="notif_channel_bedtime_desc">Reminder to go to bed</string>
+    <string name="notif_channel_debrief_name">Shreddy debriefs</string>
+    <string name="notif_channel_debrief_desc">Personalized AI debriefs after meals and workouts</string>
+    <string name="notif_channel_backup_name">Cloud backup</string>
+    <string name="notif_channel_backup_desc">Google Drive backup status (success and errors)</string>
+
     <string name="notif_type_meal_debrief">Meal debrief</string>
     <string name="notif_type_workout_debrief">Session debrief</string>
     <string name="notif_type_meal_reminder">Meal reminder</string>

@@ -195,20 +195,20 @@ class ShredCoachApplication : Application(), Configuration.Provider, ImageLoader
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannels(listOf(
-                NotificationChannel(CHANNEL_MEALS, "Rappels repas", NotificationManager.IMPORTANCE_DEFAULT)
-                    .apply { description = "Rappels pour les repas et shakers protéines" },
-                NotificationChannel(CHANNEL_WORKOUT, "Rappels séances", NotificationManager.IMPORTANCE_DEFAULT)
-                    .apply { description = "Motivation et rappels de séances" },
-                NotificationChannel(CHANNEL_BEDTIME, "Rappel coucher", NotificationManager.IMPORTANCE_LOW)
-                    .apply { description = "Rappel pour aller dormir" },
-                NotificationChannel(CHANNEL_DEBRIEF, "Débriefs Shreddy", NotificationManager.IMPORTANCE_HIGH)
-                    .apply { description = "Débriefs personnalisés IA après repas et séances" },
+                NotificationChannel(CHANNEL_MEALS, getString(R.string.notif_channel_meals_name), NotificationManager.IMPORTANCE_DEFAULT)
+                    .apply { description = getString(R.string.notif_channel_meals_desc) },
+                NotificationChannel(CHANNEL_WORKOUT, getString(R.string.notif_channel_workout_name), NotificationManager.IMPORTANCE_DEFAULT)
+                    .apply { description = getString(R.string.notif_channel_workout_desc) },
+                NotificationChannel(CHANNEL_BEDTIME, getString(R.string.notif_channel_bedtime_name), NotificationManager.IMPORTANCE_LOW)
+                    .apply { description = getString(R.string.notif_channel_bedtime_desc) },
+                NotificationChannel(CHANNEL_DEBRIEF, getString(R.string.notif_channel_debrief_name), NotificationManager.IMPORTANCE_HIGH)
+                    .apply { description = getString(R.string.notif_channel_debrief_desc) },
                 // Cloud backup : informationnel, IMPORTANCE_LOW = pas de son ni de
                 // bandeau intrusif. L'user veut savoir que sa sauvegarde a réussi
                 // sans être réveillé par une notif sonore à 3h du matin. En cas
                 // d'échec on monte à DEFAULT pour qu'il puisse intervenir.
-                NotificationChannel(CHANNEL_BACKUP, "Sauvegarde cloud", NotificationManager.IMPORTANCE_LOW)
-                    .apply { description = "Statut des sauvegardes Google Drive (succès et erreurs)" }
+                NotificationChannel(CHANNEL_BACKUP, getString(R.string.notif_channel_backup_name), NotificationManager.IMPORTANCE_LOW)
+                    .apply { description = getString(R.string.notif_channel_backup_desc) }
             ))
         }
     }

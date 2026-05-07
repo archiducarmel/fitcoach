@@ -100,6 +100,52 @@
     <string name="photo_type_side">Profil</string>
     <string name="photo_type_back">Dos</string>
 
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Notification content (titles + bodies) — Phase 6 -->
+    <!-- Postées par ShredCoachNotificationWorker -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <string name="notif_meal_breakfast_title">🌅 Petit-déjeuner</string>
+    <string name="notif_meal_breakfast_body">C\'est l\'heure de ton petit-déj ! Les protéines n\'attendent pas.</string>
+    <string name="notif_meal_lunch_title">☀️ Déjeuner</string>
+    <string name="notif_meal_lunch_body">Pause déjeuner ! Pense à tes protéines et glucides.</string>
+    <string name="notif_meal_snack_title">🍎 Snack</string>
+    <string name="notif_meal_snack_body">Un petit snack pré-training ? Banane + beurre de cacahuète !</string>
+    <string name="notif_meal_dinner_title">🌙 Dîner</string>
+    <string name="notif_meal_dinner_body">C\'est l\'heure du dîner. Protéines + légumes pour la récup !</string>
+    <string name="notif_shaker_morning_title">🥤 Shaker protéines</string>
+    <string name="notif_shaker_morning_body">N\'oublie pas ton shaker du matin ! 30g de whey.</string>
+    <string name="notif_shaker_evening_title">🥤 Shaker avant coucher</string>
+    <string name="notif_shaker_evening_body">Caséine + eau : récupération musculaire pendant la nuit.</string>
+    <string name="notif_bedtime_title">😴 Bientôt l\'heure de dormir</string>
+    <string name="notif_bedtime_body">Le sommeil c\'est 80%% de la récup. 7-8h minimum !</string>
+    <string name="notif_motivation_title">💪 On lâche rien !</string>
+    <string name="notif_motivation_body">Ça fait 3 jours sans séance. Une petite session aujourd\'hui ?</string>
+
+    <!-- Scheduled workout reminder fallback (LLM-failed) -->
+    <string name="notif_session_default_title">Séance</string>
+    <string name="notif_session_fallback_default">Séance</string>
+    <string name="notif_shaker_pretraining_title">🥤 Shaker pré-training</string>
+    <string name="notif_workout_start_title">🔥 C\'est l\'heure !</string>
+    <string name="notif_workout_upcoming_title">Séance à venir</string>
+    <!-- "%1$s" = label routine ou nom séance -->
+    <string name="notif_shaker_in_2h">Dans 2h : %1$s. Pense à ton shaker 🥤 (whey + banane = top pré-training).</string>
+    <string name="notif_start_in_30min">Dans 30 min : %1$s. Prépare tes affaires et allume la flamme ! 🔥</string>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Notification channels (system Settings → App → Notifications) -->
+    <!-- Phase 6 — créés au boot dans ShredCoachApplication.createNotificationChannels -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <string name="notif_channel_meals_name">Rappels repas</string>
+    <string name="notif_channel_meals_desc">Rappels pour les repas et shakers protéines</string>
+    <string name="notif_channel_workout_name">Rappels séances</string>
+    <string name="notif_channel_workout_desc">Motivation et rappels de séances</string>
+    <string name="notif_channel_bedtime_name">Rappel coucher</string>
+    <string name="notif_channel_bedtime_desc">Rappel pour aller dormir</string>
+    <string name="notif_channel_debrief_name">Débriefs Shreddy</string>
+    <string name="notif_channel_debrief_desc">Débriefs personnalisés IA après repas et séances</string>
+    <string name="notif_channel_backup_name">Sauvegarde cloud</string>
+    <string name="notif_channel_backup_desc">Statut des sauvegardes Google Drive (succès et erreurs)</string>
+
     <!-- NotifType (Phase 2) -->
     <string name="notif_type_meal_debrief">Débrief repas</string>
     <string name="notif_type_workout_debrief">Débrief séance</string>

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.shredcoach.app.R
 import com.shredcoach.app.ShredCoachApplication
 import com.shredcoach.app.data.local.entity.NotifType
 import com.shredcoach.app.data.local.secure.SecureKeyStore
@@ -56,7 +57,7 @@ class ScheduledWorkoutReminderWorker @AssistedInject constructor(
 
         val workoutName = scheduled.workoutId?.let { workoutRepository.getWorkoutById(it)?.name }
             ?: scheduled.title.takeIf { it.isNotBlank() }
-            ?: "Séance"
+            ?: context.getString(R.string.notif_session_fallback_default)
         val timeStr = scheduled.time?.toString()?.substring(0, 5) ?: ""
         val firstName = profile.firstName.ifBlank { "toi" }
 
@@ -84,11 +85,7 @@ class ScheduledWorkoutReminderWorker @AssistedInject constructor(
                     }
                     append(" Propose à $firstName un shaker ou collation pré-training pour être au top.")
                 },
-                if (routineLabel != null) {
-                    "Dans 2h : $routineLabel. Pense à ton shaker 🥤 (whey + banane = top pré-training)."
-                } else {
-                    "Dans 2h : $workoutName. Pense à ton shaker 🥤 (whey + banane = top pré-training)."
-                }
+                context.getString(R.string.notif_shaker_in_2h, routineLabel ?: workoutName)
             )
             TYPE_START -> Triple(
                 START_SYSTEM_PROMPT,
@@ -99,11 +96,7 @@ class ScheduledWorkoutReminderWorker @AssistedInject constructor(
                     }
                     append(" Motive $firstName pour qu'il se prépare maintenant.")
                 },
-                if (routineLabel != null) {
-                    "Dans 30 min : $routineLabel. Prépare tes affaires et allume la flamme ! 🔥"
-                } else {
-                    "Dans 30 min : $workoutName. Prépare tes affaires et allume la flamme ! 🔥"
-                }
+                context.getString(R.string.notif_start_in_30min, routineLabel ?: workoutName)
             )
             else -> return Result.failure()
         }
@@ -128,9 +121,9 @@ class ScheduledWorkoutReminderWorker @AssistedInject constructor(
 
         val body = llmMessage ?: fallback
         val title = when (type) {
-            TYPE_SHAKER -> "🥤 Shaker pré-training"
-            TYPE_START -> "🔥 C'est l'heure !"
-            else -> "Séance à venir"
+            TYPE_SHAKER -> context.getString(R.string.notif_shaker_pretraining_title)
+            TYPE_START -> context.getString(R.string.notif_workout_start_title)
+            else -> context.getString(R.string.notif_workout_upcoming_title)
         }
 
         dispatcher.dispatch(

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.shredcoach.app.R
 import com.shredcoach.app.ShredCoachApplication
 import com.shredcoach.app.data.local.entity.NotifType
 import com.shredcoach.app.data.repository.UserRepository
@@ -29,38 +30,45 @@ class ShredCoachNotificationWorker @AssistedInject constructor(
 
         when (type) {
             TYPE_BREAKFAST -> if (profile.notifBreakfast) dispatcher.dispatch(
-                NotifType.MEAL_REMINDER, "🌅 Petit-déjeuner",
-                "C'est l'heure de ton petit-déj ! Les protéines n'attendent pas.",
+                NotifType.MEAL_REMINDER,
+                context.getString(R.string.notif_meal_breakfast_title),
+                context.getString(R.string.notif_meal_breakfast_body),
                 ShredCoachApplication.CHANNEL_MEALS
             )
             TYPE_LUNCH -> if (profile.notifLunch) dispatcher.dispatch(
-                NotifType.MEAL_REMINDER, "☀️ Déjeuner",
-                "Pause déjeuner ! Pense à tes protéines et glucides.",
+                NotifType.MEAL_REMINDER,
+                context.getString(R.string.notif_meal_lunch_title),
+                context.getString(R.string.notif_meal_lunch_body),
                 ShredCoachApplication.CHANNEL_MEALS
             )
             TYPE_SNACK -> if (profile.notifSnack) dispatcher.dispatch(
-                NotifType.MEAL_REMINDER, "🍎 Snack",
-                "Un petit snack pré-training ? Banane + beurre de cacahuète !",
+                NotifType.MEAL_REMINDER,
+                context.getString(R.string.notif_meal_snack_title),
+                context.getString(R.string.notif_meal_snack_body),
                 ShredCoachApplication.CHANNEL_MEALS
             )
             TYPE_DINNER -> if (profile.notifDinner) dispatcher.dispatch(
-                NotifType.MEAL_REMINDER, "🌙 Dîner",
-                "C'est l'heure du dîner. Protéines + légumes pour la récup !",
+                NotifType.MEAL_REMINDER,
+                context.getString(R.string.notif_meal_dinner_title),
+                context.getString(R.string.notif_meal_dinner_body),
                 ShredCoachApplication.CHANNEL_MEALS
             )
             TYPE_SHAKER_MORNING -> if (profile.notifShaker) dispatcher.dispatch(
-                NotifType.SHAKER_REMINDER, "🥤 Shaker protéines",
-                "N'oublie pas ton shaker du matin ! 30g de whey.",
+                NotifType.SHAKER_REMINDER,
+                context.getString(R.string.notif_shaker_morning_title),
+                context.getString(R.string.notif_shaker_morning_body),
                 ShredCoachApplication.CHANNEL_MEALS
             )
             TYPE_SHAKER_EVENING -> if (profile.notifShaker) dispatcher.dispatch(
-                NotifType.SHAKER_REMINDER, "🥤 Shaker avant coucher",
-                "Caséine + eau : récupération musculaire pendant la nuit.",
+                NotifType.SHAKER_REMINDER,
+                context.getString(R.string.notif_shaker_evening_title),
+                context.getString(R.string.notif_shaker_evening_body),
                 ShredCoachApplication.CHANNEL_MEALS
             )
             TYPE_BEDTIME -> if (profile.notifBedtime) dispatcher.dispatch(
-                NotifType.BEDTIME_REMINDER, "😴 Bientôt l'heure de dormir",
-                "Le sommeil c'est 80% de la récup. 7-8h minimum !",
+                NotifType.BEDTIME_REMINDER,
+                context.getString(R.string.notif_bedtime_title),
+                context.getString(R.string.notif_bedtime_body),
                 ShredCoachApplication.CHANNEL_BEDTIME
             )
             TYPE_MOTIVATION -> if (profile.notifMotivation) {
@@ -77,8 +85,9 @@ class ShredCoachNotificationWorker @AssistedInject constructor(
 
         if (count == 0) {
             dispatcher.dispatch(
-                NotifType.MOTIVATION, "💪 On lâche rien !",
-                "Ça fait 3 jours sans séance. Une petite session aujourd'hui ?",
+                NotifType.MOTIVATION,
+                context.getString(R.string.notif_motivation_title),
+                context.getString(R.string.notif_motivation_body),
                 ShredCoachApplication.CHANNEL_WORKOUT
             )
         }
