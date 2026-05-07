@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import androidx.compose.ui.text.font.FontWeight
@@ -52,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.ExerciseEntity
 import com.shredcoach.app.domain.model.ExerciseVariant
 import com.shredcoach.app.domain.model.MuscleGroup
@@ -197,15 +199,15 @@ fun WorkoutSessionScreen(
         AlertDialog(
             onDismissRequest = { showStopConfirm = false },
             icon = { Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.error) },
-            title = { Text("Terminer la séance ?", fontWeight = FontWeight.Bold) },
-            text = { Text("Tu pourras reprendre plus tard. Les séries complétées sont sauvegardées.") },
+            title = { Text(stringResource(R.string.workout_stop_dialog_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.workout_stop_dialog_body)) },
             confirmButton = {
                 Button(
                     onClick = { showStopConfirm = false; viewModel.stopSessionEarly() },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) { Text("Terminer", fontWeight = FontWeight.Bold) }
+                ) { Text(stringResource(R.string.workout_stop_dialog_confirm), fontWeight = FontWeight.Bold) }
             },
-            dismissButton = { TextButton(onClick = { showStopConfirm = false }) { Text("Annuler") } }
+            dismissButton = { TextButton(onClick = { showStopConfirm = false }) { Text(stringResource(R.string.workout_action_cancel)) } }
         )
     }
 
@@ -218,30 +220,32 @@ fun WorkoutSessionScreen(
     val pendingExo = state.pendingExerciseToAdd
     if (pendingExo != null) {
         val placementLabel = when (state.pendingExercisePlacement) {
-            "start" -> "en échauffement (début)"
-            "afterCurrent" -> "après l'exercice en cours"
-            else -> "en fin de séance"
+            "start" -> stringResource(R.string.workout_add_exo_placement_start)
+            "afterCurrent" -> stringResource(R.string.workout_add_exo_placement_after_current)
+            else -> stringResource(R.string.workout_add_exo_placement_end)
         }
         AlertDialog(
             onDismissRequest = { viewModel.cancelAddExercise() },
             icon = { Icon(Icons.Default.FitnessCenter, null, tint = OrangeVibrant) },
-            title = { Text("Ajouter cet exercice ?", fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.workout_add_exo_confirm_title), fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(pendingExo.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
-                    Text("${pendingExo.series} séries · ${pendingExo.repsMin}-${pendingExo.repsMax} reps · ${pendingExo.restSeconds}s repos",
+                    Text(stringResource(R.string.workout_add_exo_summary,
+                        pendingExo.series, pendingExo.repsMin, pendingExo.repsMax, pendingExo.restSeconds),
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                     Spacer(Modifier.height(4.dp))
-                    Text("Placement : $placementLabel", style = MaterialTheme.typography.labelMedium, color = OrangeVibrant)
+                    Text(stringResource(R.string.workout_add_exo_placement, placementLabel),
+                        style = MaterialTheme.typography.labelMedium, color = OrangeVibrant)
                 }
             },
             confirmButton = {
                 Button(
                     onClick = { viewModel.confirmAddExercise() },
                     colors = ButtonDefaults.buttonColors(containerColor = OrangeVibrant)
-                ) { Text("Ajouter", fontWeight = FontWeight.Bold) }
+                ) { Text(stringResource(R.string.workout_action_add), fontWeight = FontWeight.Bold) }
             },
-            dismissButton = { TextButton(onClick = { viewModel.cancelAddExercise() }) { Text("Annuler") } }
+            dismissButton = { TextButton(onClick = { viewModel.cancelAddExercise() }) { Text(stringResource(R.string.workout_action_cancel)) } }
         )
     }
 
@@ -306,9 +310,10 @@ fun WorkoutSessionScreen(
             it.status == com.shredcoach.app.presentation.share.ShareCardData.ExerciseStatus.DONE ||
                 it.status == com.shredcoach.app.presentation.share.ShareCardData.ExerciseStatus.SKIPPED
         }
+        val shareTitle = stringResource(R.string.workout_share_title_in_progress)
         com.shredcoach.app.presentation.share.ShareSheet(
             data = com.shredcoach.app.presentation.share.ShareCardData.WorkoutInProgress(
-                title = "Séance en cours",
+                title = shareTitle,
                 subtitle = state.currentExercise?.name,
                 elapsedMinutes = (state.globalChronoSeconds / 60).toInt(),
                 exercisesDone = exercisesDoneCount,
@@ -383,7 +388,7 @@ fun WorkoutSessionScreen(
                             Icon(Icons.Default.FitnessCenter, null, Modifier.size(48.dp), tint = OrangeVibrant)
                         }
                     }
-                    Text("Préparation de ta séance...", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
+                    Text(stringResource(R.string.workout_loading), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
                     LinearProgressIndicator(
                         color = OrangeVibrant,
                         modifier = Modifier.fillMaxWidth(0.5f).height(4.dp).clip(RoundedCornerShape(2.dp))
@@ -394,7 +399,7 @@ fun WorkoutSessionScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Icon(Icons.Default.Error, null, Modifier.size(64.dp), MaterialTheme.colorScheme.error)
                     Text(state.error!!, color = MaterialTheme.colorScheme.error)
-                    Button(onClick = { navController.popBackStack() }) { Text("Retour") }
+                    Button(onClick = { navController.popBackStack() }) { Text(stringResource(R.string.workout_action_back)) }
                 }
             }
             "transition" -> {
@@ -437,9 +442,10 @@ fun WorkoutSessionScreen(
                             ) {
                                 Icon(Icons.Default.FlashOn, null, Modifier.size(64.dp), tint = NeonGreen.copy(alpha = 0.5f))
                                 Spacer(Modifier.height(20.dp))
-                                Text("Séance libre", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.workout_freestyle_empty_title),
+                                    style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                                 Spacer(Modifier.height(8.dp))
-                                Text("Ajoute ton premier exercice pour démarrer !",
+                                Text(stringResource(R.string.workout_freestyle_empty_subtitle),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center)
@@ -451,7 +457,7 @@ fun WorkoutSessionScreen(
                                 ) {
                                     Icon(Icons.Default.Add, null)
                                     Spacer(Modifier.width(8.dp))
-                                    Text("Ajouter un exercice", fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.workout_add_exo_dialog_title), fontWeight = FontWeight.Bold)
                                 }
                                 if (state.globalChronoSeconds > 0) {
                                     Spacer(Modifier.height(16.dp))
@@ -767,7 +773,7 @@ private fun GifFullscreenDialog(exercise: ExerciseEntity, onDismiss: () -> Unit)
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Fermer") } }
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.workout_action_close)) } }
     )
 }
 
@@ -786,18 +792,18 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (state.addExerciseStep == 1) {
                     IconButton(onClick = { viewModel.backToMuscleGroupStep() }, Modifier.size(32.dp)) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour", Modifier.size(18.dp))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.workout_action_back), Modifier.size(18.dp))
                     }
                 }
                 Column {
                     Text(
-                        if (state.addExerciseStep == 0) "Ajouter un exercice"
+                        if (state.addExerciseStep == 0) stringResource(R.string.workout_add_exo_dialog_title)
                         else state.addExerciseMuscleGroup?.displayName ?: "",
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        if (state.addExerciseStep == 0) "Choisis le groupe musculaire"
-                        else "Choisis l'exercice à ajouter",
+                        if (state.addExerciseStep == 0) stringResource(R.string.workout_add_exo_step_choose_group)
+                        else stringResource(R.string.workout_add_exo_step_choose_exercise),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     )
@@ -813,7 +819,7 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
                 OutlinedTextField(
                     value = state.addExerciseSearchQuery,
                     onValueChange = { viewModel.onAddExerciseSearchQuery(it) },
-                    placeholder = { Text("Rechercher un exercice...", style = MaterialTheme.typography.bodySmall) },
+                    placeholder = { Text(stringResource(R.string.workout_add_exo_search_placeholder), style = MaterialTheme.typography.bodySmall) },
                     leadingIcon = { Icon(Icons.Default.Search, null, Modifier.size(18.dp)) },
                     trailingIcon = {
                         if (state.addExerciseSearchQuery.isNotBlank()) {
@@ -821,7 +827,7 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
                                 viewModel.onAddExerciseSearchQuery("")
                                 viewModel.backToMuscleGroupStep()
                             }, Modifier.size(28.dp)) {
-                                Icon(Icons.Default.Close, "Effacer", Modifier.size(16.dp))
+                                Icon(Icons.Default.Close, stringResource(R.string.workout_add_exo_clear_search), Modifier.size(16.dp))
                             }
                         }
                     },
@@ -873,7 +879,7 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
 
                     if (recommended.isNotEmpty()) {
                         Text(
-                            "Recommandé pour ${routine.displayName}".uppercase(),
+                            stringResource(R.string.workout_add_exo_recommended_for, routine.displayName).uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = OrangeVibrant,
@@ -882,7 +888,7 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
                         recommended.forEach { MuscleGroupRow(it) }
                         Spacer(Modifier.height(6.dp))
                         Text(
-                            "Autres groupes".uppercase(),
+                            stringResource(R.string.workout_add_exo_other_groups).uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
@@ -897,7 +903,7 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
                         ) {
-                            Text("Tous les exercices de ce groupe sont déjà dans ta séance",
+                            Text(stringResource(R.string.workout_add_exo_empty_group),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                                 modifier = Modifier.padding(16.dp))
@@ -946,7 +952,8 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
                                             TagBadge(exercise.variant.displayName,
                                                 Color(exercise.variant.color).copy(alpha = 0.2f),
                                                 Color(exercise.variant.color))
-                                            Text("${exercise.series}×${exercise.repsMin}-${exercise.repsMax} · ${exercise.restSeconds}s",
+                                            Text(stringResource(R.string.workout_add_exo_summary_compact,
+                                                exercise.series, exercise.repsMin, exercise.repsMax, exercise.restSeconds),
                                                 style = MaterialTheme.typography.labelSmall,
                                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f))
                                         }
@@ -968,7 +975,7 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
                                     ) {
                                         Icon(Icons.Default.Add, null, Modifier.size(14.dp))
                                         Spacer(Modifier.width(4.dp))
-                                        Text("Ajouter", style = MaterialTheme.typography.labelSmall,
+                                        Text(stringResource(R.string.workout_action_add), style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.Bold, maxLines = 1)
                                     }
                                 } else if (state.isFreestyle && isWarmup) {
@@ -981,7 +988,7 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
                                     ) {
                                         Icon(Icons.Default.FlashOn, null, Modifier.size(14.dp))
                                         Spacer(Modifier.width(4.dp))
-                                        Text("Ajouter en échauffement", style = MaterialTheme.typography.labelSmall,
+                                        Text(stringResource(R.string.workout_add_exo_btn_add_warmup), style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.Bold, maxLines = 1)
                                     }
                                 } else if (state.isFreestyle && isCardio) {
@@ -994,7 +1001,7 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
                                     ) {
                                         Icon(Icons.AutoMirrored.Filled.DirectionsRun, null, Modifier.size(14.dp))
                                         Spacer(Modifier.width(4.dp))
-                                        Text("Ajouter en fin de séance", style = MaterialTheme.typography.labelSmall,
+                                        Text(stringResource(R.string.workout_add_exo_btn_add_end), style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.Bold, maxLines = 1)
                                     }
                                 } else {
@@ -1008,7 +1015,7 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
                                         ) {
                                             Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(14.dp))
                                             Spacer(Modifier.width(4.dp))
-                                            Text("Après celui-ci", style = MaterialTheme.typography.labelSmall,
+                                            Text(stringResource(R.string.workout_add_exo_btn_after_current), style = MaterialTheme.typography.labelSmall,
                                                 fontWeight = FontWeight.Bold, maxLines = 1)
                                         }
                                         OutlinedButton(
@@ -1019,7 +1026,7 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
                                         ) {
                                             Icon(Icons.AutoMirrored.Filled.LastPage, null, Modifier.size(14.dp))
                                             Spacer(Modifier.width(4.dp))
-                                            Text("En fin", style = MaterialTheme.typography.labelSmall,
+                                            Text(stringResource(R.string.workout_add_exo_btn_at_end), style = MaterialTheme.typography.labelSmall,
                                                 fontWeight = FontWeight.Bold, maxLines = 1)
                                         }
                                     }
@@ -1038,7 +1045,7 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
                     // En freestyle sans exercice, fermer ne fait rien de spécial
                 }
                 viewModel.closeAddExerciseDialog()
-            }) { Text("Fermer") }
+            }) { Text(stringResource(R.string.workout_action_close)) }
         }
     )
 }
@@ -1059,7 +1066,7 @@ private fun WarmupBlockView(state: WorkoutSessionState, viewModel: WorkoutSessio
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Icon(Icons.Default.LocalFireDepartment, null, Modifier.size(24.dp), tint = OrangeVibrant)
-                        Text("ÉCHAUFFEMENT", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.workout_warmup_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     }
                     Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.tertiaryContainer) {
                         Text(fmtChrono(state.exerciseChronoSeconds), Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
@@ -1067,7 +1074,8 @@ private fun WarmupBlockView(state: WorkoutSessionState, viewModel: WorkoutSessio
                             maxLines = 1, softWrap = false)
                     }
                 }
-                Text("Étape ${currentStep + 1} sur ${warmups.size}", style = MaterialTheme.typography.bodyMedium,
+                Text(stringResource(R.string.workout_warmup_step_progress, currentStep + 1, warmups.size),
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             }
         }
@@ -1102,7 +1110,8 @@ private fun WarmupBlockView(state: WorkoutSessionState, viewModel: WorkoutSessio
                 Icon(Icons.Default.Check, null, Modifier.size(24.dp))
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    if (currentStep >= warmups.size - 1) "ÉCHAUFFEMENT TERMINÉ" else "ÉTAPE SUIVANTE",
+                    if (currentStep >= warmups.size - 1) stringResource(R.string.workout_warmup_step_done)
+                    else stringResource(R.string.workout_warmup_step_next),
                     style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold
                 )
             }
@@ -1214,8 +1223,9 @@ private fun SeriesTimeline(state: WorkoutSessionState, exercise: ExerciseEntity,
                 PostLastSetPromptCard(
                     onAddSeries = { viewModel.addExtraSeries() },
                     onContinue = { viewModel.confirmMoveToNextExercise() },
-                    continueLabel = if (state.isFreestyle && state.isLastExercise) "Terminer l'exercice"
-                        else "Passer à l'exercice suivant"
+                    continueLabel = if (state.isFreestyle && state.isLastExercise)
+                        stringResource(R.string.workout_all_sets_done_finish_freestyle)
+                        else stringResource(R.string.workout_all_sets_done_continue_next)
                 )
             }
         }
@@ -1231,7 +1241,7 @@ private fun SeriesTimeline(state: WorkoutSessionState, exercise: ExerciseEntity,
             ) {
                 Icon(Icons.Default.Add, null, Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Ajouter une série", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.workout_series_add_extra), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -1274,12 +1284,12 @@ private fun CardioSessionCard(exercise: ExerciseEntity, state: WorkoutSessionSta
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Icon(Icons.AutoMirrored.Filled.DirectionsRun, null, Modifier.size(32.dp), tint = NeonGreen)
-                Text("Session cardio", style = MaterialTheme.typography.titleMedium,
+                Text(stringResource(R.string.workout_cardio_session), style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold, color = NeonGreen)
 
                 // Durée cible
                 Text(
-                    "Objectif : ${exercise.repsMin}–${exercise.repsMax} min",
+                    stringResource(R.string.workout_cardio_target, exercise.repsMin, exercise.repsMax),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
@@ -1315,7 +1325,7 @@ private fun CardioSessionCard(exercise: ExerciseEntity, state: WorkoutSessionSta
                 ) {
                     Icon(Icons.Default.PlayArrow, null, Modifier.size(24.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("DÉMARRER", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.workout_cardio_start), fontWeight = FontWeight.Bold)
                 }
             } else {
                 Button(
@@ -1331,7 +1341,7 @@ private fun CardioSessionCard(exercise: ExerciseEntity, state: WorkoutSessionSta
                 ) {
                     Icon(Icons.Default.Check, null, Modifier.size(24.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("TERMINER LE CARDIO", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.workout_cardio_finish), fontWeight = FontWeight.Bold)
                 }
             }
             OutlinedButton(
@@ -1366,7 +1376,8 @@ private fun CompletedSeriesCard(
             }
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
-                Text("Série $seriesNumber", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.workout_series_number, seriesNumber),
+                    style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                 // Affichage kind-aware :
                 //  - WEIGHTED : "80 kg" + "10 reps" (2 fragments)
                 //  - BODYWEIGHT_REPS : "10 reps" (+ "+10 kg" en cas de lesté)
@@ -1374,17 +1385,17 @@ private fun CompletedSeriesCard(
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     when (exerciseKind) {
                         ExerciseKind.WEIGHTED -> {
-                            Text("${SetMetricFormatter.formatWeight(data.weight)} kg",
+                            Text(stringResource(R.string.workout_series_metric_weight_kg, SetMetricFormatter.formatWeight(data.weight)),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold, color = OrangeVibrant)
-                            Text("${data.reps} reps", style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.workout_series_metric_reps, data.reps), style = MaterialTheme.typography.bodyMedium)
                         }
                         ExerciseKind.BODYWEIGHT_REPS -> {
-                            Text("${data.reps} reps",
+                            Text(stringResource(R.string.workout_series_metric_reps, data.reps),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold, color = OrangeVibrant)
                             if (data.weight > 0.0) {
-                                Text("+${SetMetricFormatter.formatWeight(data.weight)} kg",
+                                Text(stringResource(R.string.workout_series_metric_weight_extra, SetMetricFormatter.formatWeight(data.weight)),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                             }
@@ -1420,7 +1431,7 @@ private fun CompletedSeriesCard(
                     TextButton(onClick = onRedo, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {
                         Icon(Icons.Default.Replay, null, Modifier.size(14.dp), tint = OrangeVibrant)
                         Spacer(Modifier.width(4.dp))
-                        Text("Refaire", style = MaterialTheme.typography.labelSmall, color = OrangeVibrant)
+                        Text(stringResource(R.string.workout_action_redo), style = MaterialTheme.typography.labelSmall, color = OrangeVibrant)
                     }
                 }
             }
@@ -1435,7 +1446,7 @@ private fun SkippedSeriesCard(seriesNumber: Int) {
             Box(Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.error.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
                 Icon(Icons.Default.SkipNext, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
             }
-            Text("Série $seriesNumber — Passée", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+            Text(stringResource(R.string.workout_series_skipped, seriesNumber), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
         }
     }
 }
@@ -1460,7 +1471,7 @@ private fun RestTimerCard(seriesNum: Int, timeRemaining: Int, totalRest: Int, on
         border = BorderStroke(1.dp, arcColor.copy(alpha = 0.3f))
     ) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("REPOS", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, letterSpacing = 2.sp,
+            Text(stringResource(R.string.workout_series_rest), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, letterSpacing = 2.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
 
             // Arc circulaire progressif
@@ -1494,7 +1505,8 @@ private fun RestTimerCard(seriesNum: Int, timeRemaining: Int, totalRest: Int, on
                         softWrap = false,
                     )
                     Text(
-                        if (almost) "Go !" else "Série $seriesNum",
+                        if (almost) stringResource(R.string.workout_rest_almost_label)
+                        else stringResource(R.string.workout_series_number, seriesNum),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     )
@@ -1512,7 +1524,8 @@ private fun RestTimerCard(seriesNum: Int, timeRemaining: Int, totalRest: Int, on
                     shape = RoundedCornerShape(12.dp),
                     contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp)
                 ) {
-                    Text(if (almost) "C'est parti !" else "Passer", fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(if (almost) stringResource(R.string.workout_rest_go) else stringResource(R.string.workout_rest_skip),
+                        fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
         }
@@ -1634,8 +1647,10 @@ private fun ActiveSeriesCard(seriesNum: Int, totalSeries: Int, state: WorkoutSes
                         Text("$seriesNum", fontWeight = FontWeight.Bold, color = if (state.isSetInProgress) NeonGreen else OrangeVibrant)
                     }
                     Column {
-                        Text("Série $seriesNum / $totalSeries", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        if (state.isSetInProgress) Text("EN COURS", style = MaterialTheme.typography.labelSmall, color = NeonGreen, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                        Text(stringResource(R.string.workout_series_current_total, seriesNum, totalSeries),
+                            style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        if (state.isSetInProgress) Text(stringResource(R.string.workout_series_in_progress),
+                            style = MaterialTheme.typography.labelSmall, color = NeonGreen, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -1690,7 +1705,7 @@ private fun ActiveSeriesCard(seriesNum: Int, totalSeries: Int, state: WorkoutSes
                                 Icon(Icons.Default.History, null, Modifier.size(14.dp),
                                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                                 Text(
-                                    "Dernière fois : $lastTimeText",
+                                    stringResource(R.string.workout_last_time_value, lastTimeText),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -1700,7 +1715,7 @@ private fun ActiveSeriesCard(seriesNum: Int, totalSeries: Int, state: WorkoutSes
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Icon(Icons.Default.Star, null, Modifier.size(14.dp), tint = BrightYellow)
                                 Text(
-                                    "Record : $recordText",
+                                    stringResource(R.string.workout_record_value, recordText),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = BrightYellow,
                                     fontWeight = FontWeight.SemiBold
@@ -1717,7 +1732,7 @@ private fun ActiveSeriesCard(seriesNum: Int, totalSeries: Int, state: WorkoutSes
                         ) {
                             Icon(Icons.AutoMirrored.Filled.TrendingUp, null, Modifier.size(14.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("+5 kg", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.workout_inc_5kg), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }
@@ -1742,7 +1757,7 @@ private fun ActiveSeriesCard(seriesNum: Int, totalSeries: Int, state: WorkoutSes
                 if (activeExerciseKind == ExerciseKind.WEIGHTED) {
                     Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                         SessionStepper(
-                            label = "Poids (kg)",
+                            label = stringResource(R.string.workout_stepper_weight),
                             value = state.currentSetWeight,
                             onIncrement = {
                                 val w = (state.currentSetWeight.toDoubleOrNull() ?: 0.0) + 1.0
@@ -1764,7 +1779,8 @@ private fun ActiveSeriesCard(seriesNum: Int, totalSeries: Int, state: WorkoutSes
                     // Verrouiller le stepper pendant le décompte actif (éviter que l'user change la durée en plein milieu)
                     val locked = isTimedSetRunning
                     SessionStepper(
-                        label = if (isTimeBased) "Durée (s)" else "Reps",
+                        label = if (isTimeBased) stringResource(R.string.workout_stepper_duration_s)
+                            else stringResource(R.string.workout_stepper_reps),
                         value = state.currentSetReps,
                         onIncrement = {
                             if (locked) return@SessionStepper
@@ -1785,7 +1801,7 @@ private fun ActiveSeriesCard(seriesNum: Int, totalSeries: Int, state: WorkoutSes
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     val rest = state.effectiveRestSeconds
                     SessionStepper(
-                        label = "Repos",
+                        label = stringResource(R.string.workout_stepper_rest),
                         value = "${rest}s",
                         onIncrement = { viewModel.onRestSecondsChanged(rest + 15); tactile(false) },
                         onDecrement = { viewModel.onRestSecondsChanged(rest - 15); tactile(false) },
@@ -1813,9 +1829,9 @@ private fun PostLastSetPromptCard(onAddSeries: () -> Unit, onContinue: () -> Uni
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Icon(Icons.Default.CheckCircle, null, Modifier.size(32.dp), tint = NeonGreen)
-            Text("Toutes les séries complétées !",
+            Text(stringResource(R.string.workout_all_sets_done_title),
                 style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text("Tu veux enchaîner une série bonus ou passer à l'exercice suivant ?",
+            Text(stringResource(R.string.workout_all_sets_done_body),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center)
@@ -1829,7 +1845,7 @@ private fun PostLastSetPromptCard(onAddSeries: () -> Unit, onContinue: () -> Uni
                 ) {
                     Icon(Icons.Default.Add, null, Modifier.size(18.dp), tint = OrangeVibrant)
                     Spacer(Modifier.width(6.dp))
-                    Text("Encore une série bonus", fontWeight = FontWeight.Bold, color = OrangeVibrant)
+                    Text(stringResource(R.string.workout_all_sets_done_bonus), fontWeight = FontWeight.Bold, color = OrangeVibrant)
                 }
                 Button(
                     onClick = onContinue,
@@ -1861,15 +1877,15 @@ private fun ExerciseOverviewPanel(state: WorkoutSessionState, viewModel: Workout
         val exoName = state.exercises.getOrNull(confirmDeleteIndex)?.name ?: ""
         AlertDialog(
             onDismissRequest = { confirmDeleteIndex = -1 },
-            title = { Text("Retirer cet exercice ?", fontWeight = FontWeight.Bold) },
-            text = { Text("\"$exoName\" sera retiré de la séance en cours.") },
+            title = { Text(stringResource(R.string.workout_remove_exo_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.workout_remove_exo_body, exoName)) },
             confirmButton = {
                 Button(
                     onClick = { viewModel.removeExercise(confirmDeleteIndex); confirmDeleteIndex = -1 },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) { Text("Retirer") }
+                ) { Text(stringResource(R.string.workout_action_remove)) }
             },
-            dismissButton = { TextButton(onClick = { confirmDeleteIndex = -1 }) { Text("Annuler") } }
+            dismissButton = { TextButton(onClick = { confirmDeleteIndex = -1 }) { Text(stringResource(R.string.workout_action_cancel)) } }
         )
     }
 
@@ -1882,7 +1898,7 @@ private fun ExerciseOverviewPanel(state: WorkoutSessionState, viewModel: Workout
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text("Vue d'ensemble", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.workout_overview_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Text(
                         if (state.isFreestyle) "${state.exercises.size} exercice${if (state.exercises.size > 1) "s" else ""} · Ajoute ou termine"
                         else "${state.exercises.size} exercices · Tape pour lancer",
@@ -1902,7 +1918,7 @@ private fun ExerciseOverviewPanel(state: WorkoutSessionState, viewModel: Workout
                     FilledTonalButton(onClick = { viewModel.toggleExerciseOverview() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null, Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Retour", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.workout_overview_back), fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -1970,7 +1986,7 @@ private fun ExerciseOverviewPanel(state: WorkoutSessionState, viewModel: Workout
                     ) {
                         Icon(Icons.Default.Add, null, Modifier.size(20.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Ajouter un exercice", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(R.string.workout_add_exo_dialog_title), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
                     }
                 }
                 item {
@@ -1982,7 +1998,7 @@ private fun ExerciseOverviewPanel(state: WorkoutSessionState, viewModel: Workout
                     ) {
                         Icon(Icons.Default.CheckCircle, null, Modifier.size(18.dp), tint = NeonGreen)
                         Spacer(Modifier.width(8.dp))
-                        Text("Terminer la séance", fontWeight = FontWeight.Bold, color = NeonGreen)
+                        Text(stringResource(R.string.workout_overview_finish), fontWeight = FontWeight.Bold, color = NeonGreen)
                     }
                 }
             }
@@ -2082,7 +2098,7 @@ private fun OverviewExerciseCard(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                     if (isCurrent) {
                         Surface(shape = RoundedCornerShape(4.dp), color = OrangeVibrant) {
-                            Text("EN COURS", Modifier.padding(horizontal = 5.dp, vertical = 1.dp),
+                            Text(stringResource(R.string.workout_series_in_progress), Modifier.padding(horizontal = 5.dp, vertical = 1.dp),
                                 style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold,
                                 color = Color.White, fontSize = 9.sp)
                         }
@@ -2091,10 +2107,11 @@ private fun OverviewExerciseCard(
 
                 // Ligne 3 : séries/reps/repos OU "X séries faites"
                 if (isDone && setsCompleted > 0) {
-                    Text("$setsCompleted séries faites", style = MaterialTheme.typography.labelSmall,
+                    Text(stringResource(R.string.workout_overview_sets_done, setsCompleted), style = MaterialTheme.typography.labelSmall,
                         color = NeonGreen, fontWeight = FontWeight.SemiBold)
                 } else {
-                    Text("${exercise.series} séries · ${exercise.repsMin}-${exercise.repsMax} reps · ${exercise.restSeconds}s repos",
+                    Text(stringResource(R.string.workout_add_exo_summary,
+                        exercise.series, exercise.repsMin, exercise.repsMax, exercise.restSeconds),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                 }
@@ -2126,7 +2143,7 @@ private fun UpcomingSeriesCard(seriesNumber: Int) {
             Box(Modifier.size(36.dp).clip(CircleShape).border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape), contentAlignment = Alignment.Center) {
                 Text("$seriesNumber", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
             }
-            Text("Série $seriesNumber", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
+            Text(stringResource(R.string.workout_series_number, seriesNumber), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
         }
     }
 }
@@ -2146,7 +2163,7 @@ private fun MainActionButton(state: WorkoutSessionState, viewModel: WorkoutSessi
             Button(onClick = { com.shredcoach.app.presentation.util.hapticClick(context); viewModel.onSetStarted() }, Modifier.fillMaxWidth().padding(16.dp).height(60.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = OrangeVibrant), shape = RoundedCornerShape(16.dp)) {
                 Icon(Icons.Default.PlayArrow, null, Modifier.size(24.dp)); Spacer(Modifier.width(8.dp))
-                Text("DÉMARRER SÉRIE ${state.currentSeries}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.workout_series_start_button, state.currentSeries), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
         } else {
             val isTimedSetRunning = state.currentExercise?.isTimeBased == true && state.timedSetTotalSeconds > 0
@@ -2234,7 +2251,7 @@ private fun ExerciseTransitionOverlay(
 
         Text(fromName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center,
             modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale; this.alpha = alpha })
-        Text("TERMINÉ", style = MaterialTheme.typography.labelLarge, color = NeonGreen, fontWeight = FontWeight.Bold, letterSpacing = 3.sp)
+        Text(stringResource(R.string.workout_series_done), style = MaterialTheme.typography.labelLarge, color = NeonGreen, fontWeight = FontWeight.Bold, letterSpacing = 3.sp)
 
         // Message personnalisé de Shreddy
         Spacer(Modifier.height(8.dp))
@@ -2251,7 +2268,7 @@ private fun ExerciseTransitionOverlay(
             if (isShreddyThinking) {
                 // Animation "Shreddy réfléchit..."
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Shreddy réfléchit", style = MaterialTheme.typography.bodyMedium,
+                    Text(stringResource(R.string.workout_coach_thinking), style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium, color = OrangeVibrant.copy(alpha = 0.7f))
                     repeat(3) { i ->
                         val inf = rememberInfiniteTransition(label = "td$i")
@@ -2303,7 +2320,7 @@ private fun ExerciseTransitionOverlay(
         ) {
             Icon(Icons.Default.Share, null, Modifier.size(16.dp), tint = OrangeVibrant)
             Spacer(Modifier.width(6.dp))
-            Text("Partager", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.workout_share_button), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
         }
 
         Spacer(Modifier.height(8.dp))
@@ -2314,18 +2331,18 @@ private fun ExerciseTransitionOverlay(
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Résumé exercice", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.workout_share_summary_label), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    TransitionStat(icon = Icons.Default.FitnessCenter, value = "$exoSets", label = "Séries")
-                    TransitionStat(icon = Icons.Default.RepeatOne, value = "$exoReps", label = "Reps")
-                    TransitionStat(icon = Icons.Default.MonitorWeight, value = "%.0f kg".format(exoVolume), label = "Volume")
+                    TransitionStat(icon = Icons.Default.FitnessCenter, value = "$exoSets", label = stringResource(R.string.workout_transition_sets))
+                    TransitionStat(icon = Icons.Default.RepeatOne, value = "$exoReps", label = stringResource(R.string.workout_transition_reps))
+                    TransitionStat(icon = Icons.Default.MonitorWeight, value = "%.0f kg".format(exoVolume), label = stringResource(R.string.workout_transition_volume))
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                     // exoDuration affiché dans la transition statique → pas de tick,
                     // mais tnum reste cohérent avec les autres stats numériques.
-                    TransitionStat(icon = Icons.Default.Timer, value = fmtChrono(exoDuration), label = "Durée")
+                    TransitionStat(icon = Icons.Default.Timer, value = fmtChrono(exoDuration), label = stringResource(R.string.workout_transition_duration))
                     if (exoSkipped > 0) {
-                        TransitionStat(icon = Icons.Default.SkipNext, value = "$exoSkipped", label = "Passées")
+                        TransitionStat(icon = Icons.Default.SkipNext, value = "$exoSkipped", label = stringResource(R.string.workout_transition_skipped))
                     }
                 }
             }
@@ -2335,7 +2352,8 @@ private fun ExerciseTransitionOverlay(
 
         // Progression globale
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("$exercisesDone / $totalExercises exercices", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.workout_share_exercises_progress, exercisesDone, totalExercises),
+                style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
             LinearProgressIndicator(
                 progress = { exercisesDone.toFloat() / totalExercises.coerceAtLeast(1) },
                 modifier = Modifier.fillMaxWidth(0.7f).height(8.dp).clip(RoundedCornerShape(4.dp)),
@@ -2398,7 +2416,7 @@ private fun CoachTipCard(exercise: ExerciseEntity) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Icon(Icons.Default.Lightbulb, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
-                    Text("Coach", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                    Text(stringResource(R.string.workout_coach_label), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
                 }
                 Icon(if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore, "Toggle", Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f))
             }

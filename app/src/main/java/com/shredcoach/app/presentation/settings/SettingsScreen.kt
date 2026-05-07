@@ -27,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import android.os.Build
+import com.shredcoach.app.R
 import com.shredcoach.app.presentation.theme.OrangeVibrant
 import com.shredcoach.app.presentation.theme.SYSTEM_PALETTE_KEY
 import com.shredcoach.app.presentation.theme.ShredPalette
@@ -52,10 +54,11 @@ fun SettingsScreen(
     val context = navController.context
 
     // Reprogramme les notifications en temps reel apres chaque changement
+    val notifsUpdatedMsg = stringResource(R.string.settings_notifications_updated)
     fun applyNotifications() {
         val p = state.profile ?: return
         com.shredcoach.app.notification.NotificationScheduler.scheduleAll(context, p)
-        scope.launch { snackbarHostState.showSnackbar("Notifications mises à jour", duration = SnackbarDuration.Short) }
+        scope.launch { snackbarHostState.showSnackbar(notifsUpdatedMsg, duration = SnackbarDuration.Short) }
     }
 
     LaunchedEffect(Unit) { viewModel.ensureProfileExists() }
@@ -64,7 +67,7 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Paramètres", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.settings_title), fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
                 )
@@ -86,160 +89,211 @@ fun SettingsScreen(
                     onClick = { navController.navigate(com.shredcoach.app.presentation.navigation.Screen.Profile.route) }
                 )
 
+                // ═══ LANGUE (i18n) ═══
+                // Affiche le drapeau + la langue native courante. Tap → écran
+                // picker dédié (Screen.LanguageSettings). Volontairement en
+                // tête car c'est un setting global qui affecte TOUTE l'UX
+                // (texte, notifs, coach vocal).
+                LanguageSettingEntry(
+                    profile = profile,
+                    onClick = {
+                        navController.navigate(com.shredcoach.app.presentation.navigation.Screen.LanguageSettings.route)
+                    },
+                )
+
                 // ═══ SÉANCE ═══
-                SettingsSection("Pendant la séance", Icons.Default.FitnessCenter) {
+                SettingsSection(stringResource(R.string.settings_section_during_workout), Icons.Default.FitnessCenter) {
                     SwitchSetting(
-                        title = "Auto-start après repos",
-                        subtitle = "Lancer automatiquement la série suivante quand le repos est terminé",
+                        title = stringResource(R.string.settings_workout_autostart_title),
+                        subtitle = stringResource(R.string.settings_workout_autostart_subtitle),
                         checked = profile.autoStartAfterRest,
                         onCheckedChange = { viewModel.updateAutoStartAfterRest(it) }
                     )
                     SwitchSetting(
-                        title = "Vibration",
-                        subtitle = "Fin de repos + retour tactile sur les boutons",
+                        title = stringResource(R.string.settings_workout_vibration_title),
+                        subtitle = stringResource(R.string.settings_workout_vibration_subtitle),
                         checked = profile.vibrationEnabled,
                         onCheckedChange = { viewModel.updateVibration(it) }
                     )
                     SwitchSetting(
-                        title = "Son",
-                        subtitle = "Jouer un son à la fin du temps de repos",
+                        title = stringResource(R.string.settings_workout_sound_title),
+                        subtitle = stringResource(R.string.settings_workout_sound_subtitle),
                         checked = profile.soundEnabled,
                         onCheckedChange = { viewModel.updateSound(it) }
                     )
                     SwitchSetting(
-                        title = "Voix Shreddy",
-                        subtitle = "Shreddy annonce vocalement la fin du repos (voix naturelle)",
+                        title = stringResource(R.string.settings_workout_voice_title),
+                        subtitle = stringResource(R.string.settings_workout_voice_subtitle),
                         checked = profile.voiceEnabled,
                         onCheckedChange = { viewModel.updateVoiceEnabled(it) }
                     )
                     SwitchSetting(
-                        title = "Conseils du coach",
-                        subtitle = "Afficher les tips et instructions d'exécution",
+                        title = stringResource(R.string.settings_workout_coach_tips_title),
+                        subtitle = stringResource(R.string.settings_workout_coach_tips_subtitle),
                         checked = profile.showCoachTips,
                         onCheckedChange = { viewModel.updateShowCoachTips(it) }
                     )
                     SwitchSetting(
-                        title = "Proposition série bonus",
-                        subtitle = "Proposer d'ajouter une série après le dernier set de chaque exercice",
+                        title = stringResource(R.string.settings_workout_bonus_title),
+                        subtitle = stringResource(R.string.settings_workout_bonus_subtitle),
                         checked = profile.suggestBonusSeries,
                         onCheckedChange = { viewModel.updateSuggestBonusSeries(it) }
                     )
 
                     // Repos par défaut
                     SliderSetting(
-                        title = "Repos par défaut",
+                        title = stringResource(R.string.settings_workout_default_rest_title),
                         value = profile.defaultRestSeconds,
                         range = 30..180,
                         step = 15,
-                        unit = "s",
+                        unit = stringResource(R.string.settings_unit_seconds),
                         onValueChange = { viewModel.updateDefaultRest(it) }
                     )
                 }
 
                 // ═══ VOIX SHREDDY (moteur + persona) ═══
-                SettingsSection("Voix Shreddy", Icons.Default.RecordVoiceOver) {
+                SettingsSection(stringResource(R.string.settings_section_voice), Icons.Default.RecordVoiceOver) {
                     com.shredcoach.app.presentation.settings.voice.VoiceSettingsSection()
                 }
 
                 // ═══ SANTÉ / LIMITATIONS ═══
-                SettingsSection("Santé & limitations", Icons.Default.HealthAndSafety) {
+                SettingsSection(stringResource(R.string.settings_section_health), Icons.Default.HealthAndSafety) {
                     OutlinedTextField(
                         value = profile.healthNotes,
                         onValueChange = { viewModel.updateHealthNotes(it) },
-                        label = { Text("Notes santé / blessures") },
+                        label = { Text(stringResource(R.string.settings_health_notes_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 2, maxLines = 4,
-                        placeholder = { Text("Ex: douleur épaule gauche, tendinite genou...", style = MaterialTheme.typography.bodySmall) },
-                        supportingText = { Text("Shreddy adaptera ses conseils en fonction", style = MaterialTheme.typography.labelSmall) }
+                        placeholder = { Text(stringResource(R.string.settings_health_notes_placeholder), style = MaterialTheme.typography.bodySmall) },
+                        supportingText = { Text(stringResource(R.string.settings_health_notes_support), style = MaterialTheme.typography.labelSmall) }
                     )
                 }
 
                 // ═══ SÉANCE (durée) ═══
-                SettingsSection("Durée de séance", Icons.Default.Timer) {
+                SettingsSection(stringResource(R.string.settings_section_duration), Icons.Default.Timer) {
                     SliderSetting(
-                        title = "Durée préférée",
+                        title = stringResource(R.string.settings_duration_preferred),
                         value = profile.preferredWorkoutDuration,
                         range = 30..180,
                         step = 15,
-                        unit = "min",
+                        unit = stringResource(R.string.settings_unit_minutes),
                         onValueChange = { viewModel.updateDuration(it) }
                     )
                 }
 
                 // ═══ NOTIFICATIONS (application en temps reel) ═══
-                SettingsSection("Notifications", Icons.Default.Notifications) {
-                    SwitchSetting("Notifications activées", "Active/désactive toutes les notifications",
-                        profile.notificationsEnabled) { viewModel.updateNotificationsEnabled(it); applyNotifications() }
+                SettingsSection(stringResource(R.string.settings_section_notifications), Icons.Default.Notifications) {
+                    SwitchSetting(
+                        stringResource(R.string.settings_notifs_enabled_title),
+                        stringResource(R.string.settings_notifs_enabled_subtitle),
+                        profile.notificationsEnabled,
+                    ) { viewModel.updateNotificationsEnabled(it); applyNotifications() }
 
                     if (profile.notificationsEnabled) {
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                        Text("Repas", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold,
+                        Text(stringResource(R.string.settings_notifs_meals_label),
+                            style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 8.dp), color = OrangeVibrant)
-                        SwitchSetting("Petit-déjeuner", "Rappel à ${profile.breakfastTime}",
-                            profile.notifBreakfast) { viewModel.updateNotifBreakfast(it); applyNotifications() }
-                        SwitchSetting("Déjeuner", "Rappel à ${profile.lunchTime}",
-                            profile.notifLunch) { viewModel.updateNotifLunch(it); applyNotifications() }
-                        SwitchSetting("Snack pré-training", "Rappel à ${profile.snackTime}",
-                            profile.notifSnack) { viewModel.updateNotifSnack(it); applyNotifications() }
-                        SwitchSetting("Dîner", "Rappel à ${profile.dinnerTime}",
-                            profile.notifDinner) { viewModel.updateNotifDinner(it); applyNotifications() }
+                        SwitchSetting(
+                            stringResource(R.string.settings_notifs_breakfast),
+                            stringResource(R.string.settings_notifs_reminder_at, profile.breakfastTime),
+                            profile.notifBreakfast,
+                        ) { viewModel.updateNotifBreakfast(it); applyNotifications() }
+                        SwitchSetting(
+                            stringResource(R.string.settings_notifs_lunch),
+                            stringResource(R.string.settings_notifs_reminder_at, profile.lunchTime),
+                            profile.notifLunch,
+                        ) { viewModel.updateNotifLunch(it); applyNotifications() }
+                        SwitchSetting(
+                            stringResource(R.string.settings_notifs_snack),
+                            stringResource(R.string.settings_notifs_reminder_at, profile.snackTime),
+                            profile.notifSnack,
+                        ) { viewModel.updateNotifSnack(it); applyNotifications() }
+                        SwitchSetting(
+                            stringResource(R.string.settings_notifs_dinner),
+                            stringResource(R.string.settings_notifs_reminder_at, profile.dinnerTime),
+                            profile.notifDinner,
+                        ) { viewModel.updateNotifDinner(it); applyNotifications() }
 
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                        Text("Shakers protéines", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold,
+                        Text(stringResource(R.string.settings_notifs_shakers_label),
+                            style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 8.dp), color = OrangeVibrant)
-                        SwitchSetting("Shakers matin & soir", "Matin ${profile.shakerMorningTime} / Soir ${profile.shakerEveningTime}",
-                            profile.notifShaker) { viewModel.updateNotifShaker(it); applyNotifications() }
+                        SwitchSetting(
+                            stringResource(R.string.settings_notifs_shakers_title),
+                            stringResource(R.string.settings_notifs_shakers_subtitle, profile.shakerMorningTime, profile.shakerEveningTime),
+                            profile.notifShaker,
+                        ) { viewModel.updateNotifShaker(it); applyNotifications() }
 
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                        Text("Autres", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold,
+                        Text(stringResource(R.string.settings_notifs_others_label),
+                            style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 8.dp), color = OrangeVibrant)
-                        SwitchSetting("Rappel coucher", "30 min avant l'heure cible",
-                            profile.notifBedtime) { viewModel.updateNotifBedtime(it); applyNotifications() }
-                        SwitchSetting("Motivation", "Rappel si pas de séance depuis 3 jours",
-                            profile.notifMotivation) { viewModel.updateNotifMotivation(it); applyNotifications() }
+                        SwitchSetting(
+                            stringResource(R.string.settings_notifs_bedtime_title),
+                            stringResource(R.string.settings_notifs_bedtime_subtitle),
+                            profile.notifBedtime,
+                        ) { viewModel.updateNotifBedtime(it); applyNotifications() }
+                        SwitchSetting(
+                            stringResource(R.string.settings_notifs_motivation_title),
+                            stringResource(R.string.settings_notifs_motivation_subtitle),
+                            profile.notifMotivation,
+                        ) { viewModel.updateNotifMotivation(it); applyNotifications() }
 
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                        Text("Débriefs IA Shreddy", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold,
+                        Text(stringResource(R.string.settings_notifs_debrief_label),
+                            style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 8.dp), color = OrangeVibrant)
-                        SwitchSetting("Débrief repas", "Après chaque scan repas · humoristique & personnalisé",
-                            profile.notifMealDebrief) { viewModel.updateNotifMealDebrief(it) }
+                        SwitchSetting(
+                            stringResource(R.string.settings_notifs_meal_debrief_title),
+                            stringResource(R.string.settings_notifs_meal_debrief_subtitle),
+                            profile.notifMealDebrief,
+                        ) { viewModel.updateNotifMealDebrief(it) }
                         if (profile.notifMealDebrief) {
                             SliderSetting(
-                                title = "Délai après scan",
+                                title = stringResource(R.string.settings_notifs_meal_debrief_delay),
                                 value = profile.mealDebriefDelayMinutes,
                                 range = 5..180,
                                 step = 5,
-                                unit = "min"
+                                unit = stringResource(R.string.settings_unit_minutes),
                             ) { viewModel.updateMealDebriefDelay(it) }
                         }
-                        SwitchSetting("Débrief séance", "Après chaque séance · qualité & dynamique",
-                            profile.notifWorkoutDebrief) { viewModel.updateNotifWorkoutDebrief(it) }
+                        SwitchSetting(
+                            stringResource(R.string.settings_notifs_workout_debrief_title),
+                            stringResource(R.string.settings_notifs_workout_debrief_subtitle),
+                            profile.notifWorkoutDebrief,
+                        ) { viewModel.updateNotifWorkoutDebrief(it) }
                         if (profile.notifWorkoutDebrief) {
                             SliderSetting(
-                                title = "Délai après séance",
+                                title = stringResource(R.string.settings_notifs_workout_debrief_delay),
                                 value = profile.workoutDebriefDelayMinutes,
                                 range = 5..180,
                                 step = 5,
-                                unit = "min"
+                                unit = stringResource(R.string.settings_unit_minutes),
                             ) { viewModel.updateWorkoutDebriefDelay(it) }
                         }
                     }
                 }
 
                 // ═══ AFFICHAGE ═══
-                SettingsSection("Affichage", Icons.Default.Palette) {
+                SettingsSection(stringResource(R.string.settings_section_appearance), Icons.Default.Palette) {
                     // Mode clair / sombre / auto
                     ChipGroupSetting(
-                        title = "Apparence",
-                        options = listOf("Clair", "Sombre", "Auto"),
+                        title = stringResource(R.string.settings_appearance_mode_title),
+                        options = listOf(
+                            stringResource(R.string.settings_appearance_mode_light),
+                            stringResource(R.string.settings_appearance_mode_dark),
+                            stringResource(R.string.settings_appearance_mode_auto),
+                        ),
                         selectedIndex = when (profile.darkMode) { "light" -> 0; "dark" -> 1; else -> 2 },
                         onSelected = { viewModel.updateDarkMode(when (it) { 0 -> "light"; 1 -> "dark"; else -> "auto" }) }
                     )
 
                     // Sélecteur de palette (thème couleurs)
                     Spacer(Modifier.height(8.dp))
-                    Text("Palette", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-                    Text("La couleur principale est utilisée sur tous les écrans",
+                    Text(stringResource(R.string.settings_appearance_palette_title),
+                        style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.settings_appearance_palette_subtitle),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                     PalettePicker(
@@ -253,26 +307,30 @@ fun SettingsScreen(
                     )
 
                     Spacer(Modifier.height(4.dp))
-                    SwitchSetting("Unités impériales", "Utiliser lbs/inches au lieu de kg/cm",
-                        profile.useImperial) { viewModel.updateUseImperial(it) }
+                    SwitchSetting(
+                        stringResource(R.string.settings_appearance_imperial_title),
+                        stringResource(R.string.settings_appearance_imperial_subtitle),
+                        profile.useImperial,
+                    ) { viewModel.updateUseImperial(it) }
                 }
 
                 // ═══ SAUVEGARDE LOCALE (Drive / OneDrive / Dropbox / local) ═══
-                SettingsSection("Sauvegarde", Icons.Default.CloudSync) {
+                SettingsSection(stringResource(R.string.settings_section_backup), Icons.Default.CloudSync) {
                     com.shredcoach.app.presentation.settings.backup.BackupSettingsSection(
                         snackbar = snackbarHostState
                     )
                 }
 
                 // ═══ COACH PROACTIF IA (gated on LLM consent) ═══
-                SettingsSection("Coach proactif", Icons.Default.AutoAwesome) {
+                SettingsSection(stringResource(R.string.settings_section_coach), Icons.Default.AutoAwesome) {
                     com.shredcoach.app.presentation.settings.coach.CoachSettingsSection()
                 }
 
                 // ═══ MEAL SCANNER ═══
-                SettingsSection("Meal Scanner", Icons.Default.CameraAlt) {
+                SettingsSection(stringResource(R.string.settings_section_meal_scanner), Icons.Default.CameraAlt) {
                     // Provider selector
-                    Text("Fournisseur Vision", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.settings_meal_scanner_provider_label),
+                        style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
                     Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         listOf(
                             "GEMINI" to "Gemini",
@@ -300,7 +358,7 @@ fun SettingsScreen(
                     // ─── Config Gemini ───
                     if (profile.mealScanProvider == "GEMINI") {
                         ChipGroupSetting(
-                            title = "Modèle Gemini",
+                            title = stringResource(R.string.settings_meal_scanner_gemini_model_label),
                             options = listOf("2.5 Flash", "2.0 Flash", "3 Preview"),
                             selectedIndex = when (profile.geminiModel) { "gemini-2.0-flash" -> 1; "gemini-3-flash-preview" -> 2; else -> 0 },
                             onSelected = { viewModel.updateGeminiModel(when (it) { 1 -> "gemini-2.0-flash"; 2 -> "gemini-3-flash-preview"; else -> "gemini-2.5-flash" }) }
@@ -309,7 +367,7 @@ fun SettingsScreen(
                         OutlinedTextField(
                             value = state.geminiApiKey,
                             onValueChange = { viewModel.updateGeminiApiKey(it.trim()) },
-                            label = { Text("Clé API Gemini") },
+                            label = { Text(stringResource(R.string.settings_meal_scanner_api_key_gemini)) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             visualTransformation = if (showGeminiKey) androidx.compose.ui.text.input.VisualTransformation.None
@@ -318,26 +376,27 @@ fun SettingsScreen(
                                 Row {
                                     IconButton(onClick = {
                                         clipboardMgr.getText()?.text?.let { viewModel.updateGeminiApiKey(it.trim()) }
-                                    }) { Icon(Icons.Default.ContentPaste, "Coller", tint = OrangeVibrant) }
+                                    }) { Icon(Icons.Default.ContentPaste, stringResource(R.string.cd_paste), tint = OrangeVibrant) }
                                     IconButton(onClick = { showGeminiKey = !showGeminiKey }) {
-                                        Icon(if (showGeminiKey) Icons.Default.VisibilityOff else Icons.Default.Visibility, "Afficher")
+                                        Icon(if (showGeminiKey) Icons.Default.VisibilityOff else Icons.Default.Visibility, stringResource(R.string.cd_show_password))
                                     }
                                 }
                             },
                             placeholder = { Text("AIzaSy...", style = MaterialTheme.typography.bodySmall) },
-                            supportingText = { Text("Gratuit sur aistudio.google.com/apikey") }
+                            supportingText = { Text(stringResource(R.string.settings_meal_scanner_gemini_support)) }
                         )
                     }
 
                     // ─── Config Groq ───
                     if (profile.mealScanProvider == "GROQ") {
-                        Text("Llama 4 Scout 17B", style = MaterialTheme.typography.labelMedium,
+                        Text(stringResource(R.string.settings_meal_scanner_groq_model),
+                            style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                         var showGroqKey by remember { mutableStateOf(false) }
                         OutlinedTextField(
                             value = state.groqMealApiKey,
                             onValueChange = { viewModel.updateGroqMealApiKey(it.trim()) },
-                            label = { Text("Clé API Groq") },
+                            label = { Text(stringResource(R.string.settings_meal_scanner_api_key_groq)) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             visualTransformation = if (showGroqKey) androidx.compose.ui.text.input.VisualTransformation.None
@@ -346,26 +405,27 @@ fun SettingsScreen(
                                 Row {
                                     IconButton(onClick = {
                                         clipboardMgr.getText()?.text?.let { viewModel.updateGroqMealApiKey(it.trim()) }
-                                    }) { Icon(Icons.Default.ContentPaste, "Coller", tint = OrangeVibrant) }
+                                    }) { Icon(Icons.Default.ContentPaste, stringResource(R.string.cd_paste), tint = OrangeVibrant) }
                                     IconButton(onClick = { showGroqKey = !showGroqKey }) {
-                                        Icon(if (showGroqKey) Icons.Default.VisibilityOff else Icons.Default.Visibility, "Afficher")
+                                        Icon(if (showGroqKey) Icons.Default.VisibilityOff else Icons.Default.Visibility, stringResource(R.string.cd_show_password))
                                     }
                                 }
                             },
                             placeholder = { Text("gsk_...", style = MaterialTheme.typography.bodySmall) },
-                            supportingText = { Text("Gratuit sur console.groq.com/keys") }
+                            supportingText = { Text(stringResource(R.string.settings_meal_scanner_groq_support)) }
                         )
                     }
 
                     // ─── Config Mistral ───
                     if (profile.mealScanProvider == "MISTRAL") {
-                        Text("Mistral Small (gratuit)", style = MaterialTheme.typography.labelMedium,
+                        Text(stringResource(R.string.settings_meal_scanner_mistral_model),
+                            style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                         var showMistralKey by remember { mutableStateOf(false) }
                         OutlinedTextField(
                             value = state.mistralApiKey,
                             onValueChange = { viewModel.updateMistralApiKey(it.trim()) },
-                            label = { Text("Clé API Mistral") },
+                            label = { Text(stringResource(R.string.settings_meal_scanner_api_key_mistral)) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             visualTransformation = if (showMistralKey) androidx.compose.ui.text.input.VisualTransformation.None
@@ -374,22 +434,23 @@ fun SettingsScreen(
                                 Row {
                                     IconButton(onClick = {
                                         clipboardMgr.getText()?.text?.let { viewModel.updateMistralApiKey(it.trim()) }
-                                    }) { Icon(Icons.Default.ContentPaste, "Coller", tint = OrangeVibrant) }
+                                    }) { Icon(Icons.Default.ContentPaste, stringResource(R.string.cd_paste), tint = OrangeVibrant) }
                                     IconButton(onClick = { showMistralKey = !showMistralKey }) {
-                                        Icon(if (showMistralKey) Icons.Default.VisibilityOff else Icons.Default.Visibility, "Afficher")
+                                        Icon(if (showMistralKey) Icons.Default.VisibilityOff else Icons.Default.Visibility, stringResource(R.string.cd_show_password))
                                     }
                                 }
                             },
                             placeholder = { Text("eRTo...", style = MaterialTheme.typography.bodySmall) },
-                            supportingText = { Text("Gratuit (plan Experiment) sur console.mistral.ai") }
+                            supportingText = { Text(stringResource(R.string.settings_meal_scanner_mistral_support)) }
                         )
                     }
                 }
 
                 // ═══ ASSISTANT IA (Shreddy) ═══
-                SettingsSection("Assistant Shreddy", Icons.Default.AutoAwesome) {
+                SettingsSection(stringResource(R.string.settings_section_assistant), Icons.Default.AutoAwesome) {
                     // Provider selector
-                    Text("Fournisseur IA", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.settings_assistant_provider_label),
+                        style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
                     Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         listOf("GROQ" to "Groq", "OPENAI" to "OpenAI", "CLAUDE" to "Claude").forEach { (code, label) ->
                             val selected = profile.llmProvider == code
@@ -415,7 +476,7 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = state.llmApiKey,
                         onValueChange = { viewModel.updateLlmApiKey(it.trim()) },
-                        label = { Text("Clé API") },
+                        label = { Text(stringResource(R.string.settings_assistant_api_key)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         visualTransformation = if (showKey) androidx.compose.ui.text.input.VisualTransformation.None
@@ -428,15 +489,15 @@ fun SettingsScreen(
                                         viewModel.updateLlmApiKey(pasted.trim())
                                     }
                                 }) {
-                                    Icon(Icons.Default.ContentPaste, "Coller", tint = OrangeVibrant)
+                                    Icon(Icons.Default.ContentPaste, stringResource(R.string.cd_paste), tint = OrangeVibrant)
                                 }
                                 // Toggle visibilité
                                 IconButton(onClick = { showKey = !showKey }) {
-                                    Icon(if (showKey) Icons.Default.VisibilityOff else Icons.Default.Visibility, "Afficher/masquer")
+                                    Icon(if (showKey) Icons.Default.VisibilityOff else Icons.Default.Visibility, stringResource(R.string.cd_toggle_password))
                                 }
                             }
                         },
-                        placeholder = { Text("sk-... ou gsk-...", style = MaterialTheme.typography.bodySmall) },
+                        placeholder = { Text(stringResource(R.string.settings_assistant_api_key_placeholder), style = MaterialTheme.typography.bodySmall) },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Ascii,
                             imeAction = ImeAction.Done,
@@ -447,21 +508,22 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = profile.llmModel,
                         onValueChange = { viewModel.updateLlmModel(it) },
-                        label = { Text("Modèle (optionnel)") },
+                        label = { Text(stringResource(R.string.settings_assistant_model_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         placeholder = {
                             val defaultModel = when (profile.llmProvider) {
                                 "OPENAI" -> "gpt-4o-mini"; "CLAUDE" -> "claude-sonnet-4-20250514"; else -> "openai/gpt-oss-120b"
                             }
-                            Text("Défaut : $defaultModel", style = MaterialTheme.typography.bodySmall,
+                            Text(stringResource(R.string.settings_assistant_model_default, defaultModel),
+                                style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                         }
                     )
                 }
 
                 // ═══ CONFIDENTIALITÉ & DONNÉES (RGPD) ═══
-                SettingsSection("Confidentialité & données", Icons.Default.PrivacyTip) {
+                SettingsSection(stringResource(R.string.settings_section_privacy), Icons.Default.PrivacyTip) {
                     com.shredcoach.app.presentation.legal.LegalSettingsSection(
                         navController = navController,
                         snackbar = snackbarHostState
@@ -469,9 +531,9 @@ fun SettingsScreen(
                 }
 
                 // ═══ APP ═══
-                SettingsSection("À propos", Icons.Default.Info) {
+                SettingsSection(stringResource(R.string.settings_section_about), Icons.Default.Info) {
                     Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Version", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.settings_about_version_label), style = MaterialTheme.typography.bodyMedium)
                         Text("2.0.0", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                     }
                 }
@@ -494,14 +556,14 @@ private fun ProfileHeaderCard(
     val context = androidx.compose.ui.platform.LocalContext.current
     val displayName = "${profile.firstName.replaceFirstChar { it.uppercase() }} ${profile.lastName.replaceFirstChar { it.uppercase() }}".trim()
     val goalLabel = when (profile.goal) {
-        com.shredcoach.app.data.local.entity.FitnessGoal.SHRED -> "Sèche"
-        com.shredcoach.app.data.local.entity.FitnessGoal.BULK -> "Prise de masse"
-        com.shredcoach.app.data.local.entity.FitnessGoal.MAINTAIN -> "Maintien"
+        com.shredcoach.app.data.local.entity.FitnessGoal.SHRED -> stringResource(R.string.fitness_goal_shred)
+        com.shredcoach.app.data.local.entity.FitnessGoal.BULK -> stringResource(R.string.fitness_goal_bulk)
+        com.shredcoach.app.data.local.entity.FitnessGoal.MAINTAIN -> stringResource(R.string.fitness_goal_maintain)
     }
     val levelLabel = when (profile.level) {
-        com.shredcoach.app.data.local.entity.FitnessLevel.BEGINNER -> "Débutant"
-        com.shredcoach.app.data.local.entity.FitnessLevel.INTERMEDIATE -> "Intermédiaire"
-        com.shredcoach.app.data.local.entity.FitnessLevel.ADVANCED -> "Confirmé"
+        com.shredcoach.app.data.local.entity.FitnessLevel.BEGINNER -> stringResource(R.string.fitness_level_beginner)
+        com.shredcoach.app.data.local.entity.FitnessLevel.INTERMEDIATE -> stringResource(R.string.fitness_level_intermediate)
+        com.shredcoach.app.data.local.entity.FitnessLevel.ADVANCED -> stringResource(R.string.fitness_level_advanced)
     }
 
     Card(
@@ -536,7 +598,7 @@ private fun ProfileHeaderCard(
                             coil.compose.AsyncImage(
                                 model = coil.request.ImageRequest.Builder(context)
                                     .data(java.io.File(photoPath)).crossfade(true).build(),
-                                contentDescription = "Photo de profil",
+                                contentDescription = stringResource(R.string.cd_profile_photo),
                                 contentScale = androidx.compose.ui.layout.ContentScale.Crop,
                                 modifier = Modifier.fillMaxSize()
                                     .clip(androidx.compose.foundation.shape.CircleShape)
@@ -552,10 +614,11 @@ private fun ProfileHeaderCard(
                     }
 
                     Column(Modifier.weight(1f)) {
-                        Text("Bonjour 👋", style = MaterialTheme.typography.labelMedium,
+                        Text(stringResource(R.string.settings_profile_header_greeting),
+                            style = MaterialTheme.typography.labelMedium,
                             color = Color.White.copy(alpha = 0.85f), fontWeight = FontWeight.Medium)
                         Text(
-                            displayName.ifBlank { "Athlète" },
+                            displayName.ifBlank { stringResource(R.string.settings_profile_header_default_name) },
                             style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp),
                             fontWeight = FontWeight.ExtraBold, color = Color.White,
                             maxLines = 1, overflow = TextOverflow.Ellipsis
@@ -575,13 +638,13 @@ private fun ProfileHeaderCard(
                 // ─── Stats row ───
                 Box(Modifier.fillMaxWidth().height(1.dp).background(Color.White.copy(alpha = 0.18f)))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-                    HeaderStat("${profile.currentWeightKg.toInt()}", "kg")
+                    HeaderStat("${profile.currentWeightKg.toInt()}", stringResource(R.string.settings_profile_header_stat_kg))
                     HeaderDivider()
-                    HeaderStat("${profile.targetWeightKg.toInt()}", "objectif")
+                    HeaderStat("${profile.targetWeightKg.toInt()}", stringResource(R.string.settings_profile_header_stat_target))
                     HeaderDivider()
-                    HeaderStat("${profile.totalWorkouts}", "séances")
+                    HeaderStat("${profile.totalWorkouts}", stringResource(R.string.settings_profile_header_stat_workouts))
                     HeaderDivider()
-                    HeaderStatWithIcon("${profile.currentStreakDays}", "streak", Icons.Default.LocalFireDepartment)
+                    HeaderStatWithIcon("${profile.currentStreakDays}", stringResource(R.string.settings_profile_header_stat_streak), Icons.Default.LocalFireDepartment)
                 }
             }
         }
@@ -635,6 +698,58 @@ private fun HeaderDivider() {
 // COMPOSANTS SETTINGS
 // ═══════════════════════════════════════
 
+/**
+ * Entry de langue style "row clickable" (≠ section expandable). UX standard
+ * Android Settings : tap → écran dédié au lieu d'inline. Cohérent avec le
+ * pattern "Profile" / "Privacy Policy" déjà utilisé dans cet écran.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LanguageSettingEntry(
+    profile: com.shredcoach.app.data.local.entity.UserProfileEntity,
+    onClick: () -> Unit,
+) {
+    val current = remember(profile.languageTag) {
+        com.shredcoach.app.domain.locale.AppLocale.fromTag(profile.languageTag)
+    }
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Icon(
+                Icons.Default.Language,
+                contentDescription = null,
+                tint = OrangeVibrant,
+                modifier = Modifier.size(22.dp),
+            )
+            Column(Modifier.weight(1f)) {
+                Text(
+                    androidx.compose.ui.res.stringResource(com.shredcoach.app.R.string.settings_section_language_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    "${current.flag} ${current.displayNameNative}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+            }
+            Icon(
+                Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+            )
+        }
+    }
+}
+
 @Composable
 private fun SettingsSection(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, content: @Composable ColumnScope.() -> Unit) {
     var expanded by remember { mutableStateOf(false) }
@@ -656,7 +771,7 @@ private fun SettingsSection(title: String, icon: androidx.compose.ui.graphics.ve
             ) {
                 Icon(icon, null, Modifier.size(24.dp), tint = OrangeVibrant)
                 Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                Icon(Icons.Default.ExpandMore, "Toggle", Modifier.size(24.dp).rotate(chevronRotation),
+                Icon(Icons.Default.ExpandMore, stringResource(R.string.cd_toggle), Modifier.size(24.dp).rotate(chevronRotation),
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
             }
             // Contenu collapsible
@@ -754,11 +869,12 @@ private fun PalettePicker(
     // couleurs Material You extraites du wallpaper. Preview immédiat de l'effet
     // dynamic. Sur API < 31, l'option n'est pas affichée (Theme.kt fallback
     // déjà sunset si la clé "system" arrive sur un OS trop vieux).
+    val systemPaletteName = stringResource(R.string.settings_appearance_palette_system)
     val systemPalette: ShredPalette? = if (supportsDynamic) {
         val dyn = if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         ShredPalette(
             key = SYSTEM_PALETTE_KEY,
-            displayName = "Système",
+            displayName = systemPaletteName,
             icon = "✨",
             primary = dyn.primary,
             primaryContainer = dyn.primaryContainer,

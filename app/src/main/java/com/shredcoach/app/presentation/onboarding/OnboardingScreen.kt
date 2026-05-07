@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.EquipmentType
 import com.shredcoach.app.data.local.entity.FitnessGoal
 import com.shredcoach.app.data.local.entity.FitnessLevel
@@ -103,7 +105,7 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
                 TextButton(onClick = { viewModel.prevPage() }) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, null, Modifier.size(18.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("Retour")
+                    Text(stringResource(R.string.onboarding_nav_back))
                 }
             } else Spacer(Modifier.width(1.dp))
 
@@ -114,7 +116,7 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
                     shape = RoundedCornerShape(12.dp),
                     enabled = when (state.currentPage) { 2 -> state.firstName.isNotBlank(); else -> true }
                 ) {
-                    Text("Suivant", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.onboarding_nav_next), fontWeight = FontWeight.Bold)
                     Spacer(Modifier.width(4.dp))
                     Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(18.dp))
                 }
@@ -127,7 +129,7 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
                 ) {
                     Icon(Icons.Default.Check, null, Modifier.size(20.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("C'est parti !", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.onboarding_nav_finish), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -153,30 +155,81 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
 // PAGES
 // ═══════════════════════════════════════
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable private fun WelcomePage() {
+    var showLanguagePicker by remember { mutableStateOf(false) }
+    val langVm: com.shredcoach.app.presentation.settings.language.LanguageSettingsViewModel = hiltViewModel()
+    val currentLocale by langVm.currentLocale.collectAsState()
+
     Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         com.shredcoach.app.presentation.common.ShredCoachLogo(size = 96.dp)
         Spacer(Modifier.height(24.dp))
-        Text("ShredCoach", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold, color = OrangeVibrant)
+        Text(stringResource(R.string.app_name), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold, color = OrangeVibrant)
         Spacer(Modifier.height(12.dp))
-        Text("Ton coach sportif & nutrition", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+        Text(stringResource(R.string.onboarding_welcome_tagline),
+            style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
         Spacer(Modifier.height(32.dp))
-        Text("Atteins ton physique de rêve avec un programme personnalisé, un suivi intelligent et un coaching en temps réel.",
+        Text(stringResource(R.string.onboarding_welcome_pitch),
             style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        Spacer(Modifier.height(24.dp))
+        // Bouton langue discret — auto-détection système au 1er launch (LocaleManager
+        // applyPersistedOrDetect), modifiable ici pour les users dont la langue
+        // système ne match pas leur préférence (ex: téléphone EN d'un user FR).
+        TextButton(onClick = { showLanguagePicker = true }) {
+            Text(
+                "${currentLocale.flag}  ${currentLocale.displayNameNative}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            )
+            Spacer(Modifier.width(6.dp))
+            Icon(Icons.Default.ExpandMore, null, Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+        }
+    }
+
+    if (showLanguagePicker) {
+        ModalBottomSheet(onDismissRequest = { showLanguagePicker = false }) {
+            Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp).padding(bottom = 24.dp)) {
+                Text(
+                    androidx.compose.ui.res.stringResource(com.shredcoach.app.R.string.onboarding_language_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    androidx.compose.ui.res.stringResource(com.shredcoach.app.R.string.onboarding_language_subtitle),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+                Spacer(Modifier.height(16.dp))
+                com.shredcoach.app.presentation.settings.language.LanguagePickerSection(
+                    viewModel = langVm,
+                )
+            }
+        }
     }
 }
 
 @Composable private fun FeaturesPage() {
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
-        Text("Ce que ShredCoach fait pour toi", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.onboarding_features_title),
+            style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(24.dp))
-        FeatureItem(Icons.Default.FitnessCenter, "Séances Full Body & Split", "Générateur intelligent (Full Body, Push/Pull/Legs, …), chronomètre, suivi des poids", OrangeVibrant)
+        FeatureItem(Icons.Default.FitnessCenter,
+            stringResource(R.string.onboarding_features_workout_title),
+            stringResource(R.string.onboarding_features_workout_desc), OrangeVibrant)
         Spacer(Modifier.height(16.dp))
-        FeatureItem(Icons.Default.Restaurant, "Suivi Nutrition", "57 aliments, tracking macros, objectifs personnalisés", NeonGreen)
+        FeatureItem(Icons.Default.Restaurant,
+            stringResource(R.string.onboarding_features_nutrition_title),
+            stringResource(R.string.onboarding_features_nutrition_desc), NeonGreen)
         Spacer(Modifier.height(16.dp))
-        FeatureItem(Icons.Default.Analytics, "Dashboard BI", "Graphiques, records, tendances, comparaisons, export CSV", Color(0xFF3B82F6))
+        FeatureItem(Icons.Default.Analytics,
+            stringResource(R.string.onboarding_features_stats_title),
+            stringResource(R.string.onboarding_features_stats_desc), Color(0xFF3B82F6))
         Spacer(Modifier.height(16.dp))
-        FeatureItem(Icons.Default.Notifications, "Coach 24/7", "Rappels repas, shakers, motivation, suivi sommeil", Color(0xFF8B5CF6))
+        FeatureItem(Icons.Default.Notifications,
+            stringResource(R.string.onboarding_features_coach_title),
+            stringResource(R.string.onboarding_features_coach_desc), Color(0xFF8B5CF6))
     }
 }
 
@@ -194,22 +247,30 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
 
 @Composable private fun NamePage(state: OnboardingState, vm: OnboardingViewModel) {
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
-        Text("Comment tu t'appelles ?", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.onboarding_name_title),
+            style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
-        Text("Pour personnaliser ton expérience", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        Text(stringResource(R.string.onboarding_name_subtitle),
+            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         Spacer(Modifier.height(32.dp))
-        OutlinedTextField(state.firstName, { vm.onFirstNameChanged(it) }, label = { Text("Prénom *") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+        OutlinedTextField(state.firstName, { vm.onFirstNameChanged(it) },
+            label = { Text(stringResource(R.string.onboarding_name_first_label)) },
+            modifier = Modifier.fillMaxWidth(), singleLine = true)
         Spacer(Modifier.height(12.dp))
-        OutlinedTextField(state.lastName, { vm.onLastNameChanged(it) }, label = { Text("Nom (optionnel)") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+        OutlinedTextField(state.lastName, { vm.onLastNameChanged(it) },
+            label = { Text(stringResource(R.string.onboarding_name_last_label)) },
+            modifier = Modifier.fillMaxWidth(), singleLine = true)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable private fun BodyPage(state: OnboardingState, vm: OnboardingViewModel, navController: androidx.navigation.NavController? = null) {
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
-        Text("Ton physique actuel", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.onboarding_body_title),
+            style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
-        Text("Pour calculer tes besoins et suivre ta progression", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        Text(stringResource(R.string.onboarding_body_subtitle),
+            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         Spacer(Modifier.height(20.dp))
 
         // ─── CTA Body Scanner IA (optionnel) ───
@@ -227,10 +288,10 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
                 ) {
                     Icon(Icons.Default.Accessibility, null, Modifier.size(22.dp), tint = androidx.compose.ui.graphics.Color(0xFF00E5FF))
                     Column(Modifier.weight(1f)) {
-                        Text("Scanner IA (optionnel)",
+                        Text(stringResource(R.string.onboarding_body_scanner_title),
                             style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold,
                             color = androidx.compose.ui.graphics.Color.White)
-                        Text("Photo → mesures auto-remplies",
+                        Text(stringResource(R.string.onboarding_body_scanner_subtitle),
                             style = MaterialTheme.typography.labelSmall,
                             color = androidx.compose.ui.graphics.Color(0xFF00E5FF).copy(alpha = 0.7f))
                     }
@@ -240,8 +301,10 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
             Spacer(Modifier.height(16.dp))
         }
 
+        val sexMale = stringResource(R.string.onboarding_body_sex_male)
+        val sexFemale = stringResource(R.string.onboarding_body_sex_female)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            listOf("M" to "Homme", "F" to "Femme").forEach { (code, label) ->
+            listOf("M" to sexMale, "F" to sexFemale).forEach { (code, label) ->
                 val sel = state.sex == code
                 Surface(
                     onClick = { vm.onSexChanged(code) },
@@ -259,27 +322,44 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
         }
         Spacer(Modifier.height(16.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedTextField(state.age, { vm.onAgeChanged(it) }, label = { Text("Âge") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f), singleLine = true)
-            OutlinedTextField(state.height, { vm.onHeightChanged(it) }, label = { Text("Taille (cm)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f), singleLine = true)
+            OutlinedTextField(state.age, { vm.onAgeChanged(it) },
+                label = { Text(stringResource(R.string.onboarding_body_age_label)) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f), singleLine = true)
+            OutlinedTextField(state.height, { vm.onHeightChanged(it) },
+                label = { Text(stringResource(R.string.onboarding_body_height_label)) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f), singleLine = true)
         }
         Spacer(Modifier.height(12.dp))
-        OutlinedTextField(state.weight, { vm.onWeightChanged(it) }, label = { Text("Poids actuel (kg)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth(), singleLine = true)
+        OutlinedTextField(state.weight, { vm.onWeightChanged(it) },
+            label = { Text(stringResource(R.string.onboarding_body_weight_label)) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth(), singleLine = true)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable private fun GoalPage(state: OnboardingState, vm: OnboardingViewModel) {
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
-        Text("Ton objectif", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.onboarding_goal_title),
+            style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
-        Text("Qu'est-ce que tu veux atteindre ?", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        Text(stringResource(R.string.onboarding_goal_subtitle),
+            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         Spacer(Modifier.height(32.dp))
 
-        GoalCard(Icons.Default.LocalFireDepartment, "Sèche", "Perdre du gras, abdos visibles", FitnessGoal.SHRED, state.goal == FitnessGoal.SHRED) { vm.onGoalChanged(FitnessGoal.SHRED) }
+        GoalCard(Icons.Default.LocalFireDepartment,
+            stringResource(R.string.fitness_goal_shred),
+            stringResource(R.string.onboarding_goal_shred_desc),
+            FitnessGoal.SHRED, state.goal == FitnessGoal.SHRED) { vm.onGoalChanged(FitnessGoal.SHRED) }
         Spacer(Modifier.height(12.dp))
-        GoalCard(Icons.Default.FitnessCenter, "Prise de masse", "Gagner du muscle et de la force", FitnessGoal.BULK, state.goal == FitnessGoal.BULK) { vm.onGoalChanged(FitnessGoal.BULK) }
+        GoalCard(Icons.Default.FitnessCenter,
+            stringResource(R.string.fitness_goal_bulk),
+            stringResource(R.string.onboarding_goal_bulk_desc),
+            FitnessGoal.BULK, state.goal == FitnessGoal.BULK) { vm.onGoalChanged(FitnessGoal.BULK) }
         Spacer(Modifier.height(12.dp))
-        GoalCard(Icons.Default.Balance, "Maintien", "Garder la forme et la condition", FitnessGoal.MAINTAIN, state.goal == FitnessGoal.MAINTAIN) { vm.onGoalChanged(FitnessGoal.MAINTAIN) }
+        GoalCard(Icons.Default.Balance,
+            stringResource(R.string.fitness_goal_maintain),
+            stringResource(R.string.onboarding_goal_maintain_desc),
+            FitnessGoal.MAINTAIN, state.goal == FitnessGoal.MAINTAIN) { vm.onGoalChanged(FitnessGoal.MAINTAIN) }
     }
 }
 
@@ -313,13 +393,22 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable private fun LevelEquipmentPage(state: OnboardingState, vm: OnboardingViewModel) {
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
-        Text("Ton niveau & équipement", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.onboarding_level_title),
+            style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(24.dp))
 
-        Text("Niveau", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.onboarding_level_section_label),
+            style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(8.dp))
+        val levelBeginner = stringResource(R.string.onboarding_level_beginner_short)
+        val levelIntermediate = stringResource(R.string.onboarding_level_intermediate_short)
+        val levelAdvanced = stringResource(R.string.onboarding_level_advanced_short)
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            listOf(FitnessLevel.BEGINNER to "Débutant", FitnessLevel.INTERMEDIATE to "Inter\nmédiaire", FitnessLevel.ADVANCED to "Avancé").forEach { (level, label) ->
+            listOf(
+                FitnessLevel.BEGINNER to levelBeginner,
+                FitnessLevel.INTERMEDIATE to levelIntermediate,
+                FitnessLevel.ADVANCED to levelAdvanced,
+            ).forEach { (level, label) ->
                 val selected = state.level == level
                 Surface(
                     onClick = { vm.onLevelChanged(level) },
@@ -345,14 +434,24 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
         }
 
         Spacer(Modifier.height(24.dp))
-        Text("Équipement disponible", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.onboarding_equipment_section_label),
+            style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(8.dp))
 
-        EquipCard(Icons.Default.Warehouse, "Salle complète", "Machines + poids libres", EquipmentType.FULL_GYM, state.equipment == EquipmentType.FULL_GYM) { vm.onEquipmentChanged(EquipmentType.FULL_GYM) }
+        EquipCard(Icons.Default.Warehouse,
+            stringResource(R.string.equipment_full_gym),
+            stringResource(R.string.onboarding_equipment_full_gym_desc),
+            EquipmentType.FULL_GYM, state.equipment == EquipmentType.FULL_GYM) { vm.onEquipmentChanged(EquipmentType.FULL_GYM) }
         Spacer(Modifier.height(8.dp))
-        EquipCard(Icons.Default.Home, "Home gym", "Haltères et barres", EquipmentType.HOME_GYM, state.equipment == EquipmentType.HOME_GYM) { vm.onEquipmentChanged(EquipmentType.HOME_GYM) }
+        EquipCard(Icons.Default.Home,
+            stringResource(R.string.equipment_home_gym),
+            stringResource(R.string.onboarding_equipment_home_gym_desc),
+            EquipmentType.HOME_GYM, state.equipment == EquipmentType.HOME_GYM) { vm.onEquipmentChanged(EquipmentType.HOME_GYM) }
         Spacer(Modifier.height(8.dp))
-        EquipCard(Icons.Default.AccessibilityNew, "Poids du corps", "Aucun équipement", EquipmentType.BODYWEIGHT, state.equipment == EquipmentType.BODYWEIGHT) { vm.onEquipmentChanged(EquipmentType.BODYWEIGHT) }
+        EquipCard(Icons.Default.AccessibilityNew,
+            stringResource(R.string.equipment_bodyweight),
+            stringResource(R.string.onboarding_equipment_bodyweight_desc),
+            EquipmentType.BODYWEIGHT, state.equipment == EquipmentType.BODYWEIGHT) { vm.onEquipmentChanged(EquipmentType.BODYWEIGHT) }
     }
 }
 
@@ -391,38 +490,45 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
     }
 
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
-        Text("Objectifs nutrition", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.onboarding_nutrition_title),
+            style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
-        Text("Calculé automatiquement selon ton profil", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        Text(stringResource(R.string.onboarding_nutrition_subtitle),
+            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         Spacer(Modifier.height(24.dp))
 
         // TDEE
         Card(colors = CardDefaults.cardColors(containerColor = OrangeVibrant.copy(alpha = 0.08f))) {
             Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("TDEE estimé", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-                Text("$tdee kcal/jour", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
+                Text(stringResource(R.string.onboarding_nutrition_tdee_label),
+                    style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                Text(stringResource(R.string.onboarding_nutrition_tdee_value, tdee),
+                    style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
                 Text(when (state.goal) {
-                    FitnessGoal.SHRED -> "Déficit de 400 kcal pour sèche"
-                    FitnessGoal.BULK -> "Surplus de 300 kcal pour prise de masse"
-                    FitnessGoal.MAINTAIN -> "Maintenance calorique"
+                    FitnessGoal.SHRED -> stringResource(R.string.onboarding_nutrition_goal_shred_hint)
+                    FitnessGoal.BULK -> stringResource(R.string.onboarding_nutrition_goal_bulk_hint)
+                    FitnessGoal.MAINTAIN -> stringResource(R.string.onboarding_nutrition_goal_maintain_hint)
                 }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
             }
         }
 
         Spacer(Modifier.height(20.dp))
 
-        OutlinedTextField(state.targetCalories, { vm.onCaloriesChanged(it) }, label = { Text("Calories cibles (kcal)") },
+        OutlinedTextField(state.targetCalories, { vm.onCaloriesChanged(it) },
+            label = { Text(stringResource(R.string.onboarding_nutrition_calories_label)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth(), singleLine = true)
         Spacer(Modifier.height(12.dp))
-        OutlinedTextField(state.targetProteins, { vm.onProteinsChanged(it) }, label = { Text("Protéines cibles (g)") },
+        OutlinedTextField(state.targetProteins, { vm.onProteinsChanged(it) },
+            label = { Text(stringResource(R.string.onboarding_nutrition_proteins_label)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth(), singleLine = true,
-            supportingText = { Text("Recommandé : 2.2g par kg de poids") })
+            supportingText = { Text(stringResource(R.string.onboarding_nutrition_proteins_hint)) })
 
         Spacer(Modifier.height(24.dp))
         Card(colors = CardDefaults.cardColors(containerColor = NeonGreen.copy(alpha = 0.08f))) {
             Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Icon(Icons.Default.CheckCircle, null, Modifier.size(24.dp), tint = NeonGreen)
-                Text("Tu pourras modifier tout ça plus tard dans les paramètres.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                Text(stringResource(R.string.onboarding_nutrition_editable_later),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             }
         }
     }
@@ -506,7 +612,7 @@ private fun GoogleBackupPage(
         }
         Spacer(Modifier.height(24.dp))
         Text(
-            "Protège tes données",
+            stringResource(R.string.onboarding_backup_title),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.fillMaxWidth(),
@@ -514,7 +620,7 @@ private fun GoogleBackupPage(
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            "Connecte ton compte Google pour sauvegarder automatiquement tes séances, repas, photos et conversations dans ton Drive privé.",
+            stringResource(R.string.onboarding_backup_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
             modifier = Modifier.fillMaxWidth(),
@@ -522,11 +628,11 @@ private fun GoogleBackupPage(
         )
         Spacer(Modifier.height(28.dp))
 
-        BackupBenefit(Icons.Default.Schedule, "Sauvegarde auto chaque nuit à 3h")
+        BackupBenefit(Icons.Default.Schedule, stringResource(R.string.onboarding_backup_benefit_auto))
         Spacer(Modifier.height(12.dp))
-        BackupBenefit(Icons.AutoMirrored.Filled.TrendingUp, "Restaure tout sur n'importe quel appareil")
+        BackupBenefit(Icons.AutoMirrored.Filled.TrendingUp, stringResource(R.string.onboarding_backup_benefit_restore))
         Spacer(Modifier.height(12.dp))
-        BackupBenefit(Icons.Default.Lock, "Dossier Drive privé, invisible pour toi")
+        BackupBenefit(Icons.Default.Lock, stringResource(R.string.onboarding_backup_benefit_private))
 
         Spacer(Modifier.height(32.dp))
 
@@ -550,16 +656,16 @@ private fun GoogleBackupPage(
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
                     Spacer(Modifier.width(8.dp))
-                    Text("Connexion…", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.onboarding_backup_connecting), fontWeight = FontWeight.Bold)
                 } else {
                     Icon(Icons.Default.Login, null, Modifier.size(20.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Continuer avec Google", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.onboarding_backup_continue_with_google), fontWeight = FontWeight.Bold)
                 }
             }
             Spacer(Modifier.height(12.dp))
             Text(
-                "Plus tard — tu pourras le faire depuis les paramètres",
+                stringResource(R.string.onboarding_backup_skip_hint),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 modifier = Modifier.fillMaxWidth(),
@@ -576,7 +682,7 @@ private fun GoogleBackupPage(
                     Icon(Icons.Default.CheckCircle, null, Modifier.size(28.dp), tint = NeonGreen)
                     Column(Modifier.weight(1f)) {
                         Text(
-                            "Connecté à Google Drive",
+                            stringResource(R.string.onboarding_backup_linked_title),
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.bodyLarge,
                         )
@@ -597,19 +703,13 @@ private fun GoogleBackupPage(
         AlertDialog(
             onDismissRequest = { showEncryptedRestoreNotice = false },
             icon = { Icon(Icons.Default.Lock, null, tint = OrangeVibrant) },
-            title = { Text("Sauvegarde chiffrée") },
-            text = {
-                Text(
-                    "Cette sauvegarde est chiffrée. Termine d'abord ton onboarding " +
-                        "(quelques infos rapides), puis va dans Réglages → Sauvegarde → " +
-                        "Restaurer pour la rétablir avec ton code de récupération."
-                )
-            },
+            title = { Text(stringResource(R.string.onboarding_backup_encrypted_title)) },
+            text = { Text(stringResource(R.string.onboarding_backup_encrypted_body)) },
             confirmButton = {
                 TextButton(
                     onClick = { showEncryptedRestoreNotice = false },
                     colors = ButtonDefaults.textButtonColors(contentColor = OrangeVibrant),
-                ) { Text("Compris", fontWeight = FontWeight.SemiBold) }
+                ) { Text(stringResource(R.string.onboarding_backup_encrypted_ack), fontWeight = FontWeight.SemiBold) }
             },
         )
     }
@@ -619,13 +719,8 @@ private fun GoogleBackupPage(
         AlertDialog(
             onDismissRequest = { showRestorePrompt = null },
             icon = { Icon(Icons.Default.Restore, null, tint = OrangeVibrant) },
-            title = { Text("Sauvegarde trouvée") },
-            text = {
-                Text(
-                    "On a trouvé une sauvegarde sur ton Drive. Veux-tu la restaurer ? " +
-                        "Toutes tes infos d'onboarding actuelles seront remplacées par celles de la sauvegarde."
-                )
-            },
+            title = { Text(stringResource(R.string.onboarding_backup_found_title)) },
+            text = { Text(stringResource(R.string.onboarding_backup_found_body)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -633,10 +728,12 @@ private fun GoogleBackupPage(
                         showRestorePrompt = null
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = OrangeVibrant),
-                ) { Text("Restaurer", fontWeight = FontWeight.Bold) }
+                ) { Text(stringResource(R.string.onboarding_backup_found_restore), fontWeight = FontWeight.Bold) }
             },
             dismissButton = {
-                TextButton(onClick = { showRestorePrompt = null }) { Text("Plus tard") }
+                TextButton(onClick = { showRestorePrompt = null }) {
+                    Text(stringResource(R.string.onboarding_backup_found_later))
+                }
             },
         )
     }

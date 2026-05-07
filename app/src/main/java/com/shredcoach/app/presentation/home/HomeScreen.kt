@@ -34,12 +34,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.shredcoach.app.R
 import com.shredcoach.app.domain.workout.RoutineCatalog
 import com.shredcoach.app.presentation.common.AnimatedCounter
 import com.shredcoach.app.presentation.common.StaggeredAppear
@@ -82,20 +84,21 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
     // Salutation contextuelle
     val hour = java.time.LocalTime.now().hour
     val timeGreeting = when {
-        hour < 12 -> "Bonjour"
-        hour < 18 -> "Bon après-midi"
-        else -> "Bonsoir"
+        hour < 12 -> stringResource(R.string.home_greeting_morning)
+        hour < 18 -> stringResource(R.string.home_greeting_afternoon)
+        else -> stringResource(R.string.home_greeting_evening)
     }
-    val firstName = userProfile?.firstName?.takeIf { it.isNotBlank() } ?: "Champion"
+    val defaultName = stringResource(R.string.home_greeting_default_name)
+    val firstName = userProfile?.firstName?.takeIf { it.isNotBlank() } ?: defaultName
     // Subtitle : on retire toute référence au streak (la card streak a été
     // supprimée de la home) — sinon dissonance entre "X jours de suite"
     // affiché en sous-titre et l'absence de visualisation associée.
     val subtitle = when {
-        greetingInfo.hasWorkedOutToday -> "Bien joué aujourd'hui !"
-        greetingInfo.isTodayWorkoutDay -> "C'est jour de séance !"
+        greetingInfo.hasWorkedOutToday -> stringResource(R.string.home_subtitle_workout_done)
+        greetingInfo.isTodayWorkoutDay -> stringResource(R.string.home_subtitle_workout_day)
         greetingInfo.lastWorkoutWasYesterday && greetingInfo.lastWorkoutVolume > 0 ->
-            "Super séance hier, ${greetingInfo.lastWorkoutVolume.toInt()} kg soulevés"
-        else -> "On s'y met ?"
+            stringResource(R.string.home_subtitle_yesterday_volume, greetingInfo.lastWorkoutVolume.toInt())
+        else -> stringResource(R.string.home_subtitle_default)
     }
 
     Scaffold(
@@ -109,6 +112,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                     // Avatar + firstName cliquables ensemble (cohérent Strava/Apple).
                     // On wrap dans une Row clickable plutôt qu'un IconButton autour
                     // de la seule icône — le tap couvre toute la zone visuelle.
+                    val profileCd = stringResource(R.string.home_topbar_profile_cd, firstName)
                     Row(
                         modifier = Modifier
                             .padding(start = 8.dp)
@@ -116,7 +120,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                             .clickable { navController.switchTo(Screen.Profile.route) }
                             .padding(horizontal = 8.dp, vertical = 6.dp)
                             .semantics(mergeDescendants = true) {
-                                contentDescription = "Profil de $firstName"
+                                contentDescription = profileCd
                             },
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -157,7 +161,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                         modifier = Modifier.padding(end = 8.dp)
                     ) {
                         IconButton(onClick = { navController.navigate(Screen.Notifications.route) }) {
-                            Icon(Icons.Default.Notifications, "Notifications")
+                            Icon(Icons.Default.Notifications, stringResource(R.string.home_topbar_notifications_cd))
                         }
                     }
                 }
@@ -175,7 +179,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             StaggeredAppear(index = 0) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        "$timeGreeting, $firstName",
+                        stringResource(R.string.home_greeting_full, timeGreeting, firstName),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
@@ -193,7 +197,11 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                         // Le breakdown détaillé par routine apparaît juste en-dessous
                         // si l'user a fait plusieurs routines cette semaine.
                         Text(
-                            text = "${greetingInfo.sessionsThisWeek}/${greetingInfo.totalSessionsPerWeek} cette semaine",
+                            text = stringResource(
+                                R.string.home_sessions_this_week,
+                                greetingInfo.sessionsThisWeek,
+                                greetingInfo.totalSessionsPerWeek,
+                            ),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Medium,
                             color = OrangeVibrant,
@@ -269,18 +277,20 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             val calendarVm: com.shredcoach.app.presentation.calendar.CalendarViewModel = hiltViewModel()
             val calendarState by calendarVm.state.collectAsState()
             calendarState.nextUpcoming?.let { next ->
+                val defaultTitle = stringResource(R.string.home_next_session_default_title)
                 StaggeredAppear(index = 2) {
                     NextSessionWidget(
                         nextDate = next.date,
                         nextTime = next.time,
-                        title = next.title.ifBlank { "Séance planifiée" },
+                        title = next.title.ifBlank { defaultTitle },
                         onClick = { navController.navigate(Screen.Calendar.route) }
                     )
                 }
             }
 
             StaggeredAppear(index = 3) {
-                Text("S'entraîner", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                Text(stringResource(R.string.home_section_workout_title),
+                    style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
             }
 
@@ -324,13 +334,14 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                                 // Pas de maxLines : "GÉNÉRER UNE SÉANCE" en titleLarge bold
                                 // peut juste atteindre la fin sur petits écrans + fontScale
                                 // élevé → on préfère un wrap propre à une ellipsis.
-                                Text("GÉNÉRER UNE SÉANCE", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
+                                Text(stringResource(R.string.home_cta_generate_title),
+                                    style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
                                 Spacer(Modifier.height(4.dp))
                                 // Sub-line agnostique du type de séance — l'utilisateur
                                 // choisira sa routine (FB, Push, Pull, …) sur l'écran de
                                 // génération. Affichage volontairement neutre pour ne pas
                                 // suggérer que l'app est dédiée à un seul type.
-                                Text("${userProfile?.preferredWorkoutDuration ?: 90} min • Adapté à ton niveau",
+                                Text(stringResource(R.string.home_cta_generate_subtitle, userProfile?.preferredWorkoutDuration ?: 90),
                                     style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f),
                                     maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                             }
@@ -373,8 +384,10 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                             }
                             Spacer(Modifier.width(14.dp))
                             Column(Modifier.weight(1f)) {
-                                Text("Séance libre", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                                Text("Compose ta séance au feeling, exercice par exercice", style = MaterialTheme.typography.bodySmall,
+                                Text(stringResource(R.string.home_cta_freestyle_title),
+                                    style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.home_cta_freestyle_subtitle),
+                                    style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), maxLines = 2, lineHeight = 16.sp)
                             }
                             Icon(Icons.Default.ChevronRight, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
@@ -392,9 +405,11 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                             Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Icon(Icons.Default.Favorite, null, Modifier.size(22.dp), tint = Color(0xFFEF4444))
-                                    Text("Mes favoris", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.home_cta_favorites_title),
+                                        style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                                 }
-                                Text("Relancer une séance", style = MaterialTheme.typography.bodySmall,
+                                Text(stringResource(R.string.home_cta_favorites_subtitle),
+                                    style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                                     maxLines = 2, lineHeight = 16.sp)
                             }
@@ -408,9 +423,11 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                             Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Icon(Icons.Default.Build, null, Modifier.size(22.dp), tint = Color(0xFF3B82F6))
-                                    Text("Créer", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.home_cta_create_title),
+                                        style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                                 }
-                                Text("Composer ma séance", style = MaterialTheme.typography.bodySmall,
+                                Text(stringResource(R.string.home_cta_create_subtitle),
+                                    style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                                     maxLines = 2, lineHeight = 16.sp)
                             }
@@ -485,17 +502,22 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        ActionCard(Modifier.weight(1f).fillMaxHeight(), "Exercices", Icons.Default.FitnessCenter, OrangeVibrant) {
+                        ActionCard(Modifier.weight(1f).fillMaxHeight(),
+                            stringResource(R.string.home_action_exercises), Icons.Default.FitnessCenter, OrangeVibrant) {
                             navController.switchTo(Screen.Exercises.route)
                         }
-                        ActionCard(Modifier.weight(1f).fillMaxHeight(), "Mes Stats", Icons.Default.Analytics, NeonGreen) {
+                        ActionCard(Modifier.weight(1f).fillMaxHeight(),
+                            stringResource(R.string.home_action_stats), Icons.Default.Analytics, NeonGreen) {
                             navController.switchTo(Screen.Stats.route)
                         }
                     }
                     Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SmallCard(Modifier.weight(1f).fillMaxHeight(), "Nutrition", Icons.Default.Restaurant) { navController.switchTo(Screen.Nutrition.route) }
-                        SmallCard(Modifier.weight(1f).fillMaxHeight(), "Photos", Icons.Default.CameraAlt) { navController.switchTo(Screen.ProgressPhotos.route) }
-                        SmallCard(Modifier.weight(1f).fillMaxHeight(), "Calendrier", Icons.Default.CalendarMonth) { navController.navigate(Screen.Calendar.route) }
+                        SmallCard(Modifier.weight(1f).fillMaxHeight(),
+                            stringResource(R.string.home_action_nutrition), Icons.Default.Restaurant) { navController.switchTo(Screen.Nutrition.route) }
+                        SmallCard(Modifier.weight(1f).fillMaxHeight(),
+                            stringResource(R.string.home_action_photos), Icons.Default.CameraAlt) { navController.switchTo(Screen.ProgressPhotos.route) }
+                        SmallCard(Modifier.weight(1f).fillMaxHeight(),
+                            stringResource(R.string.home_action_calendar), Icons.Default.CalendarMonth) { navController.navigate(Screen.Calendar.route) }
                     }
                 }
             }
@@ -555,8 +577,8 @@ private fun CollapsibleHeader(
 private fun OtherOptionsHeader(expanded: Boolean, onToggle: () -> Unit) {
     CollapsibleHeader(
         expanded = expanded,
-        labelExpanded = "Moins d'options",
-        labelCollapsed = "Autres options",
+        labelExpanded = stringResource(R.string.home_section_other_options_collapse),
+        labelCollapsed = stringResource(R.string.home_section_other_options_expand),
         onToggle = onToggle,
     )
 }
@@ -565,8 +587,8 @@ private fun OtherOptionsHeader(expanded: Boolean, onToggle: () -> Unit) {
 private fun MoreSectionHeader(expanded: Boolean, onToggle: () -> Unit) {
     CollapsibleHeader(
         expanded = expanded,
-        labelExpanded = "Réduire",
-        labelCollapsed = "Plus",
+        labelExpanded = stringResource(R.string.home_section_more_collapse),
+        labelCollapsed = stringResource(R.string.home_section_more_expand),
         onToggle = onToggle,
     )
 }
@@ -612,12 +634,16 @@ private fun NextSessionWidget(
 ) {
     val today = java.time.LocalDate.now()
     val dayDelta = java.time.temporal.ChronoUnit.DAYS.between(today, nextDate).toInt()
+    // Locale courante de l'app (overlay AppCompatDelegate). On lit Locale.getDefault()
+    // plutôt que Locale.FRANCE figé : les noms de jours/mois suivent la langue choisie
+    // par l'utilisateur (FR/EN/… ).
+    val displayLocale = java.util.Locale.getDefault()
     val relativeLabel = when {
-        dayDelta == 0 -> "Aujourd'hui"
-        dayDelta == 1 -> "Demain"
-        dayDelta in 2..6 -> nextDate.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.FRANCE)
+        dayDelta == 0 -> stringResource(R.string.home_next_session_today)
+        dayDelta == 1 -> stringResource(R.string.home_next_session_tomorrow)
+        dayDelta in 2..6 -> nextDate.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, displayLocale)
             .replaceFirstChar { it.uppercase() }
-        else -> nextDate.format(java.time.format.DateTimeFormatter.ofPattern("EEE d MMM", java.util.Locale.FRANCE))
+        else -> nextDate.format(java.time.format.DateTimeFormatter.ofPattern("EEE d MMM", displayLocale))
             .replaceFirstChar { it.uppercase() }
     }
     val timeLabel = nextTime?.toString()?.substring(0, 5) ?: "—"
@@ -643,7 +669,7 @@ private fun NextSessionWidget(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    nextDate.month.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.FRANCE)
+                    nextDate.month.getDisplayName(java.time.format.TextStyle.SHORT, displayLocale)
                         .uppercase(),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
@@ -656,7 +682,7 @@ private fun NextSessionWidget(
                     maxLines = 1, softWrap = false)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("Prochaine séance · $relativeLabel",
+                Text(stringResource(R.string.home_next_session_label, relativeLabel),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                     fontWeight = FontWeight.Medium)
