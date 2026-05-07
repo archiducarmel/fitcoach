@@ -489,7 +489,7 @@ fun WorkoutSessionScreen(
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
                                 contentColor = OrangeVibrant
                             ) {
-                                Icon(Icons.Default.Add, "Ajouter exercice", Modifier.size(20.dp))
+                                Icon(Icons.Default.Add, stringResource(R.string.workout_cd_add_exercise), Modifier.size(20.dp))
                             }
                         }
                     }
@@ -519,7 +519,7 @@ private fun SessionTopBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBack, modifier = Modifier.size(36.dp)) {
-                Icon(Icons.Default.Close, "Retour", Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                Icon(Icons.Default.Close, stringResource(R.string.workout_cd_back), Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             }
             // Routine de la séance (Full Body, Push, …) + position dans la séance.
             // Format : "Push · 3/8" — affiche le contexte split, indispensable
@@ -537,7 +537,7 @@ private fun SessionTopBar(
             )
             // Bouton vue d'ensemble
             IconButton(onClick = onShowOverview, modifier = Modifier.size(36.dp)) {
-                Icon(Icons.Default.FormatListNumbered, "Vue d'ensemble", Modifier.size(18.dp),
+                Icon(Icons.Default.FormatListNumbered, stringResource(R.string.workout_cd_overview), Modifier.size(18.dp),
                     tint = if (state.showExerciseOverview) OrangeVibrant else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
             }
             Spacer(Modifier.weight(1f))
@@ -568,14 +568,14 @@ private fun SessionTopBar(
                 IconButton(onClick = onShare, modifier = Modifier.size(36.dp)) {
                     Icon(
                         Icons.Default.Share,
-                        contentDescription = "Partager la progression",
+                        contentDescription = stringResource(R.string.workout_cd_share_progress),
                         modifier = Modifier.size(18.dp),
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     )
                 }
             }
             IconButton(onClick = onStop, modifier = Modifier.size(36.dp)) {
-                Icon(Icons.Default.Stop, "Arrêter", Modifier.size(18.dp), tint = MaterialTheme.colorScheme.error)
+                Icon(Icons.Default.Stop, stringResource(R.string.workout_cd_stop), Modifier.size(18.dp), tint = MaterialTheme.colorScheme.error)
             }
         }
     }
@@ -679,7 +679,7 @@ private fun ExerciseHeader(exercise: ExerciseEntity, chronoSec: Long, onSkip: ()
                     ) {
                         Icon(
                             Icons.Default.SkipNext,
-                            contentDescription = "Passer cet exercice",
+                            contentDescription = stringResource(R.string.workout_cd_skip_exercise),
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.error,
                         )
@@ -699,7 +699,7 @@ private fun ExerciseGif(gifUrl: String, modifier: Modifier = Modifier) {
             .data(gifUrl)
             .crossfade(true)
             .build(),
-        contentDescription = "Démonstration exercice",
+        contentDescription = stringResource(R.string.workout_cd_exercise_demo),
         modifier = modifier.background(MaterialTheme.colorScheme.surfaceVariant),
         contentScale = ContentScale.Crop,
         error = {
@@ -1562,7 +1562,7 @@ private fun TimedSetCountdownHero(
         ) {
             // Label "Série X/Y · Décompte"
             Text(
-                "SÉRIE $seriesNum / $totalSeries · DÉCOMPTE",
+                stringResource(R.string.workout_set_countdown_label, seriesNum, totalSeries),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.5.sp,
@@ -1601,7 +1601,7 @@ private fun TimedSetCountdownHero(
                         color = color
                     )
                     Text(
-                        "secondes",
+                        stringResource(R.string.workout_seconds_label),
                         style = MaterialTheme.typography.labelMedium,
                         color = color.copy(alpha = 0.7f),
                         fontWeight = FontWeight.Medium
@@ -1610,7 +1610,7 @@ private fun TimedSetCountdownHero(
             }
 
             Text(
-                if (isLastSeconds) "🔥 Tiens bon !" else "Garde la position",
+                stringResource(if (isLastSeconds) R.string.workout_hold_on else R.string.workout_hold_position),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = color
@@ -1667,7 +1667,7 @@ private fun ActiveSeriesCard(seriesNum: Int, totalSeries: Int, state: WorkoutSes
                     }
                     // Skip série
                     IconButton(onClick = { viewModel.skipCurrentSeries() }, Modifier.size(32.dp)) {
-                        Icon(Icons.Default.SkipNext, "Passer", Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                        Icon(Icons.Default.SkipNext, stringResource(R.string.workout_cd_skip_set), Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                     }
                 }
             }
@@ -1816,7 +1816,8 @@ private fun ActiveSeriesCard(seriesNum: Int, totalSeries: Int, state: WorkoutSes
 }
 
 @Composable
-private fun PostLastSetPromptCard(onAddSeries: () -> Unit, onContinue: () -> Unit, continueLabel: String = "Passer à l'exercice suivant") {
+private fun PostLastSetPromptCard(onAddSeries: () -> Unit, onContinue: () -> Unit, continueLabel: String? = null) {
+    val resolvedLabel = continueLabel ?: stringResource(R.string.workout_post_last_set_continue)
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -1853,7 +1854,7 @@ private fun PostLastSetPromptCard(onAddSeries: () -> Unit, onContinue: () -> Uni
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = NeonGreen)
                 ) {
-                    Text(continueLabel, fontWeight = FontWeight.Bold)
+                    Text(resolvedLabel, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.width(6.dp))
                     Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(18.dp))
                 }
@@ -2120,7 +2121,7 @@ private fun OverviewExerciseCard(
             // Bouton supprimer (seulement les futurs)
             if (onDelete != null) {
                 IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Default.Close, "Retirer", Modifier.size(16.dp),
+                    Icon(Icons.Default.Close, stringResource(R.string.workout_cd_remove), Modifier.size(16.dp),
                         tint = MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
                 }
             }
@@ -2181,14 +2182,14 @@ private fun MainActionButton(state: WorkoutSessionState, viewModel: WorkoutSessi
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    when {
+                    stringResource(when {
                         // Série chronométrée en cours : bouton = arrêter prématurément le décompte
-                        isTimedSetRunning -> "ARRÊTER MAINTENANT"
-                        state.isLastSeries && state.isLastExercise && state.isFreestyle -> "TERMINER L'EXERCICE"
-                        state.isLastSeries && state.isLastExercise -> "TERMINER LA SÉANCE"
-                        state.isLastSeries -> "EXERCICE SUIVANT"
-                        else -> "SÉRIE TERMINÉE"
-                    },
+                        isTimedSetRunning -> R.string.workout_cta_stop_now
+                        state.isLastSeries && state.isLastExercise && state.isFreestyle -> R.string.workout_cta_finish_exercise
+                        state.isLastSeries && state.isLastExercise -> R.string.workout_cta_finish_session
+                        state.isLastSeries -> R.string.workout_cta_next_exercise
+                        else -> R.string.workout_cta_set_done
+                    }),
                     style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold
                 )
             }
@@ -2301,7 +2302,7 @@ private fun ExerciseTransitionOverlay(
             com.shredcoach.app.presentation.share.ShareSheet(
                 data = com.shredcoach.app.presentation.share.ShareCardData.ExerciseCompleted(
                     title = fromName,
-                    subtitle = "Exo $exercisesDone/$totalExercises",
+                    subtitle = stringResource(R.string.workout_transition_subtitle, exercisesDone, totalExercises),
                     setsCompleted = exoSets,
                     totalReps = exoReps,
                     volumeKg = exoVolume,
@@ -2365,7 +2366,10 @@ private fun ExerciseTransitionOverlay(
         } // fin Column scrollable
 
         // BOUTON PROCHAIN — toujours visible en bas (hors scroll)
-        val isFreestyleOverview = toName == "Vue d'ensemble"
+        // toName = "Vue d'ensemble" / "Overview" est un sentinel produit par le VM en
+        // freestyle ; on le détecte par comparaison à la string ressource courante.
+        val overviewLabel = stringResource(R.string.workout_cd_overview)
+        val isFreestyleOverview = toName == overviewLabel
         Surface(tonalElevation = 4.dp) {
             Button(
                 onClick = onDismiss,
@@ -2375,11 +2379,11 @@ private fun ExerciseTransitionOverlay(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        if (isFreestyleOverview) "CONTINUER" else "PROCHAIN EXERCICE",
+                        stringResource(if (isFreestyleOverview) R.string.workout_cta_continue else R.string.workout_cta_next_exercise_label),
                         style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, letterSpacing = 2.sp
                     )
                     Text(
-                        if (isFreestyleOverview) "Vue d'ensemble" else toName,
+                        if (isFreestyleOverview) overviewLabel else toName,
                         style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold
                     )
                 }
@@ -2418,7 +2422,7 @@ private fun CoachTipCard(exercise: ExerciseEntity) {
                     Icon(Icons.Default.Lightbulb, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
                     Text(stringResource(R.string.workout_coach_label), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
                 }
-                Icon(if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore, "Toggle", Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f))
+                Icon(if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore, stringResource(R.string.workout_cd_toggle), Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f))
             }
             if (expanded) {
                 if (exercise.tips.isNotBlank()) Text(exercise.tips, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f))

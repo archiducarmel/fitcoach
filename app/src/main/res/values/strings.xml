@@ -2134,4 +2134,36 @@
     <string name="voice_settings_api_key_paste_cd">Coller</string>
     <string name="voice_settings_api_key_visibility_cd">Afficher / masquer</string>
     <string name="voice_settings_api_key_help">Active l\'API « Cloud Text-to-Speech » sur console.cloud.google.com, puis crée une clé API dans \"APIs &amp; Services › Credentials\". La clé est stockée chiffrée sur l\'appareil.</string>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         WorkoutSession (résiduel) — Phase 8g i18n
+         ═══════════════════════════════════════════════════════════════ -->
+    <string name="workout_cd_add_exercise">Ajouter exercice</string>
+    <string name="workout_cd_back">Retour</string>
+    <string name="workout_cd_overview">Vue d\'ensemble</string>
+    <string name="workout_cd_share_progress">Partager la progression</string>
+    <string name="workout_cd_stop">Arrêter</string>
+    <string name="workout_cd_skip_exercise">Passer cet exercice</string>
+    <string name="workout_cd_exercise_demo">Démonstration exercice</string>
+    <string name="workout_cd_skip_set">Passer</string>
+    <string name="workout_cd_remove">Retirer</string>
+    <string name="workout_cd_toggle">Toggle</string>
+    <string name="workout_set_countdown_label">SÉRIE %1$d / %2$d · DÉCOMPTE</string>
+    <string name="workout_seconds_label">secondes</string>
+    <string name="workout_hold_on">🔥 Tiens bon !</string>
+    <string name="workout_hold_position">Garde la position</string>
+    <string name="workout_cta_stop_now">ARRÊTER MAINTENANT</string>
+    <string name="workout_cta_finish_exercise">TERMINER L\'EXERCICE</string>
+    <string name="workout_cta_finish_session">TERMINER LA SÉANCE</string>
+    <string name="workout_cta_next_exercise">EXERCICE SUIVANT</string>
+    <string name="workout_cta_set_done">SÉRIE TERMINÉE</string>
+    <string name="workout_cta_continue">CONTINUER</string>
+    <string name="workout_cta_next_exercise_label">PROCHAIN EXERCICE</string>
+    <string name="workout_post_last_set_continue">Passer à l\'exercice suivant</string>
+    <string name="workout_transition_subtitle">Exo %1$d/%2$d</string>
+    <!-- ViewModel -->
+    <string name="workout_vm_session_not_found">Séance introuvable</string>
+    <string name="workout_vm_error_generic">Erreur</string>
+    <string name="workout_vm_save_error">Erreur sauvegarde: %1$s</string>
+    <string name="workout_vm_first_name_fallback">Champion</string>
 </resources>

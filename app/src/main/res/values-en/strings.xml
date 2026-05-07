@@ -4663,4 +4663,35 @@
     <string name="voice_settings_api_key_paste_cd">Paste</string>
     <string name="voice_settings_api_key_visibility_cd">Show / hide</string>
     <string name="voice_settings_api_key_help">Enable the \"Cloud Text-to-Speech\" API on console.cloud.google.com, then create an API key under \"APIs &amp; Services › Credentials\". The key is stored encrypted on this device.</string>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         WorkoutSession (residual) — Phase 8g i18n
+         ═══════════════════════════════════════════════════════════════ -->
+    <string name="workout_cd_add_exercise">Add exercise</string>
+    <string name="workout_cd_back">Back</string>
+    <string name="workout_cd_overview">Overview</string>
+    <string name="workout_cd_share_progress">Share progress</string>
+    <string name="workout_cd_stop">Stop</string>
+    <string name="workout_cd_skip_exercise">Skip this exercise</string>
+    <string name="workout_cd_exercise_demo">Exercise demo</string>
+    <string name="workout_cd_skip_set">Skip</string>
+    <string name="workout_cd_remove">Remove</string>
+    <string name="workout_cd_toggle">Toggle</string>
+    <string name="workout_set_countdown_label">SET %1$d / %2$d · COUNTDOWN</string>
+    <string name="workout_seconds_label">seconds</string>
+    <string name="workout_hold_on">🔥 Hang on!</string>
+    <string name="workout_hold_position">Hold the position</string>
+    <string name="workout_cta_stop_now">STOP NOW</string>
+    <string name="workout_cta_finish_exercise">FINISH EXERCISE</string>
+    <string name="workout_cta_finish_session">FINISH SESSION</string>
+    <string name="workout_cta_next_exercise">NEXT EXERCISE</string>
+    <string name="workout_cta_set_done">SET DONE</string>
+    <string name="workout_cta_continue">CONTINUE</string>
+    <string name="workout_cta_next_exercise_label">NEXT EXERCISE</string>
+    <string name="workout_post_last_set_continue">Move on to the next exercise</string>
+    <string name="workout_transition_subtitle">Exo %1$d/%2$d</string>
+    <string name="workout_vm_session_not_found">Session not found</string>
+    <string name="workout_vm_error_generic">Error</string>
+    <string name="workout_vm_save_error">Save error: %1$s</string>
+    <string name="workout_vm_first_name_fallback">Champion</string>
 </resources>

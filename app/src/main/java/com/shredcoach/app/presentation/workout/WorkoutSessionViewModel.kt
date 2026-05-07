@@ -5,6 +5,7 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.ExerciseEntity
 import com.shredcoach.app.data.local.entity.WorkoutSetEntity
 import com.shredcoach.app.data.local.secure.SecureKeyStore
@@ -461,10 +462,10 @@ class WorkoutSessionViewModel @Inject constructor(
                     }
                     startGlobalChrono()
                 } else {
-                    _state.update { it.copy(error = "Séance introuvable", isLoading = false) }
+                    _state.update { it.copy(error = appContext.getString(R.string.workout_vm_session_not_found), isLoading = false) }
                 }
             } catch (e: Exception) {
-                _state.update { it.copy(error = e.message ?: "Erreur", isLoading = false) }
+                _state.update { it.copy(error = e.message ?: appContext.getString(R.string.workout_vm_error_generic), isLoading = false) }
             }
         }
     }
@@ -1120,7 +1121,7 @@ class WorkoutSessionViewModel @Inject constructor(
         val totalReps = doneSets.sumOf { set -> set.reps }
         val totalVol = doneSets.sumOf { set -> set.weight * set.reps }
 
-        val firstName = s.userFirstName.ifBlank { "Champion" }
+        val firstName = s.userFirstName.ifBlank { appContext.getString(R.string.workout_vm_first_name_fallback) }
         val exoName = s.currentExercise?.name ?: ""
 
         // UN SEUL state update atomique : complétion + reset prompt/rest + transition → pas de flash
@@ -1145,7 +1146,7 @@ class WorkoutSessionViewModel @Inject constructor(
                 transitionFromName = s.currentExercise?.name ?: "",
                 // En freestyle, on passe toujours par l'overview → afficher "Vue d'ensemble"
                 // au lieu du nom du prochain exo (sinon "PROCHAIN EXERCICE: Y" est trompeur).
-                transitionToName = if (s.isFreestyle) "Vue d'ensemble" else (nextExercise?.name ?: ""),
+                transitionToName = if (s.isFreestyle) appContext.getString(R.string.workout_cd_overview) else (nextExercise?.name ?: ""),
                 transitionExercisesDone = doneCount,
                 transitionTotalExercises = it.totalExercises,
                 transitionExerciseSets = doneSets.size,
@@ -1230,7 +1231,7 @@ class WorkoutSessionViewModel @Inject constructor(
         val doneCount = effectiveCompletedSets.filter { !it.skipped }.map { it.exerciseId }.toSet().size
         val totalReps = doneSets.sumOf { set -> set.reps }
         val totalVol = doneSets.sumOf { set -> set.weight * set.reps }
-        val firstName = s.userFirstName.ifBlank { "Champion" }
+        val firstName = s.userFirstName.ifBlank { appContext.getString(R.string.workout_vm_first_name_fallback) }
         val exoName = s.currentExercise?.name ?: ""
 
         // UN SEUL state update atomique : complétion + reset prompt/rest + transition
@@ -1253,7 +1254,7 @@ class WorkoutSessionViewModel @Inject constructor(
                 isShreddyThinking = true,
                 shreddyCoachMessage = "",
                 transitionFromName = exoName,
-                transitionToName = "Vue d'ensemble",
+                transitionToName = appContext.getString(R.string.workout_cd_overview),
                 transitionExercisesDone = doneCount,
                 transitionTotalExercises = it.totalExercises,
                 transitionExerciseSets = doneSets.size,
@@ -1471,7 +1472,7 @@ class WorkoutSessionViewModel @Inject constructor(
                 com.shredcoach.app.notification.NotificationScheduler
                     .scheduleWorkoutDebrief(appContext, workoutLogId, debriefDelay)
 
-                val firstName = s.userFirstName.ifBlank { "Champion" }
+                val firstName = s.userFirstName.ifBlank { appContext.getString(R.string.workout_vm_first_name_fallback) }
                 val fallbackMsg = ShreddyCoachMessages.sessionComplete(
                     firstName = firstName,
                     totalSets = s.totalSetsCompleted, totalReps = s.totalRepsCompleted,
@@ -1511,7 +1512,7 @@ class WorkoutSessionViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                _state.update { it.copy(error = "Erreur sauvegarde: ${e.message}") }
+                _state.update { it.copy(error = appContext.getString(R.string.workout_vm_save_error, e.message ?: "")) }
             }
         }
     }
