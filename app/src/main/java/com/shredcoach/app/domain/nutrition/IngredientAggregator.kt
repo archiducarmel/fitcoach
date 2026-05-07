@@ -33,19 +33,20 @@ import java.text.Normalizer
  */
 enum class IngredientCategory(
     val displayName: String,
+    @androidx.annotation.StringRes val displayNameRes: Int,
     val color: Color,
     val emoji: String,
 ) {
-    PROTEINES_ANIMALES("Protéines animales", Color(0xFFEF4444), "🥩"),
-    PROTEINES_VEGETALES("Protéines végétales", Color(0xFF8B5CF6), "🫘"),
-    LEGUMES("Légumes", Color(0xFF10B981), "🥦"),
-    FECULENTS("Féculents", Color(0xFFF59E0B), "🍚"),
-    FRUITS("Fruits", Color(0xFFEC4899), "🍎"),
-    LAITIERS("Laitiers", Color(0xFF60A5FA), "🥛"),
-    LIPIDES("Matières grasses", Color(0xFFEAB308), "🧈"),
-    BOISSONS("Boissons", Color(0xFF06B6D4), "🥤"),
-    SUCRES("Sucres & desserts", Color(0xFFF472B6), "🍰"),
-    AUTRES("Autres", Color(0xFF94A3B8), "•"),
+    PROTEINES_ANIMALES("Protéines animales", com.shredcoach.app.R.string.ingredient_cat_animal_proteins, Color(0xFFEF4444), "🥩"),
+    PROTEINES_VEGETALES("Protéines végétales", com.shredcoach.app.R.string.ingredient_cat_plant_proteins, Color(0xFF8B5CF6), "🫘"),
+    LEGUMES("Légumes", com.shredcoach.app.R.string.ingredient_cat_vegetables, Color(0xFF10B981), "🥦"),
+    FECULENTS("Féculents", com.shredcoach.app.R.string.ingredient_cat_starches, Color(0xFFF59E0B), "🍚"),
+    FRUITS("Fruits", com.shredcoach.app.R.string.ingredient_cat_fruits, Color(0xFFEC4899), "🍎"),
+    LAITIERS("Laitiers", com.shredcoach.app.R.string.ingredient_cat_dairy, Color(0xFF60A5FA), "🥛"),
+    LIPIDES("Matières grasses", com.shredcoach.app.R.string.ingredient_cat_fats, Color(0xFFEAB308), "🧈"),
+    BOISSONS("Boissons", com.shredcoach.app.R.string.ingredient_cat_drinks, Color(0xFF06B6D4), "🥤"),
+    SUCRES("Sucres & desserts", com.shredcoach.app.R.string.ingredient_cat_sweets, Color(0xFFF472B6), "🍰"),
+    AUTRES("Autres", com.shredcoach.app.R.string.ingredient_cat_other, Color(0xFF94A3B8), "•"),
 }
 
 @Immutable

@@ -1006,4 +1006,93 @@
     <string name="meal_hour_afternoon">Afternoon</string>
     <string name="meal_hour_dinner">Evening</string>
     <string name="meal_hour_night">Night</string>
+
+    <!-- Nutrition screen -->
+    <string name="nutrition_title">Nutrition</string>
+    <string name="nutrition_scan_meal_cd">Scan meal</string>
+    <string name="nutrition_add_meal_cd">Add meal</string>
+    <string name="nutrition_empty_title">What\'s for today?</string>
+    <string name="nutrition_empty_desc">Add your meals to track calories, proteins, carbs and fats in real time.</string>
+    <string name="nutrition_empty_cta">Add a meal</string>
+    <string name="nutrition_meal_type_header">%1$s %2$s</string>
+    <string name="nutrition_quickadd_title">Add a meal</string>
+    <string name="nutrition_meal_delete_dialog_title">Delete this meal?</string>
+    <string name="nutrition_meal_delete_dialog_body">"%1$s" (%2$dg) will be removed from your nutrition tracking.</string>
+    <string name="nutrition_date_today">Today</string>
+    <string name="nutrition_date_prev_cd">Previous day</string>
+    <string name="nutrition_date_next_cd">Next day</string>
+
+    <string name="nutrition_activity_trained_one">Trained · %1$d min</string>
+    <string name="nutrition_activity_trained_many">Trained · %1$d sessions · %2$d min</string>
+    <string name="nutrition_activity_pending">Awaiting activity</string>
+    <string name="nutrition_activity_rested">Rest day</string>
+
+    <string name="nutrition_energy_base">Sedentary base: %1$d kcal</string>
+    <string name="nutrition_energy_goal_delta">target %1$s%2$d kcal</string>
+    <string name="nutrition_energy_session_bonus_one">session +%1$d kcal</string>
+    <string name="nutrition_energy_session_bonus_many">sessions +%1$d kcal</string>
+    <string name="nutrition_energy_separator"> · </string>
+
+    <string name="nutrition_hero_calories_label">Calories</string>
+    <string name="nutrition_hero_calories_target">/ %1$d kcal</string>
+    <string name="nutrition_hero_remaining">remaining</string>
+    <string name="nutrition_hero_excess">over</string>
+
+    <string name="nutrition_macro_proteins">Proteins</string>
+    <string name="nutrition_macro_carbs">Carbs</string>
+    <string name="nutrition_macro_fats">Fats</string>
+    <string name="nutrition_macro_target_g">/ %1$dg</string>
+    <string name="nutrition_macro_grams">%1$dg</string>
+
+    <string name="nutrition_meal_kcal">%1$d kcal</string>
+    <string name="nutrition_meal_details">%1$dg · %2$s</string>
+    <string name="nutrition_meal_details_with_time">%1$s · %2$dg · %3$s</string>
+    <string name="nutrition_meal_delete_cd">Delete this meal</string>
+    <string name="nutrition_macro_label_prot">Prot</string>
+    <string name="nutrition_macro_label_gluc">Carb</string>
+    <string name="nutrition_macro_label_lip">Fat</string>
+
+    <string name="nutrition_addmeal_search_label">Search a food</string>
+    <string name="nutrition_addmeal_search_placeholder">e.g. chicken, rice, banana...</string>
+    <string name="nutrition_addmeal_food_kcal_per100">%1$d kcal/100g • P%2$d C%3$d F%4$d</string>
+    <string name="nutrition_addmeal_quantity_label">Quantity (g)</string>
+    <string name="nutrition_addmeal_portion_hint">Portion: %1$s (%2$dg)</string>
+    <string name="nutrition_addmeal_kcal_unit">kcal</string>
+    <string name="nutrition_addmeal_added_snackbar">Meal added</string>
+    <string name="nutrition_addmeal_add_cta">Add</string>
+    <string name="nutrition_addmeal_cancel">Cancel</string>
+
+    <!-- Meal scan detail screen -->
+    <string name="mealdetail_title">Meal details</string>
+    <string name="mealdetail_not_found">Analysis not found</string>
+    <string name="mealdetail_photo_cd">Photo of analyzed meal</string>
+
+    <!-- Insights widgets -->
+    <string name="insights_section_title">Nutrition insights</string>
+    <string name="insights_section_subtitle">%1$d meals analyzed · %2$d distinct foods</string>
+    <string name="insights_section_period_days">%1$d days</string>
+    <string name="insights_wordcloud_title">What you eat</string>
+    <string name="insights_wordcloud_subtitle">Size = total quantity, color = category</string>
+    <string name="insights_donut_title">Category split</string>
+    <string name="insights_donut_center_label">eaten</string>
+    <string name="insights_top_title">Your star foods</string>
+    <string name="insights_top_subline">Present in %1$d meals · %2$d kcal contributed</string>
+    <string name="insights_nutri_title">Meal quality</string>
+    <string name="insights_nutri_verdict_excellent">Excellent nutrition profile</string>
+    <string name="insights_nutri_verdict_good">Good balance · room to grow</string>
+    <string name="insights_nutri_verdict_mixed">Mixed · aim for more A and B</string>
+    <string name="insights_nutri_verdict_poor">Needs work · prioritize A and B</string>
+    <string name="insights_nutri_ab_share">%1$d%% A+B</string>
+
+    <!-- IngredientCategory enum -->
+    <string name="ingredient_cat_animal_proteins">Animal proteins</string>
+    <string name="ingredient_cat_plant_proteins">Plant proteins</string>
+    <string name="ingredient_cat_vegetables">Vegetables</string>
+    <string name="ingredient_cat_starches">Starches</string>
+    <string name="ingredient_cat_fruits">Fruits</string>
+    <string name="ingredient_cat_dairy">Dairy</string>
+    <string name="ingredient_cat_fats">Fats</string>
+    <string name="ingredient_cat_drinks">Drinks</string>
+    <string name="ingredient_cat_sweets">Sweets &amp; desserts</string>
+    <string name="ingredient_cat_other">Other</string>
 </resources>

@@ -12,9 +12,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.shredcoach.app.R
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -75,7 +77,7 @@ fun MealScanDetailScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Détail repas", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.mealdetail_title), fontWeight = FontWeight.Bold)
                         if (state.scanName.isNotBlank()) {
                             Text(state.scanName, style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -84,7 +86,7 @@ fun MealScanDetailScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.common_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
@@ -94,7 +96,7 @@ fun MealScanDetailScreen(
         when {
             state.isLoading -> Box(Modifier.fillMaxSize().padding(pad), Alignment.Center) { CircularProgressIndicator() }
             state.result == null -> Box(Modifier.fillMaxSize().padding(pad), Alignment.Center) {
-                Text("Analyse introuvable", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                Text(stringResource(R.string.mealdetail_not_found), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
             }
             else -> {
                 LazyColumn(
@@ -109,7 +111,7 @@ fun MealScanDetailScreen(
                                 model = coil.request.ImageRequest.Builder(
                                     androidx.compose.ui.platform.LocalContext.current
                                 ).data(java.io.File(state.photoPath!!)).crossfade(true).build(),
-                                contentDescription = "Photo du repas analysé",
+                                contentDescription = stringResource(R.string.mealdetail_photo_cd),
                                 modifier = Modifier.fillMaxWidth().heightIn(min = 180.dp, max = 260.dp)
                                     .clip(androidx.compose.foundation.shape.RoundedCornerShape(20.dp)),
                                 contentScale = androidx.compose.ui.layout.ContentScale.Crop

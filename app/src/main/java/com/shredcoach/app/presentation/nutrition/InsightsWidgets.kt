@@ -30,6 +30,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -38,6 +39,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.shredcoach.app.R
 import com.shredcoach.app.domain.nutrition.CategoryShare
 import com.shredcoach.app.domain.nutrition.IngredientCategory
 import com.shredcoach.app.domain.nutrition.IngredientStat
@@ -90,16 +92,16 @@ private fun InsightsHeader(insights: NutritionInsights) {
     ) {
         Icon(Icons.Default.AutoAwesome, null, Modifier.size(22.dp), tint = OrangeVibrant)
         Column(Modifier.weight(1f)) {
-            Text("Insights nutrition", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.insights_section_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(
-                "${insights.totalScans} repas analysés · ${insights.totalUniqueIngredients} aliments distincts",
+                stringResource(R.string.insights_section_subtitle, insights.totalScans, insights.totalUniqueIngredients),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
             )
         }
         Surface(shape = RoundedCornerShape(6.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
             Text(
-                "${insights.periodDays} jours",
+                stringResource(R.string.insights_section_period_days, insights.periodDays),
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
@@ -137,10 +139,10 @@ private fun IngredientWordCloudCard(ingredients: List<IngredientStat>) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Default.Restaurant, null, Modifier.size(20.dp), tint = OrangeVibrant)
-                Text("Ce que tu manges", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.insights_wordcloud_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             }
             Text(
-                "Taille = quantité totale, couleur = catégorie",
+                stringResource(R.string.insights_wordcloud_subtitle),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
             )
@@ -273,7 +275,7 @@ private fun CategoryLegend(categories: Set<IngredientCategory>) {
         sorted.take(5).forEach { cat ->
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Box(Modifier.size(8.dp).clip(CircleShape).background(cat.color))
-                Text(cat.displayName, style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                Text(stringResource(cat.displayNameRes), style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     maxLines = 1)
             }
@@ -301,7 +303,7 @@ private fun CategoryDonutCard(shares: List<CategoryShare>, totalGrams: Int) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Default.PieChart, null, Modifier.size(20.dp), tint = OrangeVibrant)
-                Text("Répartition par catégorie", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.insights_donut_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             }
 
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
@@ -314,7 +316,7 @@ private fun CategoryDonutCard(shares: List<CategoryShare>, totalGrams: Int) {
                             style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
                             fontWeight = FontWeight.Bold
                         )
-                        Text("ingéré",
+                        Text(stringResource(R.string.insights_donut_center_label),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                     }
@@ -364,7 +366,7 @@ private fun DonutLegendRow(share: CategoryShare) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Box(Modifier.size(10.dp).clip(CircleShape).background(share.category.color))
         Text(
-            share.category.displayName,
+            stringResource(share.category.displayNameRes),
             style = MaterialTheme.typography.labelMedium,
             modifier = Modifier.weight(1f),
             maxLines = 1
@@ -401,7 +403,7 @@ private fun TopIngredientsCard(ingredients: List<IngredientStat>) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.AutoMirrored.Filled.TrendingUp, null, Modifier.size(20.dp), tint = OrangeVibrant)
-                Text("Tes aliments stars", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.insights_top_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             }
 
             top.forEachIndexed { idx, ing ->
@@ -437,7 +439,7 @@ private fun TopIngredientsCard(ingredients: List<IngredientStat>) {
                         }
                         // Sous-ligne stats
                         Text(
-                            "Présent dans ${ing.scanCount} repas · ${ing.totalCalories} kcal apportés",
+                            stringResource(R.string.insights_top_subline, ing.scanCount, ing.totalCalories),
                             style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                         )
@@ -481,13 +483,13 @@ private fun NutriScoreDistributionCard(dist: NutriScoreDistribution) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Default.Star, null, Modifier.size(20.dp), tint = OrangeVibrant)
                 Column(Modifier.weight(1f)) {
-                    Text("Qualité de tes repas", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.insights_nutri_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     val verdict = nutriVerdict(dist.highQualityShare)
                     Text(verdict.text, style = MaterialTheme.typography.labelSmall, color = verdict.color)
                 }
                 Surface(shape = RoundedCornerShape(6.dp), color = NeonGreen.copy(alpha = 0.12f)) {
                     Text(
-                        "${(dist.highQualityShare * 100).toInt()}% A+B",
+                        stringResource(R.string.insights_nutri_ab_share, (dist.highQualityShare * 100).toInt()),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
                         fontWeight = FontWeight.Bold,
@@ -569,10 +571,10 @@ private data class NutriVerdict(val text: String, val color: Color)
  */
 @Composable
 private fun nutriVerdict(highQualityShare: Float): NutriVerdict = when {
-    highQualityShare >= 0.7f -> NutriVerdict("Excellent profil nutritionnel", NeonGreen)
-    highQualityShare >= 0.5f -> NutriVerdict("Bon équilibre · marge de progression", NeonGreen.copy(alpha = 0.85f))
-    highQualityShare >= 0.3f -> NutriVerdict("Mitigé · vise plus de A et B", OrangeVibrant)
-    else -> NutriVerdict("À améliorer · privilégie les A et B", Color(0xFFEF4444))
+    highQualityShare >= 0.7f -> NutriVerdict(stringResource(R.string.insights_nutri_verdict_excellent), NeonGreen)
+    highQualityShare >= 0.5f -> NutriVerdict(stringResource(R.string.insights_nutri_verdict_good), NeonGreen.copy(alpha = 0.85f))
+    highQualityShare >= 0.3f -> NutriVerdict(stringResource(R.string.insights_nutri_verdict_mixed), OrangeVibrant)
+    else -> NutriVerdict(stringResource(R.string.insights_nutri_verdict_poor), Color(0xFFEF4444))
 }
 
 private fun nutriColor(grade: Char): Color = when (grade) {

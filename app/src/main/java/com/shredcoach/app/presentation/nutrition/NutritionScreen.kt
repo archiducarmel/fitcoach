@@ -21,7 +21,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import com.shredcoach.app.R
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -53,8 +55,8 @@ fun NutritionScreen(navController: NavController, viewModel: NutritionViewModel 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Nutrition", fontWeight = FontWeight.Bold) },
-                navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour") } }
+                title = { Text(stringResource(R.string.nutrition_title), fontWeight = FontWeight.Bold) },
+                navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.common_back)) } }
             )
         },
         floatingActionButton = {
@@ -65,11 +67,11 @@ fun NutritionScreen(navController: NavController, viewModel: NutritionViewModel 
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 ) {
-                    Icon(Icons.Default.CameraAlt, "Scanner repas", Modifier.size(20.dp))
+                    Icon(Icons.Default.CameraAlt, stringResource(R.string.nutrition_scan_meal_cd), Modifier.size(20.dp))
                 }
                 // Ajouter manuellement
                 FloatingActionButton(onClick = { viewModel.openAddMeal(MealType.LUNCH) }, containerColor = OrangeVibrant) {
-                    Icon(Icons.Default.Add, "Ajouter repas")
+                    Icon(Icons.Default.Add, stringResource(R.string.nutrition_add_meal_cd))
                 }
             }
         }
@@ -91,9 +93,9 @@ fun NutritionScreen(navController: NavController, viewModel: NutritionViewModel 
                     Box(Modifier.fillMaxWidth().heightIn(min = 340.dp)) {
                         com.shredcoach.app.presentation.common.EmptyState(
                             icon = Icons.Default.Restaurant,
-                            title = "Qu'est-ce qu'on mange aujourd'hui ?",
-                            description = "Ajoute tes repas pour suivre calories, protéines, glucides et lipides en temps réel.",
-                            ctaLabel = "Ajouter un repas",
+                            title = stringResource(R.string.nutrition_empty_title),
+                            description = stringResource(R.string.nutrition_empty_desc),
+                            ctaLabel = stringResource(R.string.nutrition_empty_cta),
                             ctaIcon = Icons.Default.Add,
                             onCtaClick = { viewModel.openAddMeal(MealType.LUNCH) }
                         )
@@ -106,7 +108,8 @@ fun NutritionScreen(navController: NavController, viewModel: NutritionViewModel 
                 val mealsOfType = state.meals.filter { it.meal.mealType == type }
                 if (mealsOfType.isNotEmpty()) {
                     item {
-                        Text("${type.icon} ${type.displayName}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                        Text(stringResource(R.string.nutrition_meal_type_header, type.icon, stringResource(type.displayNameRes)),
+                            style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 4.dp))
                     }
                     items(mealsOfType, key = { it.meal.id }) { mwf ->
@@ -117,8 +120,8 @@ fun NutritionScreen(navController: NavController, viewModel: NutritionViewModel 
                             AlertDialog(
                                 onDismissRequest = { showDeleteConfirm = false },
                                 icon = { Icon(Icons.Default.DeleteOutline, null, tint = MaterialTheme.colorScheme.error) },
-                                title = { Text("Supprimer ce repas ?", fontWeight = FontWeight.Bold) },
-                                text = { Text("\"${mwf.food.name}\" (${mwf.meal.quantityGrams}g) sera retiré de ton suivi nutritionnel.") },
+                                title = { Text(stringResource(R.string.nutrition_meal_delete_dialog_title), fontWeight = FontWeight.Bold) },
+                                text = { Text(stringResource(R.string.nutrition_meal_delete_dialog_body, mwf.food.name, mwf.meal.quantityGrams)) },
                                 confirmButton = {
                                     Button(
                                         onClick = {
@@ -127,9 +130,9 @@ fun NutritionScreen(navController: NavController, viewModel: NutritionViewModel 
                                             showDeleteConfirm = false
                                         },
                                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                                    ) { Text("Supprimer") }
+                                    ) { Text(stringResource(R.string.common_delete)) }
                                 },
-                                dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text("Annuler") } }
+                                dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text(stringResource(R.string.common_cancel)) } }
                             )
                         }
 
@@ -143,13 +146,13 @@ fun NutritionScreen(navController: NavController, viewModel: NutritionViewModel 
 
             // ── Boutons ajout rapide par type ──
             item {
-                Text("Ajouter un repas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
+                Text(stringResource(R.string.nutrition_quickadd_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
                 Row(Modifier.padding(top = 8.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     MealType.values().forEach { type ->
                         FilterChip(
                             selected = false,
                             onClick = { viewModel.openAddMeal(type) },
-                            label = { Text("${type.icon} ${type.displayName}") }
+                            label = { Text(stringResource(R.string.nutrition_meal_type_header, type.icon, stringResource(type.displayNameRes))) }
                         )
                     }
                 }
@@ -178,16 +181,16 @@ fun NutritionScreen(navController: NavController, viewModel: NutritionViewModel 
 // ═══════════════════════════════════════
 @Composable
 private fun DateSelector(state: NutritionState, viewModel: NutritionViewModel) {
-    val fmt = DateTimeFormatter.ofPattern("EEEE d MMMM", java.util.Locale.FRENCH)
+    val fmt = DateTimeFormatter.ofPattern("EEEE d MMMM", java.util.Locale.getDefault())
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-        IconButton(onClick = { viewModel.previousDay() }) { Icon(Icons.Default.ChevronLeft, "Jour précédent") }
+        IconButton(onClick = { viewModel.previousDay() }) { Icon(Icons.Default.ChevronLeft, stringResource(R.string.nutrition_date_prev_cd)) }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(state.selectedDate.format(fmt), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             if (state.selectedDate == java.time.LocalDate.now()) {
-                Text("Aujourd'hui", style = MaterialTheme.typography.labelSmall, color = OrangeVibrant)
+                Text(stringResource(R.string.nutrition_date_today), style = MaterialTheme.typography.labelSmall, color = OrangeVibrant)
             }
         }
-        IconButton(onClick = { viewModel.nextDay() }) { Icon(Icons.Default.ChevronRight, "Jour suivant") }
+        IconButton(onClick = { viewModel.nextDay() }) { Icon(Icons.Default.ChevronRight, stringResource(R.string.nutrition_date_next_cd)) }
     }
 }
 
@@ -215,11 +218,11 @@ private fun MacrosSummaryCard(state: NutritionState) {
 
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
                         Column {
-                            Text("Calories", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.8f))
+                            Text(stringResource(R.string.nutrition_hero_calories_label), style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.8f))
                             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text("${state.totalCalories.toInt()}", style = MaterialTheme.typography.displaySmall,
                                     fontWeight = FontWeight.ExtraBold, color = Color.White)
-                                Text("/ $target kcal", style = MaterialTheme.typography.bodyMedium,
+                                Text(stringResource(R.string.nutrition_hero_calories_target, target), style = MaterialTheme.typography.bodyMedium,
                                     color = Color.White.copy(alpha = 0.8f), modifier = Modifier.padding(bottom = 4.dp))
                             }
                         }
@@ -228,7 +231,7 @@ private fun MacrosSummaryCard(state: NutritionState) {
                             Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(if (remaining >= 0) "$remaining" else "+${-remaining}",
                                     style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = Color.White)
-                                Text(if (remaining >= 0) "restantes" else "en excès",
+                                Text(if (remaining >= 0) stringResource(R.string.nutrition_hero_remaining) else stringResource(R.string.nutrition_hero_excess),
                                     style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.8f))
                             }
                         }
@@ -241,9 +244,9 @@ private fun MacrosSummaryCard(state: NutritionState) {
 
             // ─── Macros rings ───
             Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-                NutritionMacroRing("Protéines", state.totalProteins, g.targetProteins, ProteinColor)
-                NutritionMacroRing("Glucides", state.totalCarbs, g.targetCarbs, CarbColor)
-                NutritionMacroRing("Lipides", state.totalFats, g.targetFats, FatColor)
+                NutritionMacroRing(stringResource(R.string.nutrition_macro_proteins), state.totalProteins, g.targetProteins, ProteinColor)
+                NutritionMacroRing(stringResource(R.string.nutrition_macro_carbs), state.totalCarbs, g.targetCarbs, CarbColor)
+                NutritionMacroRing(stringResource(R.string.nutrition_macro_fats), state.totalFats, g.targetFats, FatColor)
             }
         }
     }
@@ -266,12 +269,12 @@ private fun ActivityStatePill(state: DailyActivityState, breakdown: EnergyBreakd
         DailyActivityState.TRAINED -> {
             val sessions = breakdown.completedWorkouts
             val mins = breakdown.totalWorkoutMinutes
-            val text = if (sessions == 1) "Entraîné · $mins min"
-            else "Entraîné · $sessions séances · $mins min"
+            val text = if (sessions == 1) stringResource(R.string.nutrition_activity_trained_one, mins)
+            else stringResource(R.string.nutrition_activity_trained_many, sessions, mins)
             text to Icons.Default.FitnessCenter
         }
-        DailyActivityState.PENDING -> "En attente d'activité" to Icons.Default.AccessTime
-        DailyActivityState.RESTED -> "Jour de repos" to Icons.Default.SelfImprovement
+        DailyActivityState.PENDING -> stringResource(R.string.nutrition_activity_pending) to Icons.Default.AccessTime
+        DailyActivityState.RESTED -> stringResource(R.string.nutrition_activity_rested) to Icons.Default.SelfImprovement
     }
     Surface(shape = RoundedCornerShape(8.dp), color = Color.White.copy(alpha = 0.22f)) {
         Row(
@@ -290,13 +293,19 @@ private fun ActivityStatePill(state: DailyActivityState, breakdown: EnergyBreakd
 private fun EnergyBreakdownStrip(breakdown: EnergyBreakdown) {
     if (breakdown.total == 0) return
     val deltaSign = if (breakdown.goalDelta >= 0) "+" else ""
+    val sep = stringResource(R.string.nutrition_energy_separator)
+    val basePart = stringResource(R.string.nutrition_energy_base, breakdown.sedentaryMaintenance)
+    val goalPart = if (breakdown.goalDelta != 0)
+        stringResource(R.string.nutrition_energy_goal_delta, deltaSign, breakdown.goalDelta) else null
+    val sessionPart = if (breakdown.workoutBonus > 0) {
+        if (breakdown.completedWorkouts > 1)
+            stringResource(R.string.nutrition_energy_session_bonus_many, breakdown.workoutBonus)
+        else stringResource(R.string.nutrition_energy_session_bonus_one, breakdown.workoutBonus)
+    } else null
     val text = buildString {
-        append("Base sédentaire : ${breakdown.sedentaryMaintenance} kcal")
-        if (breakdown.goalDelta != 0) append(" · objectif $deltaSign${breakdown.goalDelta} kcal")
-        if (breakdown.workoutBonus > 0) {
-            append(" · séance${if (breakdown.completedWorkouts > 1) "s" else ""}")
-            append(" +${breakdown.workoutBonus} kcal")
-        }
+        append(basePart)
+        if (goalPart != null) { append(sep); append(goalPart) }
+        if (sessionPart != null) { append(sep); append(sessionPart) }
     }
     Text(
         text = text,
@@ -318,11 +327,11 @@ private fun NutritionMacroRing(label: String, current: Double, target: Int, colo
                 drawArc(color, -90f, fraction * 360f, false, style = s)
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("${current.toInt()}g", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = color)
+                Text(stringResource(R.string.nutrition_macro_grams, current.toInt()), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = color)
             }
         }
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-        Text("/ ${target}g", style = MaterialTheme.typography.labelSmall, fontSize = 9.sp,
+        Text(stringResource(R.string.nutrition_macro_target_g, target), style = MaterialTheme.typography.labelSmall, fontSize = 9.sp,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
     }
 }
@@ -364,7 +373,7 @@ private fun MealCard(mwf: MealWithFood, onDelete: () -> Unit) {
                         color = Color.Black.copy(alpha = 0.6f),
                         modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
                     ) {
-                        Text("${mwf.meal.calories.toInt()} kcal", modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        Text(stringResource(R.string.nutrition_meal_kcal, mwf.meal.calories.toInt()), modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Color.White)
                     }
                 }
@@ -376,28 +385,28 @@ private fun MealCard(mwf: MealWithFood, onDelete: () -> Unit) {
                     Column(Modifier.weight(1f)) {
                         Text(mwf.food.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, maxLines = 2)
                         val timeStr = mwf.meal.time?.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
-                        val details = buildString {
-                            if (timeStr != null) { append(timeStr); append(" · ") }
-                            append("${mwf.meal.quantityGrams}g · ${mwf.meal.mealType.displayName}")
-                        }
+                        val mealTypeLabel = stringResource(mwf.meal.mealType.displayNameRes)
+                        val details = if (timeStr != null)
+                            stringResource(R.string.nutrition_meal_details_with_time, timeStr, mwf.meal.quantityGrams, mealTypeLabel)
+                        else stringResource(R.string.nutrition_meal_details, mwf.meal.quantityGrams, mealTypeLabel)
                         Text(details,
                             style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                     }
                     Surface(shape = RoundedCornerShape(8.dp), color = OrangeVibrant.copy(alpha = 0.12f)) {
-                        Text("${mwf.meal.calories.toInt()} kcal", modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        Text(stringResource(R.string.nutrition_meal_kcal, mwf.meal.calories.toInt()), modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
                     }
                     IconButton(onClick = onDelete) {
-                        Icon(Icons.Default.Close, "Supprimer ce repas", Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
+                        Icon(Icons.Default.Close, stringResource(R.string.nutrition_meal_delete_cd), Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
                     }
                 }
                 // Ligne 2 : PICTOGRAMME NUTRI-SCORE (toujours visible)
                 com.shredcoach.app.domain.nutrition.NutriScorePictogram(nutriGrade, height = 24.dp)
                 // Ligne 3 : barres macros
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    NutritionMealMacro("Protéines", mwf.meal.proteins, ProteinColor, Modifier.weight(1f))
-                    NutritionMealMacro("Glucides", mwf.meal.carbs, CarbColor, Modifier.weight(1f))
-                    NutritionMealMacro("Lipides", mwf.meal.fats, FatColor, Modifier.weight(1f))
+                    NutritionMealMacro(stringResource(R.string.nutrition_macro_proteins), mwf.meal.proteins, ProteinColor, Modifier.weight(1f))
+                    NutritionMealMacro(stringResource(R.string.nutrition_macro_carbs), mwf.meal.carbs, CarbColor, Modifier.weight(1f))
+                    NutritionMealMacro(stringResource(R.string.nutrition_macro_fats), mwf.meal.fats, FatColor, Modifier.weight(1f))
                 }
             }
         }
@@ -407,7 +416,7 @@ private fun MealCard(mwf: MealWithFood, onDelete: () -> Unit) {
 @Composable
 private fun NutritionMealMacro(label: String, grams: Double, color: Color, modifier: Modifier = Modifier) {
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text("${grams.toInt()}g", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = color)
+        Text(stringResource(R.string.nutrition_macro_grams, grams.toInt()), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = color)
         Text(label, style = MaterialTheme.typography.labelSmall, fontSize = 9.sp, color = color.copy(alpha = 0.6f))
     }
 }
@@ -422,14 +431,14 @@ private fun AddMealBottomSheet(state: NutritionState, viewModel: NutritionViewMo
     val scope = rememberCoroutineScope()
     ModalBottomSheet(onDismissRequest = { viewModel.closeAddMeal() }) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("${state.selectedMealType.icon} ${state.selectedMealType.displayName}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.nutrition_meal_type_header, state.selectedMealType.icon, stringResource(state.selectedMealType.displayNameRes)), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
 
                 // Recherche
                 OutlinedTextField(
                     value = state.searchQuery,
                     onValueChange = { viewModel.onSearchQuery(it) },
-                    label = { Text("Rechercher un aliment") },
-                    placeholder = { Text("Ex: poulet, riz, banane...") },
+                    label = { Text(stringResource(R.string.nutrition_addmeal_search_label)) },
+                    placeholder = { Text(stringResource(R.string.nutrition_addmeal_search_placeholder)) },
                     leadingIcon = { Icon(Icons.Default.Search, null) },
                     modifier = Modifier.fillMaxWidth(), singleLine = true
                 )
@@ -444,7 +453,7 @@ private fun AddMealBottomSheet(state: NutritionState, viewModel: NutritionViewMo
                             ) {
                                 Column(Modifier.weight(1f)) {
                                     Text(food.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                                    Text("${food.caloriesPer100g.toInt()} kcal/100g • P${food.proteinsPer100g.toInt()} G${food.carbsPer100g.toInt()} L${food.fatsPer100g.toInt()}",
+                                    Text(stringResource(R.string.nutrition_addmeal_food_kcal_per100, food.caloriesPer100g.toInt(), food.proteinsPer100g.toInt(), food.carbsPer100g.toInt(), food.fatsPer100g.toInt()),
                                         style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                                 }
                                 if (food.isFavorite) Icon(Icons.Default.Star, null, Modifier.size(16.dp), tint = CarbColor)
@@ -472,26 +481,27 @@ private fun AddMealBottomSheet(state: NutritionState, viewModel: NutritionViewMo
                             OutlinedTextField(
                                 value = state.quantity,
                                 onValueChange = { viewModel.onQuantityChanged(it) },
-                                label = { Text("Quantité (g)") },
+                                label = { Text(stringResource(R.string.nutrition_addmeal_quantity_label)) },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 modifier = Modifier.fillMaxWidth(), singleLine = true,
-                                supportingText = { Text("Portion: ${food.portionLabel} (${food.defaultPortionGrams}g)") }
+                                supportingText = { Text(stringResource(R.string.nutrition_addmeal_portion_hint, food.portionLabel, food.defaultPortionGrams)) }
                             )
 
                             // Preview macros
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-                                MacroPreview("${(food.caloriesPer100g * factor).toInt()}", "kcal", OrangeVibrant)
-                                MacroPreview("${(food.proteinsPer100g * factor).toInt()}g", "Prot", ProteinColor)
-                                MacroPreview("${(food.carbsPer100g * factor).toInt()}g", "Gluc", CarbColor)
-                                MacroPreview("${(food.fatsPer100g * factor).toInt()}g", "Lip", FatColor)
+                                MacroPreview("${(food.caloriesPer100g * factor).toInt()}", stringResource(R.string.nutrition_addmeal_kcal_unit), OrangeVibrant)
+                                MacroPreview(stringResource(R.string.nutrition_macro_grams, (food.proteinsPer100g * factor).toInt()), stringResource(R.string.nutrition_macro_label_prot), ProteinColor)
+                                MacroPreview(stringResource(R.string.nutrition_macro_grams, (food.carbsPer100g * factor).toInt()), stringResource(R.string.nutrition_macro_label_gluc), CarbColor)
+                                MacroPreview(stringResource(R.string.nutrition_macro_grams, (food.fatsPer100g * factor).toInt()), stringResource(R.string.nutrition_macro_label_lip), FatColor)
                             }
                         }
                     }
 
+                    val addedSnackbar = stringResource(R.string.nutrition_addmeal_added_snackbar)
                     Button(
                         onClick = {
                             viewModel.confirmAddMeal()
-                            scope.launch { snackbarHostState.showSnackbar("Repas ajouté", duration = SnackbarDuration.Short) }
+                            scope.launch { snackbarHostState.showSnackbar(addedSnackbar, duration = SnackbarDuration.Short) }
                         },
                         modifier = Modifier.fillMaxWidth().height(48.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = NeonGreen),
@@ -499,12 +509,12 @@ private fun AddMealBottomSheet(state: NutritionState, viewModel: NutritionViewMo
                     ) {
                         Icon(Icons.Default.Check, null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Ajouter", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.nutrition_addmeal_add_cta), fontWeight = FontWeight.Bold)
                     }
                 }
 
                 TextButton(onClick = { viewModel.closeAddMeal() }, Modifier.align(Alignment.End)) {
-                    Text("Annuler")
+                    Text(stringResource(R.string.nutrition_addmeal_cancel))
                 }
             }
     }
