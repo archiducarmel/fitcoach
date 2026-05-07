@@ -1,6 +1,8 @@
 package com.shredcoach.app.domain.session
 
+import android.content.Context
 import com.shredcoach.app.data.repository.WorkoutRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,6 +28,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class ActiveSessionManager @Inject constructor(
+    @ApplicationContext private val appContext: Context,
     /**
      * Provider pour casser le cycle d'init (le repo dépend du DAO qui dépend de la
      * DB qui est provided dans le même graph Singleton). Le Provider permet de
@@ -157,6 +160,10 @@ class ActiveSessionManager @Inject constructor(
             currentRestElapsed = initialRestElapsed
         )
         startChrono()
+        // Démarre le foreground service qui prend le relais en background pour
+        // le coach vocal + countdown audible écran éteint. Idempotent : si déjà
+        // démarré, startForegroundService() ne re-crée pas le service.
+        WorkoutSessionService.start(appContext)
     }
 
     /** Surcharge "fresh start" — démarrage neuf depuis Preview/Generator. */
@@ -339,6 +346,11 @@ class ActiveSessionManager @Inject constructor(
         // restore au prochain cycle (cas où l'utilisateur démarre une 2e séance
         // après avoir fermé la 1re sans process death).
         restoreAttempted = false
+        // Le service observe sessionFlow et stopSelf à la valeur null, donc on
+        // pourrait s'en passer ; mais on appelle explicitement stop() pour
+        // garantir l'arrêt immédiat de la notif (sinon délai d'un cycle de
+        // collect avant que la notif disparaisse).
+        WorkoutSessionService.stop(appContext)
     }
 
     /** Stats finales de la dernière séance (pour le Summary) */
@@ -349,11 +361,27 @@ class ActiveSessionManager @Inject constructor(
     var lastSessionRestSeconds: Long = 0; private set
     var lastSessionSkipped: Int = 0; private set
     var lastSessionWorkoutLogId: Long = 0; private set
+    /** Nb d'exercices de la dernière séance — utilisé pour la share card finale. */
+    var lastSessionExerciseCount: Int = 0; private set
+    /**
+     * Noms ordonnés des exercices de la dernière séance + index des exos
+     * skippés + résumé métrique par index ("4×10 · 80kg"). Capturés au
+     * moment du `saveSessionStats` car le state du ViewModel est détruit
+     * juste après. Utilisé par WorkoutSummaryScreen pour rendre la liste
+     * détaillée dans la share card finale.
+     */
+    var lastSessionExerciseNames: List<String> = emptyList(); private set
+    var lastSessionSkippedIndices: Set<Int> = emptySet(); private set
+    var lastSessionExerciseMetrics: Map<Int, String> = emptyMap(); private set
     var lastShreddyMessage: String = ""
 
     fun saveSessionStats(
         duration: Long, volume: Double, sets: Int, reps: Int,
-        restSeconds: Long, skipped: Int, workoutLogId: Long
+        restSeconds: Long, skipped: Int, workoutLogId: Long,
+        exerciseCount: Int = 0,
+        exerciseNames: List<String> = emptyList(),
+        skippedIndices: Set<Int> = emptySet(),
+        exerciseMetrics: Map<Int, String> = emptyMap(),
     ) {
         lastSessionDuration = duration
         lastSessionVolume = volume
@@ -362,6 +390,10 @@ class ActiveSessionManager @Inject constructor(
         lastSessionRestSeconds = restSeconds
         lastSessionSkipped = skipped
         lastSessionWorkoutLogId = workoutLogId
+        lastSessionExerciseCount = exerciseCount
+        lastSessionExerciseNames = exerciseNames
+        lastSessionSkippedIndices = skippedIndices
+        lastSessionExerciseMetrics = exerciseMetrics
     }
 
     fun getCurrentSeconds(): Long = _session.value?.globalChronoSeconds ?: 0

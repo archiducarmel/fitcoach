@@ -14,7 +14,13 @@ import coil.decode.ImageDecoderDecoder
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
+import com.shredcoach.app.data.repository.UserRepository
+import com.shredcoach.app.notification.NotificationScheduler
 import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -22,6 +28,13 @@ class ShredCoachApplication : Application(), Configuration.Provider, ImageLoader
 
     @Inject lateinit var workerFactory: HiltWorkerFactory
     @Inject lateinit var shreddyVoice: com.shredcoach.app.domain.voice.ShreddyVoice
+    @Inject lateinit var userRepository: UserRepository
+
+    /**
+     * Scope long-vie pour les bootstrap tasks (rescheduling alarmes au cold-start).
+     * SupervisorJob → une exception sur une tâche bootstrap ne casse pas les autres.
+     */
+    private val bootstrapScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     override fun onCreate() {
         // StrictMode AVANT super.onCreate() pour capturer les violations
@@ -40,6 +53,30 @@ class ShredCoachApplication : Application(), Configuration.Provider, ImageLoader
         // vérité dérivée des logs. Idempotent (UPDATE policy) → safe à appeler
         // à chaque cold start.
         com.shredcoach.app.domain.streak.StreakUpdateWorker.enqueue(this)
+        // Re-programme les alarmes de notif au cold-start. Idempotent
+        // (NotificationAlarmScheduler.scheduleAll cancel-puis-reschedule). Couvre
+        // 3 scénarios : (1) première install après onboarding (2) reboot device
+        // déjà couvert par BootReceiver, mais ceinture+bretelles si receiver
+        // refuse de tirer (ex: app non encore lancée post-reboot et user ouvre
+        // l'app — alors c'est ici qu'on rattrape) (3) update Play Store (idem
+        // BootReceiver via MY_PACKAGE_REPLACED, fallback ici).
+        bootstrapScope.launch {
+            try {
+                // **Migration v1→v2 du système de notif** : avant on utilisait
+                // `PeriodicWorkRequest` 24h tagué "shredcoach_notif". Sur les
+                // installs existantes, ces workers vivent dans la DB WorkManager
+                // et continueraient à fire EN PLUS des nouvelles alarmes →
+                // duplication. On les cancel une fois pour toutes ici. C'est un
+                // no-op pour les nouvelles installs, et idempotent pour les
+                // upgrades (next runs : tag inexistant → cancel = no-op).
+                androidx.work.WorkManager.getInstance(this@ShredCoachApplication)
+                    .cancelAllWorkByTag("shredcoach_notif")
+                val profile = userRepository.getUserProfileOnce() ?: return@launch
+                NotificationScheduler.scheduleAll(this@ShredCoachApplication, profile)
+            } catch (t: Throwable) {
+                android.util.Log.e("ShredCoachApp", "Cold-start alarm reschedule failed", t)
+            }
+        }
         // Note : la migration des clés API Room → SecureKeyStore est désormais
         // faite atomiquement par la Migration v33→v34 (cf. Migrations.kt),
         // garantissant qu'aucune clé n'est perdue même si l'utilisateur
@@ -148,7 +185,13 @@ class ShredCoachApplication : Application(), Configuration.Provider, ImageLoader
                 NotificationChannel(CHANNEL_BEDTIME, "Rappel coucher", NotificationManager.IMPORTANCE_LOW)
                     .apply { description = "Rappel pour aller dormir" },
                 NotificationChannel(CHANNEL_DEBRIEF, "Débriefs Shreddy", NotificationManager.IMPORTANCE_HIGH)
-                    .apply { description = "Débriefs personnalisés IA après repas et séances" }
+                    .apply { description = "Débriefs personnalisés IA après repas et séances" },
+                // Cloud backup : informationnel, IMPORTANCE_LOW = pas de son ni de
+                // bandeau intrusif. L'user veut savoir que sa sauvegarde a réussi
+                // sans être réveillé par une notif sonore à 3h du matin. En cas
+                // d'échec on monte à DEFAULT pour qu'il puisse intervenir.
+                NotificationChannel(CHANNEL_BACKUP, "Sauvegarde cloud", NotificationManager.IMPORTANCE_LOW)
+                    .apply { description = "Statut des sauvegardes Google Drive (succès et erreurs)" }
             ))
         }
     }
@@ -158,5 +201,6 @@ class ShredCoachApplication : Application(), Configuration.Provider, ImageLoader
         const val CHANNEL_WORKOUT = "shredcoach_workout"
         const val CHANNEL_BEDTIME = "shredcoach_bedtime"
         const val CHANNEL_DEBRIEF = "shredcoach_debrief"
+        const val CHANNEL_BACKUP = "shredcoach_backup"
     }
 }

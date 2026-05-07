@@ -3,70 +3,39 @@ package com.shredcoach.app.notification
 import android.content.Context
 import androidx.work.*
 import com.shredcoach.app.data.local.entity.UserProfileEntity
-import java.time.Duration
-import java.time.LocalDateTime
-import java.time.LocalTime
 import java.util.concurrent.TimeUnit
 
 /**
- * Planifie toutes les notifications récurrentes via WorkManager.
- * Chaque notification est un PeriodicWorkRequest qui se répète toutes les 24h.
+ * Planifie toutes les notifications récurrentes.
+ *
+ * **Architecture v2** (post-bug "rafale à l'ouverture") :
+ *  - **Daily reminders** (repas, shakers, coucher, motivation) : délégués à
+ *    [NotificationAlarmScheduler] qui utilise `AlarmManager.setAndAllowWhileIdle`.
+ *    Bypasse Doze, ne dérive pas, survit aux reboots (via [BootReceiver]).
+ *  - **One-shot debriefs** (meal/workout debriefs après scan/séance) : restent
+ *    sur WorkManager `OneTimeWorkRequest` — délais courts (5-90 min), pas de
+ *    contrainte temporelle exacte (un débrief 5 min plus tard est OK).
+ *  - **Workout reminders** (séances planifiées 2h/30min avant) : aussi
+ *    WorkManager pour la même raison — l'horizon est court.
+ *
+ * **Ce qui a changé** : les daily reminders étaient sur `PeriodicWorkRequest`
+ * 24h. Sous Doze, drift de plusieurs heures. À l'ouverture de l'app, WorkManager
+ * rattrapait le retard d'un coup → "rafale de notifs". Le passage à AlarmManager
+ * supprime le drift et les bursts.
  */
 object NotificationScheduler {
 
+    /**
+     * Programme toutes les notifications quotidiennes via AlarmManager.
+     * Idempotent : appelé depuis SettingsScreen (sur toggle change),
+     * Application.onCreate (cold start), et BootReceiver (post-reboot).
+     */
     fun scheduleAll(context: Context, profile: UserProfileEntity) {
-        val wm = WorkManager.getInstance(context)
-
-        // Annuler tout d'abord
-        wm.cancelAllWorkByTag("shredcoach_notif")
-
-        if (!profile.notificationsEnabled) return
-
-        // Repas
-        if (profile.notifBreakfast) schedule(context, ShredCoachNotificationWorker.TYPE_BREAKFAST, profile.breakfastTime)
-        if (profile.notifLunch) schedule(context, ShredCoachNotificationWorker.TYPE_LUNCH, profile.lunchTime)
-        if (profile.notifSnack) schedule(context, ShredCoachNotificationWorker.TYPE_SNACK, profile.snackTime)
-        if (profile.notifDinner) schedule(context, ShredCoachNotificationWorker.TYPE_DINNER, profile.dinnerTime)
-
-        // Shakers
-        if (profile.notifShaker) {
-            schedule(context, ShredCoachNotificationWorker.TYPE_SHAKER_MORNING, profile.shakerMorningTime)
-            schedule(context, ShredCoachNotificationWorker.TYPE_SHAKER_EVENING, profile.shakerEveningTime)
-        }
-
-        // Coucher (30 min avant)
-        if (profile.notifBedtime && profile.bedTime != null) {
-            val bedReminder = profile.bedTime.minusMinutes(30)
-            schedule(context, ShredCoachNotificationWorker.TYPE_BEDTIME, bedReminder)
-        }
-
-        // Motivation (check quotidien à 10h)
-        if (profile.notifMotivation) {
-            schedule(context, ShredCoachNotificationWorker.TYPE_MOTIVATION, LocalTime.of(10, 0))
-        }
-    }
-
-    private fun schedule(context: Context, type: String, targetTime: LocalTime) {
-        val now = LocalDateTime.now()
-        var target = now.toLocalDate().atTime(targetTime)
-        if (target.isBefore(now)) target = target.plusDays(1)
-        val delayMillis = Duration.between(now, target).toMillis()
-
-        val data = Data.Builder().putString("type", type).build()
-
-        val request = PeriodicWorkRequestBuilder<ShredCoachNotificationWorker>(24, TimeUnit.HOURS)
-            .setInitialDelay(delayMillis, TimeUnit.MILLISECONDS)
-            .setInputData(data)
-            .addTag("shredcoach_notif")
-            .addTag("shredcoach_$type")
-            .build()
-
-        WorkManager.getInstance(context)
-            .enqueueUniquePeriodicWork("shredcoach_$type", ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE, request)
+        NotificationAlarmScheduler.scheduleAll(context, profile)
     }
 
     fun cancelAll(context: Context) {
-        WorkManager.getInstance(context).cancelAllWorkByTag("shredcoach_notif")
+        NotificationAlarmScheduler.cancelAll(context)
     }
 
     // ═══════════════════════════════════════
