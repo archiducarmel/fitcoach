@@ -2227,4 +2227,632 @@
     <string name="exo_dips_entre_deux_bancs_execution">Hands on a bench behind, feet on another in front. Lower bending the elbows. Press up.</string>
     <string name="exo_dips_entre_deux_bancs_tips">Easier than classic dips. Add weight on the thighs to progress.</string>
     <string name="exo_dips_entre_deux_bancs_starting_weight">Bodyweight</string>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Phase 3 wave 3 — 100 exos contigus (source lignes 1150-1377) -->
+    <!-- Couvre fin Batch 1 (TRICEPS+ABS+LOMBAIRES+AVANT-BRAS+MOLLETS) -->
+    <!-- + Batch 2 Variantes avancées (QUADS/HAMSTRINGS/CHEST/        -->
+    <!-- SHOULDERS/BACK/BICEPS partiel)                                -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+
+    <!-- ── TRICEPS suppl. (suite) ── -->
+    <string name="exo_jm_press_name">JM press</string>
+    <string name="exo_jm_press_equipment">EZ bar + bench.</string>
+    <string name="exo_jm_press_execution">Lying down. Lower the bar toward the chin (between skullcrusher and close-grip press). Press up contracting the triceps.</string>
+    <string name="exo_jm_press_tips">Skullcrusher/close-grip hybrid. Advanced movement.</string>
+    <string name="exo_jm_press_starting_weight">45–65 lb</string>
+
+    <string name="exo_tate_press_name">Tate press</string>
+    <string name="exo_tate_press_equipment">Dumbbells + bench.</string>
+    <string name="exo_tate_press_execution">Lying down. Dumbbells above the chest. Bend the elbows to bring the dumbbells toward the chest, elbows pointing outward. Press back up.</string>
+    <string name="exo_tate_press_tips">Unusual movement but very effective for the lateral head.</string>
+    <string name="exo_tate_press_starting_weight">15–25 lb each</string>
+
+    <!-- ── ABS supplementary ── -->
+    <string name="exo_sit_ups_name">Sit-ups</string>
+    <string name="exo_sit_ups_equipment">Mat.</string>
+    <string name="exo_sit_ups_execution">Lying down, knees bent. Bring the torso all the way up to seated. Lower slowly.</string>
+    <string name="exo_sit_ups_tips">Full motion, also recruits the hip flexors.</string>
+    <string name="exo_sit_ups_starting_weight">Bodyweight</string>
+
+    <string name="exo_v_ups_name">V-ups</string>
+    <string name="exo_v_ups_equipment">Mat.</string>
+    <string name="exo_v_ups_execution">Lying down, arms and legs extended. Raise torso and legs simultaneously to touch the feet. Form a V.</string>
+    <string name="exo_v_ups_tips">Trains the entire rectus abdominis simultaneously.</string>
+    <string name="exo_v_ups_starting_weight">Bodyweight</string>
+
+    <string name="exo_bicycle_crunch_name">Bicycle crunch</string>
+    <string name="exo_bicycle_crunch_equipment">Mat.</string>
+    <string name="exo_bicycle_crunch_execution">Lying down, hands behind the head. Bring elbow toward opposite knee, alternating. Pedaling motion.</string>
+    <string name="exo_bicycle_crunch_tips">One of the best oblique exercises per EMG studies.</string>
+    <string name="exo_bicycle_crunch_starting_weight">Bodyweight</string>
+
+    <string name="exo_russian_twist_name">Russian twist</string>
+    <string name="exo_russian_twist_equipment">Plate or medicine ball.</string>
+    <string name="exo_russian_twist_execution">Seated, feet off the floor. Rotate the torso left to right while holding the weight.</string>
+    <string name="exo_russian_twist_tips">Targets the obliques. Reps count each side.</string>
+    <string name="exo_russian_twist_starting_weight">10–25 lb</string>
+
+    <string name="exo_mountain_climbers_name">Mountain climbers</string>
+    <string name="exo_mountain_climbers_equipment">None.</string>
+    <string name="exo_mountain_climbers_execution">Plank position. Alternately bring the knees to the chest at speed.</string>
+    <string name="exo_mountain_climbers_tips">Cardio + abs. Keep the hips low and stable.</string>
+    <string name="exo_mountain_climbers_starting_weight">Bodyweight</string>
+
+    <string name="exo_ab_wheel_roulette_abdominale_name">Ab wheel rollout</string>
+    <string name="exo_ab_wheel_roulette_abdominale_equipment">Ab wheel.</string>
+    <string name="exo_ab_wheel_roulette_abdominale_execution">On the knees. Roll forward extending the body. Return to start by contracting the abs.</string>
+    <string name="exo_ab_wheel_roulette_abdominale_tips">Intense exercise. Start on the knees before attempting standing.</string>
+    <string name="exo_ab_wheel_roulette_abdominale_starting_weight">Bodyweight</string>
+
+    <string name="exo_dragon_flag_name">Dragon flag</string>
+    <string name="exo_dragon_flag_equipment">Bench.</string>
+    <string name="exo_dragon_flag_execution">Lying on a bench. Hold the end. Raise the entire body like a flag. Lower slowly without touching the bench.</string>
+    <string name="exo_dragon_flag_tips">Bruce Lee\'s exercise. Extremely advanced.</string>
+    <string name="exo_dragon_flag_starting_weight">Bodyweight</string>
+
+    <string name="exo_crunch_inverse_name">Reverse crunch</string>
+    <string name="exo_crunch_inverse_equipment">Mat.</string>
+    <string name="exo_crunch_inverse_execution">Lying down, legs bent. Roll the hips toward the chest lifting the glutes off the floor. Lower slowly.</string>
+    <string name="exo_crunch_inverse_tips">Targets the lower abs.</string>
+    <string name="exo_crunch_inverse_starting_weight">Bodyweight</string>
+
+    <string name="exo_woodchop_poulie_name">Cable woodchop</string>
+    <string name="exo_woodchop_poulie_equipment">High pulley.</string>
+    <string name="exo_woodchop_poulie_execution">Grab the handle up high. Pull diagonally downward while rotating the torso. Control the return.</string>
+    <string name="exo_woodchop_poulie_tips">Functional rotational movement. Trains the obliques.</string>
+    <string name="exo_woodchop_poulie_starting_weight">25–45 lb</string>
+
+    <string name="exo_dead_bug_name">Dead bug</string>
+    <string name="exo_dead_bug_equipment">Mat.</string>
+    <string name="exo_dead_bug_execution">Lying down, arms and knees at 90°. Extend one arm and the opposite leg simultaneously. Return and alternate.</string>
+    <string name="exo_dead_bug_tips">Excellent for core stability and coordination.</string>
+    <string name="exo_dead_bug_starting_weight">Bodyweight</string>
+
+    <string name="exo_hollow_body_hold_name">Hollow body hold</string>
+    <string name="exo_hollow_body_hold_equipment">Mat.</string>
+    <string name="exo_hollow_body_hold_execution">Lying down, arms extended overhead. Lift shoulders and legs off the floor. Hold the position.</string>
+    <string name="exo_hollow_body_hold_tips">Foundational gymnastics position. Reps = seconds of hold.</string>
+    <string name="exo_hollow_body_hold_starting_weight">Bodyweight</string>
+
+    <string name="exo_pallof_press_name">Pallof press</string>
+    <string name="exo_pallof_press_equipment">Pulley or band.</string>
+    <string name="exo_pallof_press_execution">Standing perpendicular to the pulley. Hold the handle in front of the chest. Extend arms forward without rotating the torso.</string>
+    <string name="exo_pallof_press_tips">Anti-rotation: trains deep core stability.</string>
+    <string name="exo_pallof_press_starting_weight">10–25 lb</string>
+
+    <!-- ── LOWER BACK ── -->
+    <string name="exo_hyperextensions_banc_45_name">45° back extensions</string>
+    <string name="exo_hyperextensions_banc_45_equipment">Hyperextension bench.</string>
+    <string name="exo_hyperextensions_banc_45_execution">Set up on the 45° bench. Lower the torso toward the floor. Stand back up by contracting the lower back and glutes.</string>
+    <string name="exo_hyperextensions_banc_45_tips">Don\'t hyper-extend. Stop at body alignment.</string>
+    <string name="exo_hyperextensions_banc_45_starting_weight">Bodyweight</string>
+
+    <string name="exo_superman_au_sol_name">Superman</string>
+    <string name="exo_superman_au_sol_equipment">Mat.</string>
+    <string name="exo_superman_au_sol_execution">Lying face-down. Raise arms and legs simultaneously. Hold 2–3 seconds. Lower.</string>
+    <string name="exo_superman_au_sol_tips">Simple but effective for the spinal erectors.</string>
+    <string name="exo_superman_au_sol_starting_weight">Bodyweight</string>
+
+    <string name="exo_bird_dog_name">Bird dog</string>
+    <string name="exo_bird_dog_equipment">Mat.</string>
+    <string name="exo_bird_dog_execution">On all fours. Extend one arm and opposite leg simultaneously. Hold 2 seconds. Alternate.</string>
+    <string name="exo_bird_dog_tips">Stability, coordination and lower-back strength. Ideal for rehab.</string>
+    <string name="exo_bird_dog_starting_weight">Bodyweight</string>
+
+    <!-- ── FOREARMS ── -->
+    <string name="exo_farmer_s_walk_name">Farmer\'s walk</string>
+    <string name="exo_farmer_s_walk_equipment">Heavy dumbbells.</string>
+    <string name="exo_farmer_s_walk_execution">Grab a heavy dumbbell in each hand. Walk straight for 65–130 ft keeping the shoulders down and core engaged.</string>
+    <string name="exo_farmer_s_walk_tips">Reps = seconds of walking. Builds grip strength, traps and core.</string>
+    <string name="exo_farmer_s_walk_starting_weight">45–65 lb each</string>
+
+    <string name="exo_dead_hang_name">Dead hang</string>
+    <string name="exo_dead_hang_equipment">Pull-up bar.</string>
+    <string name="exo_dead_hang_execution">Hang from the bar with extended arms. Hold as long as possible.</string>
+    <string name="exo_dead_hang_tips">Reps = seconds. Builds grip endurance and decompresses the spine.</string>
+    <string name="exo_dead_hang_starting_weight">Bodyweight</string>
+
+    <string name="exo_curl_poignets_barre_name">Wrist curl (barbell)</string>
+    <string name="exo_curl_poignets_barre_equipment">Bar + bench.</string>
+    <string name="exo_curl_poignets_barre_execution">Forearms on the thighs, wrists hanging off. Curl the wrists upward to lift the bar. Lower slowly.</string>
+    <string name="exo_curl_poignets_barre_tips">Short but intense range. Burn guaranteed.</string>
+    <string name="exo_curl_poignets_barre_starting_weight">25–35 lb</string>
+
+    <!-- ── CALVES supplementary ── -->
+    <string name="exo_donkey_calf_raise_name">Donkey calf raise</string>
+    <string name="exo_donkey_calf_raise_equipment">Support + partner or machine.</string>
+    <string name="exo_donkey_calf_raise_execution">Bent forward, balls of the feet on a step. Rise on the toes. Lower stretching the calves.</string>
+    <string name="exo_donkey_calf_raise_tips">Bent-over position stretches the gastrocnemius more.</string>
+    <string name="exo_donkey_calf_raise_starting_weight">Bodyweight</string>
+
+    <string name="exo_mollets_presse_a_cuisses_name">Calf press on leg press</string>
+    <string name="exo_mollets_presse_a_cuisses_equipment">Leg press.</string>
+    <string name="exo_mollets_presse_a_cuisses_execution">Feet at the bottom of the platform, balls of the feet on the edge. Push with the toes then lower stretching.</string>
+    <string name="exo_mollets_presse_a_cuisses_tips">Lets you load heavy safely.</string>
+    <string name="exo_mollets_presse_a_cuisses_starting_weight">130–220 lb</string>
+
+    <string name="exo_box_jumps_name">Box jumps</string>
+    <string name="exo_box_jumps_equipment">Plyo box.</string>
+    <string name="exo_box_jumps_execution">Facing the box. Jump onto the box landing flat-footed. Step down under control.</string>
+    <string name="exo_box_jumps_tips">Plyometric: builds leg and calf power.</string>
+    <string name="exo_box_jumps_starting_weight">Bodyweight</string>
+
+    <!-- ── QUADS Advanced variants ── -->
+    <string name="exo_front_squat_barre_devant_name">Front squat</string>
+    <string name="exo_front_squat_barre_devant_equipment">Olympic barbell + rack.</string>
+    <string name="exo_front_squat_barre_devant_execution">Bar on the front delts, elbows high. Descend until thighs parallel keeping the torso vertical. Push through the heels.</string>
+    <string name="exo_front_squat_barre_devant_tips">More quads, less glutes than back squat. Wrist mobility required.</string>
+    <string name="exo_front_squat_barre_devant_starting_weight">Empty bar 45 lb</string>
+
+    <string name="exo_pendulum_squat_name">Pendulum squat</string>
+    <string name="exo_pendulum_squat_equipment">Pendulum squat machine.</string>
+    <string name="exo_pendulum_squat_execution">Back against the pad, feet low on the platform. Squat deep keeping lordosis. Push back up without locking out.</string>
+    <string name="exo_pendulum_squat_tips">Arc trajectory follows the natural squat path without loading the spine.</string>
+    <string name="exo_pendulum_squat_starting_weight">90–135 lb</string>
+
+    <string name="exo_belt_squat_name">Belt squat</string>
+    <string name="exo_belt_squat_equipment">Belt squat machine or belt + plates.</string>
+    <string name="exo_belt_squat_execution">Load on the belt (not the spine). Feet shoulder-width. Squat deep. Torso upright, neutral spine.</string>
+    <string name="exo_belt_squat_tips">Completely unloads the spine — ideal if you have lower-back issues.</string>
+    <string name="exo_belt_squat_starting_weight">65–110 lb</string>
+
+    <string name="exo_trap_bar_deadlift_name">Trap bar deadlift</string>
+    <string name="exo_trap_bar_deadlift_equipment">Trap bar (hex bar).</string>
+    <string name="exo_trap_bar_deadlift_execution">Standing in the center of the bar. Grab the handles, flat back. Push the floor to stand keeping the torso more vertical than a classic deadlift.</string>
+    <string name="exo_trap_bar_deadlift_tips">Squat/deadlift hybrid. Safer for the back than classic deadlift.</string>
+    <string name="exo_trap_bar_deadlift_starting_weight">135–220 lb</string>
+
+    <string name="exo_hack_squat_assis_name">Seated hack squat</string>
+    <string name="exo_hack_squat_assis_equipment">Seated hack squat (pivot machine).</string>
+    <string name="exo_hack_squat_assis_execution">Seated, back against the pad, feet on the platform. Lower the knees toward the chest. Press to extend the legs.</string>
+    <string name="exo_hack_squat_assis_tips">Seated hack variant — targets quads without lumbar stress.</string>
+    <string name="exo_hack_squat_assis_starting_weight">65–135 lb</string>
+
+    <string name="exo_squat_cosaque_name">Cossack squat</string>
+    <string name="exo_squat_cosaque_equipment">None (optional dumbbell).</string>
+    <string name="exo_squat_cosaque_execution">Feet very wide. Shift weight onto one leg keeping the other straight. Squat deep. Stand and alternate.</string>
+    <string name="exo_squat_cosaque_tips">Hip mobility + adductors + balance. Excellent for mobility.</string>
+    <string name="exo_squat_cosaque_starting_weight">Bodyweight</string>
+
+    <string name="exo_box_squat_name">Box squat</string>
+    <string name="exo_box_squat_equipment">Bar + bench/box.</string>
+    <string name="exo_box_squat_execution">Classic squat but briefly sit on the box, then explode up without rebound.</string>
+    <string name="exo_box_squat_tips">Breaks the stretch reflex — builds pure power from the bottom.</string>
+    <string name="exo_box_squat_starting_weight">Empty bar 45 lb</string>
+
+    <string name="exo_air_squat_name">Air squat</string>
+    <string name="exo_air_squat_equipment">None.</string>
+    <string name="exo_air_squat_execution">Unloaded squat at a steady pace. Arms extended forward for balance. Descend until thighs parallel.</string>
+    <string name="exo_air_squat_tips">Classic warm-up — activates the legs and increases circulation.</string>
+    <string name="exo_air_squat_starting_weight">Bodyweight</string>
+
+    <!-- ── HAMSTRINGS / Posterior chain variants ── -->
+    <string name="exo_kettlebell_swing_name">Kettlebell swing</string>
+    <string name="exo_kettlebell_swing_equipment">Kettlebell.</string>
+    <string name="exo_kettlebell_swing_execution">Hip hinge: push the hips back letting the kettlebell swing between the legs, then snap the hips forward explosively (the KB rises by inertia).</string>
+    <string name="exo_kettlebell_swing_tips">Power = hips, not arms. Top exercise for the posterior chain + cardio.</string>
+    <string name="exo_kettlebell_swing_starting_weight">25–45 lb</string>
+
+    <string name="exo_rack_pull_name">Rack pull</string>
+    <string name="exo_rack_pull_equipment">Rack at knee height + bar.</string>
+    <string name="exo_rack_pull_execution">Bar resting on the supports at knee height. Grip with flat back. Pull pushing the floor and extending the hips.</string>
+    <string name="exo_rack_pull_tips">Reduced range = heavier loads possible. Strengthens deadlift lockout.</string>
+    <string name="exo_rack_pull_starting_weight">175–265 lb</string>
+
+    <string name="exo_reeves_deadlift_name">Reeves deadlift</string>
+    <string name="exo_reeves_deadlift_equipment">Olympic bar + wide plates.</string>
+    <string name="exo_reeves_deadlift_execution">Grip the plates (not the bar) with your hands. Pull keeping the back flat. Very technical.</string>
+    <string name="exo_reeves_deadlift_tips">Advanced variant — heavy demand on grip and traps along with posterior chain.</string>
+    <string name="exo_reeves_deadlift_starting_weight">90–135 lb</string>
+
+    <!-- ── CHEST variants ── -->
+    <string name="exo_floor_press_couche_au_sol_name">Floor press</string>
+    <string name="exo_floor_press_couche_au_sol_equipment">Bar + floor.</string>
+    <string name="exo_floor_press_couche_au_sol_execution">Lying on the floor, bar above the chest. Lower until the elbows touch the floor (no further). Press to lockout.</string>
+    <string name="exo_floor_press_couche_au_sol_tips">Reduced range — easier on the shoulders. Ideal for recovery or triceps lockout work.</string>
+    <string name="exo_floor_press_couche_au_sol_starting_weight">Empty bar 45 lb</string>
+
+    <string name="exo_larsen_press_name">Larsen press</string>
+    <string name="exo_larsen_press_equipment">Bar + flat bench.</string>
+    <string name="exo_larsen_press_execution">Lying on a flat bench, legs extended forward (NOT on the floor). Perform a classic bench press without leg drive.</string>
+    <string name="exo_larsen_press_tips">Eliminates leg drive — pure pec isolation. Pure technical strength.</string>
+    <string name="exo_larsen_press_starting_weight">Empty bar 45 lb</string>
+
+    <string name="exo_hex_press_smith_machine_name">Smith machine hex press</string>
+    <string name="exo_hex_press_smith_machine_equipment">Smith machine + 2 dumbbells.</string>
+    <string name="exo_hex_press_smith_machine_execution">Lying under the Smith. Hold 2 dumbbells together (hexagons pressed). Press while squeezing the pecs.</string>
+    <string name="exo_hex_press_smith_machine_tips">Constant adduction — intense burn at the center of the pecs.</string>
+    <string name="exo_hex_press_smith_machine_starting_weight">20–35 lb each</string>
+
+    <string name="exo_svend_press_name">Svend press</string>
+    <string name="exo_svend_press_equipment">1 plate (10–25 lb).</string>
+    <string name="exo_svend_press_execution">Standing, press the plate between your palms at chest level. Extend the arms forward keeping the pressure. Return.</string>
+    <string name="exo_svend_press_tips">Finisher — total congestion of the inner pec.</string>
+    <string name="exo_svend_press_starting_weight">10–25 lb</string>
+
+    <string name="exo_developpe_couche_prise_inversee_name">Reverse-grip bench press</string>
+    <string name="exo_developpe_couche_prise_inversee_equipment">Bar + flat bench (rack required).</string>
+    <string name="exo_developpe_couche_prise_inversee_execution">Grip the bar in supination (palms toward you). Lower slowly, arms close to the body. Press without locking out.</string>
+    <string name="exo_developpe_couche_prise_inversee_tips">Recruits the clavicular head (upper pecs) more. Spotter needed.</string>
+    <string name="exo_developpe_couche_prise_inversee_starting_weight">Empty bar 45 lb</string>
+
+    <string name="exo_landmine_press_chest_name">Landmine chest press</string>
+    <string name="exo_landmine_press_chest_equipment">Landmine + plates.</string>
+    <string name="exo_landmine_press_chest_execution">Kneeling facing the landmine. Grab the bar with both hands. Press forward and upward squeezing the upper pecs.</string>
+    <string name="exo_landmine_press_chest_tips">Arc trajectory — spares the shoulders while loading the upper chest.</string>
+    <string name="exo_landmine_press_chest_starting_weight">25–45 lb</string>
+
+    <!-- ── SHOULDERS variants ── -->
+    <string name="exo_cuban_rotation_name">Cuban rotation</string>
+    <string name="exo_cuban_rotation_equipment">EZ bar or light dumbbells.</string>
+    <string name="exo_cuban_rotation_execution">Elbows at shoulder height, forearms pointing down. Externally rotate to bring the forearms above the head.</string>
+    <string name="exo_cuban_rotation_tips">Prehab — strengthens the rotator cuff. Light load mandatory.</string>
+    <string name="exo_cuban_rotation_starting_weight">10–25 lb</string>
+
+    <string name="exo_elevations_laterales_poulie_name">Cable lateral raise</string>
+    <string name="exo_elevations_laterales_poulie_equipment">Low pulley + D handle.</string>
+    <string name="exo_elevations_laterales_poulie_execution">Standing, pulley on the opposite side. Arm by your side. Raise laterally to shoulder height. Lower slowly.</string>
+    <string name="exo_elevations_laterales_poulie_tips">Constant tension — better mid-delt recruitment than dumbbells.</string>
+    <string name="exo_elevations_laterales_poulie_starting_weight">10–25 lb</string>
+
+    <string name="exo_landmine_press_epaules_name">Landmine shoulder press</string>
+    <string name="exo_landmine_press_epaules_equipment">Landmine + plates.</string>
+    <string name="exo_landmine_press_epaules_execution">Standing, bar at shoulder height. Press up and slightly forward. Arc trajectory.</string>
+    <string name="exo_landmine_press_epaules_tips">Ideal for sensitive shoulders — less impact than a classic overhead press.</string>
+    <string name="exo_landmine_press_epaules_starting_weight">25–45 lb</string>
+
+    <string name="exo_rotation_externe_poulie_name">Cable external rotation</string>
+    <string name="exo_rotation_externe_poulie_equipment">Low pulley + D handle.</string>
+    <string name="exo_rotation_externe_poulie_execution">Side to the pulley. Elbow tucked, forearm at 90°. Rotate the forearm outward. Control the return.</string>
+    <string name="exo_rotation_externe_poulie_tips">Prehab — rotator cuff (supraspinatus). Do 2–3×/week.</string>
+    <string name="exo_rotation_externe_poulie_starting_weight">5–20 lb</string>
+
+    <string name="exo_developpe_epaule_kettlebell_name">Kettlebell shoulder press</string>
+    <string name="exo_developpe_epaule_kettlebell_equipment">Kettlebell.</string>
+    <string name="exo_developpe_epaule_kettlebell_execution">KB in rack position (bell against the forearm). Press overhead while stabilizing. Control the descent.</string>
+    <string name="exo_developpe_epaule_kettlebell_tips">Rack position = recruits core stability. Train unilateral.</string>
+    <string name="exo_developpe_epaule_kettlebell_starting_weight">20–35 lb</string>
+
+    <!-- ── BACK variants ── -->
+    <string name="exo_seal_row_halteres_name">Seal row (dumbbell)</string>
+    <string name="exo_seal_row_halteres_equipment">Elevated bench + 2 dumbbells.</string>
+    <string name="exo_seal_row_halteres_execution">Lying face-down on the bench, arms hanging. Pull the dumbbells to the hips squeezing the shoulder blades. Controlled descent.</string>
+    <string name="exo_seal_row_halteres_tips">No cheating possible — no leg drive or torso movement.</string>
+    <string name="exo_seal_row_halteres_starting_weight">25–45 lb each</string>
+
+    <string name="exo_renegade_row_name">Renegade row</string>
+    <string name="exo_renegade_row_equipment">2 hex dumbbells.</string>
+    <string name="exo_renegade_row_execution">Plank position on the dumbbells. Pull one dumbbell to the hip while stabilizing the hips (no rotation). Alternate.</string>
+    <string name="exo_renegade_row_tips">Combines row + anti-rotation plank. Massive for the core.</string>
+    <string name="exo_renegade_row_starting_weight">20–25 lb each</string>
+
+    <string name="exo_rowing_smith_machine_name">Smith machine row</string>
+    <string name="exo_rowing_smith_machine_equipment">Smith machine.</string>
+    <string name="exo_rowing_smith_machine_execution">Torso bent at 45°, flat back. Grip the bar overhand. Pull to the lower sternum. Squeeze the shoulder blades.</string>
+    <string name="exo_rowing_smith_machine_tips">Guided trajectory — pure focus on back contraction without stabilization.</string>
+    <string name="exo_rowing_smith_machine_starting_weight">65–110 lb</string>
+
+    <string name="exo_pull_over_poulie_name">Cable pull-over</string>
+    <string name="exo_pull_over_poulie_equipment">High pulley + straight bar.</string>
+    <string name="exo_pull_over_poulie_execution">Standing facing the pulley, arms extended. Pull the bar toward the thighs keeping the arms straight (slight bend). Movement comes from the lats.</string>
+    <string name="exo_pull_over_poulie_tips">Pure lat isolation — mind-muscle connection critical.</string>
+    <string name="exo_pull_over_poulie_starting_weight">35–65 lb</string>
+
+    <!-- ── BICEPS variants ── -->
+    <string name="exo_spider_curl_name">Spider curl</string>
+    <string name="exo_spider_curl_equipment">Incline bench + EZ bar or dumbbells.</string>
+    <string name="exo_spider_curl_execution">Lying face-down on an incline bench. Arms hanging. Curl keeping the elbows fixed. Squeeze at the top.</string>
+    <string name="exo_spider_curl_tips">Eliminates cheating — maximum isolation of the short head of the biceps.</string>
+    <string name="exo_spider_curl_starting_weight">25–45 lb</string>
+
+    <!-- ── BICEPS variants (suite) ── -->
+    <string name="exo_zottman_curl_name">Zottman curl</string>
+    <string name="exo_zottman_curl_equipment">2 dumbbells.</string>
+    <string name="exo_zottman_curl_execution">Classic supinated curl. At the top, rotate palms downward (pronation). Slow descent in pronation. Rotate at the bottom to repeat.</string>
+    <string name="exo_zottman_curl_tips">Combo biceps (up) + forearms (down). 2-in-1 efficient.</string>
+    <string name="exo_zottman_curl_starting_weight">20–25 lb each</string>
+
+    <string name="exo_hammer_curl_halteres_name">Dumbbell hammer curl</string>
+    <string name="exo_hammer_curl_halteres_equipment">2 dumbbells.</string>
+    <string name="exo_hammer_curl_halteres_execution">Hammer grip (palms facing each other). Curl without rotating the wrists. Elbows fixed at the body.</string>
+    <string name="exo_hammer_curl_halteres_tips">Targets the brachialis and brachioradialis. Adds arm volume (forearms included).</string>
+    <string name="exo_hammer_curl_halteres_starting_weight">25–35 lb each</string>
+
+    <string name="exo_concentration_curl_name">Concentration curl</string>
+    <string name="exo_concentration_curl_equipment">1 dumbbell + bench.</string>
+    <string name="exo_concentration_curl_execution">Seated, elbow braced against the inner thigh. Curl squeezing the biceps. Slow descent, full stretch.</string>
+    <string name="exo_concentration_curl_tips">Maximum isolation — peak contraction is the highest tested via EMG.</string>
+    <string name="exo_concentration_curl_starting_weight">20–25 lb</string>
+
+    <string name="exo_cable_curl_poulie_basse_name">Low cable curl (straight bar)</string>
+    <string name="exo_cable_curl_poulie_basse_equipment">Low pulley + straight bar.</string>
+    <string name="exo_cable_curl_poulie_basse_execution">Standing facing the pulley, arms extended. Curl keeping the elbows fixed. Constant tension throughout the rep.</string>
+    <string name="exo_cable_curl_poulie_basse_tips">Constant cable tension — better recruitment than a free bar.</string>
+    <string name="exo_cable_curl_poulie_basse_starting_weight">35–55 lb</string>
+
+    <!-- ── ABS variants ── -->
+    <string name="exo_side_plank_planche_laterale_name">Side plank</string>
+    <string name="exo_side_plank_planche_laterale_equipment">None.</string>
+    <string name="exo_side_plank_planche_laterale_execution">On the side, supported on the forearm. Hips aligned with the shoulders. Hold the position. Alternate sides.</string>
+    <string name="exo_side_plank_planche_laterale_tips">Reps = seconds of hold. Targets obliques + quadratus lumborum.</string>
+    <string name="exo_side_plank_planche_laterale_starting_weight">Bodyweight</string>
+
+    <string name="exo_crunch_swiss_ball_name">Swiss ball crunch</string>
+    <string name="exo_crunch_swiss_ball_equipment">Swiss ball (gym ball).</string>
+    <string name="exo_crunch_swiss_ball_execution">Lower back on the ball, feet on the floor. Crunch by raising the torso. Take advantage of the extended range (pre-stretch on the abs).</string>
+    <string name="exo_crunch_swiss_ball_tips">Greater range than a floor crunch — better upper-ab stimulation.</string>
+    <string name="exo_crunch_swiss_ball_starting_weight">Bodyweight</string>
+
+    <string name="exo_bear_plank_kickback_name">Bear plank kickback</string>
+    <string name="exo_bear_plank_kickback_equipment">None.</string>
+    <string name="exo_bear_plank_kickback_execution">Bear plank, knees 1 in off the floor. Extend one leg backward squeezing the glute. Reset and alternate.</string>
+    <string name="exo_bear_plank_kickback_tips">Combines plank + hip extension. Anti-rotation core.</string>
+    <string name="exo_bear_plank_kickback_starting_weight">Bodyweight</string>
+
+    <!-- ── CALVES variants ── -->
+    <string name="exo_mollets_debout_smith_machine_name">Smith machine standing calf raise</string>
+    <string name="exo_mollets_debout_smith_machine_equipment">Smith machine + step.</string>
+    <string name="exo_mollets_debout_smith_machine_execution">Bar on the traps, balls of the feet on the step. Rise on the toes. Lower in a full stretch.</string>
+    <string name="exo_mollets_debout_smith_machine_tips">Guided trajectory — heavier loading than dumbbells. Full bottom stretch.</string>
+    <string name="exo_mollets_debout_smith_machine_starting_weight">65–110 lb</string>
+
+    <!-- ── TRAINING / CARDIO variants ── -->
+    <string name="exo_sled_push_name">Sled push</string>
+    <string name="exo_sled_push_equipment">Sled + plates.</string>
+    <string name="exo_sled_push_execution">Push the sled over the chosen distance. Torso leaned forward. Explosive steps. Keep the rhythm.</string>
+    <string name="exo_sled_push_tips">Reps = meters covered. Top conditioning + legs + cardio.</string>
+    <string name="exo_sled_push_starting_weight">45–90 lb added</string>
+
+    <string name="exo_burpees_name">Burpees</string>
+    <string name="exo_burpees_equipment">None.</string>
+    <string name="exo_burpees_execution">Squat, hands to the floor, throw the legs into a plank, push-up (optional), return to squat, jump with arms overhead. Chain.</string>
+    <string name="exo_burpees_tips">Intense full body. Ideal as a finisher or CrossFit-style WOD.</string>
+    <string name="exo_burpees_starting_weight">Bodyweight</string>
+
+    <string name="exo_corde_a_sauter_name">Jump rope</string>
+    <string name="exo_corde_a_sauter_equipment">Jump rope.</string>
+    <string name="exo_corde_a_sauter_execution">Light hops on the balls of the feet. Elbows close to the body, wrist rotation to spin the rope. Steady rhythm.</string>
+    <string name="exo_corde_a_sauter_tips">Reps = seconds. Cardio + calves + coordination. Perfect warm-up.</string>
+    <string name="exo_corde_a_sauter_starting_weight">Bodyweight</string>
+
+    <!-- ── STRETCHES — Targeted mobility ── -->
+    <string name="exo_etirement_psoas_fente_a_genoux_name">Psoas stretch (kneeling lunge)</string>
+    <string name="exo_etirement_psoas_fente_a_genoux_equipment">None (mat).</string>
+    <string name="exo_etirement_psoas_fente_a_genoux_execution">Lunge position, back knee on the floor. Push the hips forward keeping the torso upright. Hold 30s.</string>
+    <string name="exo_etirement_psoas_fente_a_genoux_tips">Reps = seconds per side. Crucial after a sedentary day.</string>
+    <string name="exo_etirement_psoas_fente_a_genoux_starting_weight">Bodyweight</string>
+
+    <string name="exo_etirement_quadriceps_fente_name">Quadriceps stretch (lunge)</string>
+    <string name="exo_etirement_quadriceps_fente_equipment">None.</string>
+    <string name="exo_etirement_quadriceps_fente_execution">On the rear knee. Grab the back ankle and pull toward the glute. Push the hips forward.</string>
+    <string name="exo_etirement_quadriceps_fente_tips">Stretches quadriceps + psoas simultaneously. Ideal post-leg day.</string>
+    <string name="exo_etirement_quadriceps_fente_starting_weight">Bodyweight</string>
+
+    <string name="exo_cercles_de_hanches_mobilite_name">Hip circles (mobility)</string>
+    <string name="exo_cercles_de_hanches_mobilite_equipment">None.</string>
+    <string name="exo_cercles_de_hanches_mobilite_execution">Standing, hands on the hips. Circle the pelvis. 10 in one direction, 10 in the other.</string>
+    <string name="exo_cercles_de_hanches_mobilite_tips">Activates the hips before legs. Do at the start of the session.</string>
+    <string name="exo_cercles_de_hanches_mobilite_starting_weight">Bodyweight</string>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Batch 3 entries (auto-generated FR templates) — translated   -->
+    <!-- using shared EN templates by movement pattern.                -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+
+    <string name="exo_ab_coaster_name">AB Coaster</string>
+    <string name="exo_ab_coaster_equipment">None (bodyweight).</string>
+    <string name="exo_ab_coaster_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_ab_coaster_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_ab_coaster_starting_weight">Bodyweight</string>
+
+    <string name="exo_aquabiking_name">Aquabiking</string>
+    <string name="exo_aquabiking_equipment">None (bodyweight).</string>
+    <string name="exo_aquabiking_execution">Cycling in a pool. Steady cadence. Water resistance adds muscular work.</string>
+    <string name="exo_aquabiking_tips">Reps = seconds or minutes depending on intensity. Target 70–80% MHR.</string>
+    <string name="exo_aquabiking_starting_weight">Bodyweight</string>
+
+    <string name="exo_assault_bike_name">Assault bike</string>
+    <string name="exo_assault_bike_equipment">None (bodyweight).</string>
+    <string name="exo_assault_bike_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_assault_bike_tips">Reps = seconds or minutes depending on intensity. Target 70–80% MHR.</string>
+    <string name="exo_assault_bike_starting_weight">Bodyweight</string>
+
+    <string name="exo_assault_runner_name">Assault runner</string>
+    <string name="exo_assault_runner_equipment">None (bodyweight).</string>
+    <string name="exo_assault_runner_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_assault_runner_tips">Reps = seconds or minutes depending on intensity. Target 70–80% MHR.</string>
+    <string name="exo_assault_runner_starting_weight">Bodyweight</string>
+
+    <string name="exo_bent_over_row_prise_disque_name">Bent-over plate row</string>
+    <string name="exo_bent_over_row_prise_disque_equipment">Iron plate.</string>
+    <string name="exo_bent_over_row_prise_disque_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_bent_over_row_prise_disque_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_bent_over_row_prise_disque_starting_weight">Moderate load</string>
+
+    <string name="exo_cercles_jambes_tendues_name">Straight-leg circles</string>
+    <string name="exo_cercles_jambes_tendues_equipment">None (bodyweight).</string>
+    <string name="exo_cercles_jambes_tendues_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_cercles_jambes_tendues_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_cercles_jambes_tendues_starting_weight">Bodyweight</string>
+
+    <string name="exo_chest_press_avec_sangles_de_suspension_name">Suspension chest press</string>
+    <string name="exo_chest_press_avec_sangles_de_suspension_equipment">Cable or band.</string>
+    <string name="exo_chest_press_avec_sangles_de_suspension_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_chest_press_avec_sangles_de_suspension_tips">Unstable work: recruits the stabilizers in addition to the target muscle.</string>
+    <string name="exo_chest_press_avec_sangles_de_suspension_starting_weight">Light load</string>
+
+    <string name="exo_ciseaux_name">Scissors</string>
+    <string name="exo_ciseaux_equipment">None (bodyweight).</string>
+    <string name="exo_ciseaux_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_ciseaux_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_ciseaux_starting_weight">Bodyweight</string>
+
+    <string name="exo_cocon_name">Cocoon</string>
+    <string name="exo_cocon_equipment">None (bodyweight).</string>
+    <string name="exo_cocon_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_cocon_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_cocon_starting_weight">Bodyweight</string>
+
+    <string name="exo_croix_de_fer_avec_halteres_name">Iron cross (dumbbells)</string>
+    <string name="exo_croix_de_fer_avec_halteres_equipment">Dumbbells.</string>
+    <string name="exo_croix_de_fer_avec_halteres_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_croix_de_fer_avec_halteres_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_croix_de_fer_avec_halteres_starting_weight">Moderate load</string>
+
+    <string name="exo_crunch_avec_sangles_de_suspension_name">Suspension crunch</string>
+    <string name="exo_crunch_avec_sangles_de_suspension_equipment">Cable or band.</string>
+    <string name="exo_crunch_avec_sangles_de_suspension_execution">Lying down, knees bent. Roll the shoulders toward the pelvis (not the hips). 1s contraction. Exhale fully.</string>
+    <string name="exo_crunch_avec_sangles_de_suspension_tips">Unstable work: recruits the stabilizers in addition to the target muscle.</string>
+    <string name="exo_crunch_avec_sangles_de_suspension_starting_weight">Light load</string>
+
+    <string name="exo_crunch_debout_avec_elastique_name">Standing band crunch</string>
+    <string name="exo_crunch_debout_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_crunch_debout_avec_elastique_execution">Lying down, knees bent. Roll the shoulders toward the pelvis (not the hips). 1s contraction. Exhale fully.</string>
+    <string name="exo_crunch_debout_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_crunch_debout_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_crunch_lateral_sur_banc_a_lombaires_name">Side crunch (back extension bench)</string>
+    <string name="exo_crunch_lateral_sur_banc_a_lombaires_equipment">None (bodyweight).</string>
+    <string name="exo_crunch_lateral_sur_banc_a_lombaires_execution">Lying down, knees bent. Roll the shoulders toward the pelvis (not the hips). 1s contraction. Exhale fully.</string>
+    <string name="exo_crunch_lateral_sur_banc_a_lombaires_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_crunch_lateral_sur_banc_a_lombaires_starting_weight">Bodyweight</string>
+
+    <string name="exo_crunch_papillon_name">Butterfly crunch</string>
+    <string name="exo_crunch_papillon_equipment">None (bodyweight).</string>
+    <string name="exo_crunch_papillon_execution">Lying down, knees bent. Roll the shoulders toward the pelvis (not the hips). 1s contraction. Exhale fully.</string>
+    <string name="exo_crunch_papillon_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_crunch_papillon_starting_weight">Bodyweight</string>
+
+    <string name="exo_crunch_a_la_poulie_pour_les_obliques_name">Cable oblique crunch</string>
+    <string name="exo_crunch_a_la_poulie_pour_les_obliques_equipment">Pulley + attachment.</string>
+    <string name="exo_crunch_a_la_poulie_pour_les_obliques_execution">Lying down, knees bent. Roll the shoulders toward the pelvis (not the hips). 1s contraction. Exhale fully.</string>
+    <string name="exo_crunch_a_la_poulie_pour_les_obliques_tips">Constant cable tension: zero dead spots in the motion.</string>
+    <string name="exo_crunch_a_la_poulie_pour_les_obliques_starting_weight">Light load</string>
+
+    <string name="exo_curl_allonge_a_la_poulie_name">Lying cable curl</string>
+    <string name="exo_curl_allonge_a_la_poulie_equipment">Pulley + attachment.</string>
+    <string name="exo_curl_allonge_a_la_poulie_execution">Elbows fixed at your sides. Raise contracting the biceps. 3-sec descent, full extension at the bottom.</string>
+    <string name="exo_curl_allonge_a_la_poulie_tips">Constant cable tension: zero dead spots in the motion.</string>
+    <string name="exo_curl_allonge_a_la_poulie_starting_weight">Light load</string>
+
+    <string name="exo_curl_au_pupitre_a_la_poulie_name">Cable preacher curl</string>
+    <string name="exo_curl_au_pupitre_a_la_poulie_equipment">Pulley + attachment.</string>
+    <string name="exo_curl_au_pupitre_a_la_poulie_execution">Elbows fixed at your sides. Raise contracting the biceps. 3-sec descent, full extension at the bottom.</string>
+    <string name="exo_curl_au_pupitre_a_la_poulie_tips">Constant cable tension: zero dead spots in the motion.</string>
+    <string name="exo_curl_au_pupitre_a_la_poulie_starting_weight">Light load</string>
+
+    <string name="exo_curl_avec_sangles_de_suspension_name">Suspension curl</string>
+    <string name="exo_curl_avec_sangles_de_suspension_equipment">Cable or band.</string>
+    <string name="exo_curl_avec_sangles_de_suspension_execution">Elbows fixed at your sides. Raise contracting the biceps. 3-sec descent, full extension at the bottom.</string>
+    <string name="exo_curl_avec_sangles_de_suspension_tips">Unstable work: recruits the stabilizers in addition to the target muscle.</string>
+    <string name="exo_curl_avec_sangles_de_suspension_starting_weight">Light load</string>
+
+    <string name="exo_curl_biceps_alterne_avec_halteres_name">Alternating dumbbell biceps curl</string>
+    <string name="exo_curl_biceps_alterne_avec_halteres_equipment">Dumbbells.</string>
+    <string name="exo_curl_biceps_alterne_avec_halteres_execution">Elbows fixed at your sides. Raise contracting the biceps. 3-sec descent, full extension at the bottom.</string>
+    <string name="exo_curl_biceps_alterne_avec_halteres_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_curl_biceps_alterne_avec_halteres_starting_weight">Moderate load</string>
+
+    <string name="exo_curl_biceps_avec_elastique_name">Band biceps curl</string>
+    <string name="exo_curl_biceps_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_curl_biceps_avec_elastique_execution">Elbows fixed at your sides. Raise contracting the biceps. 3-sec descent, full extension at the bottom.</string>
+    <string name="exo_curl_biceps_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_curl_biceps_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_curl_en_prise_marteau_avec_elastique_name">Hammer-grip band curl</string>
+    <string name="exo_curl_en_prise_marteau_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_curl_en_prise_marteau_avec_elastique_execution">Elbows fixed at your sides. Raise contracting the biceps. 3-sec descent, full extension at the bottom.</string>
+    <string name="exo_curl_en_prise_marteau_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_curl_en_prise_marteau_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_curl_haltere_debout_sur_banc_incline_name">Standing dumbbell curl on incline bench</string>
+    <string name="exo_curl_haltere_debout_sur_banc_incline_equipment">Dumbbells.</string>
+    <string name="exo_curl_haltere_debout_sur_banc_incline_execution">Elbows fixed at your sides. Raise contracting the biceps. 3-sec descent, full extension at the bottom.</string>
+    <string name="exo_curl_haltere_debout_sur_banc_incline_tips">Incline bench = recruits the upper pecs / front delt more.</string>
+    <string name="exo_curl_haltere_debout_sur_banc_incline_starting_weight">Moderate load</string>
+
+    <string name="exo_curl_haltere_incline_avec_rotation_name">Incline dumbbell curl with rotation</string>
+    <string name="exo_curl_haltere_incline_avec_rotation_equipment">Dumbbells.</string>
+    <string name="exo_curl_haltere_incline_avec_rotation_execution">Elbows fixed at your sides. Raise contracting the biceps. 3-sec descent, full extension at the bottom.</string>
+    <string name="exo_curl_haltere_incline_avec_rotation_tips">Incline bench = recruits the upper pecs / front delt more.</string>
+    <string name="exo_curl_haltere_incline_avec_rotation_starting_weight">Moderate load</string>
+
+    <string name="exo_curl_haltere_prise_marteau_au_pupitre_name">Hammer-grip preacher curl (dumbbell)</string>
+    <string name="exo_curl_haltere_prise_marteau_au_pupitre_equipment">Dumbbells.</string>
+    <string name="exo_curl_haltere_prise_marteau_au_pupitre_execution">Elbows fixed at your sides. Raise contracting the biceps. 3-sec descent, full extension at the bottom.</string>
+    <string name="exo_curl_haltere_prise_marteau_au_pupitre_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_curl_haltere_prise_marteau_au_pupitre_starting_weight">Moderate load</string>
+
+    <string name="exo_curl_incline_a_la_poulie_name">Incline cable curl</string>
+    <string name="exo_curl_incline_a_la_poulie_equipment">Pulley + attachment.</string>
+    <string name="exo_curl_incline_a_la_poulie_execution">Elbows fixed at your sides. Raise contracting the biceps. 3-sec descent, full extension at the bottom.</string>
+    <string name="exo_curl_incline_a_la_poulie_tips">Incline bench = recruits the upper pecs / front delt more.</string>
+    <string name="exo_curl_incline_a_la_poulie_starting_weight">Light load</string>
+
+    <string name="exo_curl_inverse_a_la_barre_name">Reverse barbell curl</string>
+    <string name="exo_curl_inverse_a_la_barre_equipment">Olympic barbell.</string>
+    <string name="exo_curl_inverse_a_la_barre_execution">Elbows fixed at your sides. Raise contracting the biceps. 3-sec descent, full extension at the bottom.</string>
+    <string name="exo_curl_inverse_a_la_barre_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_curl_inverse_a_la_barre_starting_weight">Moderate load</string>
+
+    <string name="exo_curl_poulie_en_position_squat_name">Squat-position cable curl</string>
+    <string name="exo_curl_poulie_en_position_squat_equipment">Pulley + attachment.</string>
+    <string name="exo_curl_poulie_en_position_squat_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_curl_poulie_en_position_squat_tips">Constant cable tension: zero dead spots in the motion.</string>
+    <string name="exo_curl_poulie_en_position_squat_starting_weight">Light load</string>
+
+    <string name="exo_curl_unilateral_avec_sangles_de_suspension_name">Single-arm suspension curl</string>
+    <string name="exo_curl_unilateral_avec_sangles_de_suspension_equipment">Cable or band.</string>
+    <string name="exo_curl_unilateral_avec_sangles_de_suspension_execution">Elbows fixed at your sides. Raise contracting the biceps. 3-sec descent, full extension at the bottom.</string>
+    <string name="exo_curl_unilateral_avec_sangles_de_suspension_tips">Unstable work: recruits the stabilizers in addition to the target muscle.</string>
+    <string name="exo_curl_unilateral_avec_sangles_de_suspension_starting_weight">Light load</string>
+
+    <string name="exo_curl_a_la_poulie_vis_a_vis_name">Cross-body cable curl</string>
+    <string name="exo_curl_a_la_poulie_vis_a_vis_equipment">Pulley + attachment.</string>
+    <string name="exo_curl_a_la_poulie_vis_a_vis_execution">Elbows fixed at your sides. Raise contracting the biceps. 3-sec descent, full extension at the bottom.</string>
+    <string name="exo_curl_a_la_poulie_vis_a_vis_tips">Constant cable tension: zero dead spots in the motion.</string>
+    <string name="exo_curl_a_la_poulie_vis_a_vis_starting_weight">Light load</string>
+
+    <string name="exo_dead_hang_suspension_passive_name">Dead hang (passive suspension)</string>
+    <string name="exo_dead_hang_suspension_passive_equipment">Suspension straps (TRX).</string>
+    <string name="exo_dead_hang_suspension_passive_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_dead_hang_suspension_passive_tips">Unstable work: recruits the stabilizers in addition to the target muscle.</string>
+    <string name="exo_dead_hang_suspension_passive_starting_weight">Bodyweight</string>
+
+    <string name="exo_deadlift_jambes_tendues_unilateral_avec_landmine_name">Single-leg stiff-leg deadlift (landmine)</string>
+    <string name="exo_deadlift_jambes_tendues_unilateral_avec_landmine_equipment">Landmine + bar.</string>
+    <string name="exo_deadlift_jambes_tendues_unilateral_avec_landmine_execution">Hips back, flat back, bar close to the shins. Push the floor to stand, lock hips and knees at the top.</string>
+    <string name="exo_deadlift_jambes_tendues_unilateral_avec_landmine_tips">Unilateral: corrects left/right imbalances.</string>
+    <string name="exo_deadlift_jambes_tendues_unilateral_avec_landmine_starting_weight">Moderate load</string>
+
+    <string name="exo_deadlift_sumo_aux_halteres_name">Dumbbell sumo deadlift</string>
+    <string name="exo_deadlift_sumo_aux_halteres_equipment">Dumbbells.</string>
+    <string name="exo_deadlift_sumo_aux_halteres_execution">Hips back, flat back, bar close to the shins. Push the floor to stand, lock hips and knees at the top.</string>
+    <string name="exo_deadlift_sumo_aux_halteres_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_deadlift_sumo_aux_halteres_starting_weight">Moderate load</string>
+
+    <string name="exo_dips_assis_a_la_machine_hammer_strength_name">Seated dip machine (Hammer Strength)</string>
+    <string name="exo_dips_assis_a_la_machine_hammer_strength_equipment">Guided machine.</string>
+    <string name="exo_dips_assis_a_la_machine_hammer_strength_execution">Arms extended, shoulders down. Lower until elbows at 90°. Upright torso = triceps, leaning = pecs. Press to return.</string>
+    <string name="exo_dips_assis_a_la_machine_hammer_strength_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_dips_assis_a_la_machine_hammer_strength_starting_weight">45–90 lb</string>
+
+    <string name="exo_dips_assis_a_la_machine_matrix_name">Seated dip machine (Matrix)</string>
+    <string name="exo_dips_assis_a_la_machine_matrix_equipment">Guided machine.</string>
+    <string name="exo_dips_assis_a_la_machine_matrix_execution">Arms extended, shoulders down. Lower until elbows at 90°. Upright torso = triceps, leaning = pecs. Press to return.</string>
+    <string name="exo_dips_assis_a_la_machine_matrix_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_dips_assis_a_la_machine_matrix_starting_weight">45–90 lb</string>
+
+    <string name="exo_dips_assistes_a_la_machine_name">Assisted dip machine</string>
+    <string name="exo_dips_assistes_a_la_machine_equipment">Guided machine.</string>
+    <string name="exo_dips_assistes_a_la_machine_execution">Arms extended, shoulders down. Lower until elbows at 90°. Upright torso = triceps, leaning = pecs. Press to return.</string>
+    <string name="exo_dips_assistes_a_la_machine_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_dips_assistes_a_la_machine_starting_weight">45–90 lb</string>
+
+    <string name="exo_dips_aux_anneaux_name">Ring dips</string>
+    <string name="exo_dips_aux_anneaux_equipment">None (bodyweight).</string>
+    <string name="exo_dips_aux_anneaux_execution">Arms extended, shoulders down. Lower until elbows at 90°. Upright torso = triceps, leaning = pecs. Press to return.</string>
+    <string name="exo_dips_aux_anneaux_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_dips_aux_anneaux_starting_weight">Bodyweight</string>
 </resources>
