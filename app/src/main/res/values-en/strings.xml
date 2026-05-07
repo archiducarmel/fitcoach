@@ -686,4 +686,61 @@
     <string name="swap_dialog_no_alternatives">No alternative available</string>
     <string name="swap_dialog_choose">Choose a replacement:</string>
     <string name="swap_dialog_close">Close</string>
+
+    <!-- Calendar screen + sheets -->
+    <string name="calendar_title">Calendar</string>
+    <string name="calendar_today_cd">Today</string>
+    <string name="calendar_ai_suggestion_cd">AI suggestion</string>
+    <string name="calendar_fab_schedule">Schedule</string>
+    <string name="calendar_stat_streak_label">Streak</string>
+    <string name="calendar_stat_streak_unit">days</string>
+    <string name="calendar_stat_adherence_label">Adherence</string>
+    <string name="calendar_stat_adherence_count">%1$d/%2$d this month</string>
+    <string name="calendar_stat_next_label">Next</string>
+    <string name="calendar_stat_next_none">None</string>
+    <string name="calendar_nav_prev_month_cd">Previous month</string>
+    <string name="calendar_nav_next_month_cd">Next month</string>
+    <string name="calendar_school_holiday_badge">School holidays</string>
+    <string name="calendar_day_no_session">No session this day</string>
+    <string name="calendar_day_schedule_cta">Schedule a session</string>
+    <string name="calendar_sched_default_title">Session</string>
+    <string name="calendar_sched_status_completed">Done</string>
+    <string name="calendar_sched_status_skipped">Skipped</string>
+    <string name="calendar_sched_status_canceled">Canceled</string>
+    <string name="calendar_sched_action_start">Start</string>
+    <string name="calendar_sched_action_skip">Skip</string>
+    <string name="calendar_sched_action_delete_cd">Delete scheduled session</string>
+    <string name="calendar_log_completed">Session done</string>
+    <string name="calendar_log_subtitle">%1$d sets · %2$d min · %3$dkg</string>
+
+    <!-- Quick Schedule Sheet -->
+    <string name="schedule_dialog_ok">OK</string>
+    <string name="schedule_dialog_cancel">Cancel</string>
+    <string name="schedule_time_picker_title">Session time</string>
+    <string name="schedule_sheet_title">Schedule a session</string>
+    <string name="schedule_field_date">Date</string>
+    <string name="schedule_field_time">Time</string>
+    <string name="schedule_time_empty">—</string>
+    <string name="schedule_clear_time_cd">Clear time</string>
+    <string name="schedule_reminders_hint">Auto reminders: shaker 2h before + start 30min before</string>
+    <string name="schedule_type_label">Type</string>
+    <string name="schedule_type_generated">🎲 Generated</string>
+    <string name="schedule_type_favorite">⭐ Favorite</string>
+    <string name="schedule_type_free">⚡ Free</string>
+    <string name="schedule_no_favorite">No favorite saved. Use \'Generated\' or \'Free\'.</string>
+    <string name="schedule_favorite_subtitle">%1$dmin · %2$d exos</string>
+    <string name="schedule_field_title_label">Title (optional)</string>
+    <string name="schedule_field_note_label">Note (optional)</string>
+    <string name="schedule_default_favorite_title">Favorite session</string>
+    <string name="schedule_default_free_title">Free session</string>
+    <string name="schedule_default_generated_title">Generated session</string>
+    <string name="schedule_confirm_button">Schedule</string>
+
+    <!-- AI Suggestions Sheet -->
+    <string name="ai_sugg_title">Shreddy suggestions</string>
+    <string name="ai_sugg_subtitle">Based on your habits</string>
+    <string name="ai_sugg_loading">Shreddy is thinking…</string>
+    <string name="ai_sugg_dates_label">Suggested dates</string>
+    <string name="ai_sugg_later">Later</string>
+    <string name="ai_sugg_accept_all">Accept all</string>
 </resources>

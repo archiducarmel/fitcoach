@@ -17,9 +17,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.WorkoutEntity
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
@@ -71,9 +73,9 @@ fun QuickScheduleSheet(
                             .atZone(java.time.ZoneId.systemDefault()).toLocalDate()
                     }
                     showDatePicker = false
-                }) { Text("OK") }
+                }) { Text(stringResource(R.string.schedule_dialog_ok)) }
             },
-            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Annuler") } }
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.schedule_dialog_cancel)) } }
         ) {
             DatePicker(state = datePickerState)
         }
@@ -86,10 +88,10 @@ fun QuickScheduleSheet(
                 TextButton(onClick = {
                     selectedTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
                     showTimePicker = false
-                }) { Text("OK") }
+                }) { Text(stringResource(R.string.schedule_dialog_ok)) }
             },
-            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Annuler") } },
-            title = { Text("Heure de la séance") },
+            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text(stringResource(R.string.schedule_dialog_cancel)) } },
+            title = { Text(stringResource(R.string.schedule_time_picker_title)) },
             text = { TimePicker(state = timePickerState) }
         )
     }
@@ -102,7 +104,7 @@ fun QuickScheduleSheet(
             // Header
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Icon(Icons.Default.EventAvailable, null, Modifier.size(22.dp), tint = OrangeVibrant)
-                Text("Planifier une séance", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.schedule_sheet_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
 
             // ─── Date + heure ───
@@ -117,10 +119,10 @@ fun QuickScheduleSheet(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Icon(Icons.Default.CalendarToday, null, Modifier.size(18.dp), tint = OrangeVibrant)
                         Column {
-                            Text("Date", style = MaterialTheme.typography.labelSmall,
+                            Text(stringResource(R.string.schedule_field_date), style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f))
                             Text(
-                                selectedDate.format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale.FRANCE)),
+                                selectedDate.format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())),
                                 style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold
                             )
                         }
@@ -136,16 +138,16 @@ fun QuickScheduleSheet(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Icon(Icons.Default.Schedule, null, Modifier.size(18.dp), tint = OrangeVibrant)
                         Column(Modifier.weight(1f)) {
-                            Text("Heure", style = MaterialTheme.typography.labelSmall,
+                            Text(stringResource(R.string.schedule_field_time), style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f))
                             Text(
-                                selectedTime?.toString()?.substring(0, 5) ?: "—",
+                                selectedTime?.toString()?.substring(0, 5) ?: stringResource(R.string.schedule_time_empty),
                                 style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold
                             )
                         }
                         if (selectedTime != null) {
                             IconButton(onClick = { selectedTime = null }) {
-                                Icon(Icons.Default.Close, "Effacer l'heure", Modifier.size(14.dp),
+                                Icon(Icons.Default.Close, stringResource(R.string.schedule_clear_time_cd), Modifier.size(14.dp),
                                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                             }
                         }
@@ -161,18 +163,18 @@ fun QuickScheduleSheet(
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(Icons.Default.Notifications, null, Modifier.size(16.dp), tint = NeonGreen)
-                    Text("Rappels auto : shaker 2h avant + start 30min avant",
+                    Text(stringResource(R.string.schedule_reminders_hint),
                         style = MaterialTheme.typography.labelSmall, color = NeonGreen)
                 }
             }
 
             // ─── Type de séance ───
-            Text("Type", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.schedule_type_label), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
             Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 listOf(
-                    "🎲 Générée" to 0,
-                    "⭐ Favori" to 1,
-                    "⚡ Libre" to 2
+                    stringResource(R.string.schedule_type_generated) to 0,
+                    stringResource(R.string.schedule_type_favorite) to 1,
+                    stringResource(R.string.schedule_type_free) to 2
                 ).forEach { (label, idx) ->
                     val sel = typeIndex == idx
                     Surface(
@@ -194,7 +196,7 @@ fun QuickScheduleSheet(
             // ─── Si favori : sélection depuis la liste ───
             if (typeIndex == 1) {
                 if (state.favoriteWorkouts.isEmpty()) {
-                    Text("Aucun favori enregistré. Utilise 'Générée' ou 'Libre'.",
+                    Text(stringResource(R.string.schedule_no_favorite),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                 } else {
@@ -214,7 +216,7 @@ fun QuickScheduleSheet(
                                     Text(w.name, style = MaterialTheme.typography.labelMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = if (sel) OrangeVibrant else MaterialTheme.colorScheme.onSurface)
-                                    Text("${w.durationMinutes}min · ${w.exerciseCount} exos",
+                                    Text(stringResource(R.string.schedule_favorite_subtitle, w.durationMinutes, w.exerciseCount),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f))
                                 }
@@ -228,7 +230,7 @@ fun QuickScheduleSheet(
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
-                label = { Text("Titre (optionnel)") },
+                label = { Text(stringResource(R.string.schedule_field_title_label)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp)
@@ -236,7 +238,7 @@ fun QuickScheduleSheet(
             OutlinedTextField(
                 value = note,
                 onValueChange = { note = it },
-                label = { Text("Note (optionnel)") },
+                label = { Text(stringResource(R.string.schedule_field_note_label)) },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 1,
                 maxLines = 3,
@@ -244,11 +246,14 @@ fun QuickScheduleSheet(
             )
 
             // ─── Bouton confirmer ───
+            val defaultFavTitle = stringResource(R.string.schedule_default_favorite_title)
+            val defaultFreeTitle = stringResource(R.string.schedule_default_free_title)
+            val defaultGenTitle = stringResource(R.string.schedule_default_generated_title)
             Button(
                 onClick = {
                     val workoutId = if (typeIndex == 1) selectedWorkout?.id else null
                     val finalTitle = title.ifBlank {
-                        when (typeIndex) { 1 -> selectedWorkout?.name ?: "Séance favorite"; 2 -> "Séance libre"; else -> "Séance générée" }
+                        when (typeIndex) { 1 -> selectedWorkout?.name ?: defaultFavTitle; 2 -> defaultFreeTitle; else -> defaultGenTitle }
                     }
                     onConfirm(selectedDate, selectedTime, workoutId, finalTitle, note)
                 },
@@ -258,7 +263,7 @@ fun QuickScheduleSheet(
             ) {
                 Icon(Icons.Default.Check, null)
                 Spacer(Modifier.width(8.dp))
-                Text("Planifier", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.schedule_confirm_button), fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -294,8 +299,8 @@ fun AiSuggestionsSheet(
                     }
                 }
                 Column {
-                    Text("Suggestions Shreddy", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("Basé sur tes habitudes",
+                    Text(stringResource(R.string.ai_sugg_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.ai_sugg_subtitle),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f))
                 }
@@ -304,7 +309,7 @@ fun AiSuggestionsSheet(
             if (isLoading) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     CircularProgressIndicator(Modifier.size(18.dp), color = OrangeVibrant, strokeWidth = 2.dp)
-                    Text("Shreddy réfléchit…", style = MaterialTheme.typography.bodyMedium, color = OrangeVibrant)
+                    Text(stringResource(R.string.ai_sugg_loading), style = MaterialTheme.typography.bodyMedium, color = OrangeVibrant)
                 }
             } else {
                 // Message du coach
@@ -319,7 +324,7 @@ fun AiSuggestionsSheet(
                 }
 
                 // Liste des dates suggérées
-                Text("Dates proposées", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.ai_sugg_dates_label), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                 suggestedDates.forEach { date ->
                     Row(
                         Modifier.fillMaxWidth()
@@ -338,12 +343,12 @@ fun AiSuggestionsSheet(
                         }
                         Column {
                             Text(
-                                date.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, Locale.FRANCE)
+                                date.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, Locale.getDefault())
                                     .replaceFirstChar { it.uppercase() },
                                 style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold
                             )
                             Text(
-                                date.format(DateTimeFormatter.ofPattern("d MMMM", Locale.FRANCE)),
+                                date.format(DateTimeFormatter.ofPattern("d MMMM", Locale.getDefault())),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
                             )
@@ -357,7 +362,7 @@ fun AiSuggestionsSheet(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f).height(48.dp),
                         shape = RoundedCornerShape(12.dp)
-                    ) { Text("Plus tard") }
+                    ) { Text(stringResource(R.string.ai_sugg_later)) }
                     Button(
                         onClick = onAccept,
                         modifier = Modifier.weight(1f).height(48.dp),
@@ -367,7 +372,7 @@ fun AiSuggestionsSheet(
                     ) {
                         Icon(Icons.Default.Check, null, Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Tout accepter", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.ai_sugg_accept_all), fontWeight = FontWeight.Bold)
                     }
                 }
             }

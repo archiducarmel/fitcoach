@@ -24,12 +24,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.ScheduledWorkoutEntity
 import com.shredcoach.app.domain.workout.RoutineCatalog
 import com.shredcoach.app.presentation.navigation.Screen
@@ -78,20 +80,20 @@ fun CalendarScreen(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Icon(Icons.Default.CalendarMonth, null, Modifier.size(22.dp), tint = OrangeVibrant)
-                        Text("Calendrier", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.calendar_title), fontWeight = FontWeight.Bold)
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.common_back))
                     }
                 },
                 actions = {
                     IconButton(onClick = { viewModel.goToday() }) {
-                        Icon(Icons.Default.Today, "Aujourd'hui", tint = OrangeVibrant)
+                        Icon(Icons.Default.Today, stringResource(R.string.calendar_today_cd), tint = OrangeVibrant)
                     }
                     IconButton(onClick = { viewModel.suggestNextSessions() }) {
-                        Icon(Icons.Default.AutoAwesome, "Suggestion IA", tint = NeonGreen)
+                        Icon(Icons.Default.AutoAwesome, stringResource(R.string.calendar_ai_suggestion_cd), tint = NeonGreen)
                     }
                 }
             )
@@ -104,7 +106,7 @@ fun CalendarScreen(
             ) {
                 Icon(Icons.Default.Add, null)
                 Spacer(Modifier.width(8.dp))
-                Text("Planifier", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.calendar_fab_schedule), fontWeight = FontWeight.Bold)
             }
         }
     ) { pad ->
@@ -186,34 +188,34 @@ private fun CalendarStatsHeader(state: CalendarState) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 // Streak
                 Column {
-                    Text("Streak", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.8f))
+                    Text(stringResource(R.string.calendar_stat_streak_label), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.8f))
                     Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text("${state.streakDays}", style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.ExtraBold, color = Color.White)
-                        Text("jours", style = MaterialTheme.typography.bodySmall,
+                        Text(stringResource(R.string.calendar_stat_streak_unit), style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.8f), modifier = Modifier.padding(bottom = 6.dp))
                     }
                 }
                 VerticalDividerLight()
                 // Assiduité
                 Column {
-                    Text("Assiduité", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.8f))
+                    Text(stringResource(R.string.calendar_stat_adherence_label), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.8f))
                     Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text("${state.adherencePercent}", style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.ExtraBold, color = Color.White)
                         Text("%", style = MaterialTheme.typography.titleMedium,
                             color = Color.White.copy(alpha = 0.8f), modifier = Modifier.padding(bottom = 6.dp))
                     }
-                    Text("${state.completedThisMonth}/${state.plannedThisMonth.coerceAtLeast(state.completedThisMonth)} ce mois",
+                    Text(stringResource(R.string.calendar_stat_adherence_count, state.completedThisMonth, state.plannedThisMonth.coerceAtLeast(state.completedThisMonth)),
                         style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.75f))
                 }
                 VerticalDividerLight()
                 // Prochaine séance
                 Column(Modifier.weight(1f)) {
-                    Text("Prochaine", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.8f))
+                    Text(stringResource(R.string.calendar_stat_next_label), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.8f))
                     val next = state.nextUpcoming
                     if (next != null) {
-                        val dayLabel = next.date.format(DateTimeFormatter.ofPattern("EEE d MMM", Locale.FRANCE))
+                        val dayLabel = next.date.format(DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault()))
                         val timeLabel = next.time?.let { " · ${it.toString().substring(0, 5)}" } ?: ""
                         Text(
                             dayLabel.replaceFirstChar { it.uppercase() } + timeLabel,
@@ -221,7 +223,7 @@ private fun CalendarStatsHeader(state: CalendarState) {
                             maxLines = 2, lineHeight = 16.sp
                         )
                     } else {
-                        Text("Aucune", style = MaterialTheme.typography.bodyMedium,
+                        Text(stringResource(R.string.calendar_stat_next_none), style = MaterialTheme.typography.bodyMedium,
                             color = Color.White.copy(alpha = 0.7f))
                     }
                 }
@@ -247,16 +249,16 @@ private fun MonthNavigator(month: YearMonth, onPrev: () -> Unit, onNext: () -> U
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         IconButton(onClick = onPrev) {
-            Icon(Icons.Default.ChevronLeft, "Mois précédent", tint = MaterialTheme.colorScheme.onSurface)
+            Icon(Icons.Default.ChevronLeft, stringResource(R.string.calendar_nav_prev_month_cd), tint = MaterialTheme.colorScheme.onSurface)
         }
         Text(
-            month.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.FRANCE))
+            month.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault()))
                 .replaceFirstChar { it.uppercase() },
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.ExtraBold
         )
         IconButton(onClick = onNext) {
-            Icon(Icons.Default.ChevronRight, "Mois suivant", tint = MaterialTheme.colorScheme.onSurface)
+            Icon(Icons.Default.ChevronRight, stringResource(R.string.calendar_nav_next_month_cd), tint = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
@@ -276,8 +278,12 @@ private fun MonthGrid(
     workoutDays: Set<Int>,
     onDayClick: (LocalDate) -> Unit
 ) {
-    // En-têtes jours (L M M J V S D en commençant par lundi)
-    val dayNames = listOf("L", "M", "M", "J", "V", "S", "D")
+    // En-têtes jours locale-aware (NARROW = 1 lettre, démarre lundi)
+    val dayNames = remember {
+        listOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
+            DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
+            .map { it.getDisplayName(TextStyle.NARROW, Locale.getDefault()).uppercase() }
+    }
     val firstOfMonth = month.atDay(1)
     // Offset : 0 si lundi, 6 si dimanche
     val leadingEmpty = (firstOfMonth.dayOfWeek.value - 1) // DayOfWeek: Lundi=1, Dimanche=7
@@ -444,7 +450,7 @@ private fun DayDetailsPanel(
     onMarkSkipped: (Long) -> Unit,
     onStartSession: (ScheduledWorkoutEntity) -> Unit
 ) {
-    val fmt = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.FRANCE)
+    val fmt = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.getDefault())
 
     Column(
         Modifier.fillMaxWidth().padding(16.dp),
@@ -462,7 +468,7 @@ private fun DayDetailsPanel(
                 TagBadge(holiday, OrangeVibrant.copy(alpha = 0.15f), OrangeVibrant)
             }
             if (isSchoolHoliday) {
-                TagBadge("Vacances", Color(0xFF8B5CF6).copy(alpha = 0.15f), Color(0xFF8B5CF6))
+                TagBadge(stringResource(R.string.calendar_school_holiday_badge), Color(0xFF8B5CF6).copy(alpha = 0.15f), Color(0xFF8B5CF6))
             }
         }
 
@@ -475,7 +481,7 @@ private fun DayDetailsPanel(
                     Icon(Icons.Default.EventBusy, null, Modifier.size(32.dp),
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
                     Spacer(Modifier.height(8.dp))
-                    Text("Aucune séance ce jour", style = MaterialTheme.typography.bodyMedium,
+                    Text(stringResource(R.string.calendar_day_no_session), style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                     Spacer(Modifier.height(12.dp))
                     FilledTonalButton(
@@ -486,7 +492,7 @@ private fun DayDetailsPanel(
                     ) {
                         Icon(Icons.Default.Add, null, Modifier.size(16.dp), tint = OrangeVibrant)
                         Spacer(Modifier.width(4.dp))
-                        Text("Planifier une séance", color = OrangeVibrant, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.calendar_day_schedule_cta), color = OrangeVibrant, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -549,8 +555,9 @@ private fun ScheduleCard(
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    val defaultSchedTitle = stringResource(R.string.calendar_sched_default_title)
                     Text(
-                        sched.title.ifBlank { "Séance" },
+                        sched.title.ifBlank { defaultSchedTitle },
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         maxLines = 2,
@@ -580,6 +587,9 @@ private fun ScheduleCard(
                         }
                     }
                 }
+                val statusCompletedLabel = stringResource(R.string.calendar_sched_status_completed)
+                val statusSkippedLabel = stringResource(R.string.calendar_sched_status_skipped)
+                val statusCanceledLabel = stringResource(R.string.calendar_sched_status_canceled)
                 val subtitle = buildString {
                     sched.time?.let { append(it.toString().substring(0, 5)) }
                     if (sched.note.isNotBlank()) {
@@ -589,9 +599,9 @@ private fun ScheduleCard(
                     if (sched.status != "PLANNED") {
                         if (isNotEmpty()) append(" · ")
                         append(when (sched.status) {
-                            "COMPLETED" -> "Terminée"
-                            "SKIPPED" -> "Non faite"
-                            else -> "Annulée"
+                            "COMPLETED" -> statusCompletedLabel
+                            "SKIPPED" -> statusSkippedLabel
+                            else -> statusCanceledLabel
                         })
                     }
                 }
@@ -610,7 +620,7 @@ private fun ScheduleCard(
                         ) {
                             Icon(Icons.Default.PlayArrow, null, Modifier.size(14.dp))
                             Spacer(Modifier.width(3.dp))
-                            Text("Lancer", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.calendar_sched_action_start), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                         }
                         OutlinedButton(
                             onClick = onSkip,
@@ -618,7 +628,7 @@ private fun ScheduleCard(
                             contentPadding = PaddingValues(horizontal = 10.dp),
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
                         ) {
-                            Text("Skip", style = MaterialTheme.typography.labelSmall)
+                            Text(stringResource(R.string.calendar_sched_action_skip), style = MaterialTheme.typography.labelSmall)
                         }
                         OutlinedButton(
                             onClick = onDelete,
@@ -626,7 +636,7 @@ private fun ScheduleCard(
                             contentPadding = PaddingValues(horizontal = 10.dp),
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f))
                         ) {
-                            Icon(Icons.Default.Delete, "Supprimer la séance planifiée", Modifier.size(14.dp),
+                            Icon(Icons.Default.Delete, stringResource(R.string.calendar_sched_action_delete_cd), Modifier.size(14.dp),
                                 tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f))
                         }
                     }
@@ -653,9 +663,9 @@ private fun LogCard(log: com.shredcoach.app.data.local.entity.WorkoutLogEntity) 
                 Icon(Icons.Default.Check, null, Modifier.size(20.dp), tint = NeonGreen)
             }
             Column(Modifier.weight(1f)) {
-                Text("Séance terminée", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.calendar_log_completed), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                 val duration = log.actualDurationSeconds / 60
-                Text("${log.totalSets} séries · ${duration} min · ${log.totalVolume.toInt()}kg",
+                Text(stringResource(R.string.calendar_log_subtitle, log.totalSets, duration, log.totalVolume.toInt()),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f))
             }

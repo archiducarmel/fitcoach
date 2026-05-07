@@ -803,4 +803,63 @@
     <string name="swap_dialog_no_alternatives">Aucune alternative disponible</string>
     <string name="swap_dialog_choose">Choisissez un remplacement :</string>
     <string name="swap_dialog_close">Fermer</string>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Calendar screen + sheets -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <string name="calendar_title">Calendrier</string>
+    <string name="calendar_today_cd">Aujourd\'hui</string>
+    <string name="calendar_ai_suggestion_cd">Suggestion IA</string>
+    <string name="calendar_fab_schedule">Planifier</string>
+    <string name="calendar_stat_streak_label">Streak</string>
+    <string name="calendar_stat_streak_unit">jours</string>
+    <string name="calendar_stat_adherence_label">Assiduité</string>
+    <string name="calendar_stat_adherence_count">%1$d/%2$d ce mois</string>
+    <string name="calendar_stat_next_label">Prochaine</string>
+    <string name="calendar_stat_next_none">Aucune</string>
+    <string name="calendar_nav_prev_month_cd">Mois précédent</string>
+    <string name="calendar_nav_next_month_cd">Mois suivant</string>
+    <string name="calendar_school_holiday_badge">Vacances</string>
+    <string name="calendar_day_no_session">Aucune séance ce jour</string>
+    <string name="calendar_day_schedule_cta">Planifier une séance</string>
+    <string name="calendar_sched_default_title">Séance</string>
+    <string name="calendar_sched_status_completed">Terminée</string>
+    <string name="calendar_sched_status_skipped">Non faite</string>
+    <string name="calendar_sched_status_canceled">Annulée</string>
+    <string name="calendar_sched_action_start">Lancer</string>
+    <string name="calendar_sched_action_skip">Skip</string>
+    <string name="calendar_sched_action_delete_cd">Supprimer la séance planifiée</string>
+    <string name="calendar_log_completed">Séance terminée</string>
+    <string name="calendar_log_subtitle">%1$d séries · %2$d min · %3$dkg</string>
+
+    <!-- Quick Schedule Sheet -->
+    <string name="schedule_dialog_ok">OK</string>
+    <string name="schedule_dialog_cancel">Annuler</string>
+    <string name="schedule_time_picker_title">Heure de la séance</string>
+    <string name="schedule_sheet_title">Planifier une séance</string>
+    <string name="schedule_field_date">Date</string>
+    <string name="schedule_field_time">Heure</string>
+    <string name="schedule_time_empty">—</string>
+    <string name="schedule_clear_time_cd">Effacer l\'heure</string>
+    <string name="schedule_reminders_hint">Rappels auto : shaker 2h avant + start 30min avant</string>
+    <string name="schedule_type_label">Type</string>
+    <string name="schedule_type_generated">🎲 Générée</string>
+    <string name="schedule_type_favorite">⭐ Favori</string>
+    <string name="schedule_type_free">⚡ Libre</string>
+    <string name="schedule_no_favorite">Aucun favori enregistré. Utilise \'Générée\' ou \'Libre\'.</string>
+    <string name="schedule_favorite_subtitle">%1$dmin · %2$d exos</string>
+    <string name="schedule_field_title_label">Titre (optionnel)</string>
+    <string name="schedule_field_note_label">Note (optionnel)</string>
+    <string name="schedule_default_favorite_title">Séance favorite</string>
+    <string name="schedule_default_free_title">Séance libre</string>
+    <string name="schedule_default_generated_title">Séance générée</string>
+    <string name="schedule_confirm_button">Planifier</string>
+
+    <!-- AI Suggestions Sheet -->
+    <string name="ai_sugg_title">Suggestions Shreddy</string>
+    <string name="ai_sugg_subtitle">Basé sur tes habitudes</string>
+    <string name="ai_sugg_loading">Shreddy réfléchit…</string>
+    <string name="ai_sugg_dates_label">Dates proposées</string>
+    <string name="ai_sugg_later">Plus tard</string>
+    <string name="ai_sugg_accept_all">Tout accepter</string>
 </resources>
