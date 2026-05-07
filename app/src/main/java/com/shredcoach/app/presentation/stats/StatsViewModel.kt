@@ -13,7 +13,9 @@ import com.shredcoach.app.data.repository.StatsRepository
 import com.shredcoach.app.domain.model.MuscleGroup
 import com.shredcoach.app.domain.training.SetMetricFormatter
 import com.shredcoach.app.domain.training.SetMetricFormatter.ExerciseKind
+import com.shredcoach.app.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.io.File
@@ -259,6 +261,7 @@ data class NutritionStatsData(
 
 @HiltViewModel
 class StatsViewModel @Inject constructor(
+    @ApplicationContext private val appContext: Context,
     private val statsRepository: StatsRepository,
     private val nutritionRepository: com.shredcoach.app.data.repository.NutritionRepository,
     private val mealScanDao: com.shredcoach.app.data.local.dao.MealScanDao,
@@ -455,11 +458,13 @@ class StatsViewModel @Inject constructor(
             val volumeDelta: Float = if (prevVolume > 0) ((currVolume - prevVolume).toFloat() / prevVolume.toFloat() * 100f) else if (currVolume > 0) 100f else 0f
 
             val vd = volumeDelta.toInt()
-            val insight: String = if (vd > 20) "Tu as progressé de +${vd}% en volume !"
-                else if (vd > 5) "Belle progression : +${vd}% de volume"
-                else if (vd > -5) "Volume stable, bonne régularité"
-                else if (vd > -20) "Léger recul de ${vd}%. Fatigue ?"
-                else "Volume en baisse de ${vd}%. Pense à une décharge"
+            val insight: String = when {
+                vd > 20 -> appContext.getString(R.string.stats_period_insight_strong_progress, vd)
+                vd > 5 -> appContext.getString(R.string.stats_period_insight_progress, vd)
+                vd > -5 -> appContext.getString(R.string.stats_period_insight_stable)
+                vd > -20 -> appContext.getString(R.string.stats_period_insight_slight_drop, -vd)
+                else -> appContext.getString(R.string.stats_period_insight_drop, -vd)
+            }
 
             return PeriodComparison(currWorkouts, prevWorkouts, currVolume, prevVolume, workoutDelta, volumeDelta, insight)
         } catch (_: Exception) { return null }
@@ -497,12 +502,12 @@ class StatsViewModel @Inject constructor(
         val projected = lastWeight + slope * 4
 
         val suggestion = when {
-            isPlateauing && plateauWeeks >= 4 -> "Plateau détecté ! Essaie de varier l'exercice ou augmente le volume"
-            slope > 2.0 -> "Progression rapide ! Attention à ne pas brûler les étapes"
-            slope > 0.5 -> "Bonne progression régulière, continue comme ça !"
-            slope > 0 -> "Progression lente mais constante"
-            slope < -1 -> "Régression détectée. Fatigue ? Pense à une semaine de décharge"
-            else -> "Stagnation. Essaie d'augmenter progressivement les charges"
+            isPlateauing && plateauWeeks >= 4 -> appContext.getString(R.string.stats_trend_plateau)
+            slope > 2.0 -> appContext.getString(R.string.stats_trend_fast)
+            slope > 0.5 -> appContext.getString(R.string.stats_trend_steady)
+            slope > 0 -> appContext.getString(R.string.stats_trend_slow)
+            slope < -1 -> appContext.getString(R.string.stats_trend_regression)
+            else -> appContext.getString(R.string.stats_trend_stagnation)
         }
 
         return TrendData(slope, isPlateauing, plateauWeeks, projected.coerceAtLeast(0.0), suggestion)
@@ -516,7 +521,7 @@ class StatsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val sb = StringBuilder()
-                sb.appendLine("Date,Exercice,Serie,Reps,Poids(kg),Repos(s),Tempo,Volume")
+                sb.appendLine(context.getString(R.string.stats_export_csv_header))
 
                 val startDate = LocalDate.now().minusDays(_state.value.selectedPeriod.days)
                 val exercises = _state.value.exercises
@@ -538,10 +543,10 @@ class StatsViewModel @Inject constructor(
                 val intent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/csv"
                     putExtra(Intent.EXTRA_STREAM, uri)
-                    putExtra(Intent.EXTRA_SUBJECT, "ShredCoach - Export données")
+                    putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.stats_export_csv_subject))
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
-                context.startActivity(Intent.createChooser(intent, "Partager l'export"))
+                context.startActivity(Intent.createChooser(intent, context.getString(R.string.stats_export_csv_chooser)))
             } catch (_: Exception) {}
         }
     }
@@ -843,8 +848,8 @@ class StatsViewModel @Inject constructor(
     ): PeriodAggregate {
         var totalCal = 0.0; var totalProt = 0.0; var totalCarbs = 0.0; var totalFats = 0.0
         var daysTracked = 0; var complianceDays = 0
-        val barFmt = DateTimeFormatter.ofPattern("EEE", java.util.Locale.FRANCE)
-        val barFmtLong = DateTimeFormatter.ofPattern("d/M", java.util.Locale.FRANCE)
+        val barFmt = DateTimeFormatter.ofPattern("EEE", java.util.Locale.getDefault())
+        val barFmtLong = DateTimeFormatter.ofPattern("d/M", java.util.Locale.getDefault())
         val barData = mutableListOf<Pair<String, Int>>()
         val series = mutableListOf<Pair<LocalDate, Int>>()
         val targets = mutableListOf<Int>()
@@ -919,21 +924,21 @@ class StatsViewModel @Inject constructor(
         if (protPct + carbPct + fatPct < 0.5f) return ""  // pas assez de données
         return when (goal) {
             com.shredcoach.app.data.local.entity.FitnessGoal.SHRED -> when {
-                protPct < 0.30f -> "Pas assez de protéines pour la sèche"
-                fatPct > 0.40f -> "Trop de lipides — réduis pour creuser le déficit"
-                carbPct > 0.50f -> "Glucides un peu hauts — module-les autour des séances"
-                protPct >= 0.35f && fatPct <= 0.30f -> "Split optimal pour la sèche"
-                else -> "Bon équilibre, marge de progression"
+                protPct < 0.30f -> appContext.getString(R.string.stats_macro_shred_low_prot)
+                fatPct > 0.40f -> appContext.getString(R.string.stats_macro_shred_high_fat)
+                carbPct > 0.50f -> appContext.getString(R.string.stats_macro_shred_high_carb)
+                protPct >= 0.35f && fatPct <= 0.30f -> appContext.getString(R.string.stats_macro_shred_optimal)
+                else -> appContext.getString(R.string.stats_macro_shred_balanced)
             }
             com.shredcoach.app.data.local.entity.FitnessGoal.BULK -> when {
-                carbPct < 0.40f -> "Manque de glucides pour soutenir la prise de masse"
-                protPct < 0.20f -> "Plus de protéines pour la synthèse musculaire"
-                else -> "Split adapté à la prise de masse"
+                carbPct < 0.40f -> appContext.getString(R.string.stats_macro_bulk_low_carb)
+                protPct < 0.20f -> appContext.getString(R.string.stats_macro_bulk_low_prot)
+                else -> appContext.getString(R.string.stats_macro_bulk_optimal)
             }
             else -> when {
-                protPct < 0.20f -> "Plus de protéines pour la satiété et le muscle"
-                fatPct > 0.40f -> "Lipides un peu hauts — diversifie les sources"
-                else -> "Équilibre macro correct"
+                protPct < 0.20f -> appContext.getString(R.string.stats_macro_maintain_low_prot)
+                fatPct > 0.40f -> appContext.getString(R.string.stats_macro_maintain_high_fat)
+                else -> appContext.getString(R.string.stats_macro_maintain_balanced)
             }
         }
     }
@@ -974,45 +979,45 @@ class StatsViewModel @Inject constructor(
         streak: Int,
         fasting: com.shredcoach.app.domain.nutrition.FastingStats,
     ): List<String> {
-        if (daysTracked == 0) return listOf("Suis tes repas pour débloquer des insights personnalisés")
+        if (daysTracked == 0) return listOf(appContext.getString(R.string.stats_insight_no_data))
         val list = mutableListOf<String>()
 
         // 1. Alertes protéines (priorité haute en sèche)
         if (profileGoal == com.shredcoach.app.data.local.entity.FitnessGoal.SHRED && protKg in 0.01..1.4) {
-            list += "🍗 Sous l'objectif protéines (${"%.1f".format(protKg)} g/kg) — vise ≥ 1.6 g/kg"
+            list += appContext.getString(R.string.stats_insight_low_protein, "%.1f".format(protKg))
         }
 
         // 2. Compliance / trends calories
         val complianceShare = if (daysInPeriod > 0) complianceDays.toFloat() / daysInPeriod else 0f
         when {
-            complianceShare >= 0.7f -> list += "🎯 $complianceDays/$daysInPeriod jours dans ta cible — excellente régularité"
-            complianceShare >= 0.4f -> list += "📈 $complianceDays/$daysInPeriod jours dans la cible — continue comme ça"
-            avgCal < targetCal * 0.8 -> list += "⚠️ Déficit moyen ${targetCal - avgCal} kcal/jour — risque de perte musculaire"
-            avgCal > targetCal * 1.2 -> list += "⚠️ ${avgCal - targetCal} kcal au-dessus de la cible en moyenne"
+            complianceShare >= 0.7f -> list += appContext.getString(R.string.stats_insight_compliance_high, complianceDays, daysInPeriod)
+            complianceShare >= 0.4f -> list += appContext.getString(R.string.stats_insight_compliance_mid, complianceDays, daysInPeriod)
+            avgCal < targetCal * 0.8 -> list += appContext.getString(R.string.stats_insight_deficit, targetCal - avgCal)
+            avgCal > targetCal * 1.2 -> list += appContext.getString(R.string.stats_insight_surplus, avgCal - targetCal)
         }
 
         // 3. Comparaison vs période précédente
         if (kotlin.math.abs(caloriesDelta) > 50) {
             val sign = if (caloriesDelta >= 0) "+" else ""
-            list += "📊 ${sign}$caloriesDelta kcal/jour vs période précédente"
+            list += appContext.getString(R.string.stats_insight_kcal_delta, sign, caloriesDelta)
         }
-        if (proteinsDelta >= 15) list += "💪 +${proteinsDelta}g protéines/jour vs période précédente"
+        if (proteinsDelta >= 15) list += appContext.getString(R.string.stats_insight_protein_delta, proteinsDelta)
 
         // 4. Qualité Nutri-Score
-        if (nutriHighShare >= 0.7f) list += "✨ ${(nutriHighShare * 100).toInt()}% de tes repas notés A ou B"
-        else if (nutriHighShare in 0.01f..0.3f) list += "🥗 Vise plus d'aliments notés A et B (légumes, fruits, légumineuses)"
+        if (nutriHighShare >= 0.7f) list += appContext.getString(R.string.stats_insight_nutri_high, (nutriHighShare * 100).toInt())
+        else if (nutriHighShare in 0.01f..0.3f) list += appContext.getString(R.string.stats_insight_nutri_low)
 
         // 5. Streak
-        if (streak >= 7) list += "🔥 $streak jours d'affilée à tracker tes repas"
+        if (streak >= 7) list += appContext.getString(R.string.stats_insight_streak, streak)
 
         // 6. Jeûne intermittent
         if (!fasting.isEmpty && fasting.daysMeasured >= 3) {
             val avg = fasting.averageHours
             when {
-                avg >= 16.0 -> list += "🌙 Jeûne moyen ${formatHours(avg)} — format 16-8 atteint"
-                avg >= 14.0 && fasting.daysWith16h >= 1 -> list += "🌙 Jeûne moyen ${formatHours(avg)} (${fasting.daysWith16h}j ≥ 16h)"
-                avg >= 14.0 -> list += "🌙 Jeûne moyen ${formatHours(avg)} — vise 16h+ pour le 16-8"
-                avg < 12.0 -> list += "🌙 Jeûne ${formatHours(avg)}/jour — ouvre une fenêtre de jeûne plus large"
+                avg >= 16.0 -> list += appContext.getString(R.string.stats_insight_fasting_16h, formatHours(avg))
+                avg >= 14.0 && fasting.daysWith16h >= 1 -> list += appContext.getString(R.string.stats_insight_fasting_with_16h, formatHours(avg), fasting.daysWith16h)
+                avg >= 14.0 -> list += appContext.getString(R.string.stats_insight_fasting_progress, formatHours(avg))
+                avg < 12.0 -> list += appContext.getString(R.string.stats_insight_fasting_low, formatHours(avg))
             }
         }
 

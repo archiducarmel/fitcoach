@@ -64,7 +64,7 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
     if (showShareStats) {
         // Génère la share card en fonction du tab sélectionné
         com.shredcoach.app.presentation.share.ShareSheet(
-            data = if (selectedTab == 0) buildWorkoutStatsShareData(state) else buildNutritionStatsShareData(nutritionStats),
+            data = if (selectedTab == 0) buildWorkoutStatsShareData(context, state) else buildNutritionStatsShareData(context, nutritionStats),
             onDismiss = { showShareStats = false },
         )
     }
@@ -76,8 +76,8 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
             onPick = { format ->
                 showExportStats = false
                 scope.launch {
-                    val payload = if (selectedTab == 0) buildWorkoutStatsExportPayload(state)
-                    else buildNutritionStatsExportPayload(nutritionStats)
+                    val payload = if (selectedTab == 0) buildWorkoutStatsExportPayload(context, state)
+                    else buildNutritionStatsExportPayload(context, nutritionStats)
                     val content = com.shredcoach.app.presentation.share.DataExporter.render(payload, format)
                     val uri = com.shredcoach.app.presentation.share.DataExporter.saveToCache(
                         context, content, format,
@@ -828,7 +828,7 @@ private fun ExerciseProgressionsSection(entries: List<ExerciseProgressionEntry>)
 // ═══════════════════════════════════════
 @Composable
 private fun WeightProgressionSection(state: StatsState, viewModel: StatsViewModel) {
-    SecTitle("Évolution Poids", Icons.AutoMirrored.Filled.TrendingUp)
+    SecTitle(stringResource(R.string.dashboard_section_weight_progression), Icons.AutoMirrored.Filled.TrendingUp)
     var expanded by remember { mutableStateOf(false) }
     @OptIn(ExperimentalMaterial3Api::class)
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
@@ -850,7 +850,7 @@ private fun WeightProgressionSection(state: StatsState, viewModel: StatsViewMode
             state.weightProgression.map { "${it.date.dayOfMonth}/${it.date.monthValue}" },
             Modifier.fillMaxWidth().height(200.dp), OrangeVibrant)
     } else {
-        EmptyChart("Pas assez de données")
+        EmptyChart(stringResource(R.string.dashboard_chart_no_data))
     }
 }
 
@@ -859,7 +859,7 @@ private fun WeightProgressionSection(state: StatsState, viewModel: StatsViewMode
 // ═══════════════════════════════════════
 @Composable
 private fun TrendSection(trend: TrendData) {
-    SecTitle("Tendances & Prédictions", Icons.Default.AutoGraph)
+    SecTitle(stringResource(R.string.dashboard_section_trends_predictions), Icons.Default.AutoGraph)
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             // Indicateurs
@@ -899,7 +899,7 @@ private fun TrendSection(trend: TrendData) {
 // ═══════════════════════════════════════
 @Composable
 private fun WeeklyVolumeSection(state: StatsState) {
-    SecTitle("Volume Hebdomadaire", Icons.Default.BarChart)
+    SecTitle(stringResource(R.string.dashboard_section_weekly_volume), Icons.Default.BarChart)
     // Delta vs semaine précédente
     if (abs(state.volumeChangePercent) > 0.1f) {
         val color = if (state.volumeChangePercent >= 0) NeonGreen else Color(0xFFEF4444)
@@ -917,7 +917,7 @@ private fun WeeklyVolumeSection(state: StatsState) {
 // ═══════════════════════════════════════
 @Composable
 private fun MuscleDistributionSection(data: List<MuscleSlice>) {
-    SecTitle("Répartition Musculaire", Icons.Default.PieChart)
+    SecTitle(stringResource(R.string.dashboard_section_muscle_distribution), Icons.Default.PieChart)
     val colors = listOf(OrangeVibrant, NeonGreen, Color(0xFF3B82F6), Color(0xFF8B5CF6), Color(0xFFEC4899), Color(0xFFF59E0B), Color(0xFF14B8A6), Color(0xFF6366F1), Color(0xFFEF4444), Color(0xFF10B981), Color(0xFF6B7280), Color(0xFFF97316))
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Box(Modifier.size(140.dp)) {
@@ -957,7 +957,7 @@ private fun MuscleDistributionSection(data: List<MuscleSlice>) {
 private fun RoutineBreakdownSection(data: List<RoutineSlice>, period: TimePeriod) {
     val totalSessions = data.sumOf { it.sessionCount }
     val totalVolumeKg = data.sumOf { it.volume }
-    SecTitle("Volume par Routine (${period.label})", Icons.Default.Whatshot)
+    SecTitle(stringResource(R.string.dashboard_section_routine_breakdown, stringResource(period.labelRes)), Icons.Default.Whatshot)
     val colors = listOf(OrangeVibrant, Color(0xFF3B82F6), NeonGreen, Color(0xFF8B5CF6), Color(0xFFEC4899), Color(0xFFF59E0B), Color(0xFF14B8A6), Color(0xFF6366F1))
 
     Card(
@@ -1040,7 +1040,7 @@ private fun RoutineBreakdownSection(data: List<RoutineSlice>, period: TimePeriod
                     val extraSessions = extra.sumOf { it.sessionCount }
                     val extraPct = extra.sumOf { it.percentage.toDouble() }.toInt()
                     Text(
-                        "+ ${extra.size} autres routines · $extraSessions× · $extraVol kg ($extraPct%)",
+                        stringResource(R.string.dashboard_freq_more_routines, extra.size, extraSessions, extraVol, extraPct),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
                     )
@@ -1055,7 +1055,7 @@ private fun RoutineBreakdownSection(data: List<RoutineSlice>, period: TimePeriod
 // ═══════════════════════════════════════
 @Composable
 private fun TrainingFrequencySection(state: StatsState) {
-    SecTitle("Fréquence d'Entraînement", Icons.Default.CalendarMonth)
+    SecTitle(stringResource(R.string.dashboard_section_training_frequency), Icons.Default.CalendarMonth)
     Row(
         Modifier.fillMaxWidth().height(IntrinsicSize.Min),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -1064,16 +1064,16 @@ private fun TrainingFrequencySection(state: StatsState) {
             modifier = Modifier.weight(1f).fillMaxHeight(),
             icon = Icons.Default.LocalFireDepartment,
             value = "${state.currentStreak}",
-            unit = if (state.currentStreak <= 1) "jour" else "jours",
-            label = "Streak actuel",
+            unit = stringResource(if (state.currentStreak <= 1) R.string.dashboard_freq_unit_day else R.string.dashboard_freq_unit_days),
+            label = stringResource(R.string.dashboard_freq_label_current_streak),
             color = OrangeVibrant
         )
         FrequencyCard(
             modifier = Modifier.weight(1f).fillMaxHeight(),
             icon = Icons.Default.EmojiEvents,
             value = "${state.longestStreak}",
-            unit = if (state.longestStreak <= 1) "jour" else "jours",
-            label = "Record",
+            unit = stringResource(if (state.longestStreak <= 1) R.string.dashboard_freq_unit_day else R.string.dashboard_freq_unit_days),
+            label = stringResource(R.string.dashboard_freq_label_record),
             color = NeonGreen
         )
         FrequencyCard(
@@ -1081,7 +1081,7 @@ private fun TrainingFrequencySection(state: StatsState) {
             icon = Icons.AutoMirrored.Filled.TrendingUp,
             value = "${state.weeklyCompliance.toInt()}",
             unit = "%",
-            label = "Compliance",
+            label = stringResource(R.string.dashboard_freq_label_compliance),
             color = Color(0xFF3B82F6)
         )
     }
@@ -1248,132 +1248,163 @@ private fun fmtVolShort(v: Float): String = when { v >= 1000 -> "%.0fk".format(v
 // Builders : transforment les états ViewModel en payloads share/export
 // ──────────────────────────────────────────────────────────
 
-private fun periodLabel(period: TimePeriod): String = when (period) {
-    TimePeriod.WEEK -> "7 derniers jours"
-    TimePeriod.MONTH -> "30 derniers jours"
-    TimePeriod.QUARTER -> "90 derniers jours"
-    TimePeriod.YEAR -> "365 derniers jours"
-    TimePeriod.ALL -> "Toute la période"
+private fun periodLabel(context: android.content.Context, period: TimePeriod): String = when (period) {
+    TimePeriod.WEEK -> context.getString(R.string.period_label_week)
+    TimePeriod.MONTH -> context.getString(R.string.period_label_month)
+    TimePeriod.QUARTER -> context.getString(R.string.period_label_quarter)
+    TimePeriod.YEAR -> context.getString(R.string.period_label_year)
+    TimePeriod.ALL -> context.getString(R.string.period_label_all)
 }
 
-private fun buildWorkoutStatsShareData(state: StatsState): com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate {
+private fun buildWorkoutStatsShareData(
+    context: android.content.Context,
+    state: StatsState,
+): com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate {
     return com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate(
-        title = "Mes stats séances",
-        subtitle = periodLabel(state.selectedPeriod),
+        title = context.getString(R.string.share_workouts_title),
+        subtitle = periodLabel(context, state.selectedPeriod),
         accentEmoji = "💪",
         keyMetrics = listOf(
             com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
-                label = "Séances",
+                label = context.getString(R.string.share_metric_sessions),
                 value = state.workoutCount.toString(),
             ),
             com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
-                label = "Volume",
+                label = context.getString(R.string.share_metric_volume),
                 value = state.totalVolume.toInt().toString(),
-                unit = "kg",
+                unit = context.getString(R.string.share_unit_kg),
             ),
             com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
-                label = "Reps",
+                label = context.getString(R.string.share_metric_reps),
                 value = state.totalReps.toString(),
             ),
             com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
-                label = "Durée",
+                label = context.getString(R.string.share_metric_duration),
                 value = (state.totalDuration / 60).toString(),
-                unit = "min",
+                unit = context.getString(R.string.share_unit_min),
             ),
         ),
     )
 }
 
-private fun buildNutritionStatsShareData(stats: NutritionStatsData): com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate {
+private fun buildNutritionStatsShareData(
+    context: android.content.Context,
+    stats: NutritionStatsData,
+): com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate {
     return com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate(
-        title = "Mes stats nutrition",
-        subtitle = periodLabel(stats.period),
+        title = context.getString(R.string.share_nutrition_title),
+        subtitle = periodLabel(context, stats.period),
         accentEmoji = "🥗",
         keyMetrics = listOf(
             com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
-                label = "Kcal/jour",
+                label = context.getString(R.string.share_metric_kcal_per_day),
                 value = stats.avgCalories.toString(),
-                unit = "kcal",
+                unit = context.getString(R.string.share_unit_kcal),
             ),
             com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
-                label = "Protéines",
+                label = context.getString(R.string.share_metric_proteins),
                 value = stats.avgProteins.toString(),
-                unit = "g",
+                unit = context.getString(R.string.share_unit_g),
             ),
             com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
-                label = "Compliance",
+                label = context.getString(R.string.share_metric_compliance),
                 value = "${stats.complianceDays}/${stats.daysInPeriod}",
-                unit = "j",
+                unit = context.getString(R.string.share_unit_days_short),
             ),
             com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
-                label = "Score santé",
+                label = context.getString(R.string.share_metric_health_score),
                 value = stats.avgHealthScore.toString(),
-                unit = "/100",
+                unit = context.getString(R.string.share_unit_per_100),
             ),
         ),
     )
 }
 
-private fun buildWorkoutStatsExportPayload(state: StatsState): com.shredcoach.app.presentation.share.DataExporter.ExportPayload {
+private fun buildWorkoutStatsExportPayload(
+    context: android.content.Context,
+    state: StatsState,
+): com.shredcoach.app.presentation.share.DataExporter.ExportPayload {
+    val secondsUnit = context.getString(R.string.export_unit_seconds)
+    val kgUnit = context.getString(R.string.share_unit_kg)
+    val kcalUnit = context.getString(R.string.share_unit_kcal)
     return com.shredcoach.app.presentation.share.DataExporter.ExportPayload(
-        title = "ShredCoach — Statistiques séances",
-        description = "Période : ${periodLabel(state.selectedPeriod)}",
-        columns = listOf("Métrique", "Valeur", "Unité"),
+        title = context.getString(R.string.export_workouts_title),
+        description = context.getString(R.string.export_period_prefix, periodLabel(context, state.selectedPeriod)),
+        columns = listOf(
+            context.getString(R.string.export_columns_metric),
+            context.getString(R.string.export_columns_value),
+            context.getString(R.string.export_columns_unit),
+        ),
         rows = listOf(
-            listOf("Nombre de séances", state.workoutCount.toString(), ""),
-            listOf("Volume total", state.totalVolume.toInt().toString(), "kg"),
-            listOf("Durée totale", state.totalDuration.toString(), "secondes"),
-            listOf("Reps totales", state.totalReps.toString(), ""),
-            listOf("Calories estimées", state.estimatedCalories.toString(), "kcal"),
-            listOf("Séances ce mois", state.monthWorkouts.toString(), ""),
-            listOf("Volume ce mois", state.monthVolume.toInt().toString(), "kg"),
-            listOf("Séances all-time", state.allTimeWorkouts.toString(), ""),
-            listOf("Volume all-time", state.allTimeVolume.toInt().toString(), "kg"),
-            listOf("Durée all-time", state.allTimeDuration.toString(), "secondes"),
-            listOf("Muscle le + entraîné", state.mostTrainedMuscle, ""),
-            listOf("Exercice le + fait", state.mostDoneExercise, ""),
-            listOf("Temps échauffement (all)", state.warmupSeconds.toString(), "secondes"),
-            listOf("Temps cardio (all)", state.cardioSeconds.toString(), "secondes"),
-            listOf("Temps musculation (all)", state.strengthSeconds.toString(), "secondes"),
+            listOf(context.getString(R.string.export_row_workouts_count), state.workoutCount.toString(), ""),
+            listOf(context.getString(R.string.export_row_total_volume), state.totalVolume.toInt().toString(), kgUnit),
+            listOf(context.getString(R.string.export_row_total_duration), state.totalDuration.toString(), secondsUnit),
+            listOf(context.getString(R.string.export_row_total_reps), state.totalReps.toString(), ""),
+            listOf(context.getString(R.string.export_row_estimated_calories), state.estimatedCalories.toString(), kcalUnit),
+            listOf(context.getString(R.string.export_row_month_workouts), state.monthWorkouts.toString(), ""),
+            listOf(context.getString(R.string.export_row_month_volume), state.monthVolume.toInt().toString(), kgUnit),
+            listOf(context.getString(R.string.export_row_alltime_workouts), state.allTimeWorkouts.toString(), ""),
+            listOf(context.getString(R.string.export_row_alltime_volume), state.allTimeVolume.toInt().toString(), kgUnit),
+            listOf(context.getString(R.string.export_row_alltime_duration), state.allTimeDuration.toString(), secondsUnit),
+            listOf(context.getString(R.string.export_row_most_trained_muscle), state.mostTrainedMuscle, ""),
+            listOf(context.getString(R.string.export_row_most_done_exercise), state.mostDoneExercise, ""),
+            listOf(context.getString(R.string.export_row_warmup_time), state.warmupSeconds.toString(), secondsUnit),
+            listOf(context.getString(R.string.export_row_cardio_time), state.cardioSeconds.toString(), secondsUnit),
+            listOf(context.getString(R.string.export_row_strength_time), state.strengthSeconds.toString(), secondsUnit),
         ),
         summary = listOf(
-            "Période" to periodLabel(state.selectedPeriod),
-            "Total séances" to state.workoutCount.toString(),
-            "Volume total" to "${state.totalVolume.toInt()} kg",
+            context.getString(R.string.export_summary_period) to periodLabel(context, state.selectedPeriod),
+            context.getString(R.string.export_summary_total_workouts) to state.workoutCount.toString(),
+            context.getString(R.string.export_summary_total_volume) to context.getString(
+                R.string.export_summary_total_volume_value, state.totalVolume.toInt()
+            ),
         ),
     )
 }
 
-private fun buildNutritionStatsExportPayload(stats: NutritionStatsData): com.shredcoach.app.presentation.share.DataExporter.ExportPayload {
+private fun buildNutritionStatsExportPayload(
+    context: android.content.Context,
+    stats: NutritionStatsData,
+): com.shredcoach.app.presentation.share.DataExporter.ExportPayload {
+    val gUnit = context.getString(R.string.share_unit_g)
+    val kcalUnit = context.getString(R.string.share_unit_kcal)
     return com.shredcoach.app.presentation.share.DataExporter.ExportPayload(
-        title = "ShredCoach — Statistiques nutrition",
-        description = "Période : ${periodLabel(stats.period)}",
-        columns = listOf("Métrique", "Valeur", "Unité"),
+        title = context.getString(R.string.export_nutrition_title),
+        description = context.getString(R.string.export_period_prefix, periodLabel(context, stats.period)),
+        columns = listOf(
+            context.getString(R.string.export_columns_metric),
+            context.getString(R.string.export_columns_value),
+            context.getString(R.string.export_columns_unit),
+        ),
         rows = listOf(
-            listOf("Calories moyennes/jour", stats.avgCalories.toString(), "kcal"),
-            listOf("Protéines moyennes/jour", stats.avgProteins.toString(), "g"),
-            listOf("Glucides moyens/jour", stats.avgCarbs.toString(), "g"),
-            listOf("Lipides moyens/jour", stats.avgFats.toString(), "g"),
-            listOf("Jours suivis", stats.daysTracked.toString(), "/${stats.daysInPeriod}"),
-            listOf("Cible calories", stats.targetCalories.toString(), "kcal"),
-            listOf("Cible protéines", stats.targetProteins.toString(), "g"),
-            listOf("Jours compliants", stats.complianceDays.toString(), ""),
-            listOf("Total scans", stats.totalScans.toString(), ""),
-            listOf("Score santé moyen", stats.avgHealthScore.toString(), "/100"),
-            listOf("Prot/kg poids", "%.2f".format(stats.protPerKg), "g/kg"),
-            listOf("% kcal protéines", "%.0f".format(stats.proteinKcalPct), "%"),
-            listOf("% kcal glucides", "%.0f".format(stats.carbsKcalPct), "%"),
-            listOf("% kcal lipides", "%.0f".format(stats.fatsKcalPct), "%"),
-            listOf("Nutri-Score A", stats.nutriCountA.toString(), ""),
-            listOf("Nutri-Score B", stats.nutriCountB.toString(), ""),
-            listOf("Nutri-Score C", stats.nutriCountC.toString(), ""),
-            listOf("Nutri-Score D", stats.nutriCountD.toString(), ""),
-            listOf("Nutri-Score E", stats.nutriCountE.toString(), ""),
+            listOf(context.getString(R.string.export_row_avg_calories), stats.avgCalories.toString(), kcalUnit),
+            listOf(context.getString(R.string.export_row_avg_proteins), stats.avgProteins.toString(), gUnit),
+            listOf(context.getString(R.string.export_row_avg_carbs), stats.avgCarbs.toString(), gUnit),
+            listOf(context.getString(R.string.export_row_avg_fats), stats.avgFats.toString(), gUnit),
+            listOf(context.getString(R.string.export_row_days_tracked), stats.daysTracked.toString(), "/${stats.daysInPeriod}"),
+            listOf(context.getString(R.string.export_row_target_calories), stats.targetCalories.toString(), kcalUnit),
+            listOf(context.getString(R.string.export_row_target_proteins), stats.targetProteins.toString(), gUnit),
+            listOf(context.getString(R.string.export_row_compliance_days), stats.complianceDays.toString(), ""),
+            listOf(context.getString(R.string.export_row_total_scans), stats.totalScans.toString(), ""),
+            listOf(context.getString(R.string.export_row_avg_health_score), stats.avgHealthScore.toString(), "/100"),
+            listOf(context.getString(R.string.export_row_protein_per_kg), "%.2f".format(stats.protPerKg), "g/kg"),
+            listOf(context.getString(R.string.export_row_kcal_proteins_pct), "%.0f".format(stats.proteinKcalPct), "%"),
+            listOf(context.getString(R.string.export_row_kcal_carbs_pct), "%.0f".format(stats.carbsKcalPct), "%"),
+            listOf(context.getString(R.string.export_row_kcal_fats_pct), "%.0f".format(stats.fatsKcalPct), "%"),
+            listOf(context.getString(R.string.export_row_nutri_a), stats.nutriCountA.toString(), ""),
+            listOf(context.getString(R.string.export_row_nutri_b), stats.nutriCountB.toString(), ""),
+            listOf(context.getString(R.string.export_row_nutri_c), stats.nutriCountC.toString(), ""),
+            listOf(context.getString(R.string.export_row_nutri_d), stats.nutriCountD.toString(), ""),
+            listOf(context.getString(R.string.export_row_nutri_e), stats.nutriCountE.toString(), ""),
         ),
         summary = listOf(
-            "Période" to periodLabel(stats.period),
-            "Kcal/jour" to "${stats.avgCalories} kcal",
-            "Compliance" to "${stats.complianceDays}/${stats.daysInPeriod} jours",
+            context.getString(R.string.export_summary_period) to periodLabel(context, stats.period),
+            context.getString(R.string.export_summary_kcal_per_day) to context.getString(
+                R.string.export_summary_kcal_per_day_value, stats.avgCalories
+            ),
+            context.getString(R.string.export_summary_compliance) to context.getString(
+                R.string.export_summary_compliance_value, stats.complianceDays, stats.daysInPeriod
+            ),
         ),
     )
 }
