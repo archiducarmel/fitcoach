@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -37,6 +38,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.shredcoach.app.R
 import com.shredcoach.app.domain.session.ActiveSessionManager
 import com.shredcoach.app.presentation.home.HomeScreen
 import com.shredcoach.app.presentation.exercises.ExercisesScreen
@@ -69,7 +71,7 @@ import com.shredcoach.app.presentation.workout.WorkoutSummaryScreen
 
 private data class BottomNavItem(
     val route: String,
-    val label: String,
+    @androidx.annotation.StringRes val labelRes: Int,
     val outlinedIcon: ImageVector,
     val filledIcon: ImageVector
 )
@@ -77,31 +79,31 @@ private data class BottomNavItem(
 private val bottomNavItems = listOf(
     BottomNavItem(
         route = Screen.Home.route,
-        label = "Accueil",
+        labelRes = R.string.nav_home,
         outlinedIcon = Icons.Outlined.Home,
         filledIcon = Icons.Filled.Home
     ),
     BottomNavItem(
         route = Screen.Nutrition.route,
-        label = "Nutrition",
+        labelRes = R.string.nav_nutrition,
         outlinedIcon = Icons.Outlined.Restaurant,
         filledIcon = Icons.Filled.Restaurant
     ),
     BottomNavItem(
         route = Screen.WorkoutHistory.route,
-        label = "Historique",
+        labelRes = R.string.nav_history,
         outlinedIcon = Icons.Outlined.History,
         filledIcon = Icons.Filled.History
     ),
     BottomNavItem(
         route = Screen.Stats.route,
-        label = "Stats",
+        labelRes = R.string.nav_stats,
         outlinedIcon = Icons.Outlined.BarChart,
         filledIcon = Icons.Filled.BarChart
     ),
     BottomNavItem(
         route = Screen.Settings.route,
-        label = "Réglages",
+        labelRes = R.string.nav_settings,
         outlinedIcon = Icons.Outlined.Settings,
         filledIcon = Icons.Filled.Settings
     )
@@ -611,15 +613,16 @@ private fun ShredCoachBottomBar(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
+                    val itemLabel = stringResource(item.labelRes)
                     Icon(
                         imageVector = if (isSelected) item.filledIcon else item.outlinedIcon,
-                        contentDescription = item.label,
+                        contentDescription = itemLabel,
                         modifier = Modifier.size(22.dp),
                         tint = iconColor
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = item.label,
+                        text = itemLabel,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                         color = iconColor,

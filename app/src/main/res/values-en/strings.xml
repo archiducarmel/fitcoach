@@ -17,6 +17,9 @@
     <string name="nav_exercises">Exercises</string>
     <string name="nav_stats">Stats</string>
     <string name="nav_profile">Profile</string>
+    <string name="nav_nutrition">Nutrition</string>
+    <string name="nav_history">History</string>
+    <string name="nav_settings">Settings</string>
 
     <!-- Common -->
     <string name="common_start">Start</string>
