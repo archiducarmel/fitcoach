@@ -38,9 +38,11 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.NutritionType
 import com.shredcoach.app.presentation.home.NextScheduleItem
 import com.shredcoach.app.presentation.home.TodayNutrition
@@ -91,7 +93,7 @@ fun TodayNutritionCard(
         ) {
             // ─── Header ───
             Text(
-                text = "Aujourd'hui",
+                text = stringResource(R.string.home_today_label),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
@@ -158,7 +160,7 @@ fun TodayNutritionCard(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 MacroPie(
-                    label = "Protéines",
+                    label = stringResource(R.string.home_macro_proteins),
                     consumed = nutrition.proteinsConsumedGrams,
                     target = nutrition.proteinsTargetGrams,
                     progress = nutrition.proteinsProgress,
@@ -166,7 +168,7 @@ fun TodayNutritionCard(
                     modifier = Modifier.weight(1f),
                 )
                 MacroPie(
-                    label = "Glucides",
+                    label = stringResource(R.string.home_macro_carbs),
                     consumed = nutrition.carbsConsumedGrams,
                     target = nutrition.carbsTargetGrams,
                     progress = nutrition.carbsProgress,
@@ -174,7 +176,7 @@ fun TodayNutritionCard(
                     modifier = Modifier.weight(1f),
                 )
                 MacroPie(
-                    label = "Lipides",
+                    label = stringResource(R.string.home_macro_fats),
                     consumed = nutrition.fatsConsumedGrams,
                     target = nutrition.fatsTargetGrams,
                     progress = nutrition.fatsProgress,

@@ -36,9 +36,11 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.shredcoach.app.R
 import com.shredcoach.app.domain.training.ProgressStatus
 import com.shredcoach.app.presentation.home.InsightTone
 import com.shredcoach.app.presentation.home.WeeklyInsight
@@ -97,7 +99,7 @@ fun WeeklyInsightCard(
                 Spacer(Modifier.size(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Ton highlight de la semaine",
+                        text = stringResource(R.string.home_weekly_highlight_title),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                         fontWeight = FontWeight.Medium,
@@ -146,7 +148,7 @@ fun WeeklyInsightCard(
                         )
                     }
                     Text(
-                        text = "Force max estimée",
+                        text = stringResource(R.string.home_weekly_force_max_label),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
                         fontWeight = FontWeight.Medium,
@@ -154,7 +156,7 @@ fun WeeklyInsightCard(
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "Ton record",
+                        text = stringResource(R.string.home_weekly_record_label),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                     )
@@ -205,7 +207,7 @@ fun WeeklyInsightCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 FooterStat(
-                    label = "Séances analysées",
+                    label = stringResource(R.string.home_weekly_sessions_analyzed),
                     value = insight.progression.sessionsCount.toString(),
                     color = palette.color,
                 )
@@ -215,7 +217,7 @@ fun WeeklyInsightCard(
                         .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                 )
                 FooterStat(
-                    label = "Tendance estimée",
+                    label = stringResource(R.string.home_weekly_trend_estimated),
                     value = formatMonthlyTrend(insight.progression.weeklySlopeKg),
                     color = trendColor(insight.progression.weeklySlopeKg, palette.color),
                 )

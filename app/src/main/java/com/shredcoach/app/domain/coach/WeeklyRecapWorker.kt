@@ -11,6 +11,7 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.shredcoach.app.R
 import com.shredcoach.app.ShredCoachApplication
 import com.shredcoach.app.data.consent.ConsentStore
 import com.shredcoach.app.data.local.dao.NutritionDao
@@ -143,7 +144,7 @@ class WeeklyRecapWorker @AssistedInject constructor(
 
         dispatcher.dispatch(
             type = NotifType.WEEKLY_RECAP,
-            title = "📊 Récap de la semaine",
+            title = applicationContext.getString(R.string.coach_weekly_recap_title),
             body = body,
             channelId = ShredCoachApplication.CHANNEL_DEBRIEF,
             source = source,
@@ -183,15 +184,22 @@ class WeeklyRecapWorker @AssistedInject constructor(
 
     private fun fallbackRecap(trigger: CoachTrigger.WeeklyRecap, firstName: String): String {
         val name = if (firstName.isNotBlank()) " $firstName" else ""
-        val fastingFragment = if (trigger.avgFastingHours > 0) {
+        return if (trigger.avgFastingHours > 0) {
             val h = trigger.avgFastingHours.toInt()
             val m = ((trigger.avgFastingHours - h) * 60).toInt()
             val avg = if (m < 5) "${h}h" else "${h}h${m.toString().padStart(2, '0')}"
-            ", jeûne moyen $avg"
-        } else ""
-        return "Semaine bouclée$name : ${trigger.workoutsThisWeek}/${trigger.targetWorkouts} séances, " +
-            "${trigger.totalVolumeKg}kg cumulés, prot ${trigger.proteinAdherence}%$fastingFragment. " +
-            "Cap sur la suivante !"
+            applicationContext.getString(
+                R.string.coach_weekly_recap_fallback_with_fasting,
+                name, trigger.workoutsThisWeek, trigger.targetWorkouts,
+                trigger.totalVolumeKg, trigger.proteinAdherence, avg,
+            )
+        } else {
+            applicationContext.getString(
+                R.string.coach_weekly_recap_fallback,
+                name, trigger.workoutsThisWeek, trigger.targetWorkouts,
+                trigger.totalVolumeKg, trigger.proteinAdherence,
+            )
+        }
     }
 
     companion object {

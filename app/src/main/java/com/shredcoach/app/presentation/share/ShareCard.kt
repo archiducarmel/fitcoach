@@ -38,10 +38,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.shredcoach.app.R
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
 
@@ -136,10 +138,10 @@ private fun BoxScope.WorkoutPlannedContent(data: ShareCardData.WorkoutPlanned) {
         // qui mangeait l'espace vertical au détriment de la liste exos).
         val subtitle = if (data.muscleGroups.isNotEmpty())
             data.muscleGroups.take(4).joinToString(" · ")
-        else data.subtitle ?: "Programme du jour"
+        else data.subtitle ?: stringResource(R.string.share_card_planned_subtitle)
         CardHeader(title = data.title, subtitle = subtitle)
 
-        HeroMetric(value = data.durationMinutes.toString(), unit = "min", label = "DURÉE")
+        HeroMetric(value = data.durationMinutes.toString(), unit = "min", label = stringResource(R.string.share_card_label_duration))
 
         // InlineStatsRow (hauteur prévisible 50dp) — remplace FlowRow StatChips
         // qui pouvait wrapper sur 2 lignes selon le nombre de chips et créait
@@ -181,7 +183,7 @@ private fun BoxScope.WorkoutInProgressContent(data: ShareCardData.WorkoutInProgr
             .padding(bottom = CARD_PADDING_BOTTOM - CARD_PADDING_TOP),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        CardHeader(title = data.title, subtitle = data.subtitle ?: "En live")
+        CardHeader(title = data.title, subtitle = data.subtitle ?: stringResource(R.string.share_card_in_live))
 
         // Hero : volume kg si > 0, sinon temps écoulé. Label court ("VOLUME"
         // pas "VOLUME EN COURS" qui dépassait la largeur centrée).
@@ -189,13 +191,13 @@ private fun BoxScope.WorkoutInProgressContent(data: ShareCardData.WorkoutInProgr
             HeroMetric(
                 value = data.totalVolumeKg.toInt().toString(),
                 unit = "kg",
-                label = "VOLUME",
+                label = stringResource(R.string.share_card_label_volume),
             )
         } else {
             HeroMetric(
                 value = data.elapsedMinutes.toString(),
                 unit = "min",
-                label = "ACTIVE",
+                label = stringResource(R.string.share_card_label_active),
             )
         }
 
@@ -205,7 +207,7 @@ private fun BoxScope.WorkoutInProgressContent(data: ShareCardData.WorkoutInProgr
             tiles = listOf(
                 InlineStat(Icons.Default.Schedule, "${data.elapsedMinutes}", "min"),
                 InlineStat(Icons.Default.FitnessCenter, "${data.exercisesDone}/${data.totalExercises}", "exos"),
-                InlineStat(Icons.Default.CheckCircle, "${data.totalSetsCompleted}", "séries"),
+                InlineStat(Icons.Default.CheckCircle, "${data.totalSetsCompleted}", stringResource(R.string.share_card_unit_sets)),
                 InlineStat(Icons.Default.LocalFireDepartment, "${data.totalReps}", "reps"),
             ),
         )
@@ -226,7 +228,7 @@ private fun BoxScope.WorkoutInProgressContent(data: ShareCardData.WorkoutInProgr
             Box(modifier = Modifier.weight(1f, fill = true).fillMaxWidth()) {
                 ExerciseProgressList(
                     items = visible,
-                    sectionLabel = "PROGRESSION",
+                    sectionLabel = stringResource(R.string.share_card_progression_section),
                     overflowCount = realOverflow,
                 )
             }
@@ -245,7 +247,7 @@ private fun BoxScope.ExerciseCompletedContent(data: ShareCardData.ExerciseComple
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         CardHeader(
-            title = if (data.isPersonalRecord) "🏆 NOUVEAU RECORD" else "✅ Exercice validé",
+            title = stringResource(if (data.isPersonalRecord) R.string.share_card_pr_title else R.string.share_card_done_title),
             subtitle = data.subtitle,
         )
 
@@ -261,19 +263,19 @@ private fun BoxScope.ExerciseCompletedContent(data: ShareCardData.ExerciseComple
         )
 
         StatsGrid {
-            StatTile(icon = Icons.Default.FitnessCenter, value = "${data.setsCompleted}", unit = "", label = "Séries")
-            StatTile(icon = Icons.Default.LocalFireDepartment, value = "${data.totalReps}", unit = "reps", label = "Volume")
+            StatTile(icon = Icons.Default.FitnessCenter, value = "${data.setsCompleted}", unit = "", label = stringResource(R.string.share_card_stat_sets))
+            StatTile(icon = Icons.Default.LocalFireDepartment, value = "${data.totalReps}", unit = "reps", label = stringResource(R.string.share_card_stat_volume))
             StatTile(
                 icon = Icons.Default.EmojiEvents,
                 value = data.volumeKg.toInt().toString(),
                 unit = "kg",
-                label = "Charge",
+                label = stringResource(R.string.share_card_stat_charge),
             )
             StatTile(
                 icon = Icons.Default.Schedule,
                 value = (data.durationSeconds / 60).toString(),
                 unit = "min",
-                label = "Durée",
+                label = stringResource(R.string.share_card_stat_duration),
             )
         }
         // Note : le coach message volontairement non rendu — la share card
@@ -311,7 +313,7 @@ private fun BoxScope.WorkoutFinishedContent(data: ShareCardData.WorkoutFinished)
             }
             Spacer(Modifier.width(8.dp))
             Box(modifier = Modifier.weight(1f)) {
-                CardHeader(title = data.title, subtitle = data.subtitle ?: "Séance complète")
+                CardHeader(title = data.title, subtitle = data.subtitle ?: stringResource(R.string.share_card_session_complete))
             }
         }
 
@@ -321,13 +323,13 @@ private fun BoxScope.WorkoutFinishedContent(data: ShareCardData.WorkoutFinished)
             HeroMetric(
                 value = data.totalVolumeKg.toInt().toString(),
                 unit = "kg",
-                label = "VOLUME",
+                label = stringResource(R.string.share_card_label_volume),
             )
         } else {
             HeroMetric(
                 value = (data.durationSeconds / 60).toString(),
                 unit = "min",
-                label = "DURÉE",
+                label = stringResource(R.string.share_card_label_duration),
             )
         }
 
@@ -335,7 +337,7 @@ private fun BoxScope.WorkoutFinishedContent(data: ShareCardData.WorkoutFinished)
             tiles = listOf(
                 InlineStat(Icons.Default.Schedule, "${data.durationSeconds / 60}", "min"),
                 InlineStat(Icons.Default.FitnessCenter, "${data.exerciseCount}", "exos"),
-                InlineStat(Icons.Default.CheckCircle, "${data.totalSets}", "séries"),
+                InlineStat(Icons.Default.CheckCircle, "${data.totalSets}", stringResource(R.string.share_card_unit_sets)),
                 InlineStat(Icons.Default.LocalFireDepartment, "${data.totalReps}", "reps"),
             ),
         )
@@ -349,7 +351,7 @@ private fun BoxScope.WorkoutFinishedContent(data: ShareCardData.WorkoutFinished)
             Box(modifier = Modifier.weight(1f, fill = true).fillMaxWidth()) {
                 ExerciseProgressList(
                     items = visible,
-                    sectionLabel = "EXERCICES RÉALISÉS",
+                    sectionLabel = stringResource(R.string.share_card_exercises_done_section),
                     overflowCount = realOverflow,
                 )
             }
@@ -815,7 +817,7 @@ private fun ExerciseList(exercises: List<String>, overflowCount: Int = 0) {
 
     Column(verticalArrangement = Arrangement.spacedBy(rowGap), modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "AU PROGRAMME",
+            text = stringResource(R.string.share_card_program_section),
             color = Color.White.copy(alpha = 0.65f),
             fontWeight = FontWeight.SemiBold,
             fontSize = 9.sp,

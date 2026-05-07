@@ -11,6 +11,7 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.shredcoach.app.R
 import com.shredcoach.app.data.consent.ConsentStore
 import com.shredcoach.app.data.local.entity.NotifType
 import com.shredcoach.app.data.local.secure.SecureKeyStore
@@ -142,7 +143,7 @@ class ProactiveCoachWorker @AssistedInject constructor(
 
         dispatcher.dispatch(
             type = NotifType.COACH_PROACTIVE,
-            title = "🧠 Shreddy",
+            title = applicationContext.getString(R.string.coach_proactive_notif_title),
             body = body,
             channelId = ShredCoachApplication.CHANNEL_DEBRIEF,
             source = source,
@@ -164,27 +165,35 @@ class ProactiveCoachWorker @AssistedInject constructor(
      */
     private fun fallbackMessage(trigger: CoachTrigger, firstName: String): String {
         val name = if (firstName.isNotBlank()) " $firstName" else ""
+        val ctx = applicationContext
         return when (trigger) {
             is CoachTrigger.StreakAtRisk ->
-                "Streak de ${trigger.streakDays} jours en jeu$name. Une séance courte aujourd'hui le préserve."
+                ctx.getString(R.string.coach_fallback_streak_at_risk, trigger.streakDays, name)
             is CoachTrigger.MissedScheduledWorkout ->
-                "T'avais prévu '${trigger.workoutName}'$name. On la recale cette semaine ?"
+                ctx.getString(R.string.coach_fallback_missed_workout, trigger.workoutName, name)
             is CoachTrigger.PersonalRecordCelebration ->
-                "Nouveau record sur ${trigger.exerciseName} : ${trigger.newWeightKg.toInt()}kg$name. On vise plus la prochaine fois !"
+                ctx.getString(R.string.coach_fallback_pr_celebration, trigger.exerciseName, trigger.newWeightKg.toInt(), name)
             is CoachTrigger.ProteinDeficit ->
-                "Hier ${trigger.gramsConsumed}g de prot vs objectif ${trigger.goalGrams}g$name. Un shaker aujourd'hui aide."
+                ctx.getString(R.string.coach_fallback_protein_deficit, trigger.gramsConsumed, trigger.goalGrams, name)
             is CoachTrigger.PlateauVolume ->
-                "Volume stable depuis ${trigger.weeksFlat} sem$name. On change un exo ou on monte les charges ?"
+                ctx.getString(R.string.coach_fallback_plateau_volume, trigger.weeksFlat, name)
             is CoachTrigger.Comeback ->
-                "Pas de séance depuis ${trigger.daysAway} jours$name. Une session courte de 30 min recrée le rythme."
+                ctx.getString(R.string.coach_fallback_comeback, trigger.daysAway, name)
             is CoachTrigger.BodyScanStale ->
-                "Dernière mesure il y a ${trigger.daysSince} jours$name. 30s pour scanner ton corps et ajuster le suivi."
+                ctx.getString(R.string.coach_fallback_body_scan_stale, trigger.daysSince, name)
             is CoachTrigger.GoalProximityETA ->
-                "Plus que ${"%.1f".format(kotlin.math.abs(trigger.currentWeightKg - trigger.targetWeightKg))}kg vers l'objectif$name. ETA ~${trigger.etaWeeks} sem au rythme actuel."
+                ctx.getString(
+                    R.string.coach_fallback_goal_eta,
+                    "%.1f".format(kotlin.math.abs(trigger.currentWeightKg - trigger.targetWeightKg)),
+                    name, trigger.etaWeeks,
+                )
             is CoachTrigger.WeeklyRecap ->
-                "Bilan semaine : ${trigger.workoutsThisWeek}/${trigger.targetWorkouts} séances, ${trigger.totalVolumeKg}kg cumulés$name. Cap sur la suivante."
+                ctx.getString(
+                    R.string.coach_fallback_weekly_recap,
+                    trigger.workoutsThisWeek, trigger.targetWorkouts, trigger.totalVolumeKg, name,
+                )
             is CoachTrigger.GeneralMotivation ->
-                "${trigger.recentWorkoutCount} séances cette semaine$name. Petit objectif du jour ?"
+                ctx.getString(R.string.coach_fallback_general_motivation, trigger.recentWorkoutCount, name)
         }
     }
 

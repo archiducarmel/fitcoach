@@ -2166,4 +2166,62 @@
     <string name="workout_vm_error_generic">Erreur</string>
     <string name="workout_vm_save_error">Erreur sauvegarde: %1$s</string>
     <string name="workout_vm_first_name_fallback">Champion</string>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Phase 8h — Audit cleanup résiduel (workers, home cards, share)
+         ═══════════════════════════════════════════════════════════════ -->
+    <!-- Coach workers -->
+    <string name="coach_proactive_notif_title">🧠 Shreddy</string>
+    <string name="coach_weekly_recap_title">📊 Récap de la semaine</string>
+    <string name="coach_weekly_recap_fallback_with_fasting">Semaine bouclée%1$s : %2$d/%3$d séances, %4$dkg cumulés, prot %5$d%%, jeûne moyen %6$s. Cap sur la suivante !</string>
+    <string name="coach_weekly_recap_fallback">Semaine bouclée%1$s : %2$d/%3$d séances, %4$dkg cumulés, prot %5$d%%. Cap sur la suivante !</string>
+    <!-- ProactiveCoachWorker fallback messages -->
+    <string name="coach_fallback_streak_at_risk">Streak de %1$d jours en jeu%2$s. Une séance courte aujourd\'hui le préserve.</string>
+    <string name="coach_fallback_missed_workout">T\'avais prévu \'%1$s\'%2$s. On la recale cette semaine ?</string>
+    <string name="coach_fallback_pr_celebration">Nouveau record sur %1$s : %2$dkg%3$s. On vise plus la prochaine fois !</string>
+    <string name="coach_fallback_protein_deficit">Hier %1$dg de prot vs objectif %2$dg%3$s. Un shaker aujourd\'hui aide.</string>
+    <string name="coach_fallback_plateau_volume">Volume stable depuis %1$d sem%2$s. On change un exo ou on monte les charges ?</string>
+    <string name="coach_fallback_comeback">Pas de séance depuis %1$d jours%2$s. Une session courte de 30 min recrée le rythme.</string>
+    <string name="coach_fallback_body_scan_stale">Dernière mesure il y a %1$d jours%2$s. 30s pour scanner ton corps et ajuster le suivi.</string>
+    <string name="coach_fallback_goal_eta">Plus que %1$skg vers l\'objectif%2$s. ETA ~%3$d sem au rythme actuel.</string>
+    <string name="coach_fallback_weekly_recap">Bilan semaine : %1$d/%2$d séances, %3$dkg cumulés%4$s. Cap sur la suivante.</string>
+    <string name="coach_fallback_general_motivation">%1$d séances cette semaine%2$s. Petit objectif du jour ?</string>
+    <!-- Home cards -->
+    <string name="home_resume_session_cta">REPRENDRE TA SÉANCE</string>
+    <string name="home_resume_session_elapsed_label">Écoulé</string>
+    <string name="home_resume_session_exercises_label">Exercices</string>
+    <string name="home_today_label">Aujourd\'hui</string>
+    <string name="home_macro_proteins">Protéines</string>
+    <string name="home_macro_carbs">Glucides</string>
+    <string name="home_macro_fats">Lipides</string>
+    <string name="home_weekly_highlight_title">Ton highlight de la semaine</string>
+    <string name="home_weekly_force_max_label">Force max estimée</string>
+    <string name="home_weekly_record_label">Ton record</string>
+    <string name="home_weekly_sessions_analyzed">Séances analysées</string>
+    <string name="home_weekly_trend_estimated">Tendance estimée</string>
+    <string name="home_daily_checkin_question">Comment tu te sens ce matin ?</string>
+    <string name="home_daily_checkin_mood_cd">Mood %1$s</string>
+    <!-- Mood labels -->
+    <string name="mood_tired">Fatigué</string>
+    <string name="mood_meh">Bof</string>
+    <string name="mood_ok">OK</string>
+    <string name="mood_motivated">Motivé</string>
+    <string name="mood_on_fire">En feu</string>
+    <!-- ShareCard -->
+    <string name="share_card_planned_subtitle">Programme du jour</string>
+    <string name="share_card_label_duration">DURÉE</string>
+    <string name="share_card_in_live">En live</string>
+    <string name="share_card_label_volume">VOLUME</string>
+    <string name="share_card_label_active">ACTIVE</string>
+    <string name="share_card_progression_section">PROGRESSION</string>
+    <string name="share_card_unit_sets">séries</string>
+    <string name="share_card_pr_title">🏆 NOUVEAU RECORD</string>
+    <string name="share_card_done_title">✅ Exercice validé</string>
+    <string name="share_card_stat_sets">Séries</string>
+    <string name="share_card_stat_volume">Volume</string>
+    <string name="share_card_stat_charge">Charge</string>
+    <string name="share_card_stat_duration">Durée</string>
+    <string name="share_card_session_complete">Séance complète</string>
+    <string name="share_card_exercises_done_section">EXERCICES RÉALISÉS</string>
+    <string name="share_card_program_section">AU PROGRAMME</string>
 </resources>

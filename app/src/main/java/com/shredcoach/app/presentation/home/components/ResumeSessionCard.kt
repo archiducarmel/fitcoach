@@ -30,10 +30,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.shredcoach.app.R
 import com.shredcoach.app.presentation.home.ResumableSession
 import com.shredcoach.app.presentation.theme.OrangeVibrant
 
@@ -98,7 +100,7 @@ fun ResumeSessionCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "REPRENDRE TA SÉANCE",
+                            text = stringResource(R.string.home_resume_session_cta),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
                             color = Color.White.copy(alpha = 0.85f),
@@ -156,12 +158,12 @@ fun ResumeSessionCard(
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     InfoChip(
-                        label = "Écoulé",
+                        label = stringResource(R.string.home_resume_session_elapsed_label),
                         value = formatElapsed(session.elapsedMinutes),
                         modifier = Modifier.weight(1f),
                     )
                     InfoChip(
-                        label = "Exercices",
+                        label = stringResource(R.string.home_resume_session_exercises_label),
                         value = if (session.isFreestyle) "${session.completedExercises}"
                         else "${session.completedExercises}/${session.totalExercises}",
                         modifier = Modifier.weight(1f),

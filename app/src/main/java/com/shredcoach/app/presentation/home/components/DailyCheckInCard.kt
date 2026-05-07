@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -35,6 +36,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.shredcoach.app.R
 import com.shredcoach.app.domain.wellness.MoodOption
 import com.shredcoach.app.domain.wellness.WellnessStore
 
@@ -73,7 +75,7 @@ fun DailyCheckInCard(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
-                text = "Comment tu te sens ce matin ?",
+                text = stringResource(R.string.home_daily_checkin_question),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -100,6 +102,7 @@ private fun MoodButton(option: MoodOption, onClick: () -> Unit) {
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
         label = "moodScale",
     )
+    val moodCd = stringResource(R.string.home_daily_checkin_mood_cd, stringResource(option.labelRes))
 
     Box(
         modifier = Modifier
@@ -115,7 +118,7 @@ private fun MoodButton(option: MoodOption, onClick: () -> Unit) {
             )
             .graphicsLayer { scaleX = scale; scaleY = scale }
             .semantics {
-                contentDescription = "Mood ${option.label}"
+                contentDescription = moodCd
                 role = Role.Button
             },
         contentAlignment = Alignment.Center,

@@ -60,17 +60,21 @@ class WellnessStore @Inject constructor(
     private fun prefix(date: LocalDate): String = "mood_${date.toString()}"
 
     companion object {
-        /** Index → emoji + label affichage. Source de vérité unique. */
+        /** Index → emoji + labelRes affichage. Source de vérité unique. */
         val MOOD_OPTIONS = listOf(
-            MoodOption(0, "😴", "Fatigué"),
-            MoodOption(1, "😐", "Bof"),
-            MoodOption(2, "🙂", "OK"),
-            MoodOption(3, "💪", "Motivé"),
-            MoodOption(4, "🔥", "En feu"),
+            MoodOption(0, "😴", com.shredcoach.app.R.string.mood_tired),
+            MoodOption(1, "😐", com.shredcoach.app.R.string.mood_meh),
+            MoodOption(2, "🙂", com.shredcoach.app.R.string.mood_ok),
+            MoodOption(3, "💪", com.shredcoach.app.R.string.mood_motivated),
+            MoodOption(4, "🔥", com.shredcoach.app.R.string.mood_on_fire),
         )
     }
 }
 
 private typealias MutablePreferences = androidx.datastore.preferences.core.MutablePreferences
 
-data class MoodOption(val index: Int, val emoji: String, val label: String)
+data class MoodOption(
+    val index: Int,
+    val emoji: String,
+    @androidx.annotation.StringRes val labelRes: Int,
+)
