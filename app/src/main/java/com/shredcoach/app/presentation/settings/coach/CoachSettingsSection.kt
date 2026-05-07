@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.shredcoach.app.R
 import com.shredcoach.app.domain.coach.CoachSettingsStore
 import com.shredcoach.app.presentation.theme.OrangeVibrant
 
@@ -72,13 +73,12 @@ fun CoachSettingsSection(viewModel: CoachSettingsViewModel = hiltViewModel()) {
         ) {
             Column(Modifier.padding(end = 16.dp)) {
                 Text(
-                    "Coach proactif IA",
+                    stringResource(R.string.coach_settings_title),
                     fontWeight = FontWeight.SemiBold,
                     style = MaterialTheme.typography.bodyLarge,
                 )
                 Text(
-                    "Notifications intelligentes : célébration de PR, rappel séance, " +
-                        "ajustements nutrition, récap dimanche soir.",
+                    stringResource(R.string.coach_settings_subtitle),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )
@@ -131,24 +131,20 @@ fun CoachSettingsSection(viewModel: CoachSettingsViewModel = hiltViewModel()) {
         AlertDialog(
             onDismissRequest = { showConsentDialog = false },
             icon = { Icon(Icons.Default.AutoAwesome, null, tint = OrangeVibrant) },
-            title = { Text("Activer le coach IA ?") },
-            text = {
-                Text(
-                    "Pour générer ses messages, Shreddy envoie ton contexte (séances, macros, " +
-                        "extraits de chat) au fournisseur IA configuré (Groq, OpenAI ou Claude). " +
-                        "Aucune photo ni clé API n'est partagée. Tu peux désactiver à tout moment.",
-                )
-            },
+            title = { Text(stringResource(R.string.coach_settings_consent_title)) },
+            text = { Text(stringResource(R.string.coach_settings_consent_text)) },
             confirmButton = {
                 TextButton(
                     onClick = {
                         viewModel.acceptAndEnable()
                         showConsentDialog = false
                     },
-                ) { Text("Accepter et activer") }
+                ) { Text(stringResource(R.string.coach_settings_consent_accept)) }
             },
             dismissButton = {
-                TextButton(onClick = { showConsentDialog = false }) { Text("Plus tard") }
+                TextButton(onClick = { showConsentDialog = false }) {
+                    Text(stringResource(R.string.coach_settings_consent_dismiss))
+                }
             },
         )
     }
@@ -159,12 +155,12 @@ private fun HourSlider(value: Int, onValueChange: (Int) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(
-                "Notification quotidienne",
+                stringResource(R.string.coach_settings_hour_label),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
             )
             Text(
-                "${value}h",
+                stringResource(R.string.coach_settings_hour_value, value),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
                 color = OrangeVibrant,
@@ -187,7 +183,7 @@ private fun ToneSelector(
 ) {
     Column(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            "Ton de Shreddy",
+            stringResource(R.string.coach_settings_tone_label),
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium,
         )
@@ -233,12 +229,12 @@ private fun WeeklyCapSlider(value: Int, onValueChange: (Int) -> Unit) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Column(Modifier.padding(end = 16.dp)) {
                 Text(
-                    "Plafond hebdomadaire",
+                    stringResource(R.string.coach_settings_cap_label),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
                 )
                 Text(
-                    "Nb max de notifications coach par semaine",
+                    stringResource(R.string.coach_settings_cap_subtitle),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
                 )
@@ -264,26 +260,27 @@ private fun WeeklyCapSlider(value: Int, onValueChange: (Int) -> Unit) {
 private fun CategoryToggles(muted: Set<String>, onToggle: (String) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
-            "Catégories de notifications",
+            stringResource(R.string.coach_settings_categories_label),
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium,
         )
         Text(
-            "Désactive celles qui ne te sont pas utiles",
+            stringResource(R.string.coach_settings_categories_subtitle),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
         )
         Spacer(Modifier.height(8.dp))
-        CATEGORIES.forEach { (category, label, description) ->
+        CATEGORIES.forEach { triple ->
+            val category = triple.category
             Row(
                 Modifier.fillMaxWidth().padding(vertical = 6.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f).padding(end = 16.dp)) {
-                    Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                    Text(stringResource(triple.labelRes), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
                     Text(
-                        description,
+                        stringResource(triple.descRes),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
                     )
@@ -301,17 +298,23 @@ private fun CategoryToggles(muted: Set<String>, onToggle: (String) -> Unit) {
 /**
  * Liste des catégories de triggers exposées à l'UI. Synchroniser avec
  * [com.shredcoach.app.domain.coach.CoachTrigger] — chaque entrée = un
- * `category` string, son label visible et sa description.
+ * `category` string, son label visible et sa description (R.string).
  */
+private data class CoachCategoryEntry(
+    val category: String,
+    @androidx.annotation.StringRes val labelRes: Int,
+    @androidx.annotation.StringRes val descRes: Int,
+)
+
 private val CATEGORIES = listOf(
-    Triple("streak_at_risk", "Streak en danger", "Quand ton enchaînement de séances est en jeu"),
-    Triple("missed_workout", "Séance ratée", "Quand une séance planifiée n'a pas été faite"),
-    Triple("pr_celebration", "Célébration de PR", "Quand tu bats un record perso"),
-    Triple("protein_deficit", "Déficit protéine", "En sèche, quand l'apport est sous l'objectif"),
-    Triple("plateau_volume", "Plateau", "Quand le volume stagne 3 semaines"),
-    Triple("comeback", "Retour après pause", "Encouragement après 7+ jours sans séance"),
-    Triple("body_scan_stale", "Scan corporel à jour", "Rappel pour mesurer si > 30 jours"),
-    Triple("goal_eta", "Trajectoire d'objectif", "Estimation du temps restant pour atteindre la cible"),
-    Triple("weekly_recap", "Récap hebdomadaire", "Bilan dimanche soir"),
-    Triple("motivation_general", "Check-in général", "Message neutre quand rien à signaler"),
+    CoachCategoryEntry("streak_at_risk", R.string.coach_cat_streak_at_risk_label, R.string.coach_cat_streak_at_risk_desc),
+    CoachCategoryEntry("missed_workout", R.string.coach_cat_missed_workout_label, R.string.coach_cat_missed_workout_desc),
+    CoachCategoryEntry("pr_celebration", R.string.coach_cat_pr_celebration_label, R.string.coach_cat_pr_celebration_desc),
+    CoachCategoryEntry("protein_deficit", R.string.coach_cat_protein_deficit_label, R.string.coach_cat_protein_deficit_desc),
+    CoachCategoryEntry("plateau_volume", R.string.coach_cat_plateau_volume_label, R.string.coach_cat_plateau_volume_desc),
+    CoachCategoryEntry("comeback", R.string.coach_cat_comeback_label, R.string.coach_cat_comeback_desc),
+    CoachCategoryEntry("body_scan_stale", R.string.coach_cat_body_scan_stale_label, R.string.coach_cat_body_scan_stale_desc),
+    CoachCategoryEntry("goal_eta", R.string.coach_cat_goal_eta_label, R.string.coach_cat_goal_eta_desc),
+    CoachCategoryEntry("weekly_recap", R.string.coach_cat_weekly_recap_label, R.string.coach_cat_weekly_recap_desc),
+    CoachCategoryEntry("motivation_general", R.string.coach_cat_motivation_general_label, R.string.coach_cat_motivation_general_desc),
 )

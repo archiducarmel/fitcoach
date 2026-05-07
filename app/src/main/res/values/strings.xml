@@ -2085,4 +2085,53 @@
     <string name="stats_insight_fasting_with_16h">🌙 Jeûne moyen %1$s (%2$dj ≥ 16h)</string>
     <string name="stats_insight_fasting_progress">🌙 Jeûne moyen %1$s — vise 16h+ pour le 16-8</string>
     <string name="stats_insight_fasting_low">🌙 Jeûne %1$s/jour — ouvre une fenêtre de jeûne plus large</string>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         CoachSettings + VoiceSettings — Phase 8f i18n
+         ═══════════════════════════════════════════════════════════════ -->
+    <!-- Coach proactif -->
+    <string name="coach_settings_title">Coach proactif IA</string>
+    <string name="coach_settings_subtitle">Notifications intelligentes : célébration de PR, rappel séance, ajustements nutrition, récap dimanche soir.</string>
+    <string name="coach_settings_consent_title">Activer le coach IA ?</string>
+    <string name="coach_settings_consent_text">Pour générer ses messages, Shreddy envoie ton contexte (séances, macros, extraits de chat) au fournisseur IA configuré (Groq, OpenAI ou Claude). Aucune photo ni clé API n\'est partagée. Tu peux désactiver à tout moment.</string>
+    <string name="coach_settings_consent_accept">Accepter et activer</string>
+    <string name="coach_settings_consent_dismiss">Plus tard</string>
+    <string name="coach_settings_hour_label">Notification quotidienne</string>
+    <string name="coach_settings_hour_value">%1$dh</string>
+    <string name="coach_settings_tone_label">Ton de Shreddy</string>
+    <string name="coach_settings_cap_label">Plafond hebdomadaire</string>
+    <string name="coach_settings_cap_subtitle">Nb max de notifications coach par semaine</string>
+    <string name="coach_settings_categories_label">Catégories de notifications</string>
+    <string name="coach_settings_categories_subtitle">Désactive celles qui ne te sont pas utiles</string>
+    <!-- Coach trigger categories -->
+    <string name="coach_cat_streak_at_risk_label">Streak en danger</string>
+    <string name="coach_cat_streak_at_risk_desc">Quand ton enchaînement de séances est en jeu</string>
+    <string name="coach_cat_missed_workout_label">Séance ratée</string>
+    <string name="coach_cat_missed_workout_desc">Quand une séance planifiée n\'a pas été faite</string>
+    <string name="coach_cat_pr_celebration_label">Célébration de PR</string>
+    <string name="coach_cat_pr_celebration_desc">Quand tu bats un record perso</string>
+    <string name="coach_cat_protein_deficit_label">Déficit protéine</string>
+    <string name="coach_cat_protein_deficit_desc">En sèche, quand l\'apport est sous l\'objectif</string>
+    <string name="coach_cat_plateau_volume_label">Plateau</string>
+    <string name="coach_cat_plateau_volume_desc">Quand le volume stagne 3 semaines</string>
+    <string name="coach_cat_comeback_label">Retour après pause</string>
+    <string name="coach_cat_comeback_desc">Encouragement après 7+ jours sans séance</string>
+    <string name="coach_cat_body_scan_stale_label">Scan corporel à jour</string>
+    <string name="coach_cat_body_scan_stale_desc">Rappel pour mesurer si &gt; 30 jours</string>
+    <string name="coach_cat_goal_eta_label">Trajectoire d\'objectif</string>
+    <string name="coach_cat_goal_eta_desc">Estimation du temps restant pour atteindre la cible</string>
+    <string name="coach_cat_weekly_recap_label">Récap hebdomadaire</string>
+    <string name="coach_cat_weekly_recap_desc">Bilan dimanche soir</string>
+    <string name="coach_cat_motivation_general_label">Check-in général</string>
+    <string name="coach_cat_motivation_general_desc">Message neutre quand rien à signaler</string>
+    <!-- Voice settings -->
+    <string name="voice_settings_intro">Choisis le moteur de synthèse + la voix qui te motive le plus. Le changement s\'applique à la prochaine annonce vocale.</string>
+    <string name="voice_settings_persona_label">Personnage</string>
+    <string name="voice_settings_test_button">Tester la voix</string>
+    <string name="voice_settings_engine_warning_api_key">Clé API requise</string>
+    <string name="voice_settings_api_key_label">Clé API Google Cloud TTS</string>
+    <string name="voice_settings_api_key_placeholder">AIza…</string>
+    <string name="voice_settings_api_key_paste_cd">Coller</string>
+    <string name="voice_settings_api_key_visibility_cd">Afficher / masquer</string>
+    <string name="voice_settings_api_key_help">Active l\'API « Cloud Text-to-Speech » sur console.cloud.google.com, puis crée une clé API dans \"APIs &amp; Services › Credentials\". La clé est stockée chiffrée sur l\'appareil.</string>
 </resources>

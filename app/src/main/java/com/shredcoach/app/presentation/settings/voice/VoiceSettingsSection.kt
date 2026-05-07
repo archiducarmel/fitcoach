@@ -59,6 +59,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.shredcoach.app.R
 import com.shredcoach.app.domain.voice.Gender
 import com.shredcoach.app.domain.voice.Persona
 import com.shredcoach.app.domain.voice.VoiceEngineId
@@ -85,8 +86,7 @@ fun VoiceSettingsSection(viewModel: VoiceSettingsViewModel = hiltViewModel()) {
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Text(
-            "Choisis le moteur de synthèse + la voix qui te motive le plus. " +
-                "Le changement s'applique à la prochaine annonce vocale.",
+            stringResource(R.string.voice_settings_intro),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
         )
@@ -102,7 +102,7 @@ fun VoiceSettingsSection(viewModel: VoiceSettingsViewModel = hiltViewModel()) {
 
         // ═══ Persona grid ═══
         Text(
-            "Personnage",
+            stringResource(R.string.voice_settings_persona_label),
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium,
         )
@@ -122,7 +122,7 @@ fun VoiceSettingsSection(viewModel: VoiceSettingsViewModel = hiltViewModel()) {
         ) {
             Icon(Icons.Default.PlayArrow, null, Modifier.size(20.dp))
             Spacer(Modifier.width(8.dp))
-            Text("Tester la voix", fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.voice_settings_test_button), fontWeight = FontWeight.SemiBold)
         }
 
         // ═══ Clé API Google (conditionnel) ═══
@@ -157,11 +157,12 @@ private fun EnginePicker(
             modifier = Modifier.weight(1f).fillMaxHeight(),
             onClick = { onSelect(VoiceEngineId.ANDROID) },
         )
+        val warning = if (selected == VoiceEngineId.GOOGLE_CHIRP3 && !googleApiKeyConfigured)
+            stringResource(R.string.voice_settings_engine_warning_api_key) else null
         EngineCard(
             engine = VoiceEngineId.GOOGLE_CHIRP3,
             selected = selected == VoiceEngineId.GOOGLE_CHIRP3,
-            warning = if (selected == VoiceEngineId.GOOGLE_CHIRP3 && !googleApiKeyConfigured) "Clé API requise"
-                else null,
+            warning = warning,
             modifier = Modifier.weight(1f).fillMaxHeight(),
             onClick = { onSelect(VoiceEngineId.GOOGLE_CHIRP3) },
         )
@@ -371,7 +372,7 @@ private fun GoogleApiKeyField(apiKey: String, onChange: (String) -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Icon(Icons.Default.Lock, null, Modifier.size(16.dp), tint = OrangeVibrant)
             Text(
-                "Clé API Google Cloud TTS",
+                stringResource(R.string.voice_settings_api_key_label),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
             )
@@ -383,26 +384,30 @@ private fun GoogleApiKeyField(apiKey: String, onChange: (String) -> Unit) {
             singleLine = true,
             visualTransformation = if (showKey) VisualTransformation.None else PasswordVisualTransformation(),
             placeholder = {
-                Text("AIza…", style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.voice_settings_api_key_placeholder), style = MaterialTheme.typography.bodySmall)
             },
             trailingIcon = {
                 Row {
                     IconButton(onClick = {
                         clipboard.getText()?.text?.let { onChange(it.trim()) }
-                    }) { Icon(Icons.Default.ContentPaste, "Coller", tint = OrangeVibrant) }
+                    }) {
+                        Icon(
+                            Icons.Default.ContentPaste,
+                            stringResource(R.string.voice_settings_api_key_paste_cd),
+                            tint = OrangeVibrant
+                        )
+                    }
                     IconButton(onClick = { showKey = !showKey }) {
                         Icon(
                             if (showKey) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                            contentDescription = "Afficher / masquer",
+                            contentDescription = stringResource(R.string.voice_settings_api_key_visibility_cd),
                         )
                     }
                 }
             },
         )
         Text(
-            "Active l'API « Cloud Text-to-Speech » sur console.cloud.google.com, " +
-                "puis crée une clé API dans \"APIs & Services › Credentials\". " +
-                "La clé est stockée chiffrée sur l'appareil.",
+            stringResource(R.string.voice_settings_api_key_help),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
         )
