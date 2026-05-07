@@ -53,10 +53,53 @@ fun WorkoutSummaryScreen(
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
     }
 
+    var showSharePreview by remember { mutableStateOf(false) }
+    if (showSharePreview) {
+        // Reconstruit la liste d'exos avec status DONE/SKIPPED depuis les
+        // snapshots persistés sur ActiveSessionManager (le state du
+        // ViewModel a déjà été détruit par stopSession()).
+        val skippedSet = sessionManager.lastSessionSkippedIndices
+        val metrics = sessionManager.lastSessionExerciseMetrics
+        val items = sessionManager.lastSessionExerciseNames.mapIndexed { idx, name ->
+            val status = if (idx in skippedSet) {
+                com.shredcoach.app.presentation.share.ShareCardData.ExerciseStatus.SKIPPED
+            } else {
+                com.shredcoach.app.presentation.share.ShareCardData.ExerciseStatus.DONE
+            }
+            com.shredcoach.app.presentation.share.ShareCardData.ExerciseProgressItem(
+                name = name,
+                status = status,
+                metric = metrics[idx],
+            )
+        }
+        com.shredcoach.app.presentation.share.ShareSheet(
+            data = com.shredcoach.app.presentation.share.ShareCardData.WorkoutFinished(
+                title = "Séance terminée",
+                subtitle = "Bravo Champion !",
+                durationSeconds = duration,
+                totalVolumeKg = totalVolume,
+                totalSets = totalSets,
+                totalReps = totalReps,
+                exerciseCount = sessionManager.lastSessionExerciseCount,
+                coachMessage = sessionManager.lastShreddyMessage.ifBlank { null },
+                completedExercises = items,
+            ),
+            onDismiss = { showSharePreview = false },
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Séance terminée !", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
+                title = { Text("Séance terminée !", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+                actions = {
+                    IconButton(onClick = { showSharePreview = true }) {
+                        Icon(
+                            androidx.compose.material.icons.Icons.Default.Share,
+                            contentDescription = "Partager la séance",
+                        )
+                    }
+                },
             )
         }
     ) { paddingValues ->
