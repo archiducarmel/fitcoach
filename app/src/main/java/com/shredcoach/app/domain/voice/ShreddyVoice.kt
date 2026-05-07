@@ -1,24 +1,43 @@
 package com.shredcoach.app.domain.voice
 
 import android.content.Context
-import android.speech.tts.TextToSpeech
-import android.speech.tts.Voice
-import android.util.Log
-import java.util.Locale
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Voix de Shreddy — wrapper autour de Android TextToSpeech.
- * Sélectionne automatiquement la meilleure voix française disponible.
- * Singleton injectable via Hilt.
+ * Façade publique de la voix de Shreddy.
+ *
+ * Avant le refactor multi-moteurs, [ShreddyVoice] embarquait directement le
+ * `TextToSpeech` Android. Désormais elle délègue à un [VoiceEngine] choisi
+ * dynamiquement via [VoiceSettingsStore]. Les callers existants
+ * (WorkoutSessionScreen, WorkoutSessionService, ShredCoachApplication)
+ * conservent l'API `init(context)` / `speak(text)` / `speakRestEnd()` /
+ * `speakCountdown(int)` / `shutdown()` — **aucun changement requis côté
+ * appelants**.
+ *
+ * **Swap réactif** : la persona ou le moteur changé dans Settings prend
+ * effet à la **prochaine synthèse vocale** (countdown ou phrase). Pas de
+ * restart d'app, pas de re-init manuel. Implémenté en collectant le
+ * snapshot DataStore dans un scope IO long-vie et en mettant à jour
+ * `currentEngine` / `currentPersona` (volatiles).
+ *
+ * **Pourquoi ne pas exposer `VoiceEngine` directement** : les callers
+ * appellent `speakCountdown(3)` qui maps un int → "3" via le phrasebook
+ * commun à TOUS les moteurs. Garder la logique de phrase ici évite de
+ * dupliquer le mapping dans chaque engine.
  */
 @Singleton
-class ShreddyVoice @Inject constructor() {
-
-    private var tts: TextToSpeech? = null
-    private var isReady = false
-
+class ShreddyVoice @Inject constructor(
+    private val voiceSettings: VoiceSettingsStore,
+    private val androidEngine: AndroidTtsEngine,
+    private val googleEngine: GoogleCloudTtsEngine,
+) {
     private val restEndPhrases = listOf(
         "C'est reparti !",
         "On enchaîne !",
@@ -26,7 +45,7 @@ class ShreddyVoice @Inject constructor() {
         "Allez, on y retourne !",
         "Go, c'est à toi !",
         "Repos terminé, on repart !",
-        "C'est le moment, donne tout !"
+        "C'est le moment, donne tout !",
     )
 
     private val countdownPhrases = mapOf(
@@ -35,64 +54,45 @@ class ShreddyVoice @Inject constructor() {
         4 to "4",
         3 to "3",
         2 to "2",
-        1 to "1"
+        1 to "1",
     )
 
     private var phraseIndex = 0
 
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var initialized = false
+
+    @Volatile
+    private var currentEngineId: VoiceEngineId = VoiceEngineId.ANDROID
+
+    @Volatile
+    private var currentPersona: Persona =
+        VoicePersonaRegistry.defaultPersonaFor(VoiceEngineId.ANDROID)
+
+    /**
+     * Initialise les deux moteurs et démarre l'observation des préférences.
+     * Idempotent : appelable depuis [Application.onCreate] ET un Foreground
+     * Service sans risque de double-init.
+     */
     fun init(context: Context) {
-        if (tts != null) return
+        if (initialized) return
+        initialized = true
 
-        tts = TextToSpeech(context.applicationContext) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                val engine = tts ?: return@TextToSpeech
-                val result = engine.setLanguage(Locale.FRANCE)
+        androidEngine.init(context)
+        googleEngine.init(context)
 
-                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    Log.w("ShreddyVoice", "Français non supporté, fallback anglais")
-                    engine.setLanguage(Locale.US)
-                }
-
-                // Sélectionner la meilleure voix disponible
-                selectBestVoice(engine)
-
-                // Ton coach : légèrement plus grave, rythme dynamique
-                engine.setPitch(0.95f)
-                engine.setSpeechRate(1.05f)
-
-                isReady = true
-                Log.i("ShreddyVoice", "TTS prêt — voix: ${engine.voice?.name ?: "défaut"}")
-            } else {
-                Log.e("ShreddyVoice", "Échec init TTS: $status")
+        scope.launch {
+            voiceSettings.snapshot.distinctUntilChanged().collect { snap ->
+                currentEngineId = snap.engineId
+                currentPersona = VoicePersonaRegistry.findById(snap.personaId)
+                    ?: VoicePersonaRegistry.defaultPersonaFor(snap.engineId)
             }
         }
     }
 
-    private fun selectBestVoice(engine: TextToSpeech) {
-        try {
-            val voices = engine.voices ?: return
-            // Chercher une voix française de haute qualité (neuronale)
-            val frenchVoices = voices.filter {
-                it.locale.language == "fr" && !it.isNetworkConnectionRequired
-            }.sortedByDescending { it.quality }
-
-            val bestVoice = frenchVoices.firstOrNull { it.quality >= Voice.QUALITY_HIGH }
-                ?: frenchVoices.firstOrNull { it.quality >= Voice.QUALITY_NORMAL }
-                ?: frenchVoices.firstOrNull()
-
-            if (bestVoice != null) {
-                engine.voice = bestVoice
-                Log.i("ShreddyVoice", "Voix sélectionnée: ${bestVoice.name} (qualité: ${bestVoice.quality})")
-            }
-        } catch (e: Exception) {
-            Log.w("ShreddyVoice", "Impossible de sélectionner la voix: ${e.message}")
-        }
-    }
-
-    /** Prononce un texte. */
+    /** Prononce un texte avec la persona courante via le moteur courant. */
     fun speak(text: String) {
-        if (!isReady) return
-        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "shreddy_${System.currentTimeMillis()}")
+        currentEngine().speak(text, currentPersona)
     }
 
     /** Annonce de fin de repos (phrase variée). */
@@ -102,16 +102,21 @@ class ShreddyVoice @Inject constructor() {
         speak(phrase)
     }
 
-    /** Countdown vocal (5, 3, 2, 1). */
+    /** Countdown vocal (10, 5, 4, 3, 2, 1). */
     fun speakCountdown(secondsRemaining: Int) {
         countdownPhrases[secondsRemaining]?.let { speak(it) }
     }
 
     /** Libérer les ressources. */
     fun shutdown() {
-        tts?.stop()
-        tts?.shutdown()
-        tts = null
-        isReady = false
+        scope.cancel()
+        androidEngine.shutdown()
+        googleEngine.shutdown()
+        initialized = false
+    }
+
+    private fun currentEngine(): VoiceEngine = when (currentEngineId) {
+        VoiceEngineId.ANDROID -> androidEngine
+        VoiceEngineId.GOOGLE_CHIRP3 -> googleEngine
     }
 }
