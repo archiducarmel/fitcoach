@@ -27,7 +27,7 @@ import com.shredcoach.app.data.local.entity.*
         AppNotificationEntity::class,
         ScheduledWorkoutEntity::class
     ],
-    version = 38,
+    version = 39,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

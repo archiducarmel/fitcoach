@@ -34,6 +34,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.ExerciseEntity
+import com.shredcoach.app.domain.exercise.rememberLocalizedExercise
 import com.shredcoach.app.domain.model.ExerciseVariant
 import com.shredcoach.app.domain.model.MuscleGroup
 import com.shredcoach.app.presentation.common.ShimmerBox
@@ -230,6 +231,7 @@ fun ExerciseCard(
 ) {
     val context = LocalContext.current
     val variantColor = androidx.compose.ui.graphics.Color(exercise.variant.color)
+    val localized = rememberLocalizedExercise(exercise)
 
     Card(
         onClick = onClick,
@@ -257,7 +259,7 @@ fun ExerciseCard(
                             .size(Size(128, 128))
                             .crossfade(true)
                             .build(),
-                        contentDescription = exercise.name,
+                        contentDescription = localized.name,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,
                         loading = {
@@ -277,7 +279,7 @@ fun ExerciseCard(
             // Infos
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text(exercise.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold,
+                    Text(localized.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold,
                         modifier = Modifier
                             .sharedBoundsOptIn(key = "exercise-name-${exercise.id}")
                             .weight(1f, fill = false))

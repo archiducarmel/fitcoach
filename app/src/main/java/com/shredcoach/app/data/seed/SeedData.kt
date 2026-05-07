@@ -5,7 +5,26 @@ import com.shredcoach.app.domain.model.ExerciseVariant
 import com.shredcoach.app.domain.model.MuscleGroup
 
 object SeedData {
-    fun getAllExercises(): List<ExerciseEntity> = listOf(
+    /**
+     * Catalogue complet des exercices.
+     *
+     * **i18n** : chaque [ExerciseEntity] est post-traité via [withKey] pour
+     * dériver `exerciseKey` (clé stable ASCII snake_case) depuis le nom FR.
+     * On évite d'avoir à maintenir 441 keys explicites — la dérivation est
+     * déterministe et idempotente, identique à celle utilisée par la
+     * migration v38→v39.
+     *
+     * Le `name` reste la source de vérité FR (canonique). La clé sert ensuite
+     * à résoudre `R.string.exo_<key>_<field>` au moment de l'affichage (cf.
+     * `ExerciseI18n`) si une traduction existe, sinon fallback sur le DB.
+     */
+    fun getAllExercises(): List<ExerciseEntity> = rawExercises().map { it.withKey() }
+
+    private fun ExerciseEntity.withKey(): ExerciseEntity =
+        if (exerciseKey.isNotBlank()) this
+        else copy(exerciseKey = ExerciseKey.fromName(name))
+
+    private fun rawExercises(): List<ExerciseEntity> = listOf(
         // ===== JAMBES (QUADRICEPS / FESSIERS) =====
         ExerciseEntity(
             name = "Presse à cuisses",

@@ -60,14 +60,18 @@ object DatabaseModule {
             private fun seedDatabaseIdempotent() {
                 CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
                     val exerciseDao = exerciseDaoProvider.get()
-                    // Récupère id par name pour les exos déjà en DB.
-                    val existingByName = exerciseDao.getAllExerciseIdsByName()
-                        .associate { it.name to it.id }
+                    // Match prioritaire par `exerciseKey` (stable inter-langue,
+                    // backfillé par la migration v38→v39). Fallback par `name`
+                    // pour défendre contre les rows hypothétiques sans clé.
+                    val existing = exerciseDao.getAllExerciseIdsByKey()
+                    val byKey = existing.filter { it.exerciseKey.isNotBlank() }
+                        .associate { it.exerciseKey to it.id }
+                    val byName = existing.associate { it.name to it.id }
 
                     val toInsert = mutableListOf<com.shredcoach.app.data.local.entity.ExerciseEntity>()
                     val toUpdate = mutableListOf<com.shredcoach.app.data.local.entity.ExerciseEntity>()
                     for (seed in SeedData.getAllExercises()) {
-                        val existingId = existingByName[seed.name]
+                        val existingId = byKey[seed.exerciseKey] ?: byName[seed.name]
                         if (existingId == null) {
                             toInsert.add(seed)
                         } else {
@@ -113,6 +117,7 @@ object DatabaseModule {
                 Migrations.migration35to36(),
                 Migrations.migration36to37(),
                 Migrations.migration37to38(),
+                Migrations.migration38to39(),
             )
             // Fallback uniquement en cas de **downgrade** (ex : utilisateur
             // sideload une version plus ancienne). Aucun fallback destructif

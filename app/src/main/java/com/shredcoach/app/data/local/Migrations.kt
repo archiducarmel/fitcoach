@@ -7,6 +7,7 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.shredcoach.app.data.local.secure.SecureKeyStore
+import com.shredcoach.app.data.seed.ExerciseKey
 
 /**
  * Migrations Room pour ShredCoachDatabase.
@@ -145,6 +146,49 @@ object Migrations {
     fun migration37to38(): Migration = object : Migration(37, 38) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("ALTER TABLE `user_profile` ADD COLUMN `languageTag` TEXT")
+        }
+    }
+
+    /**
+     * v38 → v39 : ajoute `exercises.exerciseKey` (clé i18n stable, ASCII
+     * snake_case) et backfille en dérivant la valeur depuis `name` via
+     * [ExerciseKey.fromName].
+     *
+     * **Pourquoi backfill dans la migration plutôt qu'au prochain seed-upsert** :
+     * `seedDatabaseIdempotent` matche désormais par `exerciseKey`. Sans
+     * backfill, les exercices déjà en DB auraient `exerciseKey = ""`, le
+     * seed n'aurait aucun match, et il insérerait des doublons (existants en
+     * v1 + nouveaux du seed). En backfillant ici, le contract devient :
+     * « après v39, **toutes** les rows ont une `exerciseKey` non-vide ».
+     *
+     * **Idempotence** : NFKD + slugify est déterministe sur le `name`, donc
+     * lancer la migration sur une DB fraîche (où la valeur viendrait du
+     * default `""`) ou sur une DB existante donne le même résultat — aucun
+     * risque de désynchronisation entre clé migrée et clé seed.
+     *
+     * **Coût** : SELECT id, name FROM exercises (~440 rows) + UPDATE batché
+     * via une transaction implicite Room. ~50ms en cold-start IO.
+     */
+    fun migration38to39(): Migration = object : Migration(38, 39) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `exercises` ADD COLUMN `exerciseKey` TEXT NOT NULL DEFAULT ''")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_exercises_exerciseKey` ON `exercises` (`exerciseKey`)")
+
+            // Backfill depuis le name FR — déterministe et idempotent.
+            val rows = mutableListOf<Pair<Long, String>>()
+            db.query("SELECT id, name FROM exercises").use { cursor ->
+                while (cursor.moveToNext()) {
+                    val id = cursor.getLong(0)
+                    val name = cursor.getString(1)
+                    rows += id to ExerciseKey.fromName(name)
+                }
+            }
+            for ((id, key) in rows) {
+                db.execSQL(
+                    "UPDATE exercises SET exerciseKey = ? WHERE id = ?",
+                    arrayOf(key, id)
+                )
+            }
         }
     }
 

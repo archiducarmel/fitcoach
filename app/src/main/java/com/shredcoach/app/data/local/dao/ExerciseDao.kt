@@ -64,6 +64,16 @@ interface ExerciseDao {
      */
     @Query("SELECT id, name FROM exercises")
     suspend fun getAllExerciseIdsByName(): List<ExerciseIdName>
+
+    /**
+     * Projection (id + exerciseKey + name) pour la sync UPSERT du catalogue
+     * post-migration v39. Le matching se fait d'abord par `exerciseKey`
+     * (stable inter-langue), puis fallback sur `name` si `exerciseKey` est
+     * vide — défense pour le cas hypothétique où la migration aurait laissé
+     * une row sans clé.
+     */
+    @Query("SELECT id, name, exerciseKey FROM exercises")
+    suspend fun getAllExerciseIdsByKey(): List<ExerciseIdKey>
 }
 
 /**
@@ -71,3 +81,9 @@ interface ExerciseDao {
  * Hors interface DAO car Room interdit les data classes nested dans une `@Dao`.
  */
 data class ExerciseIdName(val id: Long, val name: String)
+
+/**
+ * Projection Room pour le mapping {exerciseKey, name} → id utilisée par la
+ * sync UPSERT (cf. [ExerciseDao.getAllExerciseIdsByKey]).
+ */
+data class ExerciseIdKey(val id: Long, val name: String, val exerciseKey: String)

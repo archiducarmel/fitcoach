@@ -27,6 +27,7 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.ExerciseEntity
+import com.shredcoach.app.domain.exercise.rememberLocalizedExercise
 import com.shredcoach.app.presentation.common.sharedBoundsOptIn
 import com.shredcoach.app.presentation.common.sharedElementOptIn
 import com.shredcoach.app.presentation.theme.OrangeVibrant
@@ -40,11 +41,12 @@ fun ExerciseDetailScreen(
 ) {
     val exercise by viewModel.exercise.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val localizedTitle = exercise?.let { rememberLocalizedExercise(it).name }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(exercise?.name ?: stringResource(R.string.exercise_detail_title_default), fontWeight = FontWeight.Bold, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
+                title = { Text(localizedTitle ?: stringResource(R.string.exercise_detail_title_default), fontWeight = FontWeight.Bold, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.common_back))
@@ -71,6 +73,7 @@ fun ExerciseDetailScreen(
 private fun ExerciseDetailContent(exercise: ExerciseEntity, modifier: Modifier) {
     val context = LocalContext.current
     val variantColor = Color(exercise.variant.color)
+    val localized = rememberLocalizedExercise(exercise)
 
     Column(modifier.verticalScroll(rememberScrollState())) {
         // ── GIF animé (plein écran en haut) ──
@@ -89,7 +92,7 @@ private fun ExerciseDetailContent(exercise: ExerciseEntity, modifier: Modifier) 
                         .data(exercise.gifUrl)
                         .crossfade(true)
                         .build(),
-                    contentDescription = exercise.name,
+                    contentDescription = localized.name,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Fit,
                     loading = {
@@ -107,7 +110,7 @@ private fun ExerciseDetailContent(exercise: ExerciseEntity, modifier: Modifier) 
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             // ── Header : Nom + badges ──
             Text(
-                exercise.name,
+                localized.name,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.sharedBoundsOptIn(key = "exercise-name-${exercise.id}")
@@ -154,14 +157,14 @@ private fun ExerciseDetailContent(exercise: ExerciseEntity, modifier: Modifier) 
 
                     HorizontalDivider()
 
-                    ParamRow(Icons.Default.MonitorWeight, stringResource(R.string.exercise_detail_param_weight), exercise.startingWeight)
+                    ParamRow(Icons.Default.MonitorWeight, stringResource(R.string.exercise_detail_param_weight), localized.startingWeight)
                     if (exercise.tempo != "N/A") ParamRow(Icons.Default.Speed, stringResource(R.string.exercise_detail_param_tempo), exercise.tempo)
-                    ParamRow(Icons.Default.Build, stringResource(R.string.exercise_detail_param_equipment), exercise.equipment)
+                    ParamRow(Icons.Default.Build, stringResource(R.string.exercise_detail_param_equipment), localized.equipment)
                 }
             }
 
             // ── Card exécution ──
-            if (exercise.executionKey.isNotBlank()) {
+            if (localized.execution.isNotBlank()) {
                 Card(colors = CardDefaults.cardColors(containerColor = OrangeVibrant.copy(alpha = 0.08f))) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -169,7 +172,7 @@ private fun ExerciseDetailContent(exercise: ExerciseEntity, modifier: Modifier) 
                             Text(stringResource(R.string.exercise_detail_section_execution), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
                         }
                         // Diviser en étapes numérotées
-                        exercise.executionKey.split(". ").filter { it.isNotBlank() }.forEachIndexed { i, step ->
+                        localized.execution.split(". ").filter { it.isNotBlank() }.forEachIndexed { i, step ->
                             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Top) {
                                 Surface(shape = RoundedCornerShape(4.dp), color = OrangeVibrant.copy(alpha = 0.15f), modifier = Modifier.size(24.dp)) {
                                     Box(contentAlignment = Alignment.Center) {
@@ -185,14 +188,14 @@ private fun ExerciseDetailContent(exercise: ExerciseEntity, modifier: Modifier) 
             }
 
             // ── Card conseils ──
-            if (exercise.tips.isNotBlank()) {
+            if (localized.tips.isNotBlank()) {
                 Card(colors = CardDefaults.cardColors(containerColor = NeonGreen.copy(alpha = 0.08f))) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Icon(Icons.Default.Lightbulb, null, tint = NeonGreen)
                             Text(stringResource(R.string.exercise_detail_section_tips), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = NeonGreen)
                         }
-                        Text(exercise.tips, style = MaterialTheme.typography.bodyMedium, lineHeight = 22.sp,
+                        Text(localized.tips, style = MaterialTheme.typography.bodyMedium, lineHeight = 22.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f))
                     }
                 }
