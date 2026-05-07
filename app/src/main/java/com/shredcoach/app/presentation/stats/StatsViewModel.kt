@@ -24,8 +24,12 @@ import javax.inject.Inject
 import kotlin.math.abs
 
 // ── Période temporelle ──
-enum class TimePeriod(val label: String, val days: Long) {
-    WEEK("7j", 7), MONTH("30j", 30), QUARTER("90j", 90), YEAR("1 an", 365), ALL("Tout", 3650)
+enum class TimePeriod(val label: String, @androidx.annotation.StringRes val labelRes: Int, val days: Long) {
+    WEEK("7j", com.shredcoach.app.R.string.period_week, 7),
+    MONTH("30j", com.shredcoach.app.R.string.period_month, 30),
+    QUARTER("90j", com.shredcoach.app.R.string.period_quarter, 90),
+    YEAR("1 an", com.shredcoach.app.R.string.period_year, 365),
+    ALL("Tout", com.shredcoach.app.R.string.period_all, 3650)
 }
 
 // ── Data classes ──
@@ -159,12 +163,16 @@ data class ExerciseProgressionEntry(
  * Tranches horaires utilisées pour la timeline "Quand tu manges".
  * Bornes inclusives sur start, exclusives sur end (sauf NUIT qui boucle).
  */
-enum class MealHourBucket(val label: String, val emoji: String, val startHour: Int, val endHour: Int) {
-    MORNING("Matin", "🌅", 6, 11),       // 06:00 - 10:59
-    LUNCH("Midi", "☀️", 11, 15),               // 11:00 - 14:59
-    AFTERNOON("Après-midi", "🍎", 15, 19),// 15:00 - 18:59
-    DINNER("Soir", "🌙", 19, 23),         // 19:00 - 22:59
-    NIGHT("Nuit", "🌛", 23, 6);           // 23:00 - 05:59 (wrap)
+enum class MealHourBucket(
+    val label: String,
+    @androidx.annotation.StringRes val labelRes: Int,
+    val emoji: String, val startHour: Int, val endHour: Int
+) {
+    MORNING("Matin", com.shredcoach.app.R.string.meal_hour_morning, "🌅", 6, 11),
+    LUNCH("Midi", com.shredcoach.app.R.string.meal_hour_lunch, "☀️", 11, 15),
+    AFTERNOON("Après-midi", com.shredcoach.app.R.string.meal_hour_afternoon, "🍎", 15, 19),
+    DINNER("Soir", com.shredcoach.app.R.string.meal_hour_dinner, "🌙", 19, 23),
+    NIGHT("Nuit", com.shredcoach.app.R.string.meal_hour_night, "🌛", 23, 6);
 
     fun contains(hour: Int): Boolean = if (this == NIGHT) hour >= 23 || hour < 6
         else hour in startHour until endHour

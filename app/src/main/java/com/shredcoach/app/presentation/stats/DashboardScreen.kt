@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -37,6 +38,7 @@ import androidx.navigation.NavController
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import com.shredcoach.app.R
 import com.shredcoach.app.domain.training.SetMetricFormatter
 import com.shredcoach.app.domain.training.SetMetricFormatter.ExerciseKind
 import com.shredcoach.app.presentation.common.AnimatedCounter
@@ -67,8 +69,10 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
         )
     }
     if (showExportStats) {
+        val exportTitle = if (selectedTab == 0) stringResource(R.string.dashboard_export_workouts_title)
+            else stringResource(R.string.dashboard_export_nutrition_title)
         com.shredcoach.app.presentation.share.ExportSheet(
-            title = if (selectedTab == 0) "Statistiques séances" else "Statistiques nutrition",
+            title = exportTitle,
             onPick = { format ->
                 showExportStats = false
                 scope.launch {
@@ -91,13 +95,13 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mes Statistiques", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.dashboard_title), fontWeight = FontWeight.Bold) },
                 actions = {
                     IconButton(onClick = { showShareStats = true }) {
-                        Icon(Icons.Default.Share, "Partager mes stats")
+                        Icon(Icons.Default.Share, stringResource(R.string.dashboard_share_cd))
                     }
                     IconButton(onClick = { showExportStats = true }) {
-                        Icon(Icons.Default.FileDownload, "Exporter")
+                        Icon(Icons.Default.FileDownload, stringResource(R.string.dashboard_export_cd))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = androidx.compose.material3.MaterialTheme.colorScheme.background)
@@ -115,8 +119,8 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             listOf(
-                Triple(0, "Séances", Icons.Default.FitnessCenter),
-                Triple(1, "Nutrition", Icons.Default.Restaurant)
+                Triple(0, stringResource(R.string.dashboard_tab_workouts), Icons.Default.FitnessCenter),
+                Triple(1, stringResource(R.string.dashboard_tab_nutrition), Icons.Default.Restaurant)
             ).forEach { (idx, label, icon) ->
                 val sel = selectedTab == idx
                 Surface(
@@ -150,9 +154,9 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
             Box(Modifier.fillMaxSize()) {
                 com.shredcoach.app.presentation.common.EmptyState(
                     icon = Icons.AutoMirrored.Filled.TrendingUp,
-                    title = "Ta première séance sera ta référence !",
-                    description = "Complète ta première séance pour débloquer tes statistiques, records personnels et graphiques de progression.",
-                    ctaLabel = "Commencer une séance",
+                    title = stringResource(R.string.dashboard_empty_title),
+                    description = stringResource(R.string.dashboard_empty_desc),
+                    ctaLabel = stringResource(R.string.dashboard_empty_cta),
                     ctaIcon = Icons.Default.FitnessCenter,
                     onCtaClick = { navController.navigateUp() }
                 )
@@ -162,6 +166,13 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
             val scope = rememberCoroutineScope()
             // Index des sections pour scroll rapide
             val sectionIndices = remember { mutableMapOf<String, Int>() }
+
+            // Labels chips — résolus AVANT le LazyColumn (lambda non-@Composable).
+            val labelSummary = stringResource(R.string.dashboard_chip_summary)
+            val labelRecords = stringResource(R.string.dashboard_chip_records)
+            val labelCharts = stringResource(R.string.dashboard_chip_charts)
+            val labelTrends = stringResource(R.string.dashboard_chip_trends)
+            val labelFreq = stringResource(R.string.dashboard_chip_frequency)
 
             LazyColumn(
                 state = listState,
@@ -175,7 +186,7 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
                 // Chips de navigation rapide
                 item {
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        val chips = listOf("Résumé", "Records", "Graphiques", "Tendances", "Fréquence")
+                        val chips = listOf(labelSummary, labelRecords, labelCharts, labelTrends, labelFreq)
                         items(chips) { label ->
                             Surface(
                                 onClick = {
@@ -195,29 +206,29 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
                 }
 
                 // ── Résumé ──
-                stickyHeader { StickyTitle("Résumé") }
-                item { sectionIndices["Résumé"] = 3; SummarySection(state) }
+                stickyHeader { StickyTitle(stringResource(R.string.dashboard_section_summary)) }
+                item { sectionIndices[labelSummary] = 3; SummarySection(state) }
                 if (state.comparison != null) {
                     item { ComparisonSection(state.comparison!!) }
                 }
 
                 // ── Records ──
                 if (state.personalRecords.isNotEmpty()) {
-                    stickyHeader { StickyTitle("Records") }
-                    item { sectionIndices["Records"] = sectionIndices.size + 4; PersonalRecordsSection(state.personalRecords) }
+                    stickyHeader { StickyTitle(stringResource(R.string.dashboard_section_records)) }
+                    item { sectionIndices[labelRecords] = sectionIndices.size + 4; PersonalRecordsSection(state.personalRecords) }
                 }
 
                 // ── 1RM + plateau par exercice ──
                 if (state.exerciseProgressions.isNotEmpty()) {
-                    stickyHeader { StickyTitle("Progression par exercice") }
+                    stickyHeader { StickyTitle(stringResource(R.string.dashboard_section_progressions)) }
                     item { ExerciseProgressionsSection(state.exerciseProgressions) }
                 }
 
                 // ── Graphiques ──
                 if (state.weightProgression.isNotEmpty() || state.exercises.isNotEmpty() || state.weeklyVolume.isNotEmpty() || state.muscleDistribution.isNotEmpty()) {
-                    stickyHeader { StickyTitle("Graphiques") }
+                    stickyHeader { StickyTitle(stringResource(R.string.dashboard_section_charts)) }
                     if (state.weightProgression.isNotEmpty() || state.exercises.isNotEmpty()) {
-                        item { sectionIndices["Graphiques"] = sectionIndices.size + 5; WeightProgressionSection(state, viewModel) }
+                        item { sectionIndices[labelCharts] = sectionIndices.size + 5; WeightProgressionSection(state, viewModel) }
                     }
                     if (state.weeklyVolume.isNotEmpty()) {
                         item { WeeklyVolumeSection(state) }
@@ -225,9 +236,6 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
                     if (state.muscleDistribution.isNotEmpty()) {
                         item { MuscleDistributionSection(state.muscleDistribution) }
                     }
-                    // Volume par routine — apparaît dès qu'on a 1+ routine.
-                    // Vraiment utile à partir de 2 routines distinctes (split user)
-                    // mais on l'affiche aussi pour 1 routine pour confirmer le focus.
                     if (state.routineBreakdown.isNotEmpty()) {
                         item { RoutineBreakdownSection(state.routineBreakdown, state.selectedPeriod) }
                     }
@@ -235,13 +243,13 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
 
                 // ── Tendances ──
                 if (state.trend != null) {
-                    stickyHeader { StickyTitle("Tendances") }
-                    item { sectionIndices["Tendances"] = sectionIndices.size + 6; TrendSection(state.trend!!) }
+                    stickyHeader { StickyTitle(stringResource(R.string.dashboard_section_trends)) }
+                    item { sectionIndices[labelTrends] = sectionIndices.size + 6; TrendSection(state.trend!!) }
                 }
 
                 // ── Fréquence ──
-                stickyHeader { StickyTitle("Fréquence") }
-                item { sectionIndices["Fréquence"] = sectionIndices.size + 7; TrainingFrequencySection(state) }
+                stickyHeader { StickyTitle(stringResource(R.string.dashboard_section_frequency)) }
+                item { sectionIndices[labelFreq] = sectionIndices.size + 7; TrainingFrequencySection(state) }
 
                 item { Spacer(Modifier.height(32.dp)) }
             }
@@ -292,26 +300,27 @@ private fun NutritionDashboard(stats: NutritionStatsData, viewModel: StatsViewMo
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Icon(Icons.Default.Restaurant, null, Modifier.size(22.dp), tint = Color.White)
-                            Text("Moyenne quotidienne (${stats.period.label})", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f))
+                            Text(stringResource(R.string.nutri_dashboard_avg_daily, stringResource(stats.period.labelRes)),
+                                style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f))
                         }
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
                             Column {
                                 Text("${stats.avgCalories}", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold, color = Color.White)
-                                Text("kcal / jour", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.8f))
+                                Text(stringResource(R.string.nutri_dashboard_kcal_per_day), style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.8f))
                             }
                             Surface(shape = RoundedCornerShape(10.dp), color = Color.White.copy(alpha = 0.2f)) {
                                 Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                                     Text(if (delta >= 0) "+$delta" else "$delta", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = Color.White)
-                                    Text("vs objectif", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.8f))
+                                    Text(stringResource(R.string.nutri_dashboard_vs_target), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.8f))
                                 }
                             }
                         }
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                            NutriHeroStat("${stats.daysTracked}/${stats.daysInPeriod}", "jours suivis")
+                            NutriHeroStat("${stats.daysTracked}/${stats.daysInPeriod}", stringResource(R.string.nutri_dashboard_days_tracked))
                             NutriHeroDivider()
-                            NutriHeroStat("${stats.complianceDays}/${stats.daysInPeriod}", "dans la cible")
+                            NutriHeroStat("${stats.complianceDays}/${stats.daysInPeriod}", stringResource(R.string.nutri_dashboard_days_in_target))
                             NutriHeroDivider()
-                            NutriHeroStat("${stats.totalScans}", "scans repas")
+                            NutriHeroStat("${stats.totalScans}", stringResource(R.string.nutri_dashboard_total_scans))
                         }
                     }
                 }
@@ -325,21 +334,21 @@ private fun NutritionDashboard(stats: NutritionStatsData, viewModel: StatsViewMo
         item {
             Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
                 Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Macros moyennes / jour", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.nutri_dashboard_macros_avg), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                        NutriMacroRing("Protéines", stats.avgProteins.toDouble(), stats.targetProteins, Color(0xFF3B82F6))
-                        NutriMacroRing("Glucides", stats.avgCarbs.toDouble(), 260, OrangeVibrant)
-                        NutriMacroRing("Lipides", stats.avgFats.toDouble(), 70, Color(0xFFEF4444))
+                        NutriMacroRing(stringResource(R.string.nutri_dashboard_macro_proteins), stats.avgProteins.toDouble(), stats.targetProteins, Color(0xFF3B82F6))
+                        NutriMacroRing(stringResource(R.string.nutri_dashboard_macro_carbs), stats.avgCarbs.toDouble(), 260, OrangeVibrant)
+                        NutriMacroRing(stringResource(R.string.nutri_dashboard_macro_fats), stats.avgFats.toDouble(), 70, Color(0xFFEF4444))
                     }
                     // Protéines par kg
                     if (stats.protPerKg > 0) {
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Text("Protéines / kg", style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.nutri_dashboard_protein_per_kg_label), style = MaterialTheme.typography.bodyMedium)
                             val protColor = when { stats.protPerKg >= 1.6 -> NeonGreen; stats.protPerKg >= 1.2 -> OrangeVibrant; else -> Color(0xFFEF4444) }
-                            Text("${String.format("%.1f", stats.protPerKg)} g/kg", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = protColor)
+                            Text(stringResource(R.string.nutri_dashboard_protein_per_kg_value, String.format(java.util.Locale.getDefault(), "%.1f", stats.protPerKg)), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = protColor)
                         }
-                        Text("Recommandé : 1.6 – 2.2 g/kg en sèche", style = MaterialTheme.typography.labelSmall,
+                        Text(stringResource(R.string.nutri_dashboard_protein_recommended), style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                     }
                 }
@@ -381,8 +390,8 @@ private fun NutritionDashboard(stats: NutritionStatsData, viewModel: StatsViewMo
                             }
                         }
                         Column {
-                            Text("Score santé moyen", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text("Sur ${stats.totalScans} repas scannés", style = MaterialTheme.typography.bodySmall,
+                            Text(stringResource(R.string.nutri_dashboard_avg_health_score), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.nutri_dashboard_on_n_meals, stats.totalScans), style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                         }
                     }
@@ -421,9 +430,10 @@ private fun NutriMacroRing(label: String, current: Double, target: Int, color: C
     // Description TalkBack consolidée : un seul focus pour le ring entier
     // au lieu de 3 focus séparés (chiffre central + label + objectif).
     // Format : "Protéines : 87g consommés sur 120g objectif, 73 pourcent"
-    val a11yDesc = remember(current, target, label) {
+    val a11yTpl = stringResource(R.string.a11y_macro_ring)
+    val a11yDesc = remember(current, target, label, a11yTpl) {
         val pct = (finalFraction * 100).toInt()
-        "$label : ${current.toInt()}g consommés sur $target g objectif, $pct pourcent"
+        a11yTpl.format(label, current.toInt(), target, pct)
     }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -447,7 +457,7 @@ private fun NutriMacroRing(label: String, current: Double, target: Int, color: C
             )
         }
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-        Text("/ ${target}g", style = MaterialTheme.typography.labelSmall, fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+        Text(stringResource(R.string.nutri_dashboard_target_g, target), style = MaterialTheme.typography.labelSmall, fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
     }
 }
 
@@ -458,11 +468,14 @@ private fun WeeklyCaloriesChart(data: List<Pair<String, Int>>, target: Int) {
     // Description TalkBack du graphe entier : on lit chaque jour avec ses
     // calories, puis l'objectif. L'utilisateur entend une description
     // intelligible au lieu de "Lundi", "Mardi"... séparés par bar.
-    val chartDesc = remember(data, target) {
+    val zeroTpl = stringResource(R.string.a11y_day_zero_cals)
+    val withTpl = stringResource(R.string.a11y_day_with_cals)
+    val chartTpl = stringResource(R.string.a11y_chart_calories_week)
+    val chartDesc = remember(data, target, zeroTpl, withTpl, chartTpl) {
         val days = data.joinToString(", ") { (day, cal) ->
-            if (cal == 0) "$day rien" else "$day $cal calories"
+            if (cal == 0) zeroTpl.format(day) else withTpl.format(day, cal)
         }
-        "Graphique calories de la semaine : $days. Objectif quotidien $target calories."
+        chartTpl.format(days, target)
     }
 
     Row(
@@ -505,7 +518,7 @@ private fun WeeklyCaloriesChart(data: List<Pair<String, Int>>, target: Int) {
     // Ligne objectif
     Box(Modifier.fillMaxWidth().padding(top = 4.dp)) {
         HorizontalDivider(color = OrangeVibrant.copy(alpha = 0.3f), thickness = 1.dp)
-        Text("Objectif : $target kcal", modifier = Modifier.align(Alignment.CenterEnd),
+        Text(stringResource(R.string.nutri_dashboard_target_kcal, target), modifier = Modifier.align(Alignment.CenterEnd),
             style = MaterialTheme.typography.labelSmall, fontSize = 8.sp, color = OrangeVibrant.copy(alpha = 0.6f))
     }
 }
@@ -519,7 +532,7 @@ private fun PeriodFilter(selected: TimePeriod, onSelect: (TimePeriod) -> Unit) {
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         items(TimePeriod.values().toList()) { p ->
             FilterChip(selected = p == selected, onClick = { onSelect(p) },
-                label = { Text(p.label, fontWeight = if (p == selected) FontWeight.Bold else FontWeight.Normal) })
+                label = { Text(stringResource(p.labelRes), fontWeight = if (p == selected) FontWeight.Bold else FontWeight.Normal) })
         }
     }
 }
@@ -532,18 +545,18 @@ private fun SummarySection(s: StatsState) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         // Période
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.FitnessCenter, s.workoutCount, "Séances (${s.selectedPeriod.label})", OrangeVibrant)
-            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.MonitorWeight, s.totalVolume, "Volume", NeonGreen, formatter = { fmtVol(it.toDouble()) })
+            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.FitnessCenter, s.workoutCount, stringResource(R.string.dashboard_summary_sessions_period, stringResource(s.selectedPeriod.labelRes)), OrangeVibrant)
+            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.MonitorWeight, s.totalVolume, stringResource(R.string.dashboard_summary_volume), NeonGreen, formatter = { fmtVol(it.toDouble()) })
         }
         // Ce mois
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.CalendarMonth, s.monthWorkouts, "Ce mois", Color(0xFF8B5CF6))
-            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.LocalFireDepartment, s.estimatedCalories, "Calories (est.)", Color(0xFFEF4444))
+            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.CalendarMonth, s.monthWorkouts, stringResource(R.string.dashboard_summary_this_month), Color(0xFF8B5CF6))
+            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.LocalFireDepartment, s.estimatedCalories, stringResource(R.string.dashboard_summary_calories_estim), Color(0xFFEF4444))
         }
         // All time
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.EmojiEvents, s.allTimeWorkouts, "Total séances", Color(0xFF3B82F6))
-            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.Timer, s.allTimeDuration, "Temps total", Color(0xFF14B8A6), formatter = { fmtDur(it.toLong()) })
+            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.EmojiEvents, s.allTimeWorkouts, stringResource(R.string.dashboard_summary_total_sessions), Color(0xFF3B82F6))
+            SCard(Modifier.weight(1f).fillMaxHeight(), Icons.Default.Timer, s.allTimeDuration, stringResource(R.string.dashboard_summary_total_time), Color(0xFF14B8A6), formatter = { fmtDur(it.toLong()) })
         }
     // Extra
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))) {
@@ -555,14 +568,14 @@ private fun SummarySection(s: StatsState) {
                         Text(s.mostTrainedMuscle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     }
                 } else {
-                    Text("Pas encore de données", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold,
+                    Text(stringResource(R.string.dashboard_summary_no_data), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                 }
-                Text("Muscle le plus travaillé", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                Text(stringResource(R.string.dashboard_summary_most_trained), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(fmtVol(s.allTimeVolume), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Text("Volume total", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                Text(stringResource(R.string.dashboard_summary_total_volume), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
             }
         }
     }
@@ -574,7 +587,7 @@ private fun SummarySection(s: StatsState) {
             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Default.Timer, null, Modifier.size(20.dp), tint = OrangeVibrant)
-                    Text("Répartition du temps", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.dashboard_summary_time_breakdown), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 }
                 // Barre de progression stackee
                 Row(Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp))) {
@@ -590,7 +603,7 @@ private fun SummarySection(s: StatsState) {
                     TimeBreakdownMini(
                         modifier = Modifier.weight(1f),
                         icon = Icons.Default.LocalFireDepartment,
-                        label = "Échauffement",
+                        label = stringResource(R.string.dashboard_breakdown_warmup),
                         value = fmtDur(s.warmupSeconds),
                         color = Color(0xFFFBBF24)
                     )
@@ -598,7 +611,7 @@ private fun SummarySection(s: StatsState) {
                     TimeBreakdownMini(
                         modifier = Modifier.weight(1f),
                         icon = Icons.Default.FitnessCenter,
-                        label = "Musculation",
+                        label = stringResource(R.string.dashboard_breakdown_strength),
                         value = fmtDur(s.strengthSeconds),
                         color = OrangeVibrant
                     )
@@ -606,7 +619,7 @@ private fun SummarySection(s: StatsState) {
                     TimeBreakdownMini(
                         modifier = Modifier.weight(1f),
                         icon = Icons.AutoMirrored.Filled.DirectionsRun,
-                        label = "Cardio",
+                        label = stringResource(R.string.dashboard_breakdown_cardio),
                         value = fmtDur(s.cardioSeconds),
                         color = NeonGreen
                     )
@@ -687,7 +700,7 @@ private fun SCard(
 // ═══════════════════════════════════════
 @Composable
 private fun ComparisonSection(c: PeriodComparison) {
-    SecTitle("Comparaison vs période précédente", Icons.Default.CompareArrows)
+    SecTitle(stringResource(R.string.dashboard_comparison_title), Icons.Default.CompareArrows)
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             // Insight
@@ -700,8 +713,8 @@ private fun ComparisonSection(c: PeriodComparison) {
             }
             // Stats côte à côte
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-                CompStat("Séances", "${c.previousWorkouts}", "${c.currentWorkouts}", c.workoutDelta)
-                CompStat("Volume", fmtVol(c.previousVolume), fmtVol(c.currentVolume), c.volumeDelta)
+                CompStat(stringResource(R.string.dashboard_comparison_label_sessions), "${c.previousWorkouts}", "${c.currentWorkouts}", c.workoutDelta)
+                CompStat(stringResource(R.string.dashboard_comparison_label_volume), fmtVol(c.previousVolume), fmtVol(c.currentVolume), c.volumeDelta)
             }
         }
     }
@@ -733,7 +746,7 @@ private fun CompStat(label: String, prev: String, curr: String, delta: Float) {
 // ═══════════════════════════════════════
 @Composable
 private fun PersonalRecordsSection(records: List<PRDisplay>) {
-    SecTitle("Records Personnels", Icons.Default.EmojiEvents)
+    SecTitle(stringResource(R.string.dashboard_records_title), Icons.Default.EmojiEvents)
     records.take(5).forEachIndexed { i, pr ->
         Card(colors = CardDefaults.cardColors(containerColor = if (i == 0) Color(0xFFFFD700).copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface)) {
             Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -746,10 +759,13 @@ private fun PersonalRecordsSection(records: List<PRDisplay>) {
                 //  - WEIGHTED        : "1RM: 110 kg"
                 //  - BODYWEIGHT_REPS : "Poids du corps" (ou "+10 kg" si lesté)
                 //  - TIMED           : "Tenue maximale"
+                val subtitleWeighted = pr.estimated1RM?.let { stringResource(R.string.dashboard_records_subtitle_1rm, it) } ?: ""
+                val subtitleBodyweightLoaded = if (pr.weight > 0.0) stringResource(R.string.dashboard_records_subtitle_loaded, SetMetricFormatter.formatWeight(pr.weight)) else stringResource(R.string.dashboard_records_subtitle_bodyweight)
+                val subtitleTimed = stringResource(R.string.dashboard_records_subtitle_max_hold)
                 val subtitle = when (pr.kind) {
-                    ExerciseKind.WEIGHTED -> pr.estimated1RM?.let { "1RM: %.0f kg".format(it) } ?: ""
-                    ExerciseKind.BODYWEIGHT_REPS -> if (pr.weight > 0.0) "+${SetMetricFormatter.formatWeight(pr.weight)} kg lesté" else "Poids du corps"
-                    ExerciseKind.TIMED -> "Tenue maximale"
+                    ExerciseKind.WEIGHTED -> subtitleWeighted
+                    ExerciseKind.BODYWEIGHT_REPS -> subtitleBodyweightLoaded
+                    ExerciseKind.TIMED -> subtitleTimed
                 }
                 Column(Modifier.weight(1f)) {
                     Text(pr.exerciseName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -766,11 +782,11 @@ private fun PersonalRecordsSection(records: List<PRDisplay>) {
                         }
                         ExerciseKind.BODYWEIGHT_REPS -> {
                             Text("${pr.reps}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
-                            Text("reps", style = MaterialTheme.typography.labelSmall)
+                            Text(stringResource(R.string.dashboard_records_unit_reps), style = MaterialTheme.typography.labelSmall)
                         }
                         ExerciseKind.TIMED -> {
                             Text(SetMetricFormatter.formatDuration(pr.reps), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
-                            Text("tenue", style = MaterialTheme.typography.labelSmall)
+                            Text(stringResource(R.string.dashboard_records_unit_hold), style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 }
@@ -793,7 +809,7 @@ private fun PersonalRecordsSection(records: List<PRDisplay>) {
  */
 @Composable
 private fun ExerciseProgressionsSection(entries: List<ExerciseProgressionEntry>) {
-    SecTitle("Progression par exercice", Icons.AutoMirrored.Filled.TrendingUp)
+    SecTitle(stringResource(R.string.dashboard_progression_title), Icons.AutoMirrored.Filled.TrendingUp)
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(horizontal = 4.dp),
@@ -851,11 +867,11 @@ private fun TrendSection(trend: TrendData) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(String.format(java.util.Locale.US, "%.1f kg/sem",trend.slope), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
                         color = if (trend.slope > 0) NeonGreen else if (trend.slope < -0.5) Color(0xFFEF4444) else OrangeVibrant)
-                    Text("Progression", style = MaterialTheme.typography.labelSmall)
+                    Text(stringResource(R.string.dashboard_trend_progression), style = MaterialTheme.typography.labelSmall)
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("%.0f kg".format(trend.projectedWeight4Weeks), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color(0xFF3B82F6))
-                    Text("Prévu dans 4 sem.", style = MaterialTheme.typography.labelSmall)
+                    Text(stringResource(R.string.dashboard_trend_projected_4w), style = MaterialTheme.typography.labelSmall)
                 }
             }
             // Alerte plateau
@@ -863,7 +879,7 @@ private fun TrendSection(trend: TrendData) {
                 Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF3C7))) {
                     Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Icon(Icons.Default.Warning, null, tint = Color(0xFFF59E0B))
-                        Text("Plateau détecté (${trend.plateauWeeks} semaines)", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.dashboard_trend_plateau, trend.plateauWeeks), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -889,7 +905,7 @@ private fun WeeklyVolumeSection(state: StatsState) {
         val color = if (state.volumeChangePercent >= 0) NeonGreen else Color(0xFFEF4444)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Icon(if (state.volumeChangePercent >= 0) Icons.AutoMirrored.Filled.TrendingUp else Icons.Default.TrendingDown, null, Modifier.size(18.dp), tint = color)
-            Text("${if (state.volumeChangePercent >= 0) "+" else ""}${state.volumeChangePercent.toInt()}% vs semaine précédente",
+            Text(stringResource(R.string.dashboard_volume_change_vs_prev_week, if (state.volumeChangePercent >= 0) "+" else "", state.volumeChangePercent.toInt()),
                 style = MaterialTheme.typography.labelMedium, color = color, fontWeight = FontWeight.SemiBold)
         }
     }
@@ -954,14 +970,14 @@ private fun RoutineBreakdownSection(data: List<RoutineSlice>, period: TimePeriod
             // Hero numérique : total séances + volume cumulé
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column {
-                    Text("$totalSessions séances", style = MaterialTheme.typography.titleMedium,
+                    Text(stringResource(R.string.dashboard_freq_sessions_count, totalSessions), style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold, maxLines = 1)
-                    Text("${totalVolumeKg.toInt()} kg cumulés",
+                    Text(stringResource(R.string.dashboard_freq_total_volume_kg, totalVolumeKg.toInt()),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f))
                 }
                 Surface(shape = RoundedCornerShape(6.dp), color = OrangeVibrant.copy(alpha = 0.10f)) {
-                    Text("${data.size} ${if (data.size > 1) "types" else "type"}",
+                    Text(if (data.size > 1) stringResource(R.string.dashboard_freq_types_plural, data.size) else stringResource(R.string.dashboard_freq_types_singular, data.size),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold, color = OrangeVibrant)

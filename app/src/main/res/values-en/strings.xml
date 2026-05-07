@@ -883,4 +883,127 @@
     <string name="history_detail_mini_max">max</string>
     <string name="history_detail_mini_volume">volume</string>
     <string name="history_detail_dash">—</string>
+
+    <!-- Stats / Dashboard screen + Nutrition widgets -->
+    <string name="period_week">7d</string>
+    <string name="period_month">30d</string>
+    <string name="period_quarter">90d</string>
+    <string name="period_year">1y</string>
+    <string name="period_all">All</string>
+
+    <string name="dashboard_title">My Stats</string>
+    <string name="dashboard_share_cd">Share my stats</string>
+    <string name="dashboard_export_cd">Export</string>
+    <string name="dashboard_tab_workouts">Sessions</string>
+    <string name="dashboard_tab_nutrition">Nutrition</string>
+    <string name="dashboard_export_workouts_title">Workout stats</string>
+    <string name="dashboard_export_nutrition_title">Nutrition stats</string>
+    <string name="dashboard_empty_title">Your first session sets the bar!</string>
+    <string name="dashboard_empty_desc">Complete your first session to unlock stats, personal records and progression charts.</string>
+    <string name="dashboard_empty_cta">Start a session</string>
+
+    <string name="dashboard_chip_summary">Summary</string>
+    <string name="dashboard_chip_records">Records</string>
+    <string name="dashboard_chip_charts">Charts</string>
+    <string name="dashboard_chip_trends">Trends</string>
+    <string name="dashboard_chip_frequency">Frequency</string>
+    <string name="dashboard_section_summary">Summary</string>
+    <string name="dashboard_section_records">Records</string>
+    <string name="dashboard_section_progressions">Progression by exercise</string>
+    <string name="dashboard_section_charts">Charts</string>
+    <string name="dashboard_section_trends">Trends</string>
+    <string name="dashboard_section_frequency">Frequency</string>
+
+    <string name="dashboard_summary_sessions_period">Sessions (%1$s)</string>
+    <string name="dashboard_summary_volume">Volume</string>
+    <string name="dashboard_summary_this_month">This month</string>
+    <string name="dashboard_summary_calories_estim">Calories (est.)</string>
+    <string name="dashboard_summary_total_sessions">Total sessions</string>
+    <string name="dashboard_summary_total_time">Total time</string>
+    <string name="dashboard_summary_no_data">No data yet</string>
+    <string name="dashboard_summary_most_trained">Most trained muscle</string>
+    <string name="dashboard_summary_total_volume">Total volume</string>
+    <string name="dashboard_summary_time_breakdown">Time breakdown</string>
+    <string name="dashboard_breakdown_warmup">Warmup</string>
+    <string name="dashboard_breakdown_strength">Strength</string>
+    <string name="dashboard_breakdown_cardio">Cardio</string>
+
+    <string name="dashboard_comparison_title">Compared to previous period</string>
+    <string name="dashboard_comparison_label_sessions">Sessions</string>
+    <string name="dashboard_comparison_label_volume">Volume</string>
+    <string name="dashboard_records_title">Personal records</string>
+    <string name="dashboard_records_subtitle_1rm">1RM: %1$.0f kg</string>
+    <string name="dashboard_records_subtitle_loaded">+%1$s kg loaded</string>
+    <string name="dashboard_records_subtitle_bodyweight">Body weight</string>
+    <string name="dashboard_records_subtitle_max_hold">Max hold</string>
+    <string name="dashboard_records_unit_reps">reps</string>
+    <string name="dashboard_records_unit_hold">hold</string>
+
+    <string name="dashboard_progression_title">Progression by exercise</string>
+    <string name="dashboard_trend_progression">Progression</string>
+    <string name="dashboard_trend_projected_4w">Forecast in 4w</string>
+    <string name="dashboard_trend_plateau">Plateau detected (%1$d weeks)</string>
+    <string name="dashboard_volume_change_vs_prev_week">%1$s%2$d%% vs previous week</string>
+    <string name="dashboard_freq_sessions_count">%1$d sessions</string>
+    <string name="dashboard_freq_total_volume_kg">%1$d kg cumulative</string>
+    <string name="dashboard_freq_types_plural">%1$d types</string>
+    <string name="dashboard_freq_types_singular">%1$d type</string>
+
+    <string name="nutri_dashboard_avg_daily">Daily average (%1$s)</string>
+    <string name="nutri_dashboard_kcal_per_day">kcal / day</string>
+    <string name="nutri_dashboard_vs_target">vs target</string>
+    <string name="nutri_dashboard_days_tracked">days tracked</string>
+    <string name="nutri_dashboard_days_in_target">on target</string>
+    <string name="nutri_dashboard_total_scans">meal scans</string>
+    <string name="nutri_dashboard_macros_avg">Avg macros / day</string>
+    <string name="nutri_dashboard_macro_proteins">Proteins</string>
+    <string name="nutri_dashboard_macro_carbs">Carbs</string>
+    <string name="nutri_dashboard_macro_fats">Fats</string>
+    <string name="nutri_dashboard_protein_per_kg_label">Proteins / kg</string>
+    <string name="nutri_dashboard_protein_per_kg_value">%1$s g/kg</string>
+    <string name="nutri_dashboard_protein_recommended">Recommended: 1.6 – 2.2 g/kg in cut</string>
+    <string name="nutri_dashboard_avg_health_score">Avg health score</string>
+    <string name="nutri_dashboard_on_n_meals">Across %1$d scanned meals</string>
+    <string name="nutri_dashboard_target_kcal">Target: %1$d kcal</string>
+    <string name="nutri_dashboard_target_g">/ %1$dg</string>
+
+    <string name="a11y_macro_ring">%1$s: %2$dg eaten of %3$d g target, %4$d percent</string>
+    <string name="a11y_chart_calories_week">Weekly calories chart: %1$s. Daily target %2$d calories.</string>
+    <string name="a11y_day_zero_cals">%1$s nothing</string>
+    <string name="a11y_day_with_cals">%1$s %2$d calories</string>
+
+    <!-- Nutrition stats widgets -->
+    <string name="nutri_widget_coaching_title">Personalized coaching</string>
+    <string name="nutri_widget_evolution_title">Evolution vs previous period</string>
+    <string name="nutri_widget_comp_calories">Calories</string>
+    <string name="nutri_widget_comp_proteins">Proteins</string>
+    <string name="nutri_widget_comp_target_reached">Target reached</string>
+    <string name="nutri_widget_comp_unit_kcal">kcal</string>
+    <string name="nutri_widget_comp_unit_g">g</string>
+    <string name="nutri_widget_comp_unit_days">d</string>
+    <string name="nutri_widget_macro_split_title">Macro split (%% kcal)</string>
+    <string name="nutri_widget_kcal_per_day_short">kcal/day</string>
+    <string name="nutri_widget_macro_proteins">Proteins</string>
+    <string name="nutri_widget_macro_carbs">Carbs</string>
+    <string name="nutri_widget_macro_fats">Fats</string>
+    <string name="nutri_widget_quality_title">Meal quality</string>
+    <string name="nutri_widget_quality_excellent">Excellent nutrition profile</string>
+    <string name="nutri_widget_quality_good">Good balance · room to grow</string>
+    <string name="nutri_widget_quality_mixed">Mixed · aim for more A and B</string>
+    <string name="nutri_widget_quality_poor">Needs work · prioritize A and B</string>
+    <string name="nutri_widget_quality_ab_share">%1$d%% A+B</string>
+    <string name="nutri_widget_meal_hours_title">When you eat</string>
+    <string name="nutri_widget_meals_count">%1$d meals</string>
+    <string name="nutri_widget_meals_count_pct">%1$d meals · %2$d%%</string>
+    <string name="nutri_widget_late_meal_insight">💡 %1$d%% of your meals after 11pm — adjust to recover better</string>
+    <string name="nutri_widget_calories_chart_title">Calories over %1$d days</string>
+    <string name="nutri_widget_chart_no_data">Not enough data for the curve — add more meals</string>
+    <string name="nutri_widget_record_label">Record</string>
+
+    <!-- MealHourBucket enum -->
+    <string name="meal_hour_morning">Morning</string>
+    <string name="meal_hour_lunch">Noon</string>
+    <string name="meal_hour_afternoon">Afternoon</string>
+    <string name="meal_hour_dinner">Evening</string>
+    <string name="meal_hour_night">Night</string>
 </resources>

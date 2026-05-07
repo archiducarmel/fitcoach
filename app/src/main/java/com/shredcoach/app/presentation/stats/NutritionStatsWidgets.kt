@@ -39,8 +39,10 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.shredcoach.app.R
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
 import kotlin.math.max
@@ -99,7 +101,7 @@ fun InsightsPanelCard(insights: List<String>) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Default.AutoAwesome, null, Modifier.size(20.dp), tint = OrangeVibrant)
-                Text("Coaching personnalisé", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.nutri_widget_coaching_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             }
             insights.forEach { insight ->
                 Surface(
@@ -134,28 +136,28 @@ fun PeriodComparisonStrip(state: NutritionStatsData) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.AutoMirrored.Filled.TrendingUp, null, Modifier.size(20.dp), tint = OrangeVibrant)
-                Text("Évolution vs période précédente", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.nutri_widget_evolution_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
                 ComparisonStat(
-                    label = "Calories",
+                    label = stringResource(R.string.nutri_widget_comp_calories),
                     current = "${state.avgCalories}",
                     delta = state.caloriesDelta.toFloat(),
-                    deltaUnit = "kcal",
-                    inverseColors = true  // baisse = positif si on est en sèche
+                    deltaUnit = stringResource(R.string.nutri_widget_comp_unit_kcal),
+                    inverseColors = true
                 )
                 ComparisonStat(
-                    label = "Protéines",
+                    label = stringResource(R.string.nutri_widget_comp_proteins),
                     current = "${state.avgProteins}g",
                     delta = state.proteinsDelta.toFloat(),
-                    deltaUnit = "g",
-                    inverseColors = false  // hausse = positif
+                    deltaUnit = stringResource(R.string.nutri_widget_comp_unit_g),
+                    inverseColors = false
                 )
                 ComparisonStat(
-                    label = "Cible atteinte",
+                    label = stringResource(R.string.nutri_widget_comp_target_reached),
                     current = "${state.complianceDays}/${state.daysInPeriod}",
                     delta = state.complianceDelta.toFloat(),
-                    deltaUnit = "j",
+                    deltaUnit = stringResource(R.string.nutri_widget_comp_unit_days),
                     inverseColors = false
                 )
             }
@@ -209,7 +211,7 @@ fun MacroSplitDonutCard(state: NutritionStatsData) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Default.PieChart, null, Modifier.size(20.dp), tint = OrangeVibrant)
-                Text("Répartition macros (% kcal)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.nutri_widget_macro_split_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             }
 
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
@@ -225,15 +227,15 @@ fun MacroSplitDonutCard(state: NutritionStatsData) {
                         Text("${state.avgCalories}",
                             style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"),
                             fontWeight = FontWeight.ExtraBold)
-                        Text("kcal/jour", style = MaterialTheme.typography.labelSmall,
+                        Text(stringResource(R.string.nutri_widget_kcal_per_day_short), style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                     }
                 }
                 // Légende verticale
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    MacroLegendRow("Protéines", state.proteinKcalPct, ProteinColor)
-                    MacroLegendRow("Glucides", state.carbsKcalPct, CarbColor)
-                    MacroLegendRow("Lipides", state.fatsKcalPct, FatColor)
+                    MacroLegendRow(stringResource(R.string.nutri_widget_macro_proteins), state.proteinKcalPct, ProteinColor)
+                    MacroLegendRow(stringResource(R.string.nutri_widget_macro_carbs), state.carbsKcalPct, CarbColor)
+                    MacroLegendRow(stringResource(R.string.nutri_widget_macro_fats), state.fatsKcalPct, FatColor)
                 }
             }
 
@@ -341,12 +343,16 @@ fun NutriDistributionCard(state: NutritionStatsData) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Default.Star, null, Modifier.size(20.dp), tint = OrangeVibrant)
                 Column(Modifier.weight(1f)) {
-                    Text("Qualité de tes repas", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.nutri_widget_quality_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    val verdictExcellent = stringResource(R.string.nutri_widget_quality_excellent)
+                    val verdictGood = stringResource(R.string.nutri_widget_quality_good)
+                    val verdictMixed = stringResource(R.string.nutri_widget_quality_mixed)
+                    val verdictPoor = stringResource(R.string.nutri_widget_quality_poor)
                     val verdict = when {
-                        highShare >= 0.7f -> "Excellent profil nutritionnel"
-                        highShare >= 0.5f -> "Bon équilibre · marge de progression"
-                        highShare >= 0.3f -> "Mitigé · vise plus de A et B"
-                        else -> "À améliorer · privilégie A et B"
+                        highShare >= 0.7f -> verdictExcellent
+                        highShare >= 0.5f -> verdictGood
+                        highShare >= 0.3f -> verdictMixed
+                        else -> verdictPoor
                     }
                     val verdictColor = when {
                         highShare >= 0.5f -> NeonGreen
@@ -357,7 +363,7 @@ fun NutriDistributionCard(state: NutritionStatsData) {
                 }
                 Surface(shape = RoundedCornerShape(6.dp), color = NeonGreen.copy(alpha = 0.12f)) {
                     Text(
-                        "${(highShare * 100).toInt()}% A+B",
+                        stringResource(R.string.nutri_widget_quality_ab_share, (highShare * 100).toInt()),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
                         fontWeight = FontWeight.Bold,
@@ -453,9 +459,9 @@ fun MealHoursTimelineCard(buckets: Map<MealHourBucket, Int>) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Default.Schedule, null, Modifier.size(20.dp), tint = OrangeVibrant)
-                Text("Quand tu manges", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.nutri_widget_meal_hours_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.weight(1f))
-                Text("$total repas",
+                Text(stringResource(R.string.nutri_widget_meals_count, total),
                     style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
             }
@@ -475,7 +481,7 @@ fun MealHoursTimelineCard(buckets: Map<MealHourBucket, Int>) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        "💡 $pct% de tes repas après 23h — module pour mieux récupérer",
+                        stringResource(R.string.nutri_widget_late_meal_insight, pct),
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                         style = MaterialTheme.typography.labelSmall,
                         color = OrangeVibrant
@@ -497,10 +503,10 @@ private fun MealHourBucketBar(bucket: MealHourBucket, count: Int, ratio: Float, 
         Text(bucket.emoji, fontSize = 16.sp)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(bucket.label, style = MaterialTheme.typography.labelMedium, modifier = Modifier.weight(1f))
+                Text(stringResource(bucket.labelRes), style = MaterialTheme.typography.labelMedium, modifier = Modifier.weight(1f))
                 val pct = if (total > 0) (count.toFloat() / total * 100).toInt() else 0
                 Text(
-                    "$count repas · $pct%",
+                    stringResource(R.string.nutri_widget_meals_count_pct, count, pct),
                     style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
@@ -539,7 +545,7 @@ fun CaloriesPremiumChart(state: NutritionStatsData) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Default.LocalFireDepartment, null, Modifier.size(20.dp), tint = OrangeVibrant)
-                Text("Calories sur ${state.daysInPeriod} jours", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.nutri_widget_calories_chart_title, state.daysInPeriod), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             }
             if (state.daysInPeriod <= 7) {
                 CaloriesBarsChart(state)
@@ -723,7 +729,7 @@ private fun CaloriesSmoothChart(state: NutritionStatsData) {
     val series = state.dailyCaloriesSeries.filter { it.second > 0 }
     if (series.size < 2) {
         Box(Modifier.fillMaxWidth().height(180.dp), contentAlignment = Alignment.Center) {
-            Text("Pas assez de données pour la courbe — ajoute plus de repas",
+            Text(stringResource(R.string.nutri_widget_chart_no_data),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
         }
@@ -949,7 +955,7 @@ fun FastingWindowCard(stats: com.shredcoach.app.domain.nutrition.FastingStats) {
                 )
                 FastingStatChip(
                     modifier = Modifier.weight(1f),
-                    label = "Record",
+                    label = stringResource(R.string.nutri_widget_record_label),
                     value = formatFastingHours(stats.bestHours),
                     accent = bestFastingColor(stats.bestHours),
                 )
