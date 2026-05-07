@@ -154,13 +154,19 @@ class GoogleCloudTtsEngine @Inject constructor(
 
     private suspend fun synthesize(text: String, persona: Persona, apiKey: String): ByteArray? =
         withContext(Dispatchers.IO) {
+            // Locale-aware : on lit Locale.getDefault() (overlay AppCompatDelegate)
+            // pour résoudre le bon voice ID Chirp 3 HD (fr-FR-…, en-US-…, …).
+            val localeTag = java.util.Locale.getDefault().language
+            val resolvedVoiceId = persona.engineVoiceIdForLocale(localeTag)
+            val languageCode = resolvedVoiceId.substringBefore("-Chirp3", resolvedVoiceId)
+                .let { if (it.length >= 5) it.substring(0, 5) else "fr-FR" }
             val body = JSONObject().apply {
                 put("input", JSONObject().put("text", text))
                 put(
                     "voice",
                     JSONObject()
-                        .put("languageCode", "fr-FR")
-                        .put("name", persona.engineVoiceId),
+                        .put("languageCode", languageCode)
+                        .put("name", resolvedVoiceId),
                 )
                 // Chirp 3 HD : pitch NON supporté, ne pas l'envoyer (sinon 400).
                 // speakingRate (0.25–4.0) supporté.

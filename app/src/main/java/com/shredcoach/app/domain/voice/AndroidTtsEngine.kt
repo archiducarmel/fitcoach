@@ -50,36 +50,48 @@ class AndroidTtsEngine @Inject constructor() : VoiceEngine {
                 return@TextToSpeech
             }
             val engine = tts ?: return@TextToSpeech
-            val result = engine.setLanguage(Locale.FRANCE)
+            // Locale-aware : on suit la locale courante (overlay AppCompatDelegate),
+            // pas Locale.FRANCE figé. Si la voix de la locale n'est pas dispo on
+            // retombe sur en-US (langue universelle des moteurs TTS Android).
+            val targetLocale = Locale.getDefault()
+            val result = engine.setLanguage(targetLocale)
             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                Log.w(TAG, "Français non supporté, fallback anglais")
+                Log.w(TAG, "Locale $targetLocale non supporté TTS, fallback en-US")
                 engine.setLanguage(Locale.US)
             }
-            cacheBestVoicesByGender(engine)
+            cacheBestVoicesByGender(engine, targetLocale)
             ready = true
             Log.i(TAG, "TTS prêt — M=${bestMaleVoice?.name}, F=${bestFemaleVoice?.name}")
         }
     }
 
-    private fun cacheBestVoicesByGender(engine: TextToSpeech) {
+    private fun cacheBestVoicesByGender(engine: TextToSpeech, targetLocale: Locale) {
         try {
             val voices = engine.voices ?: return
-            val frenchVoices = voices.filter {
-                it.locale.language == "fr" && !it.isNetworkConnectionRequired
+            val targetLang = targetLocale.language
+            // On filtre les voix matchant la langue active. Si aucune voix locale
+            // n'existe (ex: device sans pack EN installé), on retombe sur les
+            // voix offline disponibles dans toute langue pour ne pas planter.
+            val localeVoices = voices.filter {
+                it.locale.language == targetLang && !it.isNetworkConnectionRequired
             }.sortedByDescending { it.quality }
+            val candidateVoices = localeVoices.ifEmpty {
+                voices.filter { !it.isNetworkConnectionRequired }
+                    .sortedByDescending { it.quality }
+            }
 
-            fallbackVoice = frenchVoices.firstOrNull { it.quality >= Voice.QUALITY_HIGH }
-                ?: frenchVoices.firstOrNull { it.quality >= Voice.QUALITY_NORMAL }
-                ?: frenchVoices.firstOrNull()
+            fallbackVoice = candidateVoices.firstOrNull { it.quality >= Voice.QUALITY_HIGH }
+                ?: candidateVoices.firstOrNull { it.quality >= Voice.QUALITY_NORMAL }
+                ?: candidateVoices.firstOrNull()
 
             // Heuristique nom — Android ne donne pas le genre dans l'API.
             // Patterns observés sur les voix Google/Samsung TTS :
             //   "fr-fr-x-mab-female-...", "fr-fr-x-vlf-male-..."
             //   "fr-FR-language", "fra-FRA-default-network"
             //   "fr-FR-Standard-A" (femme), "fr-FR-Standard-B" (homme), etc.
-            bestFemaleVoice = frenchVoices.firstOrNull { isFemale(it.name) } ?: fallbackVoice
-            bestMaleVoice = frenchVoices.firstOrNull { isMale(it.name) }
-                ?: frenchVoices.firstOrNull { v -> v != bestFemaleVoice }
+            bestFemaleVoice = candidateVoices.firstOrNull { isFemale(it.name) } ?: fallbackVoice
+            bestMaleVoice = candidateVoices.firstOrNull { isMale(it.name) }
+                ?: candidateVoices.firstOrNull { v -> v != bestFemaleVoice }
                 ?: fallbackVoice
         } catch (e: Exception) {
             Log.w(TAG, "Sélection voix par genre impossible: ${e.message}")

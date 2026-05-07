@@ -61,4 +61,37 @@ data class Persona(
     val engineVoiceId: String,
     val avatarEmoji: String,
     val speakingRate: Float = 1.05f,
-)
+) {
+    /**
+     * Résout le voice ID pour la locale courante (fr-FR, en-US, …).
+     *
+     * **Règle de mapping** :
+     *  - ANDROID : retourne un BCP-47 region tag (`fr-FR`, `en-US`, …) que
+     *    [TextToSpeech.setLanguage] sait consommer. Le moteur Android pickera
+     *    ensuite la meilleure voix locale matchant le [gender].
+     *  - GOOGLE_CHIRP3 : remplace le préfixe `xx-XX-` du voice ID figé en
+     *    base par le préfixe de la locale courante. Les "characters" Chirp 3 HD
+     *    (Charon, Aoede, Puck, Kore) sont disponibles cross-langue côté Google
+     *    Cloud TTS — donc swap du préfixe = même persona dans la nouvelle voix.
+     *
+     * Locales V1 supportées : fr, en. V2 (es/it/pt/de) : fallback FR pour
+     * l'instant, à activer quand les phrasebooks correspondants seront prêts.
+     */
+    fun engineVoiceIdForLocale(localeTag: String): String {
+        val regionTag = bcp47RegionTag(localeTag)
+        return when (engine) {
+            VoiceEngineId.ANDROID -> regionTag
+            VoiceEngineId.GOOGLE_CHIRP3 ->
+                engineVoiceId.replaceFirst(Regex("^[a-z]{2}-[A-Z]{2}"), regionTag)
+        }
+    }
+
+    private fun bcp47RegionTag(localeTag: String): String = when (localeTag.lowercase()) {
+        "en" -> "en-US"
+        "es" -> "es-ES"
+        "it" -> "it-IT"
+        "pt" -> "pt-PT"
+        "de" -> "de-DE"
+        else -> "fr-FR"
+    }
+}
