@@ -33,10 +33,10 @@ enum class AppLocale(
 ) {
     FRENCH(tag = "fr", displayNameNative = "Français", flag = "🇫🇷", isV1 = true),
     ENGLISH(tag = "en", displayNameNative = "English", flag = "🇬🇧", isV1 = true),
-    SPANISH(tag = "es", displayNameNative = "Español", flag = "🇪🇸", isV1 = false),
-    ITALIAN(tag = "it", displayNameNative = "Italiano", flag = "🇮🇹", isV1 = false),
-    PORTUGUESE(tag = "pt", displayNameNative = "Português", flag = "🇵🇹", isV1 = false),
-    GERMAN(tag = "de", displayNameNative = "Deutsch", flag = "🇩🇪", isV1 = false);
+    SPANISH(tag = "es", displayNameNative = "Español", flag = "🇪🇸", isV1 = true),
+    ITALIAN(tag = "it", displayNameNative = "Italiano", flag = "🇮🇹", isV1 = true),
+    PORTUGUESE(tag = "pt", displayNameNative = "Português (BR)", flag = "🇧🇷", isV1 = true),
+    GERMAN(tag = "de", displayNameNative = "Deutsch", flag = "🇩🇪", isV1 = true);
 
     /** [Locale] objet correspondant — utilisé pour les formatters (date, nombre). */
     fun toJavaLocale(): Locale = Locale(tag)

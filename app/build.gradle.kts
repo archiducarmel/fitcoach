@@ -22,11 +22,10 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-        // i18n : locales supportées V1 = FR + EN. Cela exclut toutes les autres
-        // locales des libraries tierces (AndroidX, Material) de l'APK final →
-        // APK plus petit + cohérence des strings utilisateur. Vague 2 ajoutera
-        // "es", "it", "pt", "de".
-        resourceConfigurations += listOf("fr", "en")
+        // i18n : locales supportées V2 = FR + EN + ES + IT + PT(BR) + DE.
+        // Exclut toutes les autres locales des libraries tierces (AndroidX,
+        // Material) de l'APK final → APK plus petit + cohérence des strings.
+        resourceConfigurations += listOf("fr", "en", "es", "it", "pt", "de")
     }
 
     buildTypes {

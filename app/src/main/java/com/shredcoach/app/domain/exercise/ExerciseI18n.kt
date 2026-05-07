@@ -62,7 +62,16 @@ object ExerciseI18n {
         if (key.isBlank()) return fallback
         val resName = "$PREFIX${key}_$field"
         val resId = context.resources.getIdentifier(resName, "string", context.packageName)
-        return if (resId != 0) context.getString(resId) else fallback
+        if (resId == 0) return fallback
+        // Defensive : Android peut throw NotFoundException si la ressource est
+        // déclarée dans values-en/ uniquement et que la locale courante (ex: ES)
+        // n'a ni values-es/ ni la clé dans values/ (default FR). Le fallback DB
+        // FR canonique reste cohérent et lisible — préférable à un crash.
+        return try {
+            context.getString(resId)
+        } catch (_: android.content.res.Resources.NotFoundException) {
+            fallback
+        }
     }
 }
 
