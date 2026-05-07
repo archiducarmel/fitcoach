@@ -3761,4 +3761,565 @@
     <string name="exo_rowing_halteres_sur_banc_incline_execution">Torso fixed, pull to the navel. Elbows pass behind the back. Squeeze shoulder blades 1s. Controlled descent.</string>
     <string name="exo_rowing_halteres_sur_banc_incline_tips">Incline bench = recruits the upper pecs / front delt more.</string>
     <string name="exo_rowing_halteres_sur_banc_incline_starting_weight">Moderate load</string>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Phase 3 wave 5 (FINALE) — 92 derniers exos                    -->
+    <!-- 9 WARMUP/CARDIO (oubliés du début SeedData lignes 774-927)    -->
+    <!-- + 83 Batch 3 fin alpha "R" → "É/Étirements" (1634-1717)       -->
+    <!-- Cumul = 440/441 = 100% (1 exo dédupliqué : Rowing T-bar)      -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+
+    <!-- ── WARMUP / CARDIO (oubliés Wave 1) ── -->
+    <string name="exo_cardio_leger_rameur_velo_tapis_name">Light cardio (rower, bike, treadmill)</string>
+    <string name="exo_cardio_leger_rameur_velo_tapis_equipment">Rower, stationary bike, or treadmill.</string>
+    <string name="exo_cardio_leger_rameur_velo_tapis_execution">Moderate-to-low intensity. Gradually raise the heart rate.</string>
+    <string name="exo_cardio_leger_rameur_velo_tapis_tips">5–10 minutes to raise core temperature and prep the heart.</string>
+    <string name="exo_cardio_leger_rameur_velo_tapis_starting_weight">Bodyweight</string>
+
+    <string name="exo_activation_cardio_jumping_jacks_montees_de_genoux_name">Cardio activation (jumping jacks, high knees)</string>
+    <string name="exo_activation_cardio_jumping_jacks_montees_de_genoux_equipment">None.</string>
+    <string name="exo_activation_cardio_jumping_jacks_montees_de_genoux_execution">30 sec jumping jacks then 30 sec high-knees in place. Moderate rhythm building up.</string>
+    <string name="exo_activation_cardio_jumping_jacks_montees_de_genoux_tips">5 min to raise the heart rate without fatigue. Stay light on your feet.</string>
+    <string name="exo_activation_cardio_jumping_jacks_montees_de_genoux_starting_weight">Bodyweight</string>
+
+    <string name="exo_mobilisations_articulaires_name">Joint mobilization</string>
+    <string name="exo_mobilisations_articulaires_equipment">None.</string>
+    <string name="exo_mobilisations_articulaires_execution">Shoulder, hip, ankle, knee circles. Wide and controlled motions.</string>
+    <string name="exo_mobilisations_articulaires_tips">Preps the joints for the workout. No bouncing.</string>
+    <string name="exo_mobilisations_articulaires_starting_weight">Bodyweight</string>
+
+    <string name="exo_etirements_dynamiques_name">Dynamic stretches</string>
+    <string name="exo_etirements_dynamiques_equipment">None.</string>
+    <string name="exo_etirements_dynamiques_execution">Leg swings, arm rotations, alternating lunges with rotation. Fluid motion.</string>
+    <string name="exo_etirements_dynamiques_tips">Dynamically stretches the muscles. Don\'t hold the positions (no static).</string>
+    <string name="exo_etirements_dynamiques_starting_weight">Bodyweight</string>
+
+    <string name="exo_series_d_activation_squats_pompes_fentes_name">Activation series (squats, push-ups, lunges)</string>
+    <string name="exo_series_d_activation_squats_pompes_fentes_equipment">None.</string>
+    <string name="exo_series_d_activation_squats_pompes_fentes_execution">Bodyweight movements, full range. Squats, push-ups, light lunges.</string>
+    <string name="exo_series_d_activation_squats_pompes_fentes_tips">Activates the main muscles before loading. Preps the neuromuscular system.</string>
+    <string name="exo_series_d_activation_squats_pompes_fentes_starting_weight">Bodyweight</string>
+
+    <string name="exo_rameur_name">Rowing machine</string>
+    <string name="exo_rameur_equipment">Rower (rowing machine).</string>
+    <string name="exo_rameur_execution">Legs, then back, then arms. Reverse on the return. Keep the back straight.</string>
+    <string name="exo_rameur_tips">Excellent full-body cardio. Trains legs, back and arms simultaneously. Aim for 70–80% MHR.</string>
+    <string name="exo_rameur_starting_weight">Bodyweight</string>
+
+    <string name="exo_velo_d_appartement_name">Stationary bike</string>
+    <string name="exo_velo_d_appartement_equipment">Stationary bike or spin bike.</string>
+    <string name="exo_velo_d_appartement_execution">Pedal at moderate-to-intense pace. Adjust the resistance to the desired intensity.</string>
+    <string name="exo_velo_d_appartement_tips">Low impact on the joints. Perfect post-leg-day.</string>
+    <string name="exo_velo_d_appartement_starting_weight">Bodyweight</string>
+
+    <string name="exo_tapis_de_course_marche_inclinee_ou_course_name">Treadmill (incline walk or run)</string>
+    <string name="exo_tapis_de_course_marche_inclinee_ou_course_equipment">Treadmill.</string>
+    <string name="exo_tapis_de_course_marche_inclinee_ou_course_execution">Brisk incline walk or moderate run. Maintain upright posture.</string>
+    <string name="exo_tapis_de_course_marche_inclinee_ou_course_tips">Incline walking burns as much as running with less impact. Running: high intensity.</string>
+    <string name="exo_tapis_de_course_marche_inclinee_ou_course_starting_weight">Bodyweight</string>
+
+    <string name="exo_velo_elliptique_name">Elliptical</string>
+    <string name="exo_velo_elliptique_equipment">Elliptical.</string>
+    <string name="exo_velo_elliptique_execution">Fluid forward or backward motion. Use the arms for full-body work.</string>
+    <string name="exo_velo_elliptique_tips">Very low impact. Ideal for active recovery or post-session light cardio.</string>
+    <string name="exo_velo_elliptique_starting_weight">Bodyweight</string>
+
+    <!-- ── Wave 5 source range (lines 1634-1717) ── -->
+    <string name="exo_rowing_unilateral_avec_elastique_name">Single-arm band row</string>
+    <string name="exo_rowing_unilateral_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_rowing_unilateral_avec_elastique_execution">Torso fixed, pull to the navel. Elbows pass behind the back. Squeeze shoulder blades 1s. Controlled descent.</string>
+    <string name="exo_rowing_unilateral_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_rowing_unilateral_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_russian_twist_avec_developpe_epaules_name">Russian twist with overhead press</string>
+    <string name="exo_russian_twist_avec_developpe_epaules_equipment">None (bodyweight).</string>
+    <string name="exo_russian_twist_avec_developpe_epaules_execution">Elbows at 45° from the torso. Press to full extension without locking. Controlled descent 2–3 sec.</string>
+    <string name="exo_russian_twist_avec_developpe_epaules_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_russian_twist_avec_developpe_epaules_starting_weight">Bodyweight</string>
+
+    <string name="exo_russian_twists_a_la_poulie_sur_swiss_ball_name">Cable Russian twists on Swiss ball</string>
+    <string name="exo_russian_twists_a_la_poulie_sur_swiss_ball_equipment">Pulley + attachment.</string>
+    <string name="exo_russian_twists_a_la_poulie_sur_swiss_ball_execution">Torso fixed, rotate against the resistance. Controlled motion, no jerking. Trains the obliques.</string>
+    <string name="exo_russian_twists_a_la_poulie_sur_swiss_ball_tips">Constant cable tension: zero dead spots in the motion.</string>
+    <string name="exo_russian_twists_a_la_poulie_sur_swiss_ball_starting_weight">Light load</string>
+
+    <string name="exo_safety_bar_squat_name">Safety bar squat</string>
+    <string name="exo_safety_bar_squat_equipment">None (bodyweight).</string>
+    <string name="exo_safety_bar_squat_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_safety_bar_squat_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_safety_bar_squat_starting_weight">Bodyweight</string>
+
+    <string name="exo_shrug_a_la_machine_a_mollets_name">Calf machine shrug</string>
+    <string name="exo_shrug_a_la_machine_a_mollets_equipment">Guided machine.</string>
+    <string name="exo_shrug_a_la_machine_a_mollets_execution">Balls of the feet on the edge. Rise on the toes with maximum range. Full descent with the heels low. Slow tempo.</string>
+    <string name="exo_shrug_a_la_machine_a_mollets_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_shrug_a_la_machine_a_mollets_starting_weight">45–90 lb</string>
+
+    <string name="exo_sissy_squat_avec_machine_name">Sissy squat (machine)</string>
+    <string name="exo_sissy_squat_avec_machine_equipment">Guided machine.</string>
+    <string name="exo_sissy_squat_avec_machine_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_sissy_squat_avec_machine_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_sissy_squat_avec_machine_starting_weight">45–90 lb</string>
+
+    <string name="exo_sit_up_avec_medecine_ball_name">Sit-up with medicine ball</string>
+    <string name="exo_sit_up_avec_medecine_ball_equipment">Medicine ball.</string>
+    <string name="exo_sit_up_avec_medecine_ball_execution">Lying down, knees bent. Bring the torso all the way up to seated. Lower slowly.</string>
+    <string name="exo_sit_up_avec_medecine_ball_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_sit_up_avec_medecine_ball_starting_weight">Moderate load</string>
+
+    <string name="exo_sit_up_avec_medecine_ball_contre_un_mur_name">Wall sit-up with medicine ball</string>
+    <string name="exo_sit_up_avec_medecine_ball_contre_un_mur_equipment">Medicine ball.</string>
+    <string name="exo_sit_up_avec_medecine_ball_contre_un_mur_execution">Lying down, knees bent. Bring the torso all the way up to seated. Lower slowly.</string>
+    <string name="exo_sit_up_avec_medecine_ball_contre_un_mur_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_sit_up_avec_medecine_ball_contre_un_mur_starting_weight">Moderate load</string>
+
+    <string name="exo_sits_up_a_la_chaise_romaine_name">Roman chair sit-ups</string>
+    <string name="exo_sits_up_a_la_chaise_romaine_equipment">None (bodyweight).</string>
+    <string name="exo_sits_up_a_la_chaise_romaine_execution">Lying down, knees bent. Bring the torso all the way up to seated. Lower slowly.</string>
+    <string name="exo_sits_up_a_la_chaise_romaine_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_sits_up_a_la_chaise_romaine_starting_weight">Bodyweight</string>
+
+    <string name="exo_skater_hops_name">Skater hops</string>
+    <string name="exo_skater_hops_equipment">None (bodyweight).</string>
+    <string name="exo_skater_hops_execution">Lateral jumps alternating supports. Soft landing, opposite leg behind.</string>
+    <string name="exo_skater_hops_tips">Reps = seconds or minutes depending on intensity. Target 70–80% MHR.</string>
+    <string name="exo_skater_hops_starting_weight">Bodyweight</string>
+
+    <string name="exo_skierg_name">SkiErg</string>
+    <string name="exo_skierg_equipment">None (bodyweight).</string>
+    <string name="exo_skierg_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_skierg_tips">Reps = seconds or minutes depending on intensity. Target 70–80% MHR.</string>
+    <string name="exo_skierg_starting_weight">Bodyweight</string>
+
+    <string name="exo_sled_pull_name">Sled pull</string>
+    <string name="exo_sled_pull_equipment">None (bodyweight).</string>
+    <string name="exo_sled_pull_execution">Push/pull the sled with continuous cadence. Torso slightly leaned. Push through the legs.</string>
+    <string name="exo_sled_pull_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_sled_pull_starting_weight">Bodyweight</string>
+
+    <string name="exo_souleve_de_terre_avec_deficit_name">Deficit deadlift</string>
+    <string name="exo_souleve_de_terre_avec_deficit_equipment">None (bodyweight).</string>
+    <string name="exo_souleve_de_terre_avec_deficit_execution">Hips back, flat back, bar close to the shins. Push the floor to stand, lock hips and knees at the top.</string>
+    <string name="exo_souleve_de_terre_avec_deficit_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_souleve_de_terre_avec_deficit_starting_weight">Bodyweight</string>
+
+    <string name="exo_souleve_de_terre_avec_machine_name">Machine deadlift</string>
+    <string name="exo_souleve_de_terre_avec_machine_equipment">Guided machine.</string>
+    <string name="exo_souleve_de_terre_avec_machine_execution">Hips back, flat back, bar close to the shins. Push the floor to stand, lock hips and knees at the top.</string>
+    <string name="exo_souleve_de_terre_avec_machine_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_souleve_de_terre_avec_machine_starting_weight">45–90 lb</string>
+
+    <string name="exo_souleve_de_terre_avec_elastique_name">Band deadlift</string>
+    <string name="exo_souleve_de_terre_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_souleve_de_terre_avec_elastique_execution">Hips back, flat back, bar close to the shins. Push the floor to stand, lock hips and knees at the top.</string>
+    <string name="exo_souleve_de_terre_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_souleve_de_terre_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_souleve_de_terre_roumain_avec_kettlebell_name">Kettlebell Romanian deadlift</string>
+    <string name="exo_souleve_de_terre_roumain_avec_kettlebell_equipment">Kettlebell.</string>
+    <string name="exo_souleve_de_terre_roumain_avec_kettlebell_execution">Hips back, flat back, bar close to the shins. Push the floor to stand, lock hips and knees at the top.</string>
+    <string name="exo_souleve_de_terre_roumain_avec_kettlebell_tips">Explosive functional work. Preferred for power + cardio.</string>
+    <string name="exo_souleve_de_terre_roumain_avec_kettlebell_starting_weight">Moderate load</string>
+
+    <string name="exo_souleve_de_terre_roumain_a_la_landmine_name">Landmine Romanian deadlift</string>
+    <string name="exo_souleve_de_terre_roumain_a_la_landmine_equipment">Landmine + bar.</string>
+    <string name="exo_souleve_de_terre_roumain_a_la_landmine_execution">Hips back, flat back, bar close to the shins. Push the floor to stand, lock hips and knees at the top.</string>
+    <string name="exo_souleve_de_terre_roumain_a_la_landmine_tips">Landmine: arc trajectory, demands stabilization. Versatile.</string>
+    <string name="exo_souleve_de_terre_roumain_a_la_landmine_starting_weight">Moderate load</string>
+
+    <string name="exo_souleve_de_terre_sumo_avec_kettlebell_name">Kettlebell sumo deadlift</string>
+    <string name="exo_souleve_de_terre_sumo_avec_kettlebell_equipment">Kettlebell.</string>
+    <string name="exo_souleve_de_terre_sumo_avec_kettlebell_execution">Hips back, flat back, bar close to the shins. Push the floor to stand, lock hips and knees at the top.</string>
+    <string name="exo_souleve_de_terre_sumo_avec_kettlebell_tips">Explosive functional work. Preferred for power + cardio.</string>
+    <string name="exo_souleve_de_terre_sumo_avec_kettlebell_starting_weight">Moderate load</string>
+
+    <string name="exo_souleve_de_terre_valise_name">Suitcase deadlift</string>
+    <string name="exo_souleve_de_terre_valise_equipment">None (bodyweight).</string>
+    <string name="exo_souleve_de_terre_valise_execution">Hips back, flat back, bar close to the shins. Push the floor to stand, lock hips and knees at the top.</string>
+    <string name="exo_souleve_de_terre_valise_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_souleve_de_terre_valise_starting_weight">Bodyweight</string>
+
+    <string name="exo_split_squat_avec_sangles_de_suspension_name">Suspension split squat</string>
+    <string name="exo_split_squat_avec_sangles_de_suspension_equipment">Cable or band.</string>
+    <string name="exo_split_squat_avec_sangles_de_suspension_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_split_squat_avec_sangles_de_suspension_tips">Unstable work: recruits the stabilizers in addition to the target muscle.</string>
+    <string name="exo_split_squat_avec_sangles_de_suspension_starting_weight">Light load</string>
+
+    <string name="exo_split_squat_avec_elastique_name">Band split squat</string>
+    <string name="exo_split_squat_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_split_squat_avec_elastique_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_split_squat_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_split_squat_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_split_squat_a_la_smith_machine_name">Smith machine split squat</string>
+    <string name="exo_split_squat_a_la_smith_machine_equipment">Guided machine.</string>
+    <string name="exo_split_squat_a_la_smith_machine_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_split_squat_a_la_smith_machine_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_split_squat_a_la_smith_machine_starting_weight">45–90 lb</string>
+
+    <string name="exo_squat_avant_avec_double_kettlebell_name">Double-kettlebell front squat</string>
+    <string name="exo_squat_avant_avec_double_kettlebell_equipment">Kettlebell.</string>
+    <string name="exo_squat_avant_avec_double_kettlebell_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_squat_avant_avec_double_kettlebell_tips">Explosive functional work. Preferred for power + cardio.</string>
+    <string name="exo_squat_avant_avec_double_kettlebell_starting_weight">Moderate load</string>
+
+    <string name="exo_squat_avec_bande_de_resistance_name">Resistance band squat</string>
+    <string name="exo_squat_avec_bande_de_resistance_equipment">None (bodyweight).</string>
+    <string name="exo_squat_avec_bande_de_resistance_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_squat_avec_bande_de_resistance_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_squat_avec_bande_de_resistance_starting_weight">Bodyweight</string>
+
+    <string name="exo_squat_avec_landmine_name">Landmine squat</string>
+    <string name="exo_squat_avec_landmine_equipment">Landmine + bar.</string>
+    <string name="exo_squat_avec_landmine_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_squat_avec_landmine_tips">Landmine: arc trajectory, demands stabilization. Versatile.</string>
+    <string name="exo_squat_avec_landmine_starting_weight">Moderate load</string>
+
+    <string name="exo_squat_avec_rotation_du_tronc_name">Squat with torso rotation</string>
+    <string name="exo_squat_avec_rotation_du_tronc_equipment">None (bodyweight).</string>
+    <string name="exo_squat_avec_rotation_du_tronc_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_squat_avec_rotation_du_tronc_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_squat_avec_rotation_du_tronc_starting_weight">Bodyweight</string>
+
+    <string name="exo_squat_avec_sangles_de_suspension_name">Suspension squat</string>
+    <string name="exo_squat_avec_sangles_de_suspension_equipment">Cable or band.</string>
+    <string name="exo_squat_avec_sangles_de_suspension_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_squat_avec_sangles_de_suspension_tips">Unstable work: recruits the stabilizers in addition to the target muscle.</string>
+    <string name="exo_squat_avec_sangles_de_suspension_starting_weight">Light load</string>
+
+    <string name="exo_squat_avec_elastique_name">Band squat</string>
+    <string name="exo_squat_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_squat_avec_elastique_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_squat_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_squat_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_squat_pistolet_avec_sangle_de_suspension_name">Suspension pistol squat</string>
+    <string name="exo_squat_pistolet_avec_sangle_de_suspension_equipment">Suspension straps (TRX).</string>
+    <string name="exo_squat_pistolet_avec_sangle_de_suspension_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_squat_pistolet_avec_sangle_de_suspension_tips">Unstable work: recruits the stabilizers in addition to the target muscle.</string>
+    <string name="exo_squat_pistolet_avec_sangle_de_suspension_starting_weight">Bodyweight</string>
+
+    <string name="exo_squat_sumo_a_la_landmine_name">Landmine sumo squat</string>
+    <string name="exo_squat_sumo_a_la_landmine_equipment">Landmine + bar.</string>
+    <string name="exo_squat_sumo_a_la_landmine_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_squat_sumo_a_la_landmine_tips">Landmine: arc trajectory, demands stabilization. Versatile.</string>
+    <string name="exo_squat_sumo_a_la_landmine_starting_weight">Moderate load</string>
+
+    <string name="exo_stepper_name">Stepper</string>
+    <string name="exo_stepper_equipment">None (bodyweight).</string>
+    <string name="exo_stepper_execution">Steady steps on the machine. Upright torso. Push through the whole leg.</string>
+    <string name="exo_stepper_tips">Reps = seconds or minutes depending on intensity. Target 70–80% MHR.</string>
+    <string name="exo_stepper_starting_weight">Bodyweight</string>
+
+    <string name="exo_thruster_name">Thruster</string>
+    <string name="exo_thruster_equipment">None (bodyweight).</string>
+    <string name="exo_thruster_execution">Back on the bench, feet on the floor, load on the hips. Drive the hips toward the ceiling, contract the glutes at the top.</string>
+    <string name="exo_thruster_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_thruster_starting_weight">Bodyweight</string>
+
+    <string name="exo_thruster_avec_kettlebell_name">Kettlebell thruster</string>
+    <string name="exo_thruster_avec_kettlebell_equipment">Kettlebell.</string>
+    <string name="exo_thruster_avec_kettlebell_execution">Back on the bench, feet on the floor, load on the hips. Drive the hips toward the ceiling, contract the glutes at the top.</string>
+    <string name="exo_thruster_avec_kettlebell_tips">Explosive functional work. Preferred for power + cardio.</string>
+    <string name="exo_thruster_avec_kettlebell_starting_weight">Moderate load</string>
+
+    <string name="exo_thruster_avec_landmine_name">Landmine thruster</string>
+    <string name="exo_thruster_avec_landmine_equipment">Landmine + bar.</string>
+    <string name="exo_thruster_avec_landmine_execution">Back on the bench, feet on the floor, load on the hips. Drive the hips toward the ceiling, contract the glutes at the top.</string>
+    <string name="exo_thruster_avec_landmine_tips">Landmine: arc trajectory, demands stabilization. Versatile.</string>
+    <string name="exo_thruster_avec_landmine_starting_weight">Moderate load</string>
+
+    <string name="exo_tirage_horizontal_avec_elastique_name">Band horizontal row</string>
+    <string name="exo_tirage_horizontal_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_tirage_horizontal_avec_elastique_execution">Torso fixed, pull to the navel. Elbows pass behind the back. Squeeze shoulder blades 1s. Controlled descent.</string>
+    <string name="exo_tirage_horizontal_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_tirage_horizontal_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_tirage_horizontal_prise_large_name">Wide-grip horizontal row</string>
+    <string name="exo_tirage_horizontal_prise_large_equipment">None (bodyweight).</string>
+    <string name="exo_tirage_horizontal_prise_large_execution">Torso fixed, pull to the navel. Elbows pass behind the back. Squeeze shoulder blades 1s. Controlled descent.</string>
+    <string name="exo_tirage_horizontal_prise_large_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_tirage_horizontal_prise_large_starting_weight">Bodyweight</string>
+
+    <string name="exo_tirage_incline_a_la_poulie_haute_name">Incline high cable pulldown</string>
+    <string name="exo_tirage_incline_a_la_poulie_haute_equipment">Pulley + attachment.</string>
+    <string name="exo_tirage_incline_a_la_poulie_haute_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_tirage_incline_a_la_poulie_haute_tips">Incline bench = recruits the upper pecs / front delt more.</string>
+    <string name="exo_tirage_incline_a_la_poulie_haute_starting_weight">Light load</string>
+
+    <string name="exo_tirage_menton_avec_kettlebell_name">Kettlebell upright row</string>
+    <string name="exo_tirage_menton_avec_kettlebell_equipment">Kettlebell.</string>
+    <string name="exo_tirage_menton_avec_kettlebell_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_tirage_menton_avec_kettlebell_tips">Explosive functional work. Preferred for power + cardio.</string>
+    <string name="exo_tirage_menton_avec_kettlebell_starting_weight">Moderate load</string>
+
+    <string name="exo_tirage_menton_avec_elastique_name">Band upright row</string>
+    <string name="exo_tirage_menton_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_tirage_menton_avec_elastique_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_tirage_menton_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_tirage_menton_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_tirage_vertical_en_supination_a_la_machine_hammer_strength_name">Underhand lat pulldown (Hammer Strength)</string>
+    <string name="exo_tirage_vertical_en_supination_a_la_machine_hammer_strength_equipment">Guided machine.</string>
+    <string name="exo_tirage_vertical_en_supination_a_la_machine_hammer_strength_execution">Pull the bar to the upper chest. Elbows tucked toward the back pockets. Squeeze the shoulder blades 1s at the bottom.</string>
+    <string name="exo_tirage_vertical_en_supination_a_la_machine_hammer_strength_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_tirage_vertical_en_supination_a_la_machine_hammer_strength_starting_weight">45–90 lb</string>
+
+    <string name="exo_tirage_vertical_prise_inversee_name">Reverse-grip lat pulldown</string>
+    <string name="exo_tirage_vertical_prise_inversee_equipment">None (bodyweight).</string>
+    <string name="exo_tirage_vertical_prise_inversee_execution">Pull the bar to the upper chest. Elbows tucked toward the back pockets. Squeeze the shoulder blades 1s at the bottom.</string>
+    <string name="exo_tirage_vertical_prise_inversee_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_tirage_vertical_prise_inversee_starting_weight">Bodyweight</string>
+
+    <string name="exo_touche_talon_alternes_name">Alternating heel touches</string>
+    <string name="exo_touche_talon_alternes_equipment">None (bodyweight).</string>
+    <string name="exo_touche_talon_alternes_execution">Controlled motion. Concentric phase 1–2 sec, peak contraction 1s, eccentric descent 2–3 sec. Core engaged throughout.</string>
+    <string name="exo_touche_talon_alternes_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_touche_talon_alternes_starting_weight">Bodyweight</string>
+
+    <string name="exo_traction_assistee_avec_banc_name">Bench-assisted pull-up</string>
+    <string name="exo_traction_assistee_avec_banc_equipment">None (bodyweight).</string>
+    <string name="exo_traction_assistee_avec_banc_execution">Pronated/supinated grip per variant. Pull the chin above the bar. 3-sec slow descent.</string>
+    <string name="exo_traction_assistee_avec_banc_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_traction_assistee_avec_banc_starting_weight">Bodyweight</string>
+
+    <string name="exo_traction_assistee_avec_elastique_name">Band-assisted pull-up</string>
+    <string name="exo_traction_assistee_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_traction_assistee_avec_elastique_execution">Pronated/supinated grip per variant. Pull the chin above the bar. 3-sec slow descent.</string>
+    <string name="exo_traction_assistee_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_traction_assistee_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_traction_assistee_a_la_machine_name">Machine-assisted pull-up</string>
+    <string name="exo_traction_assistee_a_la_machine_equipment">Guided machine.</string>
+    <string name="exo_traction_assistee_a_la_machine_execution">Pronated/supinated grip per variant. Pull the chin above the bar. 3-sec slow descent.</string>
+    <string name="exo_traction_assistee_a_la_machine_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_traction_assistee_a_la_machine_starting_weight">45–90 lb</string>
+
+    <string name="exo_traction_barre_derriere_name">Behind-the-neck pull-up</string>
+    <string name="exo_traction_barre_derriere_equipment">Olympic barbell.</string>
+    <string name="exo_traction_barre_derriere_execution">Pronated/supinated grip per variant. Pull the chin above the bar. 3-sec slow descent.</string>
+    <string name="exo_traction_barre_derriere_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_traction_barre_derriere_starting_weight">Moderate load</string>
+
+    <string name="exo_traction_lestee_name">Weighted pull-up</string>
+    <string name="exo_traction_lestee_equipment">None (bodyweight).</string>
+    <string name="exo_traction_lestee_execution">Pronated/supinated grip per variant. Pull the chin above the bar. 3-sec slow descent.</string>
+    <string name="exo_traction_lestee_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_traction_lestee_starting_weight">Bodyweight</string>
+
+    <string name="exo_tractions_australiennes_name">Australian pull-ups</string>
+    <string name="exo_tractions_australiennes_equipment">None (bodyweight).</string>
+    <string name="exo_tractions_australiennes_execution">Pronated/supinated grip per variant. Pull the chin above the bar. 3-sec slow descent.</string>
+    <string name="exo_tractions_australiennes_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_tractions_australiennes_starting_weight">Bodyweight</string>
+
+    <string name="exo_tractions_australiennes_avec_sangles_de_suspension_name">Suspension Australian pull-ups</string>
+    <string name="exo_tractions_australiennes_avec_sangles_de_suspension_equipment">Cable or band.</string>
+    <string name="exo_tractions_australiennes_avec_sangles_de_suspension_execution">Pronated/supinated grip per variant. Pull the chin above the bar. 3-sec slow descent.</string>
+    <string name="exo_tractions_australiennes_avec_sangles_de_suspension_tips">Unstable work: recruits the stabilizers in addition to the target muscle.</string>
+    <string name="exo_tractions_australiennes_avec_sangles_de_suspension_starting_weight">Light load</string>
+
+    <string name="exo_tractions_aux_anneaux_name">Ring pull-ups</string>
+    <string name="exo_tractions_aux_anneaux_equipment">None (bodyweight).</string>
+    <string name="exo_tractions_aux_anneaux_execution">Pronated/supinated grip per variant. Pull the chin above the bar. 3-sec slow descent.</string>
+    <string name="exo_tractions_aux_anneaux_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_tractions_aux_anneaux_starting_weight">Bodyweight</string>
+
+    <string name="exo_tractions_prise_neutre_name">Neutral-grip pull-ups</string>
+    <string name="exo_tractions_prise_neutre_equipment">None (bodyweight).</string>
+    <string name="exo_tractions_prise_neutre_execution">Pronated/supinated grip per variant. Pull the chin above the bar. 3-sec slow descent.</string>
+    <string name="exo_tractions_prise_neutre_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_tractions_prise_neutre_starting_weight">Bodyweight</string>
+
+    <string name="exo_waiter_curl_name">Waiter curl</string>
+    <string name="exo_waiter_curl_equipment">None (bodyweight).</string>
+    <string name="exo_waiter_curl_execution">Elbows fixed at your sides. Raise contracting the biceps. 3-sec descent, full extension at the bottom.</string>
+    <string name="exo_waiter_curl_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_waiter_curl_starting_weight">Bodyweight</string>
+
+    <string name="exo_wall_ball_squat_name">Wall ball squat</string>
+    <string name="exo_wall_ball_squat_equipment">None (bodyweight).</string>
+    <string name="exo_wall_ball_squat_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_wall_ball_squat_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_wall_ball_squat_starting_weight">Bodyweight</string>
+
+    <string name="exo_windmill_name">Windmill</string>
+    <string name="exo_windmill_equipment">None (bodyweight).</string>
+    <string name="exo_windmill_execution">Torso fixed, rotate against the resistance. Controlled motion, no jerking. Trains the obliques.</string>
+    <string name="exo_windmill_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_windmill_starting_weight">Bodyweight</string>
+
+    <string name="exo_zercher_squat_name">Zercher squat</string>
+    <string name="exo_zercher_squat_equipment">None (bodyweight).</string>
+    <string name="exo_zercher_squat_execution">Feet shoulder-width. Descend until thighs parallel to the floor keeping the torso upright. Push through the heels to stand up.</string>
+    <string name="exo_zercher_squat_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_zercher_squat_starting_weight">Bodyweight</string>
+
+    <string name="exo_zercher_carry_name">Zercher carry</string>
+    <string name="exo_zercher_carry_equipment">None (bodyweight).</string>
+    <string name="exo_zercher_carry_execution">Load in front of the chest or in the arms. Walk straight with maximum bracing.</string>
+    <string name="exo_zercher_carry_tips">Exhale on the concentric. No neck tension.</string>
+    <string name="exo_zercher_carry_starting_weight">Bodyweight</string>
+
+    <string name="exo_zercher_deadlift_name">Zercher deadlift</string>
+    <string name="exo_zercher_deadlift_equipment">None (bodyweight).</string>
+    <string name="exo_zercher_deadlift_execution">Hips back, flat back, bar close to the shins. Push the floor to stand, lock hips and knees at the top.</string>
+    <string name="exo_zercher_deadlift_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_zercher_deadlift_starting_weight">Bodyweight</string>
+
+    <string name="exo_ecarte_arriere_a_l_elastique_name">Banded rear delt fly</string>
+    <string name="exo_ecarte_arriere_a_l_elastique_equipment">Resistance band.</string>
+    <string name="exo_ecarte_arriere_a_l_elastique_execution">Arms semi-extended, slight constant elbow bend. Open in an arc, max stretch. Close squeezing the pecs.</string>
+    <string name="exo_ecarte_arriere_a_l_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_ecarte_arriere_a_l_elastique_starting_weight">Light load</string>
+
+    <string name="exo_ecarte_unilateral_a_la_poulie_name">Single-arm cable fly</string>
+    <string name="exo_ecarte_unilateral_a_la_poulie_equipment">Pulley + attachment.</string>
+    <string name="exo_ecarte_unilateral_a_la_poulie_execution">Arms semi-extended, slight constant elbow bend. Open in an arc, max stretch. Close squeezing the pecs.</string>
+    <string name="exo_ecarte_unilateral_a_la_poulie_tips">Unilateral: corrects left/right imbalances.</string>
+    <string name="exo_ecarte_unilateral_a_la_poulie_starting_weight">Light load</string>
+
+    <string name="exo_ecarte_a_la_poulie_vis_a_vis_haute_a_genoux_name">Kneeling high cable crossover</string>
+    <string name="exo_ecarte_a_la_poulie_vis_a_vis_haute_a_genoux_equipment">Pulley + attachment.</string>
+    <string name="exo_ecarte_a_la_poulie_vis_a_vis_haute_a_genoux_execution">Arms semi-extended, slight constant elbow bend. Open in an arc, max stretch. Close squeezing the pecs.</string>
+    <string name="exo_ecarte_a_la_poulie_vis_a_vis_haute_a_genoux_tips">Constant cable tension: zero dead spots in the motion.</string>
+    <string name="exo_ecarte_a_la_poulie_vis_a_vis_haute_a_genoux_starting_weight">Light load</string>
+
+    <string name="exo_ecartes_hyght_name">Hyght flyes</string>
+    <string name="exo_ecartes_hyght_equipment">None (bodyweight).</string>
+    <string name="exo_ecartes_hyght_execution">Arms semi-extended, slight constant elbow bend. Open in an arc, max stretch. Close squeezing the pecs.</string>
+    <string name="exo_ecartes_hyght_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_ecartes_hyght_starting_weight">Bodyweight</string>
+
+    <string name="exo_ecartes_avec_sangles_de_suspension_name">Suspension flyes</string>
+    <string name="exo_ecartes_avec_sangles_de_suspension_equipment">Cable or band.</string>
+    <string name="exo_ecartes_avec_sangles_de_suspension_execution">Arms semi-extended, slight constant elbow bend. Open in an arc, max stretch. Close squeezing the pecs.</string>
+    <string name="exo_ecartes_avec_sangles_de_suspension_tips">Unstable work: recruits the stabilizers in addition to the target muscle.</string>
+    <string name="exo_ecartes_avec_sangles_de_suspension_starting_weight">Light load</string>
+
+    <string name="exo_ecartes_avec_elastique_name">Band flyes</string>
+    <string name="exo_ecartes_avec_elastique_equipment">Resistance band.</string>
+    <string name="exo_ecartes_avec_elastique_execution">Arms semi-extended, slight constant elbow bend. Open in an arc, max stretch. Close squeezing the pecs.</string>
+    <string name="exo_ecartes_avec_elastique_tips">Constant tension with the band. Adjust the length to calibrate resistance.</string>
+    <string name="exo_ecartes_avec_elastique_starting_weight">Light load</string>
+
+    <string name="exo_ecartes_couche_a_la_poulie_vis_a_vis_name">Lying cable crossover flyes</string>
+    <string name="exo_ecartes_couche_a_la_poulie_vis_a_vis_equipment">Pulley + attachment.</string>
+    <string name="exo_ecartes_couche_a_la_poulie_vis_a_vis_execution">Arms semi-extended, slight constant elbow bend. Open in an arc, max stretch. Close squeezing the pecs.</string>
+    <string name="exo_ecartes_couche_a_la_poulie_vis_a_vis_tips">Constant cable tension: zero dead spots in the motion.</string>
+    <string name="exo_ecartes_couche_a_la_poulie_vis_a_vis_starting_weight">Light load</string>
+
+    <string name="exo_ecartes_decline_avec_halteres_name">Decline dumbbell flyes</string>
+    <string name="exo_ecartes_decline_avec_halteres_equipment">Dumbbells.</string>
+    <string name="exo_ecartes_decline_avec_halteres_execution">Arms semi-extended, slight constant elbow bend. Open in an arc, max stretch. Close squeezing the pecs.</string>
+    <string name="exo_ecartes_decline_avec_halteres_tips">Decline bench = targets the lower pecs.</string>
+    <string name="exo_ecartes_decline_avec_halteres_starting_weight">Moderate load</string>
+
+    <string name="exo_ecartes_unilateraux_a_la_landmine_name">Single-arm landmine flyes</string>
+    <string name="exo_ecartes_unilateraux_a_la_landmine_equipment">Landmine + bar.</string>
+    <string name="exo_ecartes_unilateraux_a_la_landmine_execution">Arms semi-extended, slight constant elbow bend. Open in an arc, max stretch. Close squeezing the pecs.</string>
+    <string name="exo_ecartes_unilateraux_a_la_landmine_tips">Landmine: arc trajectory, demands stabilization. Versatile.</string>
+    <string name="exo_ecartes_unilateraux_a_la_landmine_starting_weight">Moderate load</string>
+
+    <string name="exo_ecartes_a_la_poulie_haute_name">High cable flyes</string>
+    <string name="exo_ecartes_a_la_poulie_haute_equipment">Pulley + attachment.</string>
+    <string name="exo_ecartes_a_la_poulie_haute_execution">Arms semi-extended, slight constant elbow bend. Open in an arc, max stretch. Close squeezing the pecs.</string>
+    <string name="exo_ecartes_a_la_poulie_haute_tips">Constant cable tension: zero dead spots in the motion.</string>
+    <string name="exo_ecartes_a_la_poulie_haute_starting_weight">Light load</string>
+
+    <string name="exo_elevation_frontale_allongee_a_la_barre_name">Lying barbell front raise</string>
+    <string name="exo_elevation_frontale_allongee_a_la_barre_equipment">Olympic barbell.</string>
+    <string name="exo_elevation_frontale_allongee_a_la_barre_execution">Raise the arm in front to shoulder height. No swinging. 2-sec descent.</string>
+    <string name="exo_elevation_frontale_allongee_a_la_barre_tips">Catalog variant. Adapt the load to your level.</string>
+    <string name="exo_elevation_frontale_allongee_a_la_barre_starting_weight">Moderate load</string>
+
+    <string name="exo_elevation_frontale_sur_banc_incline_name">Incline bench front raise</string>
+    <string name="exo_elevation_frontale_sur_banc_incline_equipment">None (bodyweight).</string>
+    <string name="exo_elevation_frontale_sur_banc_incline_execution">Raise the arm in front to shoulder height. No swinging. 2-sec descent.</string>
+    <string name="exo_elevation_frontale_sur_banc_incline_tips">Incline bench = recruits the upper pecs / front delt more.</string>
+    <string name="exo_elevation_frontale_sur_banc_incline_starting_weight">Bodyweight</string>
+
+    <string name="exo_elevation_laterale_a_la_poulie_en_inclinaison_name">Incline cable lateral raise</string>
+    <string name="exo_elevation_laterale_a_la_poulie_en_inclinaison_equipment">Pulley + attachment.</string>
+    <string name="exo_elevation_laterale_a_la_poulie_en_inclinaison_execution">Arms by your sides. Raise to horizontal, elbows higher than the hands. 3-sec controlled descent.</string>
+    <string name="exo_elevation_laterale_a_la_poulie_en_inclinaison_tips">Constant cable tension: zero dead spots in the motion.</string>
+    <string name="exo_elevation_laterale_a_la_poulie_en_inclinaison_starting_weight">Light load</string>
+
+    <string name="exo_elevations_frontales_a_la_poulie_basse_name">Low cable front raises</string>
+    <string name="exo_elevations_frontales_a_la_poulie_basse_equipment">Pulley + attachment.</string>
+    <string name="exo_elevations_frontales_a_la_poulie_basse_execution">Raise the arm in front to shoulder height. No swinging. 2-sec descent.</string>
+    <string name="exo_elevations_frontales_a_la_poulie_basse_tips">Constant cable tension: zero dead spots in the motion.</string>
+    <string name="exo_elevations_frontales_a_la_poulie_basse_starting_weight">Light load</string>
+
+    <string name="exo_elevations_laterales_avec_kettlebell_name">Kettlebell lateral raises</string>
+    <string name="exo_elevations_laterales_avec_kettlebell_equipment">Kettlebell.</string>
+    <string name="exo_elevations_laterales_avec_kettlebell_execution">Arms by your sides. Raise to horizontal, elbows higher than the hands. 3-sec controlled descent.</string>
+    <string name="exo_elevations_laterales_avec_kettlebell_tips">Explosive functional work. Preferred for power + cardio.</string>
+    <string name="exo_elevations_laterales_avec_kettlebell_starting_weight">Moderate load</string>
+
+    <string name="exo_elevations_laterales_avec_landmine_name">Landmine lateral raises</string>
+    <string name="exo_elevations_laterales_avec_landmine_equipment">Landmine + bar.</string>
+    <string name="exo_elevations_laterales_avec_landmine_execution">Arms by your sides. Raise to horizontal, elbows higher than the hands. 3-sec controlled descent.</string>
+    <string name="exo_elevations_laterales_avec_landmine_tips">Landmine: arc trajectory, demands stabilization. Versatile.</string>
+    <string name="exo_elevations_laterales_avec_landmine_starting_weight">Moderate load</string>
+
+    <string name="exo_elevations_laterales_inclinees_avec_haltere_name">Incline dumbbell lateral raises</string>
+    <string name="exo_elevations_laterales_inclinees_avec_haltere_equipment">Dumbbells.</string>
+    <string name="exo_elevations_laterales_inclinees_avec_haltere_execution">Arms by your sides. Raise to horizontal, elbows higher than the hands. 3-sec controlled descent.</string>
+    <string name="exo_elevations_laterales_inclinees_avec_haltere_tips">Incline bench = recruits the upper pecs / front delt more.</string>
+    <string name="exo_elevations_laterales_inclinees_avec_haltere_starting_weight">Moderate load</string>
+
+    <string name="exo_elevations_laterales_unilaterales_a_la_poulie_name">Single-arm cable lateral raises</string>
+    <string name="exo_elevations_laterales_unilaterales_a_la_poulie_equipment">Pulley + attachment.</string>
+    <string name="exo_elevations_laterales_unilaterales_a_la_poulie_execution">Arms by your sides. Raise to horizontal, elbows higher than the hands. 3-sec controlled descent.</string>
+    <string name="exo_elevations_laterales_unilaterales_a_la_poulie_tips">Unilateral: corrects left/right imbalances.</string>
+    <string name="exo_elevations_laterales_unilaterales_a_la_poulie_starting_weight">Light load</string>
+
+    <string name="exo_elevations_laterales_a_la_machine_name">Machine lateral raises</string>
+    <string name="exo_elevations_laterales_a_la_machine_equipment">Guided machine.</string>
+    <string name="exo_elevations_laterales_a_la_machine_execution">Arms by your sides. Raise to horizontal, elbows higher than the hands. 3-sec controlled descent.</string>
+    <string name="exo_elevations_laterales_a_la_machine_tips">Guided variant, ideal for beginners or to load heavy safely.</string>
+    <string name="exo_elevations_laterales_a_la_machine_starting_weight">45–90 lb</string>
+
+    <string name="exo_etirement_de_la_hanche_90_90_name">90-90 hip stretch</string>
+    <string name="exo_etirement_de_la_hanche_90_90_equipment">None (bodyweight).</string>
+    <string name="exo_etirement_de_la_hanche_90_90_execution">Stretch position, hold 30s without bouncing. Breathe deeply. No pain, just tension.</string>
+    <string name="exo_etirement_de_la_hanche_90_90_tips">Mobility movement. No pain, just stretch tension.</string>
+    <string name="exo_etirement_de_la_hanche_90_90_starting_weight">Bodyweight</string>
+
+    <string name="exo_etirement_des_flechisseurs_de_hanche_a_genoux_name">Kneeling hip flexor stretch</string>
+    <string name="exo_etirement_des_flechisseurs_de_hanche_a_genoux_equipment">None (bodyweight).</string>
+    <string name="exo_etirement_des_flechisseurs_de_hanche_a_genoux_execution">Stretch position, hold 30s without bouncing. Breathe deeply. No pain, just tension.</string>
+    <string name="exo_etirement_des_flechisseurs_de_hanche_a_genoux_tips">Mobility movement. No pain, just stretch tension.</string>
+    <string name="exo_etirement_des_flechisseurs_de_hanche_a_genoux_starting_weight">Bodyweight</string>
+
+    <string name="exo_etirement_des_pectoraux_a_genoux_name">Kneeling chest stretch</string>
+    <string name="exo_etirement_des_pectoraux_a_genoux_equipment">None (bodyweight).</string>
+    <string name="exo_etirement_des_pectoraux_a_genoux_execution">Stretch position, hold 30s without bouncing. Breathe deeply. No pain, just tension.</string>
+    <string name="exo_etirement_des_pectoraux_a_genoux_tips">Mobility movement. No pain, just stretch tension.</string>
+    <string name="exo_etirement_des_pectoraux_a_genoux_starting_weight">Bodyweight</string>
+
+    <string name="exo_etirement_du_dos_a_la_barre_fixe_name">Pull-up bar back stretch</string>
+    <string name="exo_etirement_du_dos_a_la_barre_fixe_equipment">Olympic barbell.</string>
+    <string name="exo_etirement_du_dos_a_la_barre_fixe_execution">Stretch position, hold 30s without bouncing. Breathe deeply. No pain, just tension.</string>
+    <string name="exo_etirement_du_dos_a_la_barre_fixe_tips">Mobility movement. No pain, just stretch tension.</string>
+    <string name="exo_etirement_du_dos_a_la_barre_fixe_starting_weight">Moderate load</string>
+
+    <string name="exo_etirement_en_rotation_du_dos_a_genoux_name">Kneeling spinal rotation stretch</string>
+    <string name="exo_etirement_en_rotation_du_dos_a_genoux_equipment">None (bodyweight).</string>
+    <string name="exo_etirement_en_rotation_du_dos_a_genoux_execution">Torso fixed, rotate against the resistance. Controlled motion, no jerking. Trains the obliques.</string>
+    <string name="exo_etirement_en_rotation_du_dos_a_genoux_tips">Mobility movement. No pain, just stretch tension.</string>
+    <string name="exo_etirement_en_rotation_du_dos_a_genoux_starting_weight">Bodyweight</string>
+
+    <string name="exo_etirement_jambe_tendue_surelevee_name">Elevated straight-leg stretch</string>
+    <string name="exo_etirement_jambe_tendue_surelevee_equipment">None (bodyweight).</string>
+    <string name="exo_etirement_jambe_tendue_surelevee_execution">Stretch position, hold 30s without bouncing. Breathe deeply. No pain, just tension.</string>
+    <string name="exo_etirement_jambe_tendue_surelevee_tips">Mobility movement. No pain, just stretch tension.</string>
+    <string name="exo_etirement_jambe_tendue_surelevee_starting_weight">Bodyweight</string>
+
+    <string name="exo_etirement_vertical_des_bras_name">Overhead arm stretch</string>
+    <string name="exo_etirement_vertical_des_bras_equipment">None (bodyweight).</string>
+    <string name="exo_etirement_vertical_des_bras_execution">Stretch position, hold 30s without bouncing. Breathe deeply. No pain, just tension.</string>
+    <string name="exo_etirement_vertical_des_bras_tips">Mobility movement. No pain, just stretch tension.</string>
+    <string name="exo_etirement_vertical_des_bras_starting_weight">Bodyweight</string>
 </resources>
