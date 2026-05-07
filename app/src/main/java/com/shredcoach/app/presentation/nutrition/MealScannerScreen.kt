@@ -391,7 +391,7 @@ private fun HintsPanel(state: MealScannerState, viewModel: MealScannerViewModel)
                             PlateType.values().filter { it != PlateType.NONE }.forEach { plate ->
                                 val selected = state.hintPlate == plate
                                 HintChip(
-                                    label = stringResource(R.string.scanner_hint_plate_chip, plate.label, plate.diameterCm),
+                                    label = stringResource(R.string.scanner_hint_plate_chip, stringResource(plate.labelRes), plate.diameterCm),
                                     selected = selected,
                                     onClick = { viewModel.setHintPlate(if (selected) PlateType.NONE else plate) }
                                 )
@@ -416,7 +416,7 @@ private fun HintsPanel(state: MealScannerState, viewModel: MealScannerViewModel)
                                 val volLabel = if (bowl == BowlType.SALADIER) stringResource(R.string.scanner_hint_bowl_saladier)
                                     else stringResource(R.string.scanner_hint_bowl_volume_ml, bowl.volumeMl)
                                 HintChip(
-                                    label = stringResource(R.string.scanner_hint_bowl_chip, bowl.label, volLabel),
+                                    label = stringResource(R.string.scanner_hint_bowl_chip, stringResource(bowl.labelRes), volLabel),
                                     selected = selected,
                                     onClick = { viewModel.setHintBowl(if (selected) BowlType.NONE else bowl) }
                                 )

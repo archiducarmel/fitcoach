@@ -1,5 +1,8 @@
 package com.shredcoach.app.presentation.share
 
+import androidx.annotation.StringRes
+import com.shredcoach.app.R
+
 /**
  * Formats d'export supportés.
  *
@@ -18,23 +21,31 @@ enum class ExportFormat(
     val mimeType: String,
     val extension: String,
     val description: String,
+    @StringRes val displayNameRes: Int,
+    @StringRes val descriptionRes: Int,
 ) {
     CSV(
         displayName = "CSV",
         mimeType = "text/csv",
         extension = "csv",
         description = "Tableur (Excel, Numbers, Sheets)",
+        displayNameRes = R.string.export_format_csv,
+        descriptionRes = R.string.export_format_csv_desc,
     ),
     JSON(
         displayName = "JSON",
         mimeType = "application/json",
         extension = "json",
         description = "Pour developers, APIs, scripts",
+        displayNameRes = R.string.export_format_json,
+        descriptionRes = R.string.export_format_json_desc,
     ),
     TXT(
         displayName = "Texte",
         mimeType = "text/plain",
         extension = "txt",
         description = "Lisible humain, copier-coller",
+        displayNameRes = R.string.export_format_txt,
+        descriptionRes = R.string.export_format_txt_desc,
     ),
 }

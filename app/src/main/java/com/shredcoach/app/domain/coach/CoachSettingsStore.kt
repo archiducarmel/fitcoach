@@ -1,6 +1,7 @@
 package com.shredcoach.app.domain.coach
 
 import android.content.Context
+import androidx.annotation.StringRes
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -9,6 +10,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.shredcoach.app.R
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -38,10 +40,15 @@ class CoachSettingsStore @Inject constructor(
      * Tons disponibles. **Mappés à des prompts différents** dans
      * [CoachPromptBuilder] — change concrètement la formulation des notifs.
      */
-    enum class Tone(val displayName: String, val description: String) {
-        GENTLE("Doux", "Bienveillant, reformule sans pression"),
-        DIRECT("Direct", "Constat factuel, action claire, ton neutre"),
-        DRILL("Coach pro max", "Énergique, exigeant, vocabulaire sport"),
+    enum class Tone(
+        val displayName: String,
+        val description: String,
+        @StringRes val displayNameRes: Int,
+        @StringRes val descriptionRes: Int,
+    ) {
+        GENTLE("Doux", "Bienveillant, reformule sans pression", R.string.coach_tone_gentle, R.string.coach_tone_gentle_desc),
+        DIRECT("Direct", "Constat factuel, action claire, ton neutre", R.string.coach_tone_direct, R.string.coach_tone_direct_desc),
+        DRILL("Coach pro max", "Énergique, exigeant, vocabulaire sport", R.string.coach_tone_drill, R.string.coach_tone_drill_desc),
     }
 
     data class Snapshot(

@@ -1,5 +1,8 @@
 package com.shredcoach.app.domain.voice
 
+import androidx.annotation.StringRes
+import com.shredcoach.app.R
+
 /**
  * Identifie un moteur de synthèse vocale disponible dans l'app.
  *
@@ -9,12 +12,16 @@ package com.shredcoach.app.domain.voice
 enum class VoiceEngineId(
     val displayName: String,
     val tagline: String,
+    @StringRes val displayNameRes: Int,
+    @StringRes val taglineRes: Int,
     val requiresApiKey: Boolean,
 ) {
     /** TextToSpeech système — gratuit, hors-ligne, qualité variable selon device. */
     ANDROID(
         displayName = "Android (système)",
         tagline = "Gratuit · hors-ligne",
+        displayNameRes = R.string.voice_engine_android,
+        taglineRes = R.string.voice_engine_android_tagline,
         requiresApiKey = false,
     ),
 
@@ -25,6 +32,8 @@ enum class VoiceEngineId(
     GOOGLE_CHIRP3(
         displayName = "Google Cloud · Chirp 3 HD",
         tagline = "Voix neuronale studio-grade",
+        displayNameRes = R.string.voice_engine_chirp3,
+        taglineRes = R.string.voice_engine_chirp3_tagline,
         requiresApiKey = true,
     );
 

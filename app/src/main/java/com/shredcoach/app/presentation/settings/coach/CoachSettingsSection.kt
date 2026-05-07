@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -191,7 +192,7 @@ private fun ToneSelector(
             fontWeight = FontWeight.Medium,
         )
         Text(
-            CoachSettingsStore.Tone.values().first { it == selected }.description,
+            stringResource(selected.descriptionRes),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
         )
@@ -213,7 +214,7 @@ private fun ToneSelector(
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            tone.displayName,
+                            stringResource(tone.displayNameRes),
                             fontSize = 12.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                             color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,

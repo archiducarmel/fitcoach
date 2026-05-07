@@ -356,6 +356,43 @@
     <string name="equipment_home_gym">Home gym</string>
     <string name="equipment_bodyweight">Poids du corps</string>
 
+    <!-- Phase 2 — domain enums (@StringRes) -->
+    <!-- Coach tones -->
+    <string name="coach_tone_gentle">Doux</string>
+    <string name="coach_tone_gentle_desc">Bienveillant, reformule sans pression</string>
+    <string name="coach_tone_direct">Direct</string>
+    <string name="coach_tone_direct_desc">Constat factuel, action claire, ton neutre</string>
+    <string name="coach_tone_drill">Coach pro max</string>
+    <string name="coach_tone_drill_desc">Énergique, exigeant, vocabulaire sport</string>
+
+    <!-- Voice engines -->
+    <string name="voice_engine_android">Android (système)</string>
+    <string name="voice_engine_android_tagline">Gratuit · hors-ligne</string>
+    <string name="voice_engine_chirp3">Google Cloud · Chirp 3 HD</string>
+    <string name="voice_engine_chirp3_tagline">Voix neuronale studio-grade</string>
+
+    <!-- Plate types (meal scanner hints) -->
+    <string name="plate_type_none">Non spécifié</string>
+    <string name="plate_type_large">Assiette plate</string>
+    <string name="plate_type_deep">Assiette creuse</string>
+    <string name="plate_type_dessert">Assiette à dessert</string>
+    <string name="plate_type_small">Petite assiette</string>
+
+    <!-- Bowl types -->
+    <string name="bowl_type_none">Non spécifié</string>
+    <string name="bowl_type_mini">Mini bol</string>
+    <string name="bowl_type_small">Petit bol</string>
+    <string name="bowl_type_standard">Bol standard</string>
+    <string name="bowl_type_saladier">Saladier</string>
+
+    <!-- Export formats -->
+    <string name="export_format_csv">CSV</string>
+    <string name="export_format_csv_desc">Tableur (Excel, Numbers, Sheets)</string>
+    <string name="export_format_json">JSON</string>
+    <string name="export_format_json_desc">Pour développeurs, APIs, scripts</string>
+    <string name="export_format_txt">Texte</string>
+    <string name="export_format_txt_desc">Lisible humain, copier-coller</string>
+
     <!-- ════════════════════════════════════════════════════════════ -->
     <!-- Onboarding screen -->
     <!-- ════════════════════════════════════════════════════════════ -->

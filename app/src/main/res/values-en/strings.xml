@@ -321,6 +321,43 @@
     <string name="equipment_home_gym">Home gym</string>
     <string name="equipment_bodyweight">Bodyweight</string>
 
+    <!-- Phase 2 — domain enums (@StringRes) -->
+    <!-- Coach tones -->
+    <string name="coach_tone_gentle">Gentle</string>
+    <string name="coach_tone_gentle_desc">Caring, reframes without pressure</string>
+    <string name="coach_tone_direct">Direct</string>
+    <string name="coach_tone_direct_desc">Factual statement, clear action, neutral tone</string>
+    <string name="coach_tone_drill">Drill coach</string>
+    <string name="coach_tone_drill_desc">Energetic, demanding, sport vocabulary</string>
+
+    <!-- Voice engines -->
+    <string name="voice_engine_android">Android (system)</string>
+    <string name="voice_engine_android_tagline">Free · offline</string>
+    <string name="voice_engine_chirp3">Google Cloud · Chirp 3 HD</string>
+    <string name="voice_engine_chirp3_tagline">Studio-grade neural voice</string>
+
+    <!-- Plate types (meal scanner hints) -->
+    <string name="plate_type_none">Not specified</string>
+    <string name="plate_type_large">Dinner plate</string>
+    <string name="plate_type_deep">Soup plate</string>
+    <string name="plate_type_dessert">Dessert plate</string>
+    <string name="plate_type_small">Small plate</string>
+
+    <!-- Bowl types -->
+    <string name="bowl_type_none">Not specified</string>
+    <string name="bowl_type_mini">Mini bowl</string>
+    <string name="bowl_type_small">Small bowl</string>
+    <string name="bowl_type_standard">Standard bowl</string>
+    <string name="bowl_type_saladier">Salad bowl</string>
+
+    <!-- Export formats -->
+    <string name="export_format_csv">CSV</string>
+    <string name="export_format_csv_desc">Spreadsheet (Excel, Numbers, Sheets)</string>
+    <string name="export_format_json">JSON</string>
+    <string name="export_format_json_desc">For developers, APIs, scripts</string>
+    <string name="export_format_txt">Text</string>
+    <string name="export_format_txt_desc">Human-readable, copy-paste</string>
+
     <!-- ════════════════════════════════════════════════════════════ -->
     <!-- Onboarding screen -->
     <!-- ════════════════════════════════════════════════════════════ -->

@@ -555,16 +555,8 @@ private fun ProfileHeaderCard(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val displayName = "${profile.firstName.replaceFirstChar { it.uppercase() }} ${profile.lastName.replaceFirstChar { it.uppercase() }}".trim()
-    val goalLabel = when (profile.goal) {
-        com.shredcoach.app.data.local.entity.FitnessGoal.SHRED -> stringResource(R.string.fitness_goal_shred)
-        com.shredcoach.app.data.local.entity.FitnessGoal.BULK -> stringResource(R.string.fitness_goal_bulk)
-        com.shredcoach.app.data.local.entity.FitnessGoal.MAINTAIN -> stringResource(R.string.fitness_goal_maintain)
-    }
-    val levelLabel = when (profile.level) {
-        com.shredcoach.app.data.local.entity.FitnessLevel.BEGINNER -> stringResource(R.string.fitness_level_beginner)
-        com.shredcoach.app.data.local.entity.FitnessLevel.INTERMEDIATE -> stringResource(R.string.fitness_level_intermediate)
-        com.shredcoach.app.data.local.entity.FitnessLevel.ADVANCED -> stringResource(R.string.fitness_level_advanced)
-    }
+    val goalLabel = stringResource(profile.goal.displayNameRes)
+    val levelLabel = stringResource(profile.level.displayNameRes)
 
     Card(
         onClick = onClick,

@@ -106,20 +106,20 @@ data class UserProfileEntity(
     // Voir ShredCoachDatabase.DropLegacyApiKeyColumns pour la migration.
 )
 
-enum class FitnessLevel {
-    BEGINNER,
-    INTERMEDIATE,
-    ADVANCED
+enum class FitnessLevel(@androidx.annotation.StringRes val displayNameRes: Int) {
+    BEGINNER(com.shredcoach.app.R.string.fitness_level_beginner),
+    INTERMEDIATE(com.shredcoach.app.R.string.fitness_level_intermediate),
+    ADVANCED(com.shredcoach.app.R.string.fitness_level_advanced)
 }
 
-enum class EquipmentType {
-    FULL_GYM,      // Machines + poids libres
-    HOME_GYM,      // Poids libres uniquement
-    BODYWEIGHT     // Poids du corps uniquement
+enum class EquipmentType(@androidx.annotation.StringRes val displayNameRes: Int) {
+    FULL_GYM(com.shredcoach.app.R.string.equipment_full_gym),      // Machines + poids libres
+    HOME_GYM(com.shredcoach.app.R.string.equipment_home_gym),      // Poids libres uniquement
+    BODYWEIGHT(com.shredcoach.app.R.string.equipment_bodyweight)   // Poids du corps uniquement
 }
 
-enum class FitnessGoal {
-    SHRED,         // Sèche / perte de gras
-    BULK,          // Prise de masse
-    MAINTAIN       // Maintien
+enum class FitnessGoal(@androidx.annotation.StringRes val displayNameRes: Int) {
+    SHRED(com.shredcoach.app.R.string.fitness_goal_shred),         // Sèche / perte de gras
+    BULK(com.shredcoach.app.R.string.fitness_goal_bulk),           // Prise de masse
+    MAINTAIN(com.shredcoach.app.R.string.fitness_goal_maintain)    // Maintien
 }
