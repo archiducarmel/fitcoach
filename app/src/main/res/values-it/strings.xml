@@ -48,8 +48,8 @@
     <!-- Workout legacy -->
     <string name="workout_duration">Durata: %d min</string>
     <string name="workout_exercises">%d esercizi</string>
-    <string name="series">Serie %d/%d</string>
-    <string name="reps">%d-%d rip</string>
+    <string name="series">Serie %1$d/%2$d</string>
+    <string name="reps">%1$d-%2$d rip</string>
     <string name="rest_time">Recupero: %ds</string>
 
     <!-- Exercise variants -->

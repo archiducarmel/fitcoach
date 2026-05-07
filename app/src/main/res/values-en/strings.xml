@@ -51,8 +51,8 @@
     <!-- Workout -->
     <string name="workout_duration">Duration: %d min</string>
     <string name="workout_exercises">%d exercises</string>
-    <string name="series">Set %d/%d</string>
-    <string name="reps">%d-%d reps</string>
+    <string name="series">Set %1$d/%2$d</string>
+    <string name="reps">%1$d-%2$d reps</string>
     <string name="rest_time">Rest: %ds</string>
 
     <!-- Exercise variants -->
