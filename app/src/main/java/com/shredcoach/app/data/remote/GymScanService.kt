@@ -142,7 +142,7 @@ class GymScanService @Inject constructor(
             }
         }
 
-        return """
+        return com.shredcoach.app.domain.i18n.PromptLocale.outputLanguageDirective() + """
 Tu es coach sportif expert, spécialiste de l'équipement de salle de musculation.
 L'utilisateur a pris en photo une machine. Tu as DEUX tâches :
 

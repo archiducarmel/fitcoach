@@ -60,7 +60,16 @@ class BodyAnalysisService @Inject constructor(
         private const val GROQ_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
         private const val MISTRAL_MODEL = "mistral-small-latest"
 
-        val BODY_PROMPT = """
+        /**
+         * Prompt vision pour l'estimation morphologique. Locale-aware via
+         * [com.shredcoach.app.domain.i18n.PromptLocale.outputLanguageDirective] :
+         * en EN, le LLM produit `notes` (champ texte du JSON) en anglais
+         * sans qu'on ait à dupliquer le spec FR.
+         */
+        val BODY_PROMPT: String
+            get() = com.shredcoach.app.domain.i18n.PromptLocale.outputLanguageDirective() + BODY_PROMPT_FR
+
+        private val BODY_PROMPT_FR = """
 Tu es un analyste morphologique expert, formé aux méthodes d'estimation visuelle Navy/YMCA pour le taux de gras corporel et aux tables anthropométriques standard (WHO, Tanita, InBody).
 
 MISSION : Observe cette photo d'une personne et ESTIME AU MIEUX ses mesures corporelles avec une approche proportionnelle rigoureuse.

@@ -1,6 +1,7 @@
 package com.shredcoach.app.notification
 
 import com.shredcoach.app.domain.coach.CoachSettingsStore
+import com.shredcoach.app.domain.i18n.PromptLocale
 
 /**
  * System + user prompts pour les notifications de débrief IA.
@@ -12,11 +13,7 @@ import com.shredcoach.app.domain.coach.CoachSettingsStore
  */
 object DebriefPrompts {
 
-    /**
-     * System prompt **legacy** utilisé encore par le débrief séance. Pour les
-     * débriefs repas → utiliser [buildMealSystemPrompt] qui prend le ton.
-     */
-    val DEBRIEF_SYSTEM_PROMPT = """
+    private val DEBRIEF_SYSTEM_PROMPT_FR = """
 Tu es Shreddy, coach sportif et nutrition IA de l'app ShredCoach. Tu rédiges des débriefs courts à destination de l'utilisateur dans une notification push.
 
 RÈGLES ABSOLUES :
@@ -30,12 +27,37 @@ RÈGLES ABSOLUES :
 - Jamais de jargon scientifique.
     """.trimIndent()
 
+    private val DEBRIEF_SYSTEM_PROMPT_EN = """
+You are Shreddy, the AI sport and nutrition coach of the ShredCoach app. You write short debriefs to the user as a push notification.
+
+ABSOLUTE RULES:
+- English only, direct address (you), use the first name when available.
+- HUMOROUS but caring tone, never guilt-tripping, always encouraging.
+- MAX 2 sentences, 180 characters max (notification constraint).
+- No emoji in the text (max 1 at the very end).
+- No greetings ("Hey", "Hi") since this notification arrives standalone.
+- Direct answer: start with a factual observation, end with an actionable tip when relevant.
+- Do NOT invent data: only use info from the prompt.
+- No scientific jargon.
+    """.trimIndent()
+
+    /**
+     * System prompt **legacy** utilisé encore par le débrief séance. Pour les
+     * débriefs repas → utiliser [buildMealSystemPrompt] qui prend le ton.
+     */
+    val DEBRIEF_SYSTEM_PROMPT: String
+        get() = PromptLocale.pick(fr = DEBRIEF_SYSTEM_PROMPT_FR, en = DEBRIEF_SYSTEM_PROMPT_EN)
+
     /**
      * System prompt pour les débriefs **repas**, paramétré par le ton choisi
      * par l'utilisateur. Mêmes 3 voix que le coach proactif (cohérence UX) +
      * un exemple BON/MAUVAIS de débrief repas matchant le ton sélectionné.
      */
     fun buildMealSystemPrompt(tone: CoachSettingsStore.Tone): String {
+        return if (PromptLocale.isEn()) buildMealSystemPromptEn(tone) else buildMealSystemPromptFr(tone)
+    }
+
+    private fun buildMealSystemPromptFr(tone: CoachSettingsStore.Tone): String {
         val toneRules = when (tone) {
             CoachSettingsStore.Tone.GENTLE -> """
 TON : DOUX & BIENVEILLANT
@@ -105,6 +127,76 @@ $example
 """.trimIndent()
     }
 
+    private fun buildMealSystemPromptEn(tone: CoachSettingsStore.Tone): String {
+        val toneRules = when (tone) {
+            CoachSettingsStore.Tone.GENTLE -> """
+TONE: SOFT & SUPPORTIVE
+- No blunt imperative ("do this", "force yourself"). Prefer suggestion ("what if we...", "you could").
+- Reframe gaps as opportunities ("it's ok, we balance things at the next meal").
+- End with ONE concrete suggestion, never an obligation.
+            """.trimIndent()
+            CoachSettingsStore.Tone.DIRECT -> """
+TONE: DIRECT & FACTUAL
+- Observation → action, two beats, neutral tone.
+- No fluff or embellishment. No emoji in the text.
+- End with ONE clear action, present tense.
+            """.trimIndent()
+            CoachSettingsStore.Tone.DRILL -> """
+TONE: PRO COACH MAX, ENERGETIC
+- High-level sport vocabulary: "smash", "lock the macro", "clean and tight", "max the protein".
+- Direct but NEVER demeaning. Demanding like a passionate sport buddy.
+- End with ONE punchy call-to-action.
+            """.trimIndent()
+        }
+
+        val example = when (tone) {
+            CoachSettingsStore.Tone.DIRECT -> """
+✓ GOOD (DIRECT, lunch 720 kcal / 45 g protein, workout done this morning):
+"Lunch 720 kcal, 45 g protein after your session — solid intake. 60 g protein left for the day, aim for a rich dinner."
+
+✗ BAD (DIRECT — vague, no numbers):
+"Pretty good meal, keep it up!"
+            """.trimIndent()
+            CoachSettingsStore.Tone.GENTLE -> """
+✓ GOOD (GENTLE, dinner 950 kcal vs 600 target, shred):
+"Dinner a bit heavy tonight, that's ok. You could lighten up tomorrow at lunch with a leaner protein-focused meal."
+
+✗ BAD (GENTLE — guilt-tripping):
+"950 kcal at dinner... you went way over, this will impact your shred. Be careful tomorrow."
+            """.trimIndent()
+            CoachSettingsStore.Tone.DRILL -> """
+✓ GOOD (DRILL, breakfast 35 g protein, session planned tonight):
+"35 g protein at breakfast, solid base. Load up at lunch so the tank is full before the session — let's lock it in."
+
+✗ BAD (DRILL — demeaning):
+"35 g of protein?! That's all you've got before your session? Wake up!"
+            """.trimIndent()
+        }
+
+        return """
+You are Shreddy, the AI nutrition coach of the ShredCoach app. You write ONE
+post-meal debrief for the user as a push notification.
+
+ABSOLUTE RULES:
+- English only, direct address (you), first name when available.
+- MAX 2 sentences, 180 characters max (system notification constraint).
+- No emoji in the text (max 1 at the very end if relevant).
+- No greetings ("Hey", "Hi") — this is a standalone notification.
+- Numerical observation → actionable tip adapted to the time of day.
+- Do NOT invent data. ONLY use the provided info.
+- Adapt the advice to timing: if the day isn't over, speak about the next meal;
+  if it's dinner, speak about recovery or tomorrow.
+- If a session is mentioned (done or planned), the protein advice must
+  explicitly tie back to it.
+
+$toneRules
+
+EXAMPLE (study it, your message must be close to the GOOD example):
+
+$example
+""".trimIndent()
+    }
+
     /**
      * Construit le user prompt pour un débrief repas.
      *
@@ -145,17 +237,35 @@ $example
         // Profil
         goalName: String,
     ): String {
-        val nameClause = firstName.ifBlank { "" }.let { if (it.isNotBlank()) "Prénom : $it\n" else "" }
-        val dishLine = if (dishCount > 1) "$dishName + ${dishCount - 1} autre(s) plat(s)"
-                       else dishName.ifBlank { "Repas scanné" }
-        val nutriLine = if (nutriScoreGrade.isNotBlank())
-            "Nutri-Score : $nutriScoreGrade · Score santé : $healthScore/10"
-        else "Score santé : $healthScore/10"
+        val en = PromptLocale.isEn()
+        val nameClause = firstName.ifBlank { "" }.let {
+            if (it.isBlank()) "" else if (en) "First name: $it\n" else "Prénom : $it\n"
+        }
+        val dishLine = if (dishCount > 1)
+            if (en) "$dishName + ${dishCount - 1} other dish(es)"
+            else "$dishName + ${dishCount - 1} autre(s) plat(s)"
+        else
+            dishName.ifBlank { if (en) "Scanned meal" else "Repas scanné" }
+
+        val nutriLine = if (en) {
+            if (nutriScoreGrade.isNotBlank())
+                "Nutri-Score: $nutriScoreGrade · Health score: $healthScore/10"
+            else "Health score: $healthScore/10"
+        } else {
+            if (nutriScoreGrade.isNotBlank())
+                "Nutri-Score : $nutriScoreGrade · Score santé : $healthScore/10"
+            else "Score santé : $healthScore/10"
+        }
 
         val deficitCals = (dailyCaloriesTarget - dailyCaloriesSoFar).coerceAtLeast(0)
         val deficitProt = (dailyProteinsTarget - dailyProteinsSoFar.toInt()).coerceAtLeast(0)
 
-        val workoutLine = when {
+        val workoutLine = if (en) when {
+            workoutDoneToday && workoutVolumeKg > 0 ->
+                "Workout DONE today (${workoutVolumeKg}kg of volume) — protein recovery matters."
+            workoutDoneToday -> "Workout DONE today — protein recovery matters."
+            else -> "No workout today."
+        } else when {
             workoutDoneToday && workoutVolumeKg > 0 ->
                 "Séance FAITE aujourd'hui (${workoutVolumeKg}kg de volume) — récup prot importante."
             workoutDoneToday -> "Séance FAITE aujourd'hui — récup prot importante."
@@ -165,34 +275,77 @@ $example
         val yesterdayLine = if (yesterdayCalsAtSamePoint > 0) {
             val delta = dailyCaloriesSoFar - yesterdayCalsAtSamePoint
             val sign = if (delta > 0) "+" else ""
-            "Hier au même point : ${yesterdayCalsAtSamePoint}kcal (delta : $sign${delta}kcal)."
+            if (en) "Yesterday at same point: ${yesterdayCalsAtSamePoint}kcal (delta: $sign${delta}kcal)."
+            else "Hier au même point : ${yesterdayCalsAtSamePoint}kcal (delta : $sign${delta}kcal)."
         } else ""
 
-        val timingLine = if (isEndOfDay)
-            "Position : FIN de journée, plus de repas prévu."
-        else
-            "Position : $remainingMealSlots repas restants prévus aujourd'hui."
-
-        val otherMealsLine = if (otherMealsToday.isNotEmpty())
-            "Repas déjà pris : ${otherMealsToday.joinToString(", ")}."
-        else ""
-
-        val intent = when {
-            isEndOfDay && goalName == "SHRED" ->
-                "Bilan de fin de journée. Constat sur le total kcal/prot vs cible, conseil pour optimiser demain."
-            isEndOfDay ->
-                "Bilan de fin de journée. Constat factuel sur la journée et un mot sur la récup."
-            mealTypeDisplay.equals("Petit-déjeuner", ignoreCase = true) ->
-                "Démarrage de journée. Évalue la base posée pour la journée, conseille pour le prochain repas."
-            mealTypeDisplay.equals("Pré-training", ignoreCase = true) ->
-                "Carburant avant séance. Évalue l'apport rapide et oriente la séance imminente."
-            mealTypeDisplay.equals("Goûter", ignoreCase = true) ->
-                "Pause snacking. Vigilance sucre, regarde l'écart avec la cible et oriente le dîner."
-            else ->
-                "Débrief milieu de journée. Constat sur l'apport, conseil pour le prochain repas en fonction du restant à atteindre."
+        val timingLine = if (en) {
+            if (isEndOfDay) "Position: END of day, no further meal scheduled."
+            else "Position: $remainingMealSlots remaining meals planned today."
+        } else {
+            if (isEndOfDay) "Position : FIN de journée, plus de repas prévu."
+            else "Position : $remainingMealSlots repas restants prévus aujourd'hui."
         }
 
-        return """
+        val otherMealsLine = if (otherMealsToday.isNotEmpty()) {
+            if (en) "Already eaten: ${otherMealsToday.joinToString(", ")}."
+            else "Repas déjà pris : ${otherMealsToday.joinToString(", ")}."
+        } else ""
+
+        val intent = if (en) {
+            when {
+                isEndOfDay && goalName == "SHRED" ->
+                    "End-of-day summary. Observation on total kcal/protein vs target, advice to optimize tomorrow."
+                isEndOfDay ->
+                    "End-of-day summary. Factual recap of the day and a word on recovery."
+                mealTypeDisplay.contains("breakfast", ignoreCase = true) ->
+                    "Day kickoff. Evaluate the foundation laid for the day, advise for the next meal."
+                mealTypeDisplay.contains("pre-workout", ignoreCase = true) ->
+                    "Pre-workout fuel. Evaluate the quick intake and orient the upcoming session."
+                mealTypeDisplay.contains("snack", ignoreCase = true) ->
+                    "Snacking break. Watch for sugar, check the gap to target and orient dinner."
+                else ->
+                    "Mid-day debrief. Observation on intake, advice for the next meal based on what's left."
+            }
+        } else {
+            when {
+                isEndOfDay && goalName == "SHRED" ->
+                    "Bilan de fin de journée. Constat sur le total kcal/prot vs cible, conseil pour optimiser demain."
+                isEndOfDay ->
+                    "Bilan de fin de journée. Constat factuel sur la journée et un mot sur la récup."
+                mealTypeDisplay.equals("Petit-déjeuner", ignoreCase = true) ->
+                    "Démarrage de journée. Évalue la base posée pour la journée, conseille pour le prochain repas."
+                mealTypeDisplay.equals("Pré-training", ignoreCase = true) ->
+                    "Carburant avant séance. Évalue l'apport rapide et oriente la séance imminente."
+                mealTypeDisplay.equals("Goûter", ignoreCase = true) ->
+                    "Pause snacking. Vigilance sucre, regarde l'écart avec la cible et oriente le dîner."
+                else ->
+                    "Débrief milieu de journée. Constat sur l'apport, conseil pour le prochain repas en fonction du restant à atteindre."
+            }
+        }
+
+        val goalLabel = if (en) when (goalName) { "SHRED" -> "shred"; "BULK" -> "bulk"; else -> "maintain" }
+                        else when (goalName) { "SHRED" -> "sèche"; "BULK" -> "prise de masse"; else -> "maintien" }
+
+        return if (en) """
+${nameClause}Meal: $dishLine ($mealTypeDisplay, scanned ${minutesSinceMeal}min ago)
+Macros: ${calories}kcal · ${proteins.toInt()}g protein · ${carbs.toInt()}g carbs · ${fats.toInt()}g fat · ${fibers.toInt()}g fiber
+Detail: sugar ${sugars.toInt()}g · sat. fat ${"%.1f".format(saturatedFat)}g · salt ${"%.1f".format(saltG)}g
+$nutriLine
+
+Day:
+- $mealsLoggedToday meals logged ${if (otherMealsLine.isNotBlank()) "($otherMealsLine)" else ""}
+- Total: $dailyCaloriesSoFar / $dailyCaloriesTarget kcal · ${dailyProteinsSoFar.toInt()} / $dailyProteinsTarget g protein
+- Remaining to hit: $deficitCals kcal · $deficitProt g protein
+- $workoutLine
+${if (yesterdayLine.isNotBlank()) "- $yesterdayLine" else ""}
+- $timingLine
+
+Goal: $goalLabel
+
+Task:
+$intent
+""".trimIndent() else """
 ${nameClause}Repas : $dishLine ($mealTypeDisplay, scanné il y a ${minutesSinceMeal}min)
 Macros : ${calories}kcal · ${proteins.toInt()}g prot · ${carbs.toInt()}g gluc · ${fats.toInt()}g lip · ${fibers.toInt()}g fibres
 Détail : sucres ${sugars.toInt()}g · graisses sat. ${"%.1f".format(saturatedFat)}g · sel ${"%.1f".format(saltG)}g
@@ -206,7 +359,7 @@ Journée :
 ${if (yesterdayLine.isNotBlank()) "- $yesterdayLine" else ""}
 - $timingLine
 
-Objectif : ${when (goalName) { "SHRED" -> "sèche"; "BULK" -> "prise de masse"; else -> "maintien" }}
+Objectif : $goalLabel
 
 Tâche :
 $intent
@@ -228,7 +381,26 @@ $intent
         workoutsThisWeek: Int,
         targetWorkoutsPerWeek: Int,
         goalName: String
-    ): String = """
+    ): String {
+        val en = PromptLocale.isEn()
+        val goal = if (en) when (goalName) { "SHRED" -> "shred"; "BULK" -> "bulk"; else -> "maintain" }
+                   else when (goalName) { "SHRED" -> "sèche"; "BULK" -> "prise de masse"; else -> "maintien" }
+        return if (en) """
+Debrief of the session that just ended (30 min ago):
+
+- Session: $workoutName
+- Duration: ${durationMin}min
+- Exercises: $exercisesCompleted/$exercisesTotal completed
+- Sets: $totalSets | Reps: $totalReps | Volume: ${totalVolumeKg.toInt()}kg
+- PR broken: ${if (hasPR) "YES" else "no"}
+
+Consistency context:
+- Current streak: ${streakDays}d
+- Sessions this week: $workoutsThisWeek / $targetWorkoutsPerWeek planned
+- Goal: $goal
+
+Write a short debrief for $firstName: session quality, training momentum, encouragement toward the next goal.
+""".trimIndent() else """
 Débrief de la séance qui vient de se terminer (il y a 30 min) :
 
 - Séance : $workoutName
@@ -240,8 +412,9 @@ Débrief de la séance qui vient de se terminer (il y a 30 min) :
 Contexte régularité :
 - Streak actuel : ${streakDays}j
 - Séances cette semaine : $workoutsThisWeek / $targetWorkoutsPerWeek prévues
-- Objectif : ${when (goalName) { "SHRED" -> "sèche"; "BULK" -> "prise de masse"; else -> "maintien" }}
+- Objectif : $goal
 
 Rédige un débrief court pour $firstName : qualité de la séance, dynamique d'entraînement, encouragement vers le prochain objectif.
 """.trimIndent()
+    }
 }

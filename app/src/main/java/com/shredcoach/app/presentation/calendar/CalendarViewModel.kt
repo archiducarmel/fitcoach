@@ -264,11 +264,18 @@ class CalendarViewModel @Inject constructor(
                         .getOrDefault(LlmProvider.GROQ)
                     val model = profile.llmModel.takeIf { it.isNotBlank() }
 
+                    val en = com.shredcoach.app.domain.i18n.PromptLocale.isEn()
                     val datesStr = suggestions.joinToString(", ") {
-                        it.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.FRANCE) + " " + it.dayOfMonth + "/" + it.monthValue
+                        it.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault()) + " " + it.dayOfMonth + "/" + it.monthValue
                     }
-                    val firstName = profile.firstName.ifBlank { "toi" }
-                    val prompt = """
+                    val firstName = profile.firstName.ifBlank { if (en) "you" else "toi" }
+                    val prompt = if (en) """
+Based on $firstName's habits (preferred days: ${workoutDays.sorted()}, current streak: ${profile.currentStreakDays}d),
+here are the next 5 suggested dates: $datesStr.
+
+Write ONE sentence (180 chars max) — a motivating and humorous justification to schedule these sessions.
+No greetings, no list — just the sentence.
+                    """.trimIndent() else """
 D'après les habitudes de $firstName (jours préférés: ${workoutDays.sorted()}, streak actuel: ${profile.currentStreakDays}j),
 voici les 5 prochaines dates suggérées : $datesStr.
 
@@ -276,10 +283,15 @@ Rédige en UNE seule phrase (max 180 chars) une justification motivante et humor
 Pas de salutations, pas de liste — juste la phrase.
                     """.trimIndent()
 
+                    val systemPrompt = if (en)
+                        "You are Shreddy, AI sport coach. Reply in English, kind and humorous tone, max 180 characters, a single sentence."
+                    else
+                        "Tu es Shreddy, coach sportif IA. Réponds en français, ton humoristique bienveillant, max 180 caractères, une seule phrase."
+
                     kotlinx.coroutines.withTimeout(12_000) {
                         chatRepository.quickCoachMessage(
                             prompt = prompt,
-                            systemPrompt = "Tu es Shreddy, coach sportif IA. Réponds en français, ton humoristique bienveillant, max 180 caractères, une seule phrase.",
+                            systemPrompt = systemPrompt,
                             provider = provider,
                             apiKey = apiKey,
                             model = model
@@ -288,7 +300,7 @@ Pas de salutations, pas de liste — juste la phrase.
                 } catch (_: Exception) { null }
             } else null
 
-            val fallbackMsg = "${suggestions.size} séances suggérées selon tes jours préférés. Let's go !"
+            val fallbackMsg = appContext.getString(com.shredcoach.app.R.string.ai_sugg_fallback, suggestions.size)
 
             _state.update {
                 it.copy(

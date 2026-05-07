@@ -899,6 +899,7 @@
     <string name="ai_sugg_dates_label">Dates proposées</string>
     <string name="ai_sugg_later">Plus tard</string>
     <string name="ai_sugg_accept_all">Tout accepter</string>
+    <string name="ai_sugg_fallback">%d séances suggérées selon tes jours préférés. Let\'s go !</string>
 
     <!-- ════════════════════════════════════════════════════════════ -->
     <!-- Workout history screen + detail screen -->

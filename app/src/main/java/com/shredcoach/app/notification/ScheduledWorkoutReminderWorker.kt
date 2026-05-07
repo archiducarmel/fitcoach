@@ -75,26 +75,35 @@ class ScheduledWorkoutReminderWorker @AssistedInject constructor(
         } else workoutName
 
         // ─── Construire le prompt LLM selon le type ───
+        val en = com.shredcoach.app.domain.i18n.PromptLocale.isEn()
         val (systemPrompt, userPrompt, fallback) = when (type) {
             TYPE_SHAKER -> Triple(
                 SHAKER_SYSTEM_PROMPT,
                 buildString {
-                    append("Séance '$displayName' prévue à $timeStr (dans 2h).")
-                    if (routineLabel != null) {
-                        append(" Type de séance : $routineLabel.")
+                    if (en) {
+                        append("Session '$displayName' planned at $timeStr (in 2h).")
+                        if (routineLabel != null) append(" Session type: $routineLabel.")
+                        append(" Suggest to $firstName a pre-workout shake or snack to be on point.")
+                    } else {
+                        append("Séance '$displayName' prévue à $timeStr (dans 2h).")
+                        if (routineLabel != null) append(" Type de séance : $routineLabel.")
+                        append(" Propose à $firstName un shaker ou collation pré-training pour être au top.")
                     }
-                    append(" Propose à $firstName un shaker ou collation pré-training pour être au top.")
                 },
                 context.getString(R.string.notif_shaker_in_2h, routineLabel ?: workoutName)
             )
             TYPE_START -> Triple(
                 START_SYSTEM_PROMPT,
                 buildString {
-                    append("Séance '$displayName' prévue à $timeStr (dans 30 min).")
-                    if (routineLabel != null) {
-                        append(" Type de séance : $routineLabel.")
+                    if (en) {
+                        append("Session '$displayName' planned at $timeStr (in 30 min).")
+                        if (routineLabel != null) append(" Session type: $routineLabel.")
+                        append(" Motivate $firstName so they get ready right now.")
+                    } else {
+                        append("Séance '$displayName' prévue à $timeStr (dans 30 min).")
+                        if (routineLabel != null) append(" Type de séance : $routineLabel.")
+                        append(" Motive $firstName pour qu'il se prépare maintenant.")
                     }
-                    append(" Motive $firstName pour qu'il se prépare maintenant.")
                 },
                 context.getString(R.string.notif_start_in_30min, routineLabel ?: workoutName)
             )
@@ -149,7 +158,7 @@ class ScheduledWorkoutReminderWorker @AssistedInject constructor(
         const val TYPE_SHAKER = "shaker_2h"
         const val TYPE_START = "start_30min"
 
-        val SHAKER_SYSTEM_PROMPT = """
+        private val SHAKER_SYSTEM_PROMPT_FR = """
 Tu es Shreddy, coach sportif IA. Tu rédiges une notification push courte (180 chars max, 1-2 phrases)
 pour rappeler un shaker/collation pré-training 2h avant une séance.
 
@@ -162,7 +171,20 @@ RÈGLES :
 - Réponse directe, pas de blabla
         """.trimIndent()
 
-        val START_SYSTEM_PROMPT = """
+        private val SHAKER_SYSTEM_PROMPT_EN = """
+You are Shreddy, AI sport coach. You write a short push notification (180 chars max, 1-2 sentences)
+to remind the user about a pre-workout shake/snack 2h before a session.
+
+RULES:
+- English, direct address (you), first name when provided
+- Humorous and motivating tone, never guilt-tripping
+- Max 180 characters, max 2 sentences
+- Suggest a precise food/shake (whey, banana, oats, etc.)
+- No greetings, no emojis (max 1 at the end)
+- Direct answer, no fluff
+        """.trimIndent()
+
+        private val START_SYSTEM_PROMPT_FR = """
 Tu es Shreddy, coach sportif IA. Tu rédiges une notification push courte (180 chars max, 1-2 phrases)
 pour pousser l'utilisateur à se préparer 30min avant sa séance.
 
@@ -174,5 +196,28 @@ RÈGLES :
 - Pas de salutations
 - Réponse directe, 1 emoji max en fin
         """.trimIndent()
+
+        private val START_SYSTEM_PROMPT_EN = """
+You are Shreddy, AI sport coach. You write a short push notification (180 chars max, 1-2 sentences)
+to nudge the user to get ready 30min before their session.
+
+RULES:
+- English, direct address (you), first name when provided
+- Energetic and motivating tone, not aggressive
+- Max 180 characters, max 2 sentences
+- Mention the session + invite them to prep right now
+- No greetings
+- Direct answer, max 1 emoji at the end
+        """.trimIndent()
+
+        val SHAKER_SYSTEM_PROMPT: String
+            get() = com.shredcoach.app.domain.i18n.PromptLocale.pick(
+                fr = SHAKER_SYSTEM_PROMPT_FR, en = SHAKER_SYSTEM_PROMPT_EN
+            )
+
+        val START_SYSTEM_PROMPT: String
+            get() = com.shredcoach.app.domain.i18n.PromptLocale.pick(
+                fr = START_SYSTEM_PROMPT_FR, en = START_SYSTEM_PROMPT_EN
+            )
     }
 }

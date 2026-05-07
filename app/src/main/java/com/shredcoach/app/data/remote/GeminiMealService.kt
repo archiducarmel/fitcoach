@@ -457,7 +457,11 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
             // description (y compris avec `$`, `\`, `%`, accents, emojis).
             val basePrompt = MEAL_TEXT_PROMPT.replace("{{USER_DESCRIPTION}}", description.trim())
             // Append du bloc d'indices contenant (assiette/bol) si l'user en a renseigné.
-            val finalPrompt = if (hintBlock.isBlank()) basePrompt else basePrompt + "\n" + hintBlock
+            val withHints = if (hintBlock.isBlank()) basePrompt else basePrompt + "\n" + hintBlock
+            // i18n : préfixe une directive d'override de langue de sortie quand l'app
+            // est en EN. Le LLM continue de lire le spec FR mais produit les champs
+            // texte (noms de plats, verdict, etc.) dans la langue utilisateur.
+            val finalPrompt = com.shredcoach.app.domain.i18n.PromptLocale.outputLanguageDirective() + withHints
 
             val rawJson = when (provider.uppercase()) {
                 "GROQ" -> callGroqTextMeal(apiKey, finalPrompt)
@@ -499,7 +503,9 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
     ): Result<MealAnalysisResult> = withContext(Dispatchers.IO) {
         try {
             // Construit le prompt final : prompt de base + bloc d'indices utilisateur (vide si aucun indice)
-            val finalPrompt = if (hintBlock.isBlank()) MEAL_PROMPT else MEAL_PROMPT + "\n" + hintBlock
+            val withHints = if (hintBlock.isBlank()) MEAL_PROMPT else MEAL_PROMPT + "\n" + hintBlock
+            // i18n : directive d'override de langue (cf. analyzeMealFromText).
+            val finalPrompt = com.shredcoach.app.domain.i18n.PromptLocale.outputLanguageDirective() + withHints
 
             val rawJson = when (provider.uppercase()) {
                 "GROQ" -> callGroq(imageBytes, mimeType, apiKey, finalPrompt)

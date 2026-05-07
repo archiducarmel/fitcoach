@@ -1,13 +1,21 @@
 package com.shredcoach.app.presentation.workout
 
+import com.shredcoach.app.domain.i18n.PromptLocale
+
 /**
  * Messages de coaching contextuels de Shreddy.
  * Mode LLM : appel API pour messages générés par IA.
  * Mode fallback : templates locaux si pas d'API key ou erreur réseau.
+ *
+ * **i18n** : le system prompt LLM et les user prompts (`build*Prompt`) sont
+ * locale-aware via [PromptLocale]. Les fallbacks locaux (`exerciseTransition`,
+ * `sessionComplete`) restent en FR pour l'instant — leur traduction passe
+ * par Phase 5 (voice/coach phrasebook) qui les remplace par un système
+ * de phrases curées par persona × locale.
  */
 object ShreddyCoachMessages {
 
-    const val COACH_SYSTEM_PROMPT = """Tu es Shreddy, coach sportif dans l'app ShredCoach. Français uniquement.
+    private const val COACH_SYSTEM_PROMPT_FR = """Tu es Shreddy, coach sportif dans l'app ShredCoach. Français uniquement.
 
 MISSION : UNE SEULE phrase de coaching (15 mots max idéalement, 25 mots max absolu).
 
@@ -38,25 +46,71 @@ INTERDICTIONS ABSOLUES :
 
 Réponds UNIQUEMENT le message, rien d'autre."""
 
+    private const val COACH_SYSTEM_PROMPT_EN = """You are Shreddy, sport coach inside the ShredCoach app. English only.
+
+MISSION: ONE coaching sentence (ideally 15 words, 25 words absolute max).
+
+You MUST rotate between these 3 modes for each message. The mode is provided in the prompt.
+
+MODE "TECHNIQUE":
+- Analyse one technical aspect of the exercise (ROM, tempo, grip, breathing, posture)
+- Give one actionable micro-tip tied to the specific exercise
+- E.g.: "Lock your shoulder blades on the next exercise — it changes everything."
+
+MODE "HUMOR":
+- Wordplay, lifting metaphor, sport/pop-culture reference, kind irony
+- E.g.: "Your pecs are texting your t-shirt: 'It's getting tight in here.'"
+- E.g.: "That kind of volume even your scale respects."
+
+MODE "ENCOURAGEMENT":
+- Based on REAL numbers (volume, reps, progression)
+- Not generic: include a concrete data point from the session
+- E.g.: "2.8 tons lifted — your body has no choice but to progress."
+
+ABSOLUTE PROHIBITIONS:
+- More than 1 sentence
+- Starting with the exercise name
+- Mixed-language slang
+- Emojis
+- "Well done" or "Keep it up" on their own
+- Markdown
+
+Reply with ONLY the message, nothing else."""
+
+    val COACH_SYSTEM_PROMPT: String
+        get() = PromptLocale.pick(fr = COACH_SYSTEM_PROMPT_FR, en = COACH_SYSTEM_PROMPT_EN)
+
     fun buildExercisePrompt(
         firstName: String, exerciseName: String, sets: Int, reps: Int,
         volume: Double, skipped: Int, duration: Long,
         exercisesDone: Int, totalExercises: Int,
         isPersonalRecord: Boolean, goalName: String
     ): String {
+        val en = PromptLocale.isEn()
         val remaining = totalExercises - exercisesDone
-        val goal = when (goalName) { "SHRED" -> "sèche"; "BULK" -> "prise de masse"; else -> "maintien" }
+        val goal = if (en) when (goalName) { "SHRED" -> "shred"; "BULK" -> "bulk"; else -> "maintain" }
+                   else when (goalName) { "SHRED" -> "sèche"; "BULK" -> "prise de masse"; else -> "maintien" }
         val volStr = if (volume >= 1000) "%.1ft".format(volume / 1000) else "%.0fkg".format(volume)
         val mode = nextCoachMode()
         return buildString {
-            appendLine("MODE : $mode")
-            appendLine("User : $firstName | Objectif : $goal")
-            appendLine("Exercice : $exerciseName — $sets séries, $reps reps, $volStr, ${duration/60}min")
-            if (isPersonalRecord) appendLine("RECORD PERSONNEL battu !")
-            if (skipped > 0) appendLine("$skipped série(s) sautée(s)")
-            if (sets == 0) appendLine("Exercice entièrement passé")
-            appendLine("Séance : $exercisesDone/$totalExercises (reste $remaining)")
-            appendLine("Génère UNE phrase en mode $mode.")
+            appendLine("MODE: $mode")
+            if (en) {
+                appendLine("User: $firstName | Goal: $goal")
+                appendLine("Exercise: $exerciseName — $sets sets, $reps reps, $volStr, ${duration/60}min")
+                if (isPersonalRecord) appendLine("PERSONAL RECORD broken!")
+                if (skipped > 0) appendLine("$skipped set(s) skipped")
+                if (sets == 0) appendLine("Exercise entirely skipped")
+                appendLine("Session: $exercisesDone/$totalExercises ($remaining left)")
+                appendLine("Generate ONE sentence in $mode mode.")
+            } else {
+                appendLine("User : $firstName | Objectif : $goal")
+                appendLine("Exercice : $exerciseName — $sets séries, $reps reps, $volStr, ${duration/60}min")
+                if (isPersonalRecord) appendLine("RECORD PERSONNEL battu !")
+                if (skipped > 0) appendLine("$skipped série(s) sautée(s)")
+                if (sets == 0) appendLine("Exercice entièrement passé")
+                appendLine("Séance : $exercisesDone/$totalExercises (reste $remaining)")
+                appendLine("Génère UNE phrase en mode $mode.")
+            }
         }
     }
 
@@ -65,17 +119,29 @@ Réponds UNIQUEMENT le message, rien d'autre."""
         durationMinutes: Long, exercisesCompleted: Int, exercisesSkipped: Int,
         streak: Int, goalName: String
     ): String {
-        val goal = when (goalName) { "SHRED" -> "sèche"; "BULK" -> "prise de masse"; else -> "maintien" }
+        val en = PromptLocale.isEn()
+        val goal = if (en) when (goalName) { "SHRED" -> "shred"; "BULK" -> "bulk"; else -> "maintain" }
+                   else when (goalName) { "SHRED" -> "sèche"; "BULK" -> "prise de masse"; else -> "maintien" }
         val volStr = if (totalVolume >= 1000) "%.1ft".format(totalVolume / 1000) else "%.0fkg".format(totalVolume)
         val total = exercisesCompleted + exercisesSkipped
         return buildString {
-            appendLine("MODE : ENCOURAGEMENT (fin de séance, célébrer l'effort)")
-            appendLine("User : $firstName | Objectif : $goal | Streak : $streak jours")
-            appendLine("Séance : $exercisesCompleted/$total exos, $totalSets séries, $totalReps reps, $volStr, ${durationMinutes}min")
-            if (exercisesSkipped > 0) appendLine("$exercisesSkipped exercice(s) sauté(s)")
-            if (exercisesSkipped > exercisesCompleted) appendLine("Séance très difficile")
-            if (streak >= 7) appendLine("Série de $streak jours !")
-            appendLine("Génère UNE phrase de félicitation avec un chiffre concret.")
+            if (en) {
+                appendLine("MODE: ENCOURAGEMENT (end of session, celebrate the effort)")
+                appendLine("User: $firstName | Goal: $goal | Streak: $streak days")
+                appendLine("Session: $exercisesCompleted/$total exercises, $totalSets sets, $totalReps reps, $volStr, ${durationMinutes}min")
+                if (exercisesSkipped > 0) appendLine("$exercisesSkipped exercise(s) skipped")
+                if (exercisesSkipped > exercisesCompleted) appendLine("Very tough session")
+                if (streak >= 7) appendLine("$streak-day streak!")
+                appendLine("Generate ONE congratulatory sentence with a concrete number.")
+            } else {
+                appendLine("MODE : ENCOURAGEMENT (fin de séance, célébrer l'effort)")
+                appendLine("User : $firstName | Objectif : $goal | Streak : $streak jours")
+                appendLine("Séance : $exercisesCompleted/$total exos, $totalSets séries, $totalReps reps, $volStr, ${durationMinutes}min")
+                if (exercisesSkipped > 0) appendLine("$exercisesSkipped exercice(s) sauté(s)")
+                if (exercisesSkipped > exercisesCompleted) appendLine("Séance très difficile")
+                if (streak >= 7) appendLine("Série de $streak jours !")
+                appendLine("Génère UNE phrase de félicitation avec un chiffre concret.")
+            }
         }
     }
 

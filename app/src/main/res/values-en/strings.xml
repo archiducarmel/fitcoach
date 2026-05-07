@@ -780,6 +780,7 @@
     <string name="ai_sugg_dates_label">Suggested dates</string>
     <string name="ai_sugg_later">Later</string>
     <string name="ai_sugg_accept_all">Accept all</string>
+    <string name="ai_sugg_fallback">%d sessions suggested based on your preferred days. Let\'s go!</string>
 
     <!-- Workout history screen + detail screen -->
     <string name="history_title">History</string>
