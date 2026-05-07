@@ -862,4 +862,153 @@
     <string name="ai_sugg_dates_label">Dates proposées</string>
     <string name="ai_sugg_later">Plus tard</string>
     <string name="ai_sugg_accept_all">Tout accepter</string>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Workout history screen + detail screen -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <string name="history_title">Historique</string>
+    <string name="history_share_cd">Partager l\'historique</string>
+    <string name="history_export_cd">Exporter</string>
+    <string name="history_tab_workouts">Séances</string>
+    <string name="history_tab_nutrition">Nutrition</string>
+    <string name="history_workouts_empty_title">Aucune séance dans l\'historique</string>
+    <string name="history_workouts_empty_desc">Termine ta première séance et elle apparaîtra ici avec toutes ses métriques.</string>
+    <string name="history_workouts_empty_cta">Générer une séance</string>
+    <string name="history_nutrition_empty_title">Aucun repas scanné</string>
+    <string name="history_nutrition_empty_desc">Scanne ton premier repas avec le Meal Scanner pour voir ton historique nutritionnel ici.</string>
+    <string name="history_nutrition_empty_cta">Scanner un repas</string>
+    <string name="history_no_match">Aucune séance correspondante</string>
+    <string name="history_freestyle_session_name">Séance libre</string>
+
+    <!-- HistoryFilter enum -->
+    <string name="history_filter_all">Toutes</string>
+    <string name="history_filter_completed">Terminées</string>
+    <string name="history_filter_abandoned">Abandonnées</string>
+    <string name="history_routine_filter_all">Toutes routines</string>
+
+    <!-- Hero summary -->
+    <string name="history_hero_title">Mon parcours</string>
+    <string name="history_hero_label_seances">Séances</string>
+    <string name="history_hero_label_volume">Volume</string>
+    <string name="history_hero_label_time">Temps</string>
+
+    <!-- Card metrics -->
+    <string name="history_metric_duration">Durée</string>
+    <string name="history_metric_exos">Exos</string>
+    <string name="history_metric_sets">Séries</string>
+    <string name="history_metric_volume">Volume</string>
+    <string name="history_status_completed">Terminée</string>
+    <string name="history_status_abandoned">Abandonnée</string>
+
+    <!-- Buckets temporels -->
+    <string name="history_bucket_today">Aujourd\'hui</string>
+    <string name="history_bucket_yesterday">Hier</string>
+    <string name="history_bucket_this_week">Cette semaine</string>
+    <string name="history_bucket_this_month">Ce mois-ci</string>
+    <string name="history_bucket_3_months">3 derniers mois</string>
+    <string name="history_bucket_older">Plus ancien</string>
+
+    <!-- Nutrition meal card -->
+    <string name="history_meal_calories">%1$d kcal</string>
+    <string name="history_meal_calories_card">%1$d kcal</string>
+    <string name="history_meal_weight">%1$dg</string>
+    <string name="history_meal_grams">%1$.1fg</string>
+    <string name="history_meal_macro_proteins">Protéines</string>
+    <string name="history_meal_macro_carbs">Glucides</string>
+    <string name="history_meal_macro_fats">Lipides</string>
+    <string name="history_meal_macro_fibers">Fibres</string>
+    <string name="history_meal_full_analysis">Voir l\'analyse complète</string>
+    <string name="history_meal_delete_cd">Supprimer</string>
+    <string name="history_meal_delete_dialog_title">Supprimer ce repas ?</string>
+    <string name="history_meal_delete_dialog_body">« %1$s » sera supprimé de ton historique et du suivi nutritionnel.</string>
+
+    <!-- Share / Export -->
+    <string name="history_export_workouts_title">Historique séances</string>
+    <string name="history_export_nutrition_title">Historique repas scannés</string>
+    <string name="history_share_workouts_title">Mon historique séances</string>
+    <string name="history_share_workouts_subtitle">Total cumulé</string>
+    <string name="history_share_workouts_count_label">séances</string>
+    <string name="history_share_metric_volume">Volume</string>
+    <string name="history_share_metric_sets">Séries</string>
+    <string name="history_share_metric_reps">Reps</string>
+    <string name="history_share_metric_duration">Durée</string>
+    <string name="history_share_nutrition_title">Mon historique repas</string>
+    <string name="history_share_nutrition_subtitle">Tous mes scans</string>
+    <string name="history_share_nutrition_count_label">repas scannés</string>
+    <string name="history_share_metric_total_kcal">Total kcal</string>
+    <string name="history_share_metric_avg_score">Score moyen</string>
+    <string name="history_share_metric_avg_protein">Protéines/repas</string>
+    <string name="history_export_workouts_payload_title">ShredCoach — Historique séances</string>
+    <string name="history_export_workouts_payload_desc">%1$d séances exportées</string>
+    <string name="history_export_col_date">Date</string>
+    <string name="history_export_col_session">Séance</string>
+    <string name="history_export_col_duration_min">Durée (min)</string>
+    <string name="history_export_col_volume_kg">Volume (kg)</string>
+    <string name="history_export_col_sets">Séries</string>
+    <string name="history_export_col_reps">Reps</string>
+    <string name="history_export_col_rest_total_s">Repos total (s)</string>
+    <string name="history_export_col_exos_done">Exos terminés</string>
+    <string name="history_export_col_exos_skipped">Exos passés</string>
+    <string name="history_export_col_status">Statut</string>
+    <string name="history_export_summary_total_sessions">Total séances</string>
+    <string name="history_export_summary_total_volume">Volume cumulé</string>
+    <string name="history_export_summary_total_duration">Durée cumulée</string>
+    <string name="history_export_nutrition_payload_title">ShredCoach — Historique nutrition (scans)</string>
+    <string name="history_export_nutrition_payload_desc">%1$d repas scannés</string>
+    <string name="history_export_col_meal_type">Type repas</string>
+    <string name="history_export_col_dish">Plat</string>
+    <string name="history_export_col_cuisine">Cuisine</string>
+    <string name="history_export_col_kcal">Kcal</string>
+    <string name="history_export_col_proteins_g">Protéines (g)</string>
+    <string name="history_export_col_carbs_g">Glucides (g)</string>
+    <string name="history_export_col_fats_g">Lipides (g)</string>
+    <string name="history_export_col_fibers_g">Fibres (g)</string>
+    <string name="history_export_col_weight_g">Poids (g)</string>
+    <string name="history_export_col_health_score">Score santé</string>
+    <string name="history_export_col_nutri_score">Nutri-Score</string>
+    <string name="history_export_col_verdict">Verdict</string>
+    <string name="history_export_col_added_to_tracking">Ajouté au suivi</string>
+    <string name="history_export_summary_total_scans">Total scans</string>
+    <string name="history_export_summary_total_kcal">Kcal cumulées</string>
+    <string name="history_export_summary_avg_health_score">Score santé moyen</string>
+    <string name="history_export_yes">Oui</string>
+    <string name="history_export_no">Non</string>
+
+    <!-- Detail screen -->
+    <string name="history_detail_title">Détails</string>
+    <string name="history_detail_share_cd">Partager</string>
+    <string name="history_detail_delete_cd">Supprimer</string>
+    <string name="history_detail_relaunch">RELANCER CETTE SÉANCE</string>
+    <string name="history_detail_not_found">Séance introuvable</string>
+    <string name="history_detail_perf_section">Performances par exercice</string>
+    <string name="history_detail_delete_dialog_title">Supprimer cette séance ?</string>
+    <string name="history_detail_delete_dialog_body">Cette action est définitive. Toutes les séries et métriques associées seront perdues.</string>
+    <string name="history_detail_delete_confirm">Supprimer</string>
+    <string name="history_detail_delete_cancel">Annuler</string>
+    <string name="history_detail_session_completed">Séance terminée</string>
+    <string name="history_detail_session_abandoned">Séance abandonnée</string>
+    <string name="history_detail_default_share_title">Séance</string>
+    <string name="history_detail_share_sets_only">%1$d séries</string>
+
+    <!-- Stat tiles -->
+    <string name="history_detail_stat_duration">Durée</string>
+    <string name="history_detail_stat_volume">Volume</string>
+    <string name="history_detail_stat_exos">Exercices</string>
+    <string name="history_detail_stat_sets">Séries</string>
+    <string name="history_detail_stat_rest_total">Repos total</string>
+    <string name="history_detail_stat_active_time">Temps actif</string>
+    <string name="history_detail_subtitle_skipped">%1$d sauté(s)</string>
+    <string name="history_detail_subtitle_reps">%1$d reps</string>
+    <string name="history_detail_notes_label">Notes de séance</string>
+
+    <!-- Mini stats par exo -->
+    <string name="history_detail_mini_total">total</string>
+    <string name="history_detail_mini_max_hold">max tenue</string>
+    <string name="history_detail_mini_sets">séries</string>
+    <string name="history_detail_mini_total_reps">total reps</string>
+    <string name="history_detail_mini_max_per_set">max/série</string>
+    <string name="history_detail_mini_reps">reps</string>
+    <string name="history_detail_mini_max">max</string>
+    <string name="history_detail_mini_volume">volume</string>
+    <string name="history_detail_dash">—</string>
 </resources>

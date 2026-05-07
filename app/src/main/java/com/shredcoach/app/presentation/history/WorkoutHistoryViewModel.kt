@@ -1,9 +1,11 @@
 ﻿package com.shredcoach.app.presentation.history
 
 
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.shredcoach.app.R
 import com.shredcoach.app.data.local.dao.MealScanDao
 import com.shredcoach.app.data.local.entity.MealScanEntity
 import com.shredcoach.app.data.local.entity.WorkoutLogEntity
@@ -22,8 +24,10 @@ data class HistoryListItem(
     val realExercisesCount: Int
 )
 
-enum class HistoryFilter(val displayName: String) {
-    ALL("Toutes"), COMPLETED("Terminées"), ABANDONED("Abandonnées")
+enum class HistoryFilter(val displayName: String, @StringRes val displayNameRes: Int) {
+    ALL("Toutes", R.string.history_filter_all),
+    COMPLETED("Terminées", R.string.history_filter_completed),
+    ABANDONED("Abandonnées", R.string.history_filter_abandoned)
 }
 
 @Immutable
@@ -43,6 +47,8 @@ data class WorkoutHistoryState(
 
 @HiltViewModel
 class WorkoutHistoryViewModel @Inject constructor(
+    @dagger.hilt.android.qualifiers.ApplicationContext
+    private val appContext: android.content.Context,
     private val workoutRepository: WorkoutRepository,
     private val mealScanDao: MealScanDao,
     private val nutritionRepository: NutritionRepository
@@ -74,7 +80,7 @@ class WorkoutHistoryViewModel @Inject constructor(
                 val items = logs.map { log ->
                     val workoutName = log.workoutId?.let {
                         workoutRepository.getWorkoutById(it)?.name
-                    } ?: "Séance libre"
+                    } ?: appContext.getString(R.string.history_freestyle_session_name)
                     val sets = workoutRepository.getWorkoutSets(log.id)
                     HistoryListItem(
                         log = log,

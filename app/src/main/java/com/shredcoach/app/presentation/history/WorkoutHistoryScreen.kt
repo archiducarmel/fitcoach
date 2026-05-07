@@ -19,11 +19,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.WorkoutLogEntity
 import com.shredcoach.app.domain.workout.RoutineCatalog
 import kotlinx.coroutines.launch
@@ -60,7 +62,7 @@ fun WorkoutHistoryScreen(
     val availableRoutineIds = remember(state.items) {
         state.items.map { it.log.routineId }.distinct()
     }
-    val grouped = remember(filteredItems) { groupByBucket(filteredItems) }
+    val grouped = groupByBucketComposable(filteredItems)
 
     // Scans nutrition
     val mealScans by remember { viewModel.mealScans }.collectAsState()
@@ -72,19 +74,21 @@ fun WorkoutHistoryScreen(
 
     if (showShareHistory) {
         com.shredcoach.app.presentation.share.ShareSheet(
-            data = if (selectedTab == 0) buildWorkoutHistoryShareData(filteredItems)
-            else buildNutritionHistoryShareData(mealScans),
+            data = if (selectedTab == 0) buildWorkoutHistoryShareData(filteredItems, context)
+            else buildNutritionHistoryShareData(mealScans, context),
             onDismiss = { showShareHistory = false },
         )
     }
     if (showExportHistory) {
+        val exportTitle = if (selectedTab == 0) stringResource(R.string.history_export_workouts_title)
+            else stringResource(R.string.history_export_nutrition_title)
         com.shredcoach.app.presentation.share.ExportSheet(
-            title = if (selectedTab == 0) "Historique séances" else "Historique repas scannés",
+            title = exportTitle,
             onPick = { format ->
                 showExportHistory = false
                 scope.launch {
-                    val payload = if (selectedTab == 0) buildWorkoutHistoryExportPayload(filteredItems)
-                    else buildNutritionHistoryExportPayload(mealScans)
+                    val payload = if (selectedTab == 0) buildWorkoutHistoryExportPayload(filteredItems, context)
+                    else buildNutritionHistoryExportPayload(mealScans, context)
                     val content = com.shredcoach.app.presentation.share.DataExporter.render(payload, format)
                     val uri = com.shredcoach.app.presentation.share.DataExporter.saveToCache(
                         context, content, format,
@@ -102,13 +106,13 @@ fun WorkoutHistoryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Historique", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.history_title), fontWeight = FontWeight.Bold) },
                 actions = {
                     IconButton(onClick = { showShareHistory = true }) {
-                        Icon(Icons.Default.Share, "Partager l'historique")
+                        Icon(Icons.Default.Share, stringResource(R.string.history_share_cd))
                     }
                     IconButton(onClick = { showExportHistory = true }) {
-                        Icon(Icons.Default.FileDownload, "Exporter")
+                        Icon(Icons.Default.FileDownload, stringResource(R.string.history_export_cd))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -128,8 +132,8 @@ fun WorkoutHistoryScreen(
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 listOf(
-                    Triple(0, "Séances", Icons.Default.FitnessCenter),
-                    Triple(1, "Nutrition", Icons.Default.Restaurant)
+                    Triple(0, stringResource(R.string.history_tab_workouts), Icons.Default.FitnessCenter),
+                    Triple(1, stringResource(R.string.history_tab_nutrition), Icons.Default.Restaurant)
                 ).forEach { (idx, label, icon) ->
                     val selected = selectedTab == idx
                     Surface(
@@ -169,9 +173,9 @@ fun WorkoutHistoryScreen(
                 state.items.isEmpty() -> Box(Modifier.fillMaxSize()) {
                     com.shredcoach.app.presentation.common.EmptyState(
                         icon = Icons.Default.History,
-                        title = "Aucune séance dans l'historique",
-                        description = "Termine ta première séance et elle apparaîtra ici avec toutes ses métriques.",
-                        ctaLabel = "Générer une séance",
+                        title = stringResource(R.string.history_workouts_empty_title),
+                        description = stringResource(R.string.history_workouts_empty_desc),
+                        ctaLabel = stringResource(R.string.history_workouts_empty_cta),
                         ctaIcon = Icons.Default.AutoAwesome,
                         onCtaClick = { navController.navigate(Screen.WorkoutGenerator.route) }
                     )
@@ -201,7 +205,7 @@ fun WorkoutHistoryScreen(
                     if (filteredItems.isEmpty()) {
                         item {
                             Text(
-                                "Aucune séance correspondante", style = MaterialTheme.typography.bodyMedium,
+                                stringResource(R.string.history_no_match), style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                                 modifier = Modifier.padding(vertical = 32.dp).fillMaxWidth(),
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -251,9 +255,9 @@ private fun NutritionHistoryContent(
         Box(Modifier.fillMaxSize(), Alignment.Center) {
             com.shredcoach.app.presentation.common.EmptyState(
                 icon = Icons.Default.Restaurant,
-                title = "Aucun repas scanné",
-                description = "Scanne ton premier repas avec le Meal Scanner pour voir ton historique nutritionnel ici.",
-                ctaLabel = "Scanner un repas",
+                title = stringResource(R.string.history_nutrition_empty_title),
+                description = stringResource(R.string.history_nutrition_empty_desc),
+                ctaLabel = stringResource(R.string.history_nutrition_empty_cta),
                 ctaIcon = Icons.Default.CameraAlt,
                 onCtaClick = { navController.navigate(com.shredcoach.app.presentation.navigation.Screen.MealScanner.route) }
             )
@@ -269,7 +273,7 @@ private fun NutritionHistoryContent(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             grouped.forEach { (date, dayScans) ->
-                val dateStr = date.format(java.time.format.DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.FRANCE))
+                val dateStr = date.format(java.time.format.DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.getDefault()))
                     .replaceFirstChar { it.uppercase() }
                 val dayCalories = dayScans.sumOf { it.totalCalories }
 
@@ -279,7 +283,7 @@ private fun NutritionHistoryContent(
                         Text(dateStr, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                         Surface(shape = RoundedCornerShape(6.dp), color = OrangeVibrant.copy(alpha = 0.12f)) {
-                            Text("$dayCalories kcal", modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            Text(stringResource(R.string.history_meal_calories, dayCalories), modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                                 style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = OrangeVibrant)
                         }
                     }
@@ -293,8 +297,8 @@ private fun NutritionHistoryContent(
                             AlertDialog(
                                 onDismissRequest = { showDeleteConfirm = false },
                                 icon = { Icon(Icons.Default.DeleteOutline, null, tint = MaterialTheme.colorScheme.error) },
-                                title = { Text("Supprimer ce repas ?", fontWeight = FontWeight.Bold) },
-                                text = { Text("\"${scan.dishName}\" sera supprimé de ton historique et du suivi nutritionnel.") },
+                                title = { Text(stringResource(R.string.history_meal_delete_dialog_title), fontWeight = FontWeight.Bold) },
+                                text = { Text(stringResource(R.string.history_meal_delete_dialog_body, scan.dishName)) },
                                 confirmButton = {
                                     Button(
                                         onClick = {
@@ -303,9 +307,9 @@ private fun NutritionHistoryContent(
                                             showDeleteConfirm = false
                                         },
                                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                                    ) { Text("Supprimer") }
+                                    ) { Text(stringResource(R.string.common_delete)) }
                                 },
-                                dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text("Annuler") } }
+                                dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text(stringResource(R.string.common_cancel)) } }
                             )
                         }
 
@@ -408,16 +412,16 @@ private fun MealHistoryCard(scan: com.shredcoach.app.data.local.entity.MealScanE
             Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)).padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("${scan.totalCalories} kcal", style = MaterialTheme.typography.titleMedium,
+                    Text(stringResource(R.string.history_meal_calories_card, scan.totalCalories), style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold, color = OrangeVibrant)
-                    Text("${scan.totalWeight}g", style = MaterialTheme.typography.bodySmall,
+                    Text(stringResource(R.string.history_meal_weight, scan.totalWeight), style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                 }
                 // 4 barres macros noms complets
-                HistoryMacroBar("Protéines", scan.totalProteins, Color(0xFF3B82F6), totalMacroG)
-                HistoryMacroBar("Glucides", scan.totalCarbs, OrangeVibrant, totalMacroG)
-                HistoryMacroBar("Lipides", scan.totalFats, Color(0xFFEF4444), totalMacroG)
-                HistoryMacroBar("Fibres", scan.totalFibers, NeonGreen, totalMacroG)
+                HistoryMacroBar(stringResource(R.string.history_meal_macro_proteins), scan.totalProteins, Color(0xFF3B82F6), totalMacroG)
+                HistoryMacroBar(stringResource(R.string.history_meal_macro_carbs), scan.totalCarbs, OrangeVibrant, totalMacroG)
+                HistoryMacroBar(stringResource(R.string.history_meal_macro_fats), scan.totalFats, Color(0xFFEF4444), totalMacroG)
+                HistoryMacroBar(stringResource(R.string.history_meal_macro_fibers), scan.totalFibers, NeonGreen, totalMacroG)
             }
 
             // ─── Verdict ───
@@ -435,12 +439,12 @@ private fun MealHistoryCard(scan: com.shredcoach.app.data.local.entity.MealScanE
                 horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 // Supprimer
                 IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Default.DeleteOutline, "Supprimer", Modifier.size(16.dp),
+                    Icon(Icons.Default.DeleteOutline, stringResource(R.string.history_meal_delete_cd), Modifier.size(16.dp),
                         tint = MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
                 }
                 // Voir détails
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Voir l'analyse complète", style = MaterialTheme.typography.labelSmall,
+                    Text(stringResource(R.string.history_meal_full_analysis), style = MaterialTheme.typography.labelSmall,
                         color = OrangeVibrant, fontWeight = FontWeight.SemiBold)
                     Icon(Icons.Default.ChevronRight, null, Modifier.size(16.dp), tint = OrangeVibrant)
                 }
@@ -458,7 +462,7 @@ private fun HistoryMacroBar(label: String, grams: Double, color: Color, totalG: 
         Box(Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)).background(color.copy(alpha = 0.1f))) {
             Box(Modifier.fillMaxWidth(fraction).fillMaxHeight().clip(RoundedCornerShape(3.dp)).background(color))
         }
-        Text("${String.format("%.1f", grams)}g", style = MaterialTheme.typography.labelSmall,
+        Text(stringResource(R.string.history_meal_grams, grams), style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold, modifier = Modifier.width(45.dp),
             textAlign = androidx.compose.ui.text.style.TextAlign.End)
     }
@@ -492,16 +496,16 @@ private fun HistorySummaryHero(state: WorkoutHistoryState) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Icon(Icons.Default.EmojiEvents, null, tint = Color.White, modifier = Modifier.size(24.dp))
                     Text(
-                        "Mon parcours", style = MaterialTheme.typography.titleMedium,
+                        stringResource(R.string.history_hero_title), style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold, color = Color.White
                     )
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    SummaryStat("${state.totalWorkouts}", "Séances", Modifier.weight(1f))
+                    SummaryStat("${state.totalWorkouts}", stringResource(R.string.history_hero_label_seances), Modifier.weight(1f))
                     VerticalDividerLight()
-                    SummaryStat(formatVolume(state.totalVolumeKg), "Volume", Modifier.weight(1f))
+                    SummaryStat(formatVolume(state.totalVolumeKg), stringResource(R.string.history_hero_label_volume), Modifier.weight(1f))
                     VerticalDividerLight()
-                    SummaryStat(formatDurationShort(state.totalDurationMinutes), "Temps", Modifier.weight(1f))
+                    SummaryStat(formatDurationShort(state.totalDurationMinutes), stringResource(R.string.history_hero_label_time), Modifier.weight(1f))
                 }
             }
         }
@@ -540,7 +544,7 @@ private fun FilterChipsRow(current: HistoryFilter, onSelect: (HistoryFilter) -> 
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    filter.displayName,
+                    stringResource(filter.displayNameRes),
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
@@ -574,7 +578,7 @@ private fun RoutineFilterChipsRow(
             shape = RoundedCornerShape(12.dp)
         ) {
             Text(
-                "Toutes routines",
+                stringResource(R.string.history_routine_filter_all),
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = if (allSelected) FontWeight.Bold else FontWeight.Medium,
@@ -679,10 +683,10 @@ private fun HistoryCard(entry: HistoryListItem, onClick: () -> Unit) {
 
             // Métriques principales
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                MetricCell(Icons.Default.Timer, formatSeconds(log.actualDurationSeconds), "Durée", Modifier.weight(1f))
-                MetricCell(Icons.Default.FitnessCenter, "${entry.realExercisesCount}", "Exos", Modifier.weight(1f))
-                MetricCell(Icons.Default.Repeat, "${entry.realSetsCount}", "Séries", Modifier.weight(1f))
-                MetricCell(Icons.Default.Bolt, formatVolume(log.totalVolume), "Volume", Modifier.weight(1f))
+                MetricCell(Icons.Default.Timer, formatSeconds(log.actualDurationSeconds), stringResource(R.string.history_metric_duration), Modifier.weight(1f))
+                MetricCell(Icons.Default.FitnessCenter, "${entry.realExercisesCount}", stringResource(R.string.history_metric_exos), Modifier.weight(1f))
+                MetricCell(Icons.Default.Repeat, "${entry.realSetsCount}", stringResource(R.string.history_metric_sets), Modifier.weight(1f))
+                MetricCell(Icons.Default.Bolt, formatVolume(log.totalVolume), stringResource(R.string.history_metric_volume), Modifier.weight(1f))
             }
         }
     }
@@ -690,7 +694,8 @@ private fun HistoryCard(entry: HistoryListItem, onClick: () -> Unit) {
 
 @Composable
 private fun StatusBadge(completed: Boolean) {
-    val (label, color) = if (completed) "Terminée" to NeonGreen else "Abandonnée" to OrangeVibrant
+    val label = if (completed) stringResource(R.string.history_status_completed) else stringResource(R.string.history_status_abandoned)
+    val color = if (completed) NeonGreen else OrangeVibrant
     Surface(
         shape = RoundedCornerShape(8.dp),
         color = color.copy(alpha = 0.12f)
@@ -721,8 +726,8 @@ private fun MetricCell(icon: ImageVector, value: String, label: String, modifier
 // Helpers — formatting
 // ═══════════════════════════════════════
 internal fun formatVolume(kg: Double): String = when {
-    kg >= 10_000 -> String.format(Locale.FRANCE, "%.1ft", kg / 1000)
-    kg >= 1_000 -> String.format(Locale.FRANCE, "%.1fk", kg / 1000) + "g"
+    kg >= 10_000 -> String.format(Locale.getDefault(), "%.1ft", kg / 1000)
+    kg >= 1_000 -> String.format(Locale.getDefault(), "%.1fk", kg / 1000) + "g"
     else -> "${kg.toInt()}kg"
 }
 
@@ -739,25 +744,45 @@ internal fun formatSeconds(seconds: Long): String {
 }
 
 internal fun formatLongDate(date: LocalDateTime): String {
-    val fmt = DateTimeFormatter.ofPattern("EEEE d MMMM 'à' HH:mm", Locale.FRANCE)
+    // Pattern locale-aware. 'à' / 'at' n'est pas i18n parfait mais gardé
+    // simple — le séparateur passe en remarque dans translatable_pattern le cas échéant.
+    val fmt = DateTimeFormatter.ofPattern("EEEE d MMMM HH:mm", Locale.getDefault())
     return date.format(fmt).replaceFirstChar { it.uppercase() }
 }
 
-private fun groupByBucket(items: List<HistoryListItem>): Map<String, List<HistoryListItem>> {
+@Composable
+private fun bucketLabelFor(d: LocalDate, today: LocalDate, startOfWeek: LocalDate, startOfMonth: LocalDate): String = when {
+    d == today -> stringResource(R.string.history_bucket_today)
+    d == today.minusDays(1) -> stringResource(R.string.history_bucket_yesterday)
+    !d.isBefore(startOfWeek) -> stringResource(R.string.history_bucket_this_week)
+    !d.isBefore(startOfMonth) -> stringResource(R.string.history_bucket_this_month)
+    !d.isBefore(today.minusDays(90)) -> stringResource(R.string.history_bucket_3_months)
+    else -> stringResource(R.string.history_bucket_older)
+}
+
+@Composable
+private fun groupByBucketComposable(items: List<HistoryListItem>): Map<String, List<HistoryListItem>> {
     val today = LocalDate.now()
     val startOfWeek = today.minusDays(today.dayOfWeek.value.toLong() - 1)
     val startOfMonth = today.withDayOfMonth(1)
+
+    val labelToday = stringResource(R.string.history_bucket_today)
+    val labelYesterday = stringResource(R.string.history_bucket_yesterday)
+    val labelThisWeek = stringResource(R.string.history_bucket_this_week)
+    val labelThisMonth = stringResource(R.string.history_bucket_this_month)
+    val label3Months = stringResource(R.string.history_bucket_3_months)
+    val labelOlder = stringResource(R.string.history_bucket_older)
 
     val groups = linkedMapOf<String, MutableList<HistoryListItem>>()
     items.forEach { item ->
         val d = item.log.date.toLocalDate()
         val bucket = when {
-            d == today -> "Aujourd'hui"
-            d == today.minusDays(1) -> "Hier"
-            !d.isBefore(startOfWeek) -> "Cette semaine"
-            !d.isBefore(startOfMonth) -> "Ce mois-ci"
-            !d.isBefore(today.minusDays(90)) -> "3 derniers mois"
-            else -> "Plus ancien"
+            d == today -> labelToday
+            d == today.minusDays(1) -> labelYesterday
+            !d.isBefore(startOfWeek) -> labelThisWeek
+            !d.isBefore(startOfMonth) -> labelThisMonth
+            !d.isBefore(today.minusDays(90)) -> label3Months
+            else -> labelOlder
         }
         groups.getOrPut(bucket) { mutableListOf() }.add(item)
     }
@@ -768,10 +793,11 @@ private fun groupByBucket(items: List<HistoryListItem>): Map<String, List<Histor
 // Share / Export builders
 // ──────────────────────────────────────────────────────────
 
-private val historyDateFmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.FRENCH)
+private val historyDateFmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.getDefault())
 
 private fun buildWorkoutHistoryShareData(
     items: List<HistoryListItem>,
+    ctx: android.content.Context,
 ): com.shredcoach.app.presentation.share.ShareCardData.HistorySummary {
     val totalSeances = items.size
     val totalVolume = items.sumOf { it.log.totalVolume }
@@ -779,23 +805,23 @@ private fun buildWorkoutHistoryShareData(
     val totalReps = items.sumOf { it.log.totalReps }
     val totalDurationSec = items.sumOf { it.log.actualDurationSeconds }
     return com.shredcoach.app.presentation.share.ShareCardData.HistorySummary(
-        title = "Mon historique séances",
-        subtitle = "Total cumulé",
+        title = ctx.getString(R.string.history_share_workouts_title),
+        subtitle = ctx.getString(R.string.history_share_workouts_subtitle),
         accentEmoji = "📅",
         totalCount = totalSeances,
-        countLabel = "séances",
+        countLabel = ctx.getString(R.string.history_share_workouts_count_label),
         keyMetrics = listOf(
             com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
-                label = "Volume", value = totalVolume.toInt().toString(), unit = "kg",
+                label = ctx.getString(R.string.history_share_metric_volume), value = totalVolume.toInt().toString(), unit = "kg",
             ),
             com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
-                label = "Séries", value = totalSets.toString(),
+                label = ctx.getString(R.string.history_share_metric_sets), value = totalSets.toString(),
             ),
             com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
-                label = "Reps", value = totalReps.toString(),
+                label = ctx.getString(R.string.history_share_metric_reps), value = totalReps.toString(),
             ),
             com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
-                label = "Durée", value = (totalDurationSec / 60).toString(), unit = "min",
+                label = ctx.getString(R.string.history_share_metric_duration), value = (totalDurationSec / 60).toString(), unit = "min",
             ),
         ),
     )
@@ -803,25 +829,26 @@ private fun buildWorkoutHistoryShareData(
 
 private fun buildNutritionHistoryShareData(
     scans: List<com.shredcoach.app.data.local.entity.MealScanEntity>,
+    ctx: android.content.Context,
 ): com.shredcoach.app.presentation.share.ShareCardData.HistorySummary {
     val totalCalories = scans.sumOf { it.totalCalories }
     val avgHealth = if (scans.isNotEmpty()) scans.map { it.healthScore }.average().toInt() else 0
     val avgProt = if (scans.isNotEmpty()) scans.map { it.totalProteins }.average().toInt() else 0
     return com.shredcoach.app.presentation.share.ShareCardData.HistorySummary(
-        title = "Mon historique repas",
-        subtitle = "Tous mes scans",
+        title = ctx.getString(R.string.history_share_nutrition_title),
+        subtitle = ctx.getString(R.string.history_share_nutrition_subtitle),
         accentEmoji = "🍽️",
         totalCount = scans.size,
-        countLabel = "repas scannés",
+        countLabel = ctx.getString(R.string.history_share_nutrition_count_label),
         keyMetrics = listOf(
             com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
-                label = "Total kcal", value = totalCalories.toString(), unit = "kcal",
+                label = ctx.getString(R.string.history_share_metric_total_kcal), value = totalCalories.toString(), unit = "kcal",
             ),
             com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
-                label = "Score moyen", value = avgHealth.toString(), unit = "/100",
+                label = ctx.getString(R.string.history_share_metric_avg_score), value = avgHealth.toString(), unit = "/100",
             ),
             com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
-                label = "Protéines/repas", value = avgProt.toString(), unit = "g",
+                label = ctx.getString(R.string.history_share_metric_avg_protein), value = avgProt.toString(), unit = "g",
             ),
         ),
     )
@@ -829,19 +856,31 @@ private fun buildNutritionHistoryShareData(
 
 private fun buildWorkoutHistoryExportPayload(
     items: List<HistoryListItem>,
+    ctx: android.content.Context,
 ): com.shredcoach.app.presentation.share.DataExporter.ExportPayload {
+    val defaultSessionName = ctx.getString(R.string.history_detail_default_share_title)
+    val statusDone = ctx.getString(R.string.history_status_completed)
+    val statusAbandoned = ctx.getString(R.string.history_status_abandoned)
     return com.shredcoach.app.presentation.share.DataExporter.ExportPayload(
-        title = "ShredCoach — Historique séances",
-        description = "${items.size} séances exportées",
+        title = ctx.getString(R.string.history_export_workouts_payload_title),
+        description = ctx.getString(R.string.history_export_workouts_payload_desc, items.size),
         columns = listOf(
-            "Date", "Séance", "Durée (min)", "Volume (kg)", "Séries",
-            "Reps", "Repos total (s)", "Exos terminés", "Exos passés", "Statut",
+            ctx.getString(R.string.history_export_col_date),
+            ctx.getString(R.string.history_export_col_session),
+            ctx.getString(R.string.history_export_col_duration_min),
+            ctx.getString(R.string.history_export_col_volume_kg),
+            ctx.getString(R.string.history_export_col_sets),
+            ctx.getString(R.string.history_export_col_reps),
+            ctx.getString(R.string.history_export_col_rest_total_s),
+            ctx.getString(R.string.history_export_col_exos_done),
+            ctx.getString(R.string.history_export_col_exos_skipped),
+            ctx.getString(R.string.history_export_col_status),
         ),
         rows = items.map { item ->
             val log = item.log
             listOf(
                 log.date.format(historyDateFmt),
-                item.workoutName.ifBlank { "Séance" },
+                item.workoutName.ifBlank { defaultSessionName },
                 (log.actualDurationSeconds / 60).toString(),
                 "%.1f".format(log.totalVolume),
                 log.totalSets.toString(),
@@ -849,27 +888,41 @@ private fun buildWorkoutHistoryExportPayload(
                 log.totalRestSeconds.toString(),
                 log.exercisesCompleted.toString(),
                 log.exercisesSkipped.toString(),
-                if (log.completed) "Terminée" else "Abandonnée",
+                if (log.completed) statusDone else statusAbandoned,
             )
         },
         summary = listOf(
-            "Total séances" to items.size.toString(),
-            "Volume cumulé" to "${items.sumOf { it.log.totalVolume }.toInt()} kg",
-            "Durée cumulée" to "${items.sumOf { it.log.actualDurationSeconds } / 60} min",
+            ctx.getString(R.string.history_export_summary_total_sessions) to items.size.toString(),
+            ctx.getString(R.string.history_export_summary_total_volume) to "${items.sumOf { it.log.totalVolume }.toInt()} kg",
+            ctx.getString(R.string.history_export_summary_total_duration) to "${items.sumOf { it.log.actualDurationSeconds } / 60} min",
         ),
     )
 }
 
 private fun buildNutritionHistoryExportPayload(
     scans: List<com.shredcoach.app.data.local.entity.MealScanEntity>,
+    ctx: android.content.Context,
 ): com.shredcoach.app.presentation.share.DataExporter.ExportPayload {
+    val yes = ctx.getString(R.string.history_export_yes)
+    val no = ctx.getString(R.string.history_export_no)
     return com.shredcoach.app.presentation.share.DataExporter.ExportPayload(
-        title = "ShredCoach — Historique nutrition (scans)",
-        description = "${scans.size} repas scannés",
+        title = ctx.getString(R.string.history_export_nutrition_payload_title),
+        description = ctx.getString(R.string.history_export_nutrition_payload_desc, scans.size),
         columns = listOf(
-            "Date", "Type repas", "Plat", "Cuisine",
-            "Kcal", "Protéines (g)", "Glucides (g)", "Lipides (g)", "Fibres (g)",
-            "Poids (g)", "Score santé", "Nutri-Score", "Verdict", "Ajouté au suivi",
+            ctx.getString(R.string.history_export_col_date),
+            ctx.getString(R.string.history_export_col_meal_type),
+            ctx.getString(R.string.history_export_col_dish),
+            ctx.getString(R.string.history_export_col_cuisine),
+            ctx.getString(R.string.history_export_col_kcal),
+            ctx.getString(R.string.history_export_col_proteins_g),
+            ctx.getString(R.string.history_export_col_carbs_g),
+            ctx.getString(R.string.history_export_col_fats_g),
+            ctx.getString(R.string.history_export_col_fibers_g),
+            ctx.getString(R.string.history_export_col_weight_g),
+            ctx.getString(R.string.history_export_col_health_score),
+            ctx.getString(R.string.history_export_col_nutri_score),
+            ctx.getString(R.string.history_export_col_verdict),
+            ctx.getString(R.string.history_export_col_added_to_tracking),
         ),
         rows = scans.map { s ->
             listOf(
@@ -886,13 +939,13 @@ private fun buildNutritionHistoryExportPayload(
                 s.healthScore.toString(),
                 s.nutriScoreGrade,
                 s.verdict,
-                if (s.addedToTracking) "Oui" else "Non",
+                if (s.addedToTracking) yes else no,
             )
         },
         summary = listOf(
-            "Total scans" to scans.size.toString(),
-            "Kcal cumulées" to scans.sumOf { it.totalCalories }.toString(),
-            "Score santé moyen" to (if (scans.isNotEmpty()) scans.map { it.healthScore }.average().toInt() else 0).toString(),
+            ctx.getString(R.string.history_export_summary_total_scans) to scans.size.toString(),
+            ctx.getString(R.string.history_export_summary_total_kcal) to scans.sumOf { it.totalCalories }.toString(),
+            ctx.getString(R.string.history_export_summary_avg_health_score) to (if (scans.isNotEmpty()) scans.map { it.healthScore }.average().toInt() else 0).toString(),
         ),
     )
 }
