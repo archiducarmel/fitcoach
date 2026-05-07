@@ -141,6 +141,14 @@ android {
         checkDependencies = false
         // i18n : strings sans traduction = erreur (sauf baseline)
         error += "MissingTranslation"
+        // ExtraTranslation downgrad en warning : les `exo_<key>_*` du catalogue
+        // exos sont **EN-only by design** (la source FR vit dans la DB
+        // ExerciseEntity, EN dans values-en/, resolver dynamique dans
+        // ExerciseI18n). Les laisser en error casserait la CI à chaque nouvelle
+        // wave de traductions exos. Trade-off accepté : on ne détecte plus
+        // les accidents EN-only non-exo, mais on a 0 false positive sur les
+        // ~250 exos déjà traduits.
+        warning += "ExtraTranslation"
         // Garde-fou pour les nouveaux écrans (ne pas remonter sur l'existant
         // déjà nettoyé via Vagues 1A-1E).
         warning += "HardcodedText"
