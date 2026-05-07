@@ -1388,6 +1388,51 @@
     <string name="weight_history_title">Your weigh-ins</string>
     <string name="weight_history_total">%d total</string>
 
+    <!-- ─── Exercises screen ─── -->
+    <string name="exercises_title">Exercises</string>
+    <plurals name="exercises_count">
+        <item quantity="one">%d exercise</item>
+        <item quantity="other">%d exercises</item>
+    </plurals>
+    <string name="exercises_search_hint">Search…</string>
+    <string name="exercises_search_clear_cd">Clear</string>
+    <string name="exercises_filter_reset_cd">Reset filters</string>
+    <string name="exercises_empty_title">No exercises found</string>
+    <string name="exercises_empty_desc">Refine your search or reset your filters.</string>
+    <string name="exercises_empty_cta">Reset filters</string>
+    <string name="exercises_stat_series">Sets</string>
+    <string name="exercises_stat_reps">Reps</string>
+    <string name="exercises_stat_rest">Rest</string>
+    <string name="exercises_db_cta_title">Discover +</string>
+    <string name="exercises_db_cta_badge">FREE</string>
+    <string name="exercises_db_cta_subtitle">873 exercises with HD photos</string>
+    <string name="exercises_db_cta_caption">Free Exercise DB · filter by muscle, equipment, level</string>
+    <string name="exercises_gymscan_cta_title">GymScan</string>
+    <string name="exercises_gymscan_cta_badge">AI</string>
+    <string name="exercises_gymscan_cta_subtitle">Identify any machine from a photo</string>
+    <string name="exercises_gymscan_cta_caption">AI analyzes + matches with the animated exercises database</string>
+
+    <!-- ─── ExerciseDetail screen ─── -->
+    <string name="exercise_detail_title_default">Details</string>
+    <string name="exercise_detail_not_found">Exercise not found</string>
+    <string name="exercise_difficulty_beginner">Beginner</string>
+    <string name="exercise_difficulty_intermediate">Intermediate</string>
+    <string name="exercise_difficulty_advanced">Advanced</string>
+    <string name="exercise_detail_section_programming">Programming</string>
+    <string name="exercise_detail_param_weight">Starting weight</string>
+    <string name="exercise_detail_param_tempo">Tempo</string>
+    <string name="exercise_detail_param_equipment">Equipment</string>
+    <string name="exercise_detail_section_execution">How to execute it well</string>
+    <string name="exercise_detail_section_tips">Coach tips</string>
+    <string name="exercise_detail_variant_type_label">Type: %s</string>
+    <string name="exercise_detail_gif_placeholder">Demo</string>
+
+    <!-- ExerciseVariant.descriptionRes -->
+    <string name="variant_machine_desc">Guided, safe, ideal to start out and load heavy securely</string>
+    <string name="variant_weights_desc">Free weights, maximal muscle recruitment, requires stabilization</string>
+    <string name="variant_bodyweight_desc">No equipment, functional, trains coordination and core stability</string>
+    <string name="variant_isolation_desc">Targets a single muscle precisely, finishing and sculpting</string>
+
     <!-- IngredientCategory enum -->
     <string name="ingredient_cat_animal_proteins">Animal proteins</string>
     <string name="ingredient_cat_plant_proteins">Plant proteins</string>

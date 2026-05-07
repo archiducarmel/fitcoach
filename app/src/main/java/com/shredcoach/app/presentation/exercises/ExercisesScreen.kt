@@ -22,6 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,6 +32,7 @@ import coil.request.ImageRequest
 import coil.size.Size
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.ExerciseEntity
 import com.shredcoach.app.domain.model.ExerciseVariant
 import com.shredcoach.app.domain.model.MuscleGroup
@@ -58,9 +61,9 @@ fun ExercisesScreen(
                 title = {
                     Column(modifier = Modifier.fillMaxHeight().offset(y = (-6).dp),
                         verticalArrangement = Arrangement.Center) {
-                        Text("Exercices", style = MaterialTheme.typography.titleLarge,
+                        Text(stringResource(R.string.exercises_title), style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold, lineHeight = 24.sp)
-                        Text("${exercises.size} exercice${if (exercises.size > 1) "s" else ""}",
+                        Text(pluralStringResource(R.plurals.exercises_count, exercises.size, exercises.size),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 16.sp)
                     }
@@ -87,12 +90,12 @@ fun ExercisesScreen(
                     value = searchQuery,
                     onValueChange = { viewModel.onSearchQuery(it) },
                     modifier = Modifier.weight(1f).heightIn(min = 52.dp),
-                    placeholder = { Text("Rechercher...", style = MaterialTheme.typography.bodySmall) },
+                    placeholder = { Text(stringResource(R.string.exercises_search_hint), style = MaterialTheme.typography.bodySmall) },
                     leadingIcon = { Icon(Icons.Default.Search, null, Modifier.size(20.dp)) },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(onClick = { viewModel.onSearchQuery("") }) {
-                                Icon(Icons.Default.Close, "Effacer", Modifier.size(18.dp))
+                                Icon(Icons.Default.Close, stringResource(R.string.exercises_search_clear_cd), Modifier.size(18.dp))
                             }
                         }
                     },
@@ -102,7 +105,7 @@ fun ExercisesScreen(
                 )
                 if (selectedMuscleGroup != null || selectedVariant != null) {
                     IconButton(onClick = { viewModel.clearFilters() }, modifier = Modifier.size(40.dp)) {
-                        Icon(Icons.Default.FilterListOff, "Réinitialiser filtres", Modifier.size(20.dp), tint = OrangeVibrant)
+                        Icon(Icons.Default.FilterListOff, stringResource(R.string.exercises_filter_reset_cd), Modifier.size(20.dp), tint = OrangeVibrant)
                     }
                 }
             }
@@ -133,9 +136,9 @@ fun ExercisesScreen(
             } else if (exercises.isEmpty()) {
                 com.shredcoach.app.presentation.common.EmptyState(
                     icon = Icons.Default.Search,
-                    title = "Aucun exercice trouvé",
-                    description = "Affine ta recherche ou réinitialise tes filtres.",
-                    ctaLabel = "Réinitialiser les filtres",
+                    title = stringResource(R.string.exercises_empty_title),
+                    description = stringResource(R.string.exercises_empty_desc),
+                    ctaLabel = stringResource(R.string.exercises_empty_cta),
                     ctaIcon = Icons.Default.FilterListOff,
                     onCtaClick = { viewModel.clearFilters() }
                 )
@@ -188,7 +191,7 @@ fun MuscleGroupFilters(
             FilterChip(
                 selected = selectedMuscleGroup == group,
                 onClick = { onMuscleGroupSelected(if (selectedMuscleGroup == group) null else group) },
-                label = { Text(group.displayName, style = MaterialTheme.typography.labelSmall) }
+                label = { Text(stringResource(group.displayNameRes), style = MaterialTheme.typography.labelSmall) }
             )
         }
     }
@@ -209,7 +212,7 @@ fun VariantFilters(
             FilterChip(
                 selected = selectedVariant == variant,
                 onClick = { onVariantSelected(if (selectedVariant == variant) null else variant) },
-                label = { Text(variant.displayName, style = MaterialTheme.typography.labelSmall) },
+                label = { Text(stringResource(variant.displayNameRes), style = MaterialTheme.typography.labelSmall) },
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = androidx.compose.ui.graphics.Color(variant.color)
                 )
@@ -280,15 +283,15 @@ fun ExerciseCard(
                             .weight(1f, fill = false))
                     Spacer(Modifier.width(8.dp))
                     Surface(shape = RoundedCornerShape(6.dp), color = variantColor.copy(alpha = 0.2f)) {
-                        Text(exercise.variant.displayName, Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        Text(stringResource(exercise.variant.displayNameRes), Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                             style = MaterialTheme.typography.labelSmall, color = variantColor)
                     }
                 }
-                Text(exercise.muscleGroup.displayName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(exercise.muscleGroup.displayNameRes), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ExerciseStat(label = "Séries", value = "${exercise.series}")
-                    ExerciseStat(label = "Reps", value = "${exercise.repsMin}-${exercise.repsMax}")
-                    ExerciseStat(label = "Repos", value = "${exercise.restSeconds}s")
+                    ExerciseStat(label = stringResource(R.string.exercises_stat_series), value = "${exercise.series}")
+                    ExerciseStat(label = stringResource(R.string.exercises_stat_reps), value = "${exercise.repsMin}-${exercise.repsMax}")
+                    ExerciseStat(label = stringResource(R.string.exercises_stat_rest), value = "${exercise.restSeconds}s")
                 }
             }
         }
@@ -430,14 +433,14 @@ private fun ExerciseDbExplorerCta(onClick: () -> Unit) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("Découvrir +", style = MaterialTheme.typography.titleMedium,
+                        Text(stringResource(R.string.exercises_db_cta_title), style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.ExtraBold,
                             color = androidx.compose.ui.graphics.Color.White)
                         Surface(
                             shape = RoundedCornerShape(6.dp),
                             color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.22f)
                         ) {
-                            Text("FREE",
+                            Text(stringResource(R.string.exercises_db_cta_badge),
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.ExtraBold,
@@ -445,11 +448,11 @@ private fun ExerciseDbExplorerCta(onClick: () -> Unit) {
                                 fontSize = 9.sp)
                         }
                     }
-                    Text("873 exercices avec photos HD",
+                    Text(stringResource(R.string.exercises_db_cta_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = androidx.compose.ui.graphics.Color.White)
-                    Text("Free Exercise DB · filtres muscle, équipement, niveau",
+                    Text(stringResource(R.string.exercises_db_cta_caption),
                         style = MaterialTheme.typography.labelSmall,
                         color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.85f))
                 }
@@ -515,14 +518,14 @@ private fun GymScanCta(onClick: () -> Unit) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("GymScan", style = MaterialTheme.typography.titleMedium,
+                        Text(stringResource(R.string.exercises_gymscan_cta_title), style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.ExtraBold,
                             color = androidx.compose.ui.graphics.Color.White)
                         Surface(
                             shape = RoundedCornerShape(6.dp),
                             color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.22f)
                         ) {
-                            Text("IA",
+                            Text(stringResource(R.string.exercises_gymscan_cta_badge),
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.ExtraBold,
@@ -530,11 +533,11 @@ private fun GymScanCta(onClick: () -> Unit) {
                                 fontSize = 9.sp)
                         }
                     }
-                    Text("Identifie n'importe quelle machine en photo",
+                    Text(stringResource(R.string.exercises_gymscan_cta_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = androidx.compose.ui.graphics.Color.White)
-                    Text("L'IA analyse + matche avec la base d'exos animés",
+                    Text(stringResource(R.string.exercises_gymscan_cta_caption),
                         style = MaterialTheme.typography.labelSmall,
                         color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.85f))
                 }

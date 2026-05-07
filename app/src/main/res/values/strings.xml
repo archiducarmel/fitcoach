@@ -1560,6 +1560,51 @@
     <string name="weight_history_title">Tes pesées</string>
     <string name="weight_history_total">%d au total</string>
 
+    <!-- ─── Exercises screen ─── -->
+    <string name="exercises_title">Exercices</string>
+    <plurals name="exercises_count">
+        <item quantity="one">%d exercice</item>
+        <item quantity="other">%d exercices</item>
+    </plurals>
+    <string name="exercises_search_hint">Rechercher…</string>
+    <string name="exercises_search_clear_cd">Effacer</string>
+    <string name="exercises_filter_reset_cd">Réinitialiser filtres</string>
+    <string name="exercises_empty_title">Aucun exercice trouvé</string>
+    <string name="exercises_empty_desc">Affine ta recherche ou réinitialise tes filtres.</string>
+    <string name="exercises_empty_cta">Réinitialiser les filtres</string>
+    <string name="exercises_stat_series">Séries</string>
+    <string name="exercises_stat_reps">Reps</string>
+    <string name="exercises_stat_rest">Repos</string>
+    <string name="exercises_db_cta_title">Découvrir +</string>
+    <string name="exercises_db_cta_badge">FREE</string>
+    <string name="exercises_db_cta_subtitle">873 exercices avec photos HD</string>
+    <string name="exercises_db_cta_caption">Free Exercise DB · filtres muscle, équipement, niveau</string>
+    <string name="exercises_gymscan_cta_title">GymScan</string>
+    <string name="exercises_gymscan_cta_badge">IA</string>
+    <string name="exercises_gymscan_cta_subtitle">Identifie n\'importe quelle machine en photo</string>
+    <string name="exercises_gymscan_cta_caption">L\'IA analyse + matche avec la base d\'exos animés</string>
+
+    <!-- ─── ExerciseDetail screen ─── -->
+    <string name="exercise_detail_title_default">Détail</string>
+    <string name="exercise_detail_not_found">Exercice introuvable</string>
+    <string name="exercise_difficulty_beginner">Débutant</string>
+    <string name="exercise_difficulty_intermediate">Intermédiaire</string>
+    <string name="exercise_difficulty_advanced">Avancé</string>
+    <string name="exercise_detail_section_programming">Programmation</string>
+    <string name="exercise_detail_param_weight">Poids de départ</string>
+    <string name="exercise_detail_param_tempo">Tempo</string>
+    <string name="exercise_detail_param_equipment">Équipement</string>
+    <string name="exercise_detail_section_execution">Comment bien exécuter</string>
+    <string name="exercise_detail_section_tips">Conseils du coach</string>
+    <string name="exercise_detail_variant_type_label">Type : %s</string>
+    <string name="exercise_detail_gif_placeholder">Démonstration</string>
+
+    <!-- ExerciseVariant.descriptionRes -->
+    <string name="variant_machine_desc">Guidé, sécurisé, idéal pour débuter et charger lourd en toute sécurité</string>
+    <string name="variant_weights_desc">Poids libres, recrutement musculaire maximal, exige de la stabilisation</string>
+    <string name="variant_bodyweight_desc">Aucun équipement, fonctionnel, travaille la coordination et le gainage</string>
+    <string name="variant_isolation_desc">Cible un seul muscle précisément, finition et sculpture</string>
+
     <!-- IngredientCategory enum -->
     <string name="ingredient_cat_animal_proteins">Protéines animales</string>
     <string name="ingredient_cat_plant_proteins">Protéines végétales</string>
