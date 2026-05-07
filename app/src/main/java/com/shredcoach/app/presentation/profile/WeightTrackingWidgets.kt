@@ -36,6 +36,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -44,6 +46,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.WeightLogEntity
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
@@ -80,15 +83,16 @@ fun WeightTrackingTab(state: ProfileState, viewModel: ProfileViewModel) {
     // ── Header avec CTA pesée ──
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
         Column {
-            Text("Suivi du poids", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text("${logs.size} pesée${if (logs.size > 1) "s" else ""} · objectif ${formatKg(profile.targetWeightKg)}",
+            Text(stringResource(R.string.weight_tab_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            val countText = pluralStringResource(R.plurals.weight_logs_count, logs.size, logs.size)
+            Text(stringResource(R.string.weight_tab_subtitle, countText, formatKg(profile.targetWeightKg)),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f))
         }
         FilledTonalButton(onClick = { viewModel.showAddWeight() }) {
             Icon(Icons.Default.Add, null, Modifier.size(18.dp))
             Spacer(Modifier.width(4.dp))
-            Text("Peser")
+            Text(stringResource(R.string.weight_btn_log))
         }
     }
 
@@ -167,7 +171,7 @@ private fun WeightProgressHero(
         Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Default.MonitorWeight, null, Modifier.size(20.dp), tint = accentColor)
-                Text("Ta progression",
+                Text(stringResource(R.string.weight_hero_title),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold)
                 Spacer(Modifier.weight(1f))
@@ -238,7 +242,7 @@ private fun ProgressBar(
         // Labels Départ | Objectif
         Row(Modifier.fillMaxWidth()) {
             Column {
-                Text("Départ", style = MaterialTheme.typography.labelSmall,
+                Text(stringResource(R.string.weight_label_start), style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f))
                 Text(formatKg(startKg), style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
                     fontWeight = FontWeight.SemiBold)
@@ -247,7 +251,7 @@ private fun ProgressBar(
             Column(horizontalAlignment = Alignment.End) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     Icon(Icons.Default.Flag, null, Modifier.size(11.dp), tint = NeonGreen)
-                    Text("Objectif", style = MaterialTheme.typography.labelSmall,
+                    Text(stringResource(R.string.weight_label_target), style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f))
                 }
                 Text(formatKg(targetKg), style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
@@ -289,25 +293,25 @@ private fun ProgressVerdict(
 
             Column(Modifier.weight(1f)) {
                 val title = when {
-                    reached -> "Objectif atteint ! 🎉"
-                    isLosing && weeklyChange < -0.05 -> "Sur la bonne voie"
-                    isLosing && weeklyChange > 0.05 -> "Tu reprends — ajuste"
-                    !isLosing && weeklyChange > 0.05 -> "Bonne progression"
-                    !isLosing && weeklyChange < -0.05 -> "Tu perds — ajuste"
-                    else -> "Stabilité actuelle"
+                    reached -> stringResource(R.string.weight_verdict_reached_title)
+                    isLosing && weeklyChange < -0.05 -> stringResource(R.string.weight_verdict_losing_good)
+                    isLosing && weeklyChange > 0.05 -> stringResource(R.string.weight_verdict_losing_bad)
+                    !isLosing && weeklyChange > 0.05 -> stringResource(R.string.weight_verdict_gaining_good)
+                    !isLosing && weeklyChange < -0.05 -> stringResource(R.string.weight_verdict_gaining_bad)
+                    else -> stringResource(R.string.weight_verdict_stable)
                 }
                 Text(title, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
 
                 val subtitle = when {
-                    reached -> "Bravo, tu as atteint ton objectif"
-                    abs(weeklyChange) < 0.05 -> "Plus que ${formatKg(remaining)} à parcourir"
+                    reached -> stringResource(R.string.weight_verdict_reached_subtitle)
+                    abs(weeklyChange) < 0.05 -> stringResource(R.string.weight_verdict_remaining_only, formatKg(remaining))
                     else -> {
                         val weeksToGoal = if (weeklyChange != 0.0) abs(remaining / weeklyChange) else Double.POSITIVE_INFINITY
                         if (weeksToGoal.isFinite() && weeksToGoal in 0.5..200.0) {
                             val rounded = weeksToGoal.toInt().coerceAtLeast(1)
-                            "${formatKg(remaining)} restant · ETA ~$rounded semaine${if (rounded > 1) "s" else ""}"
+                            pluralStringResource(R.plurals.weight_verdict_eta, rounded, formatKg(remaining), rounded)
                         } else {
-                            "${formatKg(remaining)} restant"
+                            stringResource(R.string.weight_verdict_remaining, formatKg(remaining))
                         }
                     }
                 }
@@ -355,7 +359,7 @@ private fun TargetWeightEditor(
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Default.Flag, null, Modifier.size(20.dp), tint = NeonGreen)
-                Text("Mon objectif",
+                Text(stringResource(R.string.weight_target_title),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold)
                 Spacer(Modifier.weight(1f))
@@ -367,14 +371,14 @@ private fun TargetWeightEditor(
                             strokeWidth = 1.5.dp,
                             color = NeonGreen
                         )
-                        Text("Sauvegarde…", style = MaterialTheme.typography.labelSmall,
+                        Text(stringResource(R.string.weight_target_saving), style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f))
                     }
                 }
                 AnimatedVisibility(visible = showSaved, enter = fadeIn(), exit = fadeOut()) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                         Icon(Icons.Default.Check, null, Modifier.size(14.dp), tint = NeonGreen)
-                        Text("Enregistré", style = MaterialTheme.typography.labelSmall,
+                        Text(stringResource(R.string.weight_target_saved), style = MaterialTheme.typography.labelSmall,
                             color = NeonGreen, fontWeight = FontWeight.SemiBold)
                     }
                 }
@@ -383,12 +387,12 @@ private fun TargetWeightEditor(
             OutlinedTextField(
                 value = editValue,
                 onValueChange = onChange,
-                label = { Text("Objectif (kg)") },
+                label = { Text(stringResource(R.string.weight_target_field_label)) },
                 trailingIcon = { Icon(Icons.Default.Edit, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                supportingText = { Text("Sauvegarde automatique après saisie", style = MaterialTheme.typography.labelSmall) }
+                supportingText = { Text(stringResource(R.string.weight_target_field_supporting), style = MaterialTheme.typography.labelSmall) }
             )
 
             // Presets : ajustements rapides depuis le poids actuel.
@@ -440,11 +444,11 @@ private fun PresetChip(label: String, modifier: Modifier = Modifier, onClick: ()
 //  - Empty state stylé si pas assez de points.
 //  - Affiche le dernier point comme un "halo" pulsant pour le repérer.
 
-private enum class ChartPeriod(val label: String, val days: Int) {
-    WEEK("7 j", 7),
-    MONTH("30 j", 30),
-    QUARTER("90 j", 90),
-    ALL("Tout", Int.MAX_VALUE)
+private enum class ChartPeriod(@androidx.annotation.StringRes val labelRes: Int, val days: Int) {
+    WEEK(R.string.weight_chart_period_week, 7),
+    MONTH(R.string.weight_chart_period_month, 30),
+    QUARTER(R.string.weight_chart_period_quarter, 90),
+    ALL(R.string.weight_chart_period_all, Int.MAX_VALUE)
 }
 
 @Composable
@@ -464,9 +468,9 @@ private fun WeightChartCard(logs: List<WeightLogEntity>, targetKg: Double) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Default.ShowChart, null, Modifier.size(20.dp), tint = OrangeVibrant)
-                Text("Évolution", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.weight_chart_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.weight(1f))
-                Text("${filtered.size} pesée${if (filtered.size > 1) "s" else ""}",
+                Text(pluralStringResource(R.plurals.weight_logs_count, filtered.size, filtered.size),
                     style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
             }
@@ -482,7 +486,7 @@ private fun WeightChartCard(logs: List<WeightLogEntity>, targetKg: Double) {
                         modifier = Modifier.weight(1f).height(32.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Text(p.label,
+                            Text(stringResource(p.labelRes),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                                 color = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant)
@@ -493,7 +497,7 @@ private fun WeightChartCard(logs: List<WeightLogEntity>, targetKg: Double) {
 
             if (filtered.isEmpty()) {
                 Box(Modifier.fillMaxWidth().height(180.dp), contentAlignment = Alignment.Center) {
-                    Text("Aucune pesée sur cette période",
+                    Text(stringResource(R.string.weight_chart_empty),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                 }
@@ -638,7 +642,7 @@ private fun WeightChartCanvas(
         }
 
         // Labels axe X : premier et dernier (et milieu si n >= 5)
-        val dateFmt = DateTimeFormatter.ofPattern("d MMM", java.util.Locale.FRENCH)
+        val dateFmt = DateTimeFormatter.ofPattern("d MMM", java.util.Locale.getDefault())
         val toRender = mutableListOf<Pair<Float, String>>()
         toRender += points.first().x to logs.first().date.format(dateFmt)
         if (n >= 5) {
@@ -703,22 +707,22 @@ private fun ChartStatsRow(logs: List<WeightLogEntity>) {
         horizontalArrangement = Arrangement.SpaceAround
     ) {
         ChartStat(
-            label = "Variation",
+            label = stringResource(R.string.weight_chart_stat_delta),
             value = (if (delta >= 0) "+" else "") + String.format(java.util.Locale.US, "%.1f kg", delta),
             color = deltaColor
         )
         ChartStat(
-            label = "Min",
+            label = stringResource(R.string.weight_chart_stat_min),
             value = formatKg(logs.minOf { it.weightKg }),
             color = MaterialTheme.colorScheme.onSurface
         )
         ChartStat(
-            label = "Max",
+            label = stringResource(R.string.weight_chart_stat_max),
             value = formatKg(logs.maxOf { it.weightKg }),
             color = MaterialTheme.colorScheme.onSurface
         )
         ChartStat(
-            label = "/ semaine",
+            label = stringResource(R.string.weight_chart_stat_per_week),
             value = (if (perWeek >= 0) "+" else "") + String.format(java.util.Locale.US, "%.2f", perWeek),
             color = deltaColor
         )
@@ -756,9 +760,9 @@ private fun EmptyHistoryCard(onAdd: () -> Unit) {
                 contentAlignment = Alignment.Center) {
                 Icon(Icons.Default.MonitorWeight, null, Modifier.size(28.dp), tint = OrangeVibrant)
             }
-            Text("Démarre ton suivi", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.weight_empty_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             Text(
-                "Pèse-toi le matin à jeun, même horaire chaque fois pour des données fiables.",
+                stringResource(R.string.weight_empty_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
                 textAlign = TextAlign.Center
@@ -766,7 +770,7 @@ private fun EmptyHistoryCard(onAdd: () -> Unit) {
             FilledTonalButton(onClick = onAdd) {
                 Icon(Icons.Default.Add, null, Modifier.size(18.dp))
                 Spacer(Modifier.width(4.dp))
-                Text("Ma première pesée", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.weight_empty_cta), fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -789,10 +793,10 @@ private fun WeightHistoryCard(logs: List<WeightLogEntity>) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Default.Schedule, null, Modifier.size(20.dp), tint = OrangeVibrant)
-                Text("Tes pesées", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.weight_history_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.weight(1f))
                 if (sorted.size > display.size) {
-                    Text("${sorted.size} au total", style = MaterialTheme.typography.labelSmall,
+                    Text(stringResource(R.string.weight_history_total, sorted.size), style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                 }
             }
@@ -814,7 +818,7 @@ private fun WeightHistoryRow(log: WeightLogEntity, previous: Double?) {
         delta < 0 -> NeonGreen
         else -> ErrorRed
     }
-    val dateFmt = DateTimeFormatter.ofPattern("EEE d MMM", java.util.Locale.FRENCH)
+    val dateFmt = DateTimeFormatter.ofPattern("EEE d MMM", java.util.Locale.getDefault())
 
     Row(
         Modifier.fillMaxWidth().padding(vertical = 4.dp),

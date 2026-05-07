@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -38,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.EquipmentType
 import com.shredcoach.app.data.local.entity.FitnessGoal
 import com.shredcoach.app.data.local.entity.FitnessLevel
@@ -59,9 +61,11 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
     // ── Launchers photo de profil (camera + galerie) ──
     var pendingPhotoPath by remember { mutableStateOf("") }
     var showPhotoChoice by remember { mutableStateOf(false) }
+    val photoUpdatedMsg = stringResource(R.string.profile_snack_photo_updated)
+    val photoImportErrorMsg = stringResource(R.string.profile_snack_import_error)
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success && pendingPhotoPath.isNotBlank()) {
-            viewModel.updateProfilePhoto(pendingPhotoPath); snack("Photo de profil mise à jour")
+            viewModel.updateProfilePhoto(pendingPhotoPath); snack(photoUpdatedMsg)
         }
     }
     val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -72,8 +76,8 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
                 context.contentResolver.openInputStream(uri)?.use { input ->
                     file.outputStream().use { output -> input.copyTo(output) }
                 }
-                viewModel.updateProfilePhoto(file.absolutePath); snack("Photo de profil mise à jour")
-            } catch (_: Exception) { snack("Erreur lors de l'import") }
+                viewModel.updateProfilePhoto(file.absolutePath); snack(photoUpdatedMsg)
+            } catch (_: Exception) { snack(photoImportErrorMsg) }
         }
     }
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -99,20 +103,21 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
     }
 
     // BottomSheet choix photo
+    val photoRemovedMsg = stringResource(R.string.profile_snack_photo_removed)
     if (showPhotoChoice) {
         ModalBottomSheet(onDismissRequest = { showPhotoChoice = false }) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Photo de profil", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.profile_photo_sheet_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Button(onClick = { showPhotoChoice = false; launchCamera() }, Modifier.fillMaxWidth().height(52.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = OrangeVibrant)) {
-                    Icon(Icons.Default.CameraAlt, null); Spacer(Modifier.width(8.dp)); Text("Prendre une photo", fontWeight = FontWeight.Bold)
+                    Icon(Icons.Default.CameraAlt, null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.profile_photo_sheet_camera), fontWeight = FontWeight.Bold)
                 }
                 OutlinedButton(onClick = { showPhotoChoice = false; galleryLauncher.launch("image/*") }, Modifier.fillMaxWidth().height(52.dp)) {
-                    Icon(Icons.Default.PhotoLibrary, null); Spacer(Modifier.width(8.dp)); Text("Choisir dans la galerie", fontWeight = FontWeight.Bold)
+                    Icon(Icons.Default.PhotoLibrary, null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.profile_photo_sheet_gallery), fontWeight = FontWeight.Bold)
                 }
                 if (state.profile?.profilePhotoPath != null) {
-                    TextButton(onClick = { showPhotoChoice = false; viewModel.updateProfilePhoto(""); snack("Photo supprimée") }, Modifier.fillMaxWidth()) {
-                        Text("Supprimer la photo", color = Color(0xFFEF4444))
+                    TextButton(onClick = { showPhotoChoice = false; viewModel.updateProfilePhoto(""); snack(photoRemovedMsg) }, Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.profile_photo_sheet_remove), color = Color(0xFFEF4444))
                     }
                 }
             }
@@ -124,17 +129,17 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
     if (state.showAddWeight) {
         ModalBottomSheet(onDismissRequest = { viewModel.hideAddWeight() }) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Nouvelle pesée", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                OutlinedTextField(state.newWeight, { viewModel.onNewWeightChanged(it) }, label = { Text("Poids (kg)") },
+                Text(stringResource(R.string.profile_weight_sheet_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                OutlinedTextField(state.newWeight, { viewModel.onNewWeightChanged(it) }, label = { Text(stringResource(R.string.profile_weight_field_label)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true, modifier = Modifier.fillMaxWidth())
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    TextButton(onClick = { viewModel.hideAddWeight() }, Modifier.weight(1f)) { Text("Annuler") }
+                    TextButton(onClick = { viewModel.hideAddWeight() }, Modifier.weight(1f)) { Text(stringResource(R.string.common_cancel)) }
                     Button(onClick = {
                         val w = state.newWeight
                         viewModel.addWeightLog()
-                        snack("Pesée ajoutée : $w kg")
+                        snack(context.getString(R.string.profile_snack_weight_added, w))
                     }, Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = NeonGreen)) { Text("Enregistrer", fontWeight = FontWeight.Bold) }
+                        colors = ButtonDefaults.buttonColors(containerColor = NeonGreen)) { Text(stringResource(R.string.common_save), fontWeight = FontWeight.Bold) }
                 }
             }
         }
@@ -144,41 +149,46 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
     if (state.showDeleteConfirm) {
         ModalBottomSheet(onDismissRequest = { viewModel.hideDeleteConfirm() }) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Supprimer toutes les données ?", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text("Cette action est IRRÉVERSIBLE. Toutes tes séances, tes repas, ton profil seront supprimés.",
+                Text(stringResource(R.string.profile_delete_dialog_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.profile_delete_dialog_body),
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    TextButton(onClick = { viewModel.hideDeleteConfirm() }, Modifier.weight(1f)) { Text("Annuler") }
+                    TextButton(onClick = { viewModel.hideDeleteConfirm() }, Modifier.weight(1f)) { Text(stringResource(R.string.common_cancel)) }
                     Button(onClick = { viewModel.deleteAllData(context) }, Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))) { Text("Tout supprimer", fontWeight = FontWeight.Bold) }
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))) { Text(stringResource(R.string.profile_delete_dialog_confirm), fontWeight = FontWeight.Bold) }
                 }
             }
         }
     }
 
-    val tabTitles = listOf("Infos", "Poids", "Mesures")
+    val tabTitles = listOf(
+        stringResource(R.string.profile_tab_infos),
+        stringResource(R.string.profile_tab_weight),
+        stringResource(R.string.profile_tab_measures)
+    )
     @OptIn(ExperimentalFoundationApi::class)
     val pagerState = rememberPagerState(pageCount = { 3 })
 
+    val exportedMsg = stringResource(R.string.profile_snack_exported)
     Scaffold(topBar = {
         TopAppBar(
-            title = { Text("Mon Profil", fontWeight = FontWeight.Bold) },
-            navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour") } },
+            title = { Text(stringResource(R.string.profile_screen_title), fontWeight = FontWeight.Bold) },
+            navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.common_back)) } },
             actions = {
-                IconButton(onClick = { navController.navigate(com.shredcoach.app.presentation.navigation.Screen.Settings.route) }) { Icon(Icons.Default.Settings, "Paramètres") }
+                IconButton(onClick = { navController.navigate(com.shredcoach.app.presentation.navigation.Screen.Settings.route) }) { Icon(Icons.Default.Settings, stringResource(R.string.profile_action_settings_cd)) }
                 // Menu overflow : Photos + Danger zone + Export
                 var menuExpanded by remember { mutableStateOf(false) }
-                IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Default.MoreVert, "Plus d'options") }
+                IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Default.MoreVert, stringResource(R.string.profile_action_more_cd)) }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                    DropdownMenuItem(text = { Text("Photos progression") }, onClick = {
+                    DropdownMenuItem(text = { Text(stringResource(R.string.profile_menu_photos)) }, onClick = {
                         menuExpanded = false
                         navController.navigate(com.shredcoach.app.presentation.navigation.Screen.ProgressPhotos.route)
                     }, leadingIcon = { Icon(Icons.Default.CameraAlt, null) })
-                    DropdownMenuItem(text = { Text("Exporter / Sauvegarder") }, onClick = {
-                        menuExpanded = false; viewModel.exportBackup(context); snack("Données exportées")
+                    DropdownMenuItem(text = { Text(stringResource(R.string.profile_menu_export)) }, onClick = {
+                        menuExpanded = false; viewModel.exportBackup(context); snack(exportedMsg)
                     }, leadingIcon = { Icon(Icons.Default.Backup, null) })
                     HorizontalDivider()
-                    DropdownMenuItem(text = { Text("Supprimer les données", color = Color(0xFFEF4444)) }, onClick = {
+                    DropdownMenuItem(text = { Text(stringResource(R.string.profile_menu_delete), color = Color(0xFFEF4444)) }, onClick = {
                         menuExpanded = false; viewModel.showDeleteConfirm()
                     }, leadingIcon = { Icon(Icons.Default.DeleteForever, null, tint = Color(0xFFEF4444)) })
                 }
@@ -198,7 +208,7 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
                     if (photoPath != null) {
                         coil.compose.AsyncImage(
                             model = coil.request.ImageRequest.Builder(context).data(java.io.File(photoPath)).crossfade(true).build(),
-                            contentDescription = "Photo de profil",
+                            contentDescription = stringResource(R.string.profile_photo_avatar_cd),
                             contentScale = androidx.compose.ui.layout.ContentScale.Crop,
                             modifier = Modifier.fillMaxSize()
                         )
@@ -213,14 +223,15 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
                 }
                 Column(Modifier.weight(1f)) {
                     val displayName = "${state.editFirstName.replaceFirstChar { it.uppercase() }} ${state.editLastName.replaceFirstChar { it.uppercase() }}".trim()
-                    Text(displayName.ifBlank { "Ton nom" }, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(displayName.ifBlank { stringResource(R.string.profile_default_name) }, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     state.profile?.let { p ->
-                        Text("${p.currentWeightKg} kg • ${p.heightCm} cm • ${p.age} ans", style = MaterialTheme.typography.bodySmall,
+                        Text(stringResource(R.string.profile_avatar_meta, p.currentWeightKg.toString(), p.heightCm, p.age),
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                     }
                 }
                 // Badge photo pour indication
-                Icon(Icons.Default.CameraAlt, "Changer photo", Modifier.size(18.dp),
+                Icon(Icons.Default.CameraAlt, stringResource(R.string.profile_change_photo_cd), Modifier.size(18.dp),
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
             }
 
@@ -248,21 +259,22 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
                 Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     when (page) {
                         0 -> { // Infos
-                            SectionCard("Informations", Icons.Default.Person) {
+                            val profileSavedMsg = stringResource(R.string.profile_snack_profile_saved)
+                            SectionCard(stringResource(R.string.profile_section_info), Icons.Default.Person) {
                                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                    OutlinedTextField(state.editFirstName, { viewModel.onFirstNameChanged(it) }, label = { Text("Prénom") },
+                                    OutlinedTextField(state.editFirstName, { viewModel.onFirstNameChanged(it) }, label = { Text(stringResource(R.string.profile_field_firstname)) },
                                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
                                         modifier = Modifier.weight(1f), singleLine = true)
-                                    OutlinedTextField(state.editLastName, { viewModel.onLastNameChanged(it) }, label = { Text("Nom") },
+                                    OutlinedTextField(state.editLastName, { viewModel.onLastNameChanged(it) }, label = { Text(stringResource(R.string.profile_field_lastname)) },
                                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
                                         modifier = Modifier.weight(1f), singleLine = true)
                                 }
                                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                    OutlinedTextField(state.editAge, { viewModel.onAgeChanged(it) }, label = { Text("Âge") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f), singleLine = true)
-                                    OutlinedTextField(state.editHeight, { viewModel.onHeightChanged(it) }, label = { Text("Taille (cm)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f), singleLine = true)
+                                    OutlinedTextField(state.editAge, { viewModel.onAgeChanged(it) }, label = { Text(stringResource(R.string.profile_field_age)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f), singleLine = true)
+                                    OutlinedTextField(state.editHeight, { viewModel.onHeightChanged(it) }, label = { Text(stringResource(R.string.profile_field_height)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f), singleLine = true)
                                 }
                                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                    listOf("M" to "Homme", "F" to "Femme").forEach { (code, label) ->
+                                    listOf("M" to stringResource(R.string.profile_sex_male), "F" to stringResource(R.string.profile_sex_female)).forEach { (code, label) ->
                                         val sel = state.editSex == code
                                         Surface(
                                             onClick = { viewModel.onSexChanged(code) },
@@ -278,17 +290,21 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
                                         }
                                     }
                                 }
-                                Button(onClick = { viewModel.saveProfile(); snack("Profil mis à jour") }, Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = OrangeVibrant)) {
-                                    Icon(Icons.Default.Save, null, Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)); Text("Enregistrer", fontWeight = FontWeight.Bold)
+                                Button(onClick = { viewModel.saveProfile(); snack(profileSavedMsg) }, Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = OrangeVibrant)) {
+                                    Icon(Icons.Default.Save, null, Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.common_save), fontWeight = FontWeight.Bold)
                                 }
                             }
 
                             // Objectifs
-                            SectionCard("Mes objectifs", Icons.Default.Flag) {
+                            SectionCard(stringResource(R.string.profile_section_goals), Icons.Default.Flag) {
                                 state.profile?.let { p ->
-                                    Text("Niveau", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                                    Text(stringResource(R.string.profile_label_level), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                                     Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        listOf(FitnessLevel.BEGINNER to "Débutant", FitnessLevel.INTERMEDIATE to "Inter\nmédiaire", FitnessLevel.ADVANCED to "Avancé").forEach { (level, label) ->
+                                        listOf(
+                                            FitnessLevel.BEGINNER to stringResource(R.string.profile_level_beginner),
+                                            FitnessLevel.INTERMEDIATE to stringResource(R.string.profile_level_intermediate),
+                                            FitnessLevel.ADVANCED to stringResource(R.string.profile_level_advanced)
+                                        ).forEach { (level, label) ->
                                             val sel = p.level == level
                                             Surface(onClick = { viewModel.updateLevel(level) }, modifier = Modifier.weight(1f).fillMaxHeight().defaultMinSize(minHeight = 44.dp),
                                                 shape = RoundedCornerShape(8.dp), color = if (sel) OrangeVibrant else MaterialTheme.colorScheme.surfaceVariant, tonalElevation = if (sel) 0.dp else 1.dp) {
@@ -299,9 +315,13 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
                                             }
                                         }
                                     }
-                                    Text("Équipement", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                                    Text(stringResource(R.string.profile_label_equipment), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                                     Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        listOf(EquipmentType.FULL_GYM to "Salle\ncomplète", EquipmentType.HOME_GYM to "Home\ngym", EquipmentType.BODYWEIGHT to "Poids du\ncorps").forEach { (equip, label) ->
+                                        listOf(
+                                            EquipmentType.FULL_GYM to stringResource(R.string.profile_equip_full_gym),
+                                            EquipmentType.HOME_GYM to stringResource(R.string.profile_equip_home_gym),
+                                            EquipmentType.BODYWEIGHT to stringResource(R.string.profile_equip_bodyweight)
+                                        ).forEach { (equip, label) ->
                                             val sel = p.equipment == equip
                                             Surface(onClick = { viewModel.updateEquipment(equip) }, modifier = Modifier.weight(1f).fillMaxHeight().defaultMinSize(minHeight = 44.dp),
                                                 shape = RoundedCornerShape(8.dp), color = if (sel) OrangeVibrant else MaterialTheme.colorScheme.surfaceVariant, tonalElevation = if (sel) 0.dp else 1.dp) {
@@ -312,9 +332,13 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
                                             }
                                         }
                                     }
-                                    Text("Objectif", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                                    Text(stringResource(R.string.profile_label_goal), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                                     Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        listOf(FitnessGoal.SHRED to "Sèche", FitnessGoal.BULK to "Prise de\nmasse", FitnessGoal.MAINTAIN to "Maintien").forEach { (goal, label) ->
+                                        listOf(
+                                            FitnessGoal.SHRED to stringResource(R.string.profile_goal_shred),
+                                            FitnessGoal.BULK to stringResource(R.string.profile_goal_bulk),
+                                            FitnessGoal.MAINTAIN to stringResource(R.string.profile_goal_maintain)
+                                        ).forEach { (goal, label) ->
                                             val sel = p.goal == goal
                                             Surface(onClick = { viewModel.updateGoal(goal) }, modifier = Modifier.weight(1f).fillMaxHeight().defaultMinSize(minHeight = 44.dp),
                                                 shape = RoundedCornerShape(8.dp), color = if (sel) OrangeVibrant else MaterialTheme.colorScheme.surfaceVariant, tonalElevation = if (sel) 0.dp else 1.dp) {
@@ -332,6 +356,7 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
                             WeightTrackingTab(state = state, viewModel = viewModel)
                         }
                         2 -> { // Mesures
+                            val measuresSavedMsg = stringResource(R.string.profile_snack_measures_saved)
                             // ─── CTA Body Scanner (premium IA) ───
                             Card(
                                 onClick = { navController.navigate(com.shredcoach.app.presentation.navigation.Screen.BodyScanner.route) },
@@ -356,11 +381,11 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
                                         Icon(Icons.Default.Accessibility, null, Modifier.size(26.dp), tint = Color(0xFF00E5FF))
                                     }
                                     Column(Modifier.weight(1f)) {
-                                        Text("Body Scanner IA",
+                                        Text(stringResource(R.string.profile_bodyscan_title),
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.ExtraBold,
                                             color = Color.White)
-                                        Text("Photo → mesures auto + visualisation 3D",
+                                        Text(stringResource(R.string.profile_bodyscan_subtitle),
                                             style = MaterialTheme.typography.labelSmall,
                                             color = Color(0xFF00E5FF).copy(alpha = 0.7f))
                                     }
@@ -371,24 +396,24 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
                             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f))) {
                                 Row(Modifier.padding(12.dp), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Icon(Icons.Default.Info, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f))
-                                    Text("Mesure au mètre-ruban, le matin à jeun.", style = MaterialTheme.typography.bodySmall,
+                                    Text(stringResource(R.string.profile_measure_hint), style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f))
                                 }
                             }
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                MField("Tour de taille", state.editWaist, { viewModel.onMeasureChanged("waist", it) }, Modifier.weight(1f))
-                                MField("Poitrine", state.editChest, { viewModel.onMeasureChanged("chest", it) }, Modifier.weight(1f))
+                                MField(stringResource(R.string.profile_measure_waist), state.editWaist, { viewModel.onMeasureChanged("waist", it) }, Modifier.weight(1f))
+                                MField(stringResource(R.string.profile_measure_chest), state.editChest, { viewModel.onMeasureChanged("chest", it) }, Modifier.weight(1f))
                             }
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                MField("Bras", state.editArm, { viewModel.onMeasureChanged("arm", it) }, Modifier.weight(1f))
-                                MField("Cuisse", state.editThigh, { viewModel.onMeasureChanged("thigh", it) }, Modifier.weight(1f))
+                                MField(stringResource(R.string.profile_measure_arm), state.editArm, { viewModel.onMeasureChanged("arm", it) }, Modifier.weight(1f))
+                                MField(stringResource(R.string.profile_measure_thigh), state.editThigh, { viewModel.onMeasureChanged("thigh", it) }, Modifier.weight(1f))
                             }
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                MField("Hanches", state.editHip, { viewModel.onMeasureChanged("hip", it) }, Modifier.weight(1f))
-                                MField("Mollet", state.editCalf, { viewModel.onMeasureChanged("calf", it) }, Modifier.weight(1f))
+                                MField(stringResource(R.string.profile_measure_hip), state.editHip, { viewModel.onMeasureChanged("hip", it) }, Modifier.weight(1f))
+                                MField(stringResource(R.string.profile_measure_calf), state.editCalf, { viewModel.onMeasureChanged("calf", it) }, Modifier.weight(1f))
                             }
-                            Button(onClick = { viewModel.saveProfile(); snack("Mesures sauvegardées") }, Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = NeonGreen)) {
-                                Icon(Icons.Default.Save, null, Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)); Text("Sauvegarder mesures", fontWeight = FontWeight.Bold)
+                            Button(onClick = { viewModel.saveProfile(); snack(measuresSavedMsg) }, Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = NeonGreen)) {
+                                Icon(Icons.Default.Save, null, Modifier.size(20.dp)); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.profile_btn_save_measures), fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -421,5 +446,5 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
 
 @Composable private fun MField(label: String, value: String, onChange: (String) -> Unit, modifier: Modifier) {
     OutlinedTextField(value, onChange, label = { Text(label) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        modifier = modifier, singleLine = true, suffix = { Text("cm", style = MaterialTheme.typography.labelSmall) })
+        modifier = modifier, singleLine = true, suffix = { Text(stringResource(R.string.profile_measure_unit_cm), style = MaterialTheme.typography.labelSmall) })
 }

@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -30,6 +31,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
+import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.PhotoType
 import com.shredcoach.app.data.local.entity.ProgressPhotoEntity
 import com.shredcoach.app.presentation.theme.NeonGreen
@@ -110,17 +112,20 @@ fun ProgressPhotosScreen(navController: NavController, viewModel: ProgressPhotos
 
     Scaffold(topBar = {
         TopAppBar(
-            title = { Text("Photos Progression", fontWeight = FontWeight.Bold) },
-            navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour") } })
+            title = { Text(stringResource(R.string.photos_screen_title), fontWeight = FontWeight.Bold) },
+            navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.common_back)) } })
     }) { pad ->
+        val cameraCd = stringResource(R.string.photos_btn_camera_cd)
+        val galleryCd = stringResource(R.string.photos_btn_gallery_cd)
+        val sectionCountTpl = stringResource(R.string.photos_section_count)
         LazyColumn(Modifier.fillMaxSize().padding(pad), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
 
             // Boutons capture
             item {
                 Card(colors = CardDefaults.cardColors(containerColor = OrangeVibrant.copy(alpha = 0.08f))) {
                     Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("Nouvelle photo", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Text("Prends une photo face, profil et dos pour suivre ta transformation.", style = MaterialTheme.typography.bodySmall,
+                        Text(stringResource(R.string.photos_card_new_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.photos_card_new_desc), style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
 
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -131,13 +136,13 @@ fun ProgressPhotosScreen(navController: NavController, viewModel: ProgressPhotos
                                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                                 ) {
                                     Column(Modifier.fillMaxWidth().padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        Text(type.displayName, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                                        Text(stringResource(type.displayNameRes), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                             FilledTonalIconButton(onClick = { takePhoto(type) }, modifier = Modifier.size(36.dp)) {
-                                                Icon(Icons.Default.CameraAlt, "Caméra", Modifier.size(18.dp))
+                                                Icon(Icons.Default.CameraAlt, cameraCd, Modifier.size(18.dp))
                                             }
                                             FilledTonalIconButton(onClick = { pickFromGallery(type) }, modifier = Modifier.size(36.dp)) {
-                                                Icon(Icons.Default.Photo, "Galerie", Modifier.size(18.dp))
+                                                Icon(Icons.Default.Photo, galleryCd, Modifier.size(18.dp))
                                             }
                                         }
                                     }
@@ -153,7 +158,8 @@ fun ProgressPhotosScreen(navController: NavController, viewModel: ProgressPhotos
                 val photos = state.photos.filter { it.photoType == type }.sortedByDescending { it.date }
                 if (photos.isNotEmpty()) {
                     item {
-                        Text("${type.displayName} (${photos.size})", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        val typeName = stringResource(type.displayNameRes)
+                        Text(String.format(sectionCountTpl, typeName, photos.size), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     }
                     item {
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -176,9 +182,9 @@ fun ProgressPhotosScreen(navController: NavController, viewModel: ProgressPhotos
                     Box(Modifier.fillMaxWidth().heightIn(min = 400.dp)) {
                         com.shredcoach.app.presentation.common.EmptyState(
                             icon = Icons.Default.PhotoCamera,
-                            title = "Capture ta transformation",
-                            description = "Une photo vaut mille reps. Prends ta première photo pour suivre ta progression visuellement semaine après semaine.",
-                            ctaLabel = "Prendre ma première photo",
+                            title = stringResource(R.string.photos_empty_title),
+                            description = stringResource(R.string.photos_empty_desc),
+                            ctaLabel = stringResource(R.string.photos_empty_cta),
                             ctaIcon = Icons.Default.CameraAlt,
                             onCtaClick = { launchCamera() }
                         )
@@ -198,7 +204,7 @@ private fun PhotoCard(photo: ProgressPhotoEntity, onClick: () -> Unit) {
         Column {
             SubcomposeAsyncImage(
                 model = ImageRequest.Builder(LocalContext.current).data(File(photo.filePath)).crossfade(true).build(),
-                contentDescription = photo.photoType.displayName,
+                contentDescription = stringResource(photo.photoType.displayNameRes),
                 modifier = Modifier.fillMaxWidth().height(180.dp),
                 contentScale = ContentScale.Crop,
                 loading = { Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp) } },
@@ -219,15 +225,17 @@ private fun ComparisonSection(photos: List<ProgressPhotoEntity>) {
     val oldest = sorted.first()
     val newest = sorted.last()
 
-    Text("Avant / Après", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    val beforeLabel = stringResource(R.string.photos_comparison_before)
+    val afterLabel = stringResource(R.string.photos_comparison_after)
+    Text(stringResource(R.string.photos_comparison_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
     Card(elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
         Row(Modifier.fillMaxWidth().height(220.dp)) {
             // Avant
             Box(Modifier.weight(1f).fillMaxHeight()) {
                 SubcomposeAsyncImage(
                     model = ImageRequest.Builder(LocalContext.current).data(File(oldest.filePath)).crossfade(true).build(),
-                    contentDescription = "Avant", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
-                    error = { Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant), Alignment.Center) { Text("Avant") } }
+                    contentDescription = beforeLabel, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
+                    error = { Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant), Alignment.Center) { Text(beforeLabel) } }
                 )
                 Surface(Modifier.align(Alignment.BottomStart).padding(6.dp), shape = RoundedCornerShape(4.dp), color = Color.Black.copy(alpha = 0.6f)) {
                     Text(oldest.date.format(DateTimeFormatter.ofPattern("dd/MM/yy")), Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
@@ -239,8 +247,8 @@ private fun ComparisonSection(photos: List<ProgressPhotoEntity>) {
             Box(Modifier.weight(1f).fillMaxHeight()) {
                 SubcomposeAsyncImage(
                     model = ImageRequest.Builder(LocalContext.current).data(File(newest.filePath)).crossfade(true).build(),
-                    contentDescription = "Après", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
-                    error = { Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant), Alignment.Center) { Text("Après") } }
+                    contentDescription = afterLabel, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
+                    error = { Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant), Alignment.Center) { Text(afterLabel) } }
                 )
                 Surface(Modifier.align(Alignment.BottomEnd).padding(6.dp), shape = RoundedCornerShape(4.dp), color = NeonGreen.copy(alpha = 0.8f)) {
                     Text(newest.date.format(DateTimeFormatter.ofPattern("dd/MM/yy")), Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
@@ -265,13 +273,13 @@ private fun PhotoViewerDialog(photo: ProgressPhotoEntity, onDismiss: () -> Unit,
                 )
                 Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Column {
-                        Text(photo.photoType.displayName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        Text(photo.date.format(DateTimeFormatter.ofPattern("dd MMMM yyyy", java.util.Locale.FRENCH)), style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(photo.photoType.displayNameRes), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        Text(photo.date.format(DateTimeFormatter.ofPattern("dd MMMM yyyy", java.util.Locale.getDefault())), style = MaterialTheme.typography.bodySmall)
                         if (photo.weightAtTime > 0) Text("${photo.weightAtTime} kg", style = MaterialTheme.typography.bodySmall, color = OrangeVibrant)
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        IconButton(onClick = { onDelete(photo); onDismiss() }) { Icon(Icons.Default.Delete, "Supprimer", tint = Color(0xFFEF4444)) }
-                        TextButton(onClick = onDismiss) { Text("Fermer") }
+                        IconButton(onClick = { onDelete(photo); onDismiss() }) { Icon(Icons.Default.Delete, stringResource(R.string.photos_action_delete_cd), tint = Color(0xFFEF4444)) }
+                        TextButton(onClick = onDismiss) { Text(stringResource(R.string.photos_action_close)) }
                     }
                 }
             }
