@@ -529,6 +529,88 @@
     <string name="favorite_preview_subtitle">Personnalise les paramètres avant de commencer</string>
     <string name="favorite_preview_launch">LANCER LA SÉANCE</string>
 
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Custom workout screen + WorkoutSection enum -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+
+    <!-- WorkoutSection (enum côté ViewModel — référence Phase 2 style) -->
+    <string name="workout_section_warmup">Échauffement</string>
+    <string name="workout_section_strength">Musculation</string>
+    <string name="workout_section_cardio">Cardio</string>
+
+    <string name="custom_title">Créer ma séance</string>
+    <string name="custom_favorite_cd">Favori</string>
+    <string name="custom_launch_button">LANCER LA SÉANCE</string>
+
+    <string name="custom_mode_switch_title">Changer de mode ?</string>
+    <string name="custom_mode_switch_to_template">Ta séance actuelle sera remplacée par le modèle suggéré (4 échauffement + 7 muscu + 1 cardio).</string>
+    <string name="custom_mode_switch_to_blank">Ta séance actuelle sera effacée et tu repartiras d\'une page blanche.</string>
+    <string name="custom_mode_switch_continue">Continuer</string>
+
+    <string name="custom_section_routine">Type de séance</string>
+    <string name="custom_field_name_label">Nom de la séance</string>
+
+    <!-- Slot card -->
+    <string name="custom_slot_pick_exercise">Choisir un exercice</string>
+    <string name="custom_slot_move_up_cd">Monter</string>
+    <string name="custom_slot_move_down_cd">Descendre</string>
+    <string name="custom_slot_remove_cd">Supprimer</string>
+    <string name="custom_stepper_series">Séries</string>
+    <string name="custom_stepper_reps">Reps</string>
+    <string name="custom_stepper_rest">Repos</string>
+    <string name="custom_stepper_duration">Durée</string>
+    <string name="custom_stepper_rest_value">%1$ds</string>
+    <string name="custom_stepper_duration_value">%1$d min</string>
+    <!-- "%1$d-%2$d" = repsMin-repsMax -->
+    <string name="custom_stepper_reps_value">%1$d-%2$d</string>
+
+    <!-- Exercise picker dialog -->
+    <!-- "%1$s" = nom du groupe musculaire -->
+    <string name="custom_picker_title">Choisir : %1$s</string>
+    <!-- "%1$d×%2$d-%3$d · %4$ds" -->
+    <string name="custom_picker_summary">%1$d×%2$d-%3$d · %4$ds</string>
+
+    <!-- Add slot dialog (muscle group picker for a section) -->
+    <string name="custom_add_slot_title">Ajouter à %1$s</string>
+
+    <!-- Hero duration -->
+    <string name="custom_hero_estimated">Durée estimée</string>
+    <!-- "%1$d" = cible min -->
+    <string name="custom_hero_target_label">/ cible %1$d min</string>
+    <string name="custom_hero_delta_ok">OK</string>
+    <string name="custom_hero_delta_min">min</string>
+    <string name="custom_hero_target_chips">Cible :</string>
+    <!-- "%1$d" = minutes -->
+    <string name="custom_hero_chip_min">%1$d min</string>
+    <string name="custom_hero_rebalance">Rééquilibrer les exos muscu</string>
+    <!-- breakdown items -->
+    <string name="custom_breakdown_warmup">Échauf.</string>
+    <string name="custom_breakdown_strength">Muscu</string>
+    <string name="custom_breakdown_cardio">Cardio</string>
+    <string name="custom_breakdown_transitions">Transitions</string>
+    <!-- "%1$s" = label, "%2$d" = minutes -->
+    <string name="custom_breakdown_item">%1$s · %2$d\'</string>
+
+    <!-- Mode tabs -->
+    <string name="custom_mode_template_label">Modèle suggéré</string>
+    <string name="custom_mode_template_subtitle">Équilibré, personnalisable</string>
+    <string name="custom_mode_blank_label">Partir de zéro</string>
+    <string name="custom_mode_blank_subtitle">100% personnalisé</string>
+
+    <!-- Section header -->
+    <string name="custom_section_header_summary_one">%1$d exercice · %2$d min</string>
+    <string name="custom_section_header_summary_many">%1$d exercices · %2$d min</string>
+
+    <!-- Empty section hints -->
+    <string name="custom_empty_warmup">Ajoute des exos d\'échauffement pour préparer ton corps</string>
+    <string name="custom_empty_strength">Ajoute tes exos muscu par groupe musculaire</string>
+    <string name="custom_empty_cardio">Ajoute du cardio en fin de séance (optionnel)</string>
+
+    <!-- Format minutes (h + mm) helper -->
+    <!-- "%1$d" = heures, "%2$s" = minutes formatées (vide ou " 30min") -->
+    <string name="fmt_minutes_h">%1$dh%2$s</string>
+    <string name="fmt_minutes_only">%1$d min</string>
+
     <!-- Format helpers : "%1$d" h + "%2$d" min ; m only ; s only -->
     <string name="fmt_duration_h_m">%1$dh %2$dmin</string>
     <string name="fmt_duration_m">%1$dmin</string>
@@ -676,4 +758,49 @@
     <string name="onboarding_backup_found_body">On a trouvé une sauvegarde sur ton Drive. Veux-tu la restaurer ? Toutes tes infos d\'onboarding actuelles seront remplacées par celles de la sauvegarde.</string>
     <string name="onboarding_backup_found_restore">Restaurer</string>
     <string name="onboarding_backup_found_later">Plus tard</string>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- Workout preview screen -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <string name="preview_topbar_title">Votre séance</string>
+    <string name="preview_share_card_title">Ma séance du jour</string>
+    <string name="preview_share_subtitle">%1$d min · %2$s</string>
+    <string name="preview_share_cd">Partager la séance</string>
+    <string name="preview_favorite_cd">Favori</string>
+    <string name="preview_fav_added">Séance ajoutée aux favoris</string>
+    <string name="preview_fav_removed">Séance retirée des favoris</string>
+    <string name="preview_empty_title">Aucune séance générée</string>
+    <string name="preview_empty_desc">Lance la génération d\'une séance adaptée à ta durée disponible.</string>
+    <string name="preview_section_warmup">Échauffement (%1$d min)</string>
+    <string name="preview_section_strength">Exercices de Musculation (%1$d exercices)</string>
+    <string name="preview_section_cardio">Cardio (%1$d min)</string>
+    <string name="preview_error_unknown">Erreur inconnue</string>
+    <string name="preview_error_start_failed">Impossible de démarrer la séance</string>
+    <string name="preview_error_prefix">Erreur: %1$s</string>
+    <string name="preview_start_button">COMMENCER LA SÉANCE</string>
+    <string name="preview_summary_title">Séance %1$s</string>
+    <string name="preview_summary_total">%1$d min au total</string>
+    <string name="preview_summary_compact">%1$s · %2$d min</string>
+    <string name="preview_summary_exos_count">%1$d exos</string>
+    <string name="preview_breakdown_warmup_label">Échauff.</string>
+    <string name="preview_breakdown_strength_label">exos</string>
+    <string name="preview_breakdown_cardio_label">Cardio</string>
+    <string name="preview_breakdown_minutes">%1$dmin</string>
+    <string name="preview_swap_cd">Remplacer</string>
+    <string name="preview_settings_cd">Paramètres</string>
+    <string name="preview_stepper_series">Séries</string>
+    <string name="preview_stepper_reps">Reps</string>
+    <string name="preview_stepper_rest">Repos</string>
+    <string name="preview_card_summary_format">%1$d×%2$d-%3$d · %4$ds</string>
+    <string name="preview_card_reps_range">%1$d-%2$d</string>
+    <string name="preview_card_rest_seconds">%1$ds</string>
+    <string name="preview_cardio_minutes">%1$d minutes</string>
+    <string name="preview_routine_default">Full Body</string>
+
+    <!-- Swap exercise dialog -->
+    <string name="swap_dialog_title">Remplacer l\'exercice</string>
+    <string name="swap_dialog_current">Exercice actuel : %1$s (%2$s)</string>
+    <string name="swap_dialog_no_alternatives">Aucune alternative disponible</string>
+    <string name="swap_dialog_choose">Choisissez un remplacement :</string>
+    <string name="swap_dialog_close">Fermer</string>
 </resources>

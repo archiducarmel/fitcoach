@@ -22,9 +22,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.shredcoach.app.R
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import coil.size.Size
@@ -77,8 +79,8 @@ fun WorkoutPreviewScreen(
         val routineForShare = RoutineCatalog.byId(workoutForShare.routineId)
         com.shredcoach.app.presentation.share.ShareSheet(
             data = com.shredcoach.app.presentation.share.ShareCardData.WorkoutPlanned(
-                title = "Ma séance du jour",
-                subtitle = "${workoutForShare.totalDuration} min · ${routineForShare.displayName}",
+                title = stringResource(R.string.preview_share_card_title),
+                subtitle = stringResource(R.string.preview_share_subtitle, workoutForShare.totalDuration, routineForShare.displayName),
                 durationMinutes = workoutForShare.totalDuration,
                 exerciseCount = workoutForShare.exerciseCount,
                 warmupCount = workoutForShare.warmupExercises.size,
@@ -100,7 +102,7 @@ fun WorkoutPreviewScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "Votre séance",
+                        stringResource(R.string.preview_topbar_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -111,19 +113,21 @@ fun WorkoutPreviewScreen(
                         viewModel.clearWorkout()
                         navController.navigateUp()
                     }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 actions = {
                     val isFavorite by viewModel.markAsFavorite.collectAsState()
                     val snackbarHostState = com.shredcoach.app.presentation.navigation.LocalSnackbarHostState.current
                     val snackScope = rememberCoroutineScope()
+                    val favAddedMsg = stringResource(R.string.preview_fav_added)
+                    val favRemovedMsg = stringResource(R.string.preview_fav_removed)
                     // Bouton partager — n'apparaît que si une séance est générée
                     if (generatedWorkout != null) {
                         IconButton(onClick = { showSharePreview = true }) {
                             Icon(
                                 androidx.compose.material.icons.Icons.Default.Share,
-                                contentDescription = "Partager la séance",
+                                contentDescription = stringResource(R.string.preview_share_cd),
                                 tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                             )
                         }
@@ -131,12 +135,12 @@ fun WorkoutPreviewScreen(
                     IconButton(onClick = {
                         viewModel.toggleFavorite()
                         snackScope.launch { snackbarHostState.showSnackbar(
-                            if (!isFavorite) "Séance ajoutée aux favoris" else "Séance retirée des favoris",
+                            if (!isFavorite) favAddedMsg else favRemovedMsg,
                             duration = SnackbarDuration.Short) }
                     }) {
                         Icon(
                             if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            "Favori",
+                            stringResource(R.string.preview_favorite_cd),
                             tint = if (isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
                     }
@@ -155,8 +159,8 @@ fun WorkoutPreviewScreen(
             ) {
                 EmptyState(
                     icon = Icons.Default.FitnessCenter,
-                    title = "Aucune séance générée",
-                    description = "Lance la génération d'une séance adaptée à ta durée disponible."
+                    title = stringResource(R.string.preview_empty_title),
+                    description = stringResource(R.string.preview_empty_desc)
                 )
             }
         } else {
@@ -201,7 +205,7 @@ fun WorkoutPreviewScreen(
                             ) {
                                 Icon(Icons.Default.LocalFireDepartment, null, Modifier.size(20.dp), tint = OrangeVibrant)
                                 Text(
-                                    "Échauffement (${workout.warmupMinutes} min)",
+                                    stringResource(R.string.preview_section_warmup, workout.warmupMinutes),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = OrangeVibrant
@@ -238,7 +242,7 @@ fun WorkoutPreviewScreen(
                         ) {
                             Icon(Icons.Default.FitnessCenter, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurface)
                             Text(
-                                "Exercices de Musculation (${workout.exerciseCount} exercices)",
+                                stringResource(R.string.preview_section_strength, workout.exerciseCount),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
@@ -281,7 +285,7 @@ fun WorkoutPreviewScreen(
                             ) {
                                 Icon(Icons.AutoMirrored.Filled.DirectionsRun, null, Modifier.size(20.dp), tint = NeonGreen)
                                 Text(
-                                    "Cardio (${workout.cardioMinutes} min)",
+                                    stringResource(R.string.preview_section_cardio, workout.cardioMinutes),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = NeonGreen
@@ -316,6 +320,9 @@ fun WorkoutPreviewScreen(
                 // Start workout button
                 var isStarting by remember { mutableStateOf(false) }
                 var startError by remember { mutableStateOf<String?>(null) }
+                val ctxForErrors = LocalContext.current
+                val unknownErrorMsg = stringResource(R.string.preview_error_unknown)
+                val startFailedMsg = stringResource(R.string.preview_error_start_failed)
 
                 // Show error message if start failed
                 if (startError != null) {
@@ -338,7 +345,7 @@ fun WorkoutPreviewScreen(
                                 tint = MaterialTheme.colorScheme.error
                             )
                             Text(
-                                startError ?: "Erreur inconnue",
+                                startError ?: unknownErrorMsg,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onErrorContainer
                             )
@@ -358,10 +365,10 @@ fun WorkoutPreviewScreen(
                                         com.shredcoach.app.presentation.navigation.Screen.WorkoutSession.createRoute(workoutLogId)
                                     )
                                 } else {
-                                    startError = error ?: "Impossible de démarrer la séance"
+                                    startError = error ?: startFailedMsg
                                 }
                             } catch (e: Exception) {
-                                startError = "Erreur: ${e.message}"
+                                startError = ctxForErrors.getString(R.string.preview_error_prefix, e.message ?: "")
                             } finally {
                                 isStarting = false
                             }
@@ -386,7 +393,7 @@ fun WorkoutPreviewScreen(
                         Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(28.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            "COMMENCER LA SÉANCE",
+                            stringResource(R.string.preview_start_button),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -403,7 +410,7 @@ fun WorkoutSummaryCard(
     warmupMinutes: Int,
     exerciseCount: Int,
     cardioMinutes: Int,
-    routineDisplayName: String = "Full Body",
+    routineDisplayName: String = stringResource(R.string.preview_routine_default),
     modifier: Modifier = Modifier,
     collapsed: Boolean = false
 ) {
@@ -421,10 +428,11 @@ fun WorkoutSummaryCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Icon(Icons.Default.FitnessCenter, null, Modifier.size(20.dp), tint = Color.White.copy(alpha = 0.7f))
-                Text("$routineDisplayName · $totalDuration min", style = MaterialTheme.typography.titleSmall,
+                Text(stringResource(R.string.preview_summary_compact, routineDisplayName, totalDuration),
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.weight(1f),
                     maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-                Text("$exerciseCount exos", style = MaterialTheme.typography.labelMedium,
+                Text(stringResource(R.string.preview_summary_exos_count, exerciseCount), style = MaterialTheme.typography.labelMedium,
                     color = Color.White.copy(alpha = 0.85f))
             }
         } else {
@@ -435,20 +443,25 @@ fun WorkoutSummaryCard(
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween) {
                     Column(Modifier.weight(1f)) {
-                        Text("Séance $routineDisplayName", style = MaterialTheme.typography.titleMedium,
+                        Text(stringResource(R.string.preview_summary_title, routineDisplayName), style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold, color = Color.White,
                             maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-                        Text("$totalDuration min au total", style = MaterialTheme.typography.bodySmall,
+                        Text(stringResource(R.string.preview_summary_total, totalDuration), style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.85f))
                     }
                     Icon(Icons.Default.FitnessCenter, null, Modifier.size(32.dp), tint = Color.White.copy(alpha = 0.6f))
                 }
                 Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), verticalAlignment = Alignment.CenterVertically) {
-                    BreakdownMini(icon = Icons.AutoMirrored.Filled.DirectionsRun, value = "${warmupMinutes}min", label = "Échauff.", modifier = Modifier.weight(1f))
+                    BreakdownMini(icon = Icons.AutoMirrored.Filled.DirectionsRun,
+                        value = stringResource(R.string.preview_breakdown_minutes, warmupMinutes),
+                        label = stringResource(R.string.preview_breakdown_warmup_label), modifier = Modifier.weight(1f))
                     Box(Modifier.width(1.dp).fillMaxHeight().background(Color.White.copy(alpha = 0.3f)))
-                    BreakdownMini(icon = Icons.Default.FitnessCenter, value = "$exerciseCount", label = "exos", modifier = Modifier.weight(1f))
+                    BreakdownMini(icon = Icons.Default.FitnessCenter, value = "$exerciseCount",
+                        label = stringResource(R.string.preview_breakdown_strength_label), modifier = Modifier.weight(1f))
                     Box(Modifier.width(1.dp).fillMaxHeight().background(Color.White.copy(alpha = 0.3f)))
-                    BreakdownMini(icon = Icons.AutoMirrored.Filled.DirectionsWalk, value = "${cardioMinutes}min", label = "Cardio", modifier = Modifier.weight(1f))
+                    BreakdownMini(icon = Icons.AutoMirrored.Filled.DirectionsWalk,
+                        value = stringResource(R.string.preview_breakdown_minutes, cardioMinutes),
+                        label = stringResource(R.string.preview_breakdown_cardio_label), modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -566,10 +579,10 @@ fun ExercisePreviewCard(
                         maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, lineHeight = 18.sp)
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Surface(shape = MaterialTheme.shapes.small, color = Color(exercise.variant.color).copy(alpha = 0.2f)) {
-                            Text(exercise.variant.displayName, Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            Text(stringResource(exercise.variant.displayNameRes), Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                 style = MaterialTheme.typography.labelSmall, color = Color(exercise.variant.color), maxLines = 1)
                         }
-                        Text("${effectiveSeries}×${effectiveRepsMin}-${effectiveRepsMax} · ${effectiveRest}s",
+                        Text(stringResource(R.string.preview_card_summary_format, effectiveSeries, effectiveRepsMin, effectiveRepsMax, effectiveRest),
                             style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), maxLines = 1)
                     }
                 }
@@ -577,13 +590,13 @@ fun ExercisePreviewCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (onSwap != null) {
                         IconButton(onClick = onSwap, modifier = Modifier.size(36.dp)) {
-                            Icon(Icons.Default.SwapHoriz, "Remplacer", Modifier.size(20.dp), tint = OrangeVibrant)
+                            Icon(Icons.Default.SwapHoriz, stringResource(R.string.preview_swap_cd), Modifier.size(20.dp), tint = OrangeVibrant)
                         }
                     }
                     if (canExpand) {
                         Icon(
                             if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                            "Paramètres", Modifier.size(22.dp),
+                            stringResource(R.string.preview_settings_cd), Modifier.size(22.dp),
                             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                         )
                     }
@@ -599,15 +612,15 @@ fun ExercisePreviewCard(
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        PreviewMiniStepper("Séries", "$effectiveSeries",
+                        PreviewMiniStepper(stringResource(R.string.preview_stepper_series), "$effectiveSeries",
                             onMinus = { onSeriesChange?.invoke((effectiveSeries - 1).coerceAtLeast(1)) },
                             onPlus = { onSeriesChange?.invoke((effectiveSeries + 1).coerceAtMost(10)) })
                         PreviewDivider()
-                        PreviewMiniStepper("Reps", "$effectiveRepsMin-$effectiveRepsMax",
+                        PreviewMiniStepper(stringResource(R.string.preview_stepper_reps), stringResource(R.string.preview_card_reps_range, effectiveRepsMin, effectiveRepsMax),
                             onMinus = { onRepsMinChange?.invoke((effectiveRepsMin - 1).coerceAtLeast(1)); onRepsMaxChange?.invoke((effectiveRepsMax - 1).coerceAtLeast(1)) },
                             onPlus = { onRepsMinChange?.invoke(effectiveRepsMin + 1); onRepsMaxChange?.invoke(effectiveRepsMax + 1) })
                         PreviewDivider()
-                        PreviewMiniStepper("Repos", "${effectiveRest}s",
+                        PreviewMiniStepper(stringResource(R.string.preview_stepper_rest), stringResource(R.string.preview_card_rest_seconds, effectiveRest),
                             onMinus = { onRestChange?.invoke((effectiveRest - 15).coerceAtLeast(15)) },
                             onPlus = { onRestChange?.invoke((effectiveRest + 15).coerceAtMost(300)) })
                     }
@@ -702,7 +715,7 @@ fun CardioExerciseCard(
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        "$durationMinutes minutes",
+                        stringResource(R.string.preview_cardio_minutes, durationMinutes),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -723,7 +736,7 @@ fun CardioExerciseCard(
                 IconButton(onClick = onSwap) {
                     Icon(
                         Icons.Default.SwapHoriz,
-                        contentDescription = "Remplacer",
+                        contentDescription = stringResource(R.string.preview_swap_cd),
                         tint = NeonGreen
                     )
                 }
@@ -744,7 +757,7 @@ fun SwapExerciseDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                "Remplacer l'exercice",
+                stringResource(R.string.swap_dialog_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -752,7 +765,7 @@ fun SwapExerciseDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    "Exercice actuel : ${exercise.name} (${exercise.variant.displayName})",
+                    stringResource(R.string.swap_dialog_current, exercise.name, stringResource(exercise.variant.displayNameRes)),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
@@ -761,13 +774,13 @@ fun SwapExerciseDialog(
 
                 if (alternatives.isEmpty()) {
                     Text(
-                        "Aucune alternative disponible",
+                        stringResource(R.string.swap_dialog_no_alternatives),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error
                     )
                 } else {
                     Text(
-                        "Choisissez un remplacement :",
+                        stringResource(R.string.swap_dialog_choose),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -808,7 +821,7 @@ fun SwapExerciseDialog(
                                             style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                                     }
                                     Surface(shape = MaterialTheme.shapes.small, color = Color(alt.variant.color).copy(alpha = 0.2f)) {
-                                        Text(alt.variant.displayName, style = MaterialTheme.typography.labelSmall, color = Color(alt.variant.color),
+                                        Text(stringResource(alt.variant.displayNameRes), style = MaterialTheme.typography.labelSmall, color = Color(alt.variant.color),
                                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp))
                                     }
                                 }
@@ -821,7 +834,7 @@ fun SwapExerciseDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Fermer")
+                Text(stringResource(R.string.swap_dialog_close))
             }
         }
     )

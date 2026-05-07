@@ -466,6 +466,68 @@
     <string name="favorite_preview_subtitle">Tweak the params before starting</string>
     <string name="favorite_preview_launch">START SESSION</string>
 
+    <!-- Custom workout screen + WorkoutSection -->
+    <string name="workout_section_warmup">Warmup</string>
+    <string name="workout_section_strength">Strength</string>
+    <string name="workout_section_cardio">Cardio</string>
+
+    <string name="custom_title">Build my session</string>
+    <string name="custom_favorite_cd">Favorite</string>
+    <string name="custom_launch_button">START SESSION</string>
+
+    <string name="custom_mode_switch_title">Switch mode?</string>
+    <string name="custom_mode_switch_to_template">Your current session will be replaced by the suggested template (4 warmup + 7 strength + 1 cardio).</string>
+    <string name="custom_mode_switch_to_blank">Your current session will be wiped and you\'ll start from a blank page.</string>
+    <string name="custom_mode_switch_continue">Continue</string>
+
+    <string name="custom_section_routine">Session type</string>
+    <string name="custom_field_name_label">Session name</string>
+
+    <string name="custom_slot_pick_exercise">Pick an exercise</string>
+    <string name="custom_slot_move_up_cd">Move up</string>
+    <string name="custom_slot_move_down_cd">Move down</string>
+    <string name="custom_slot_remove_cd">Remove</string>
+    <string name="custom_stepper_series">Sets</string>
+    <string name="custom_stepper_reps">Reps</string>
+    <string name="custom_stepper_rest">Rest</string>
+    <string name="custom_stepper_duration">Duration</string>
+    <string name="custom_stepper_rest_value">%1$ds</string>
+    <string name="custom_stepper_duration_value">%1$d min</string>
+    <string name="custom_stepper_reps_value">%1$d-%2$d</string>
+
+    <string name="custom_picker_title">Pick: %1$s</string>
+    <string name="custom_picker_summary">%1$d×%2$d-%3$d · %4$ds</string>
+
+    <string name="custom_add_slot_title">Add to %1$s</string>
+
+    <string name="custom_hero_estimated">Estimated duration</string>
+    <string name="custom_hero_target_label">/ target %1$d min</string>
+    <string name="custom_hero_delta_ok">OK</string>
+    <string name="custom_hero_delta_min">min</string>
+    <string name="custom_hero_target_chips">Target:</string>
+    <string name="custom_hero_chip_min">%1$d min</string>
+    <string name="custom_hero_rebalance">Rebalance strength exos</string>
+    <string name="custom_breakdown_warmup">Warmup</string>
+    <string name="custom_breakdown_strength">Strength</string>
+    <string name="custom_breakdown_cardio">Cardio</string>
+    <string name="custom_breakdown_transitions">Transitions</string>
+    <string name="custom_breakdown_item">%1$s · %2$d\'</string>
+
+    <string name="custom_mode_template_label">Suggested template</string>
+    <string name="custom_mode_template_subtitle">Balanced, customizable</string>
+    <string name="custom_mode_blank_label">Start from scratch</string>
+    <string name="custom_mode_blank_subtitle">100% custom</string>
+
+    <string name="custom_section_header_summary_one">%1$d exercise · %2$d min</string>
+    <string name="custom_section_header_summary_many">%1$d exercises · %2$d min</string>
+
+    <string name="custom_empty_warmup">Add warmup exos to prepare your body</string>
+    <string name="custom_empty_strength">Add your strength exos by muscle group</string>
+    <string name="custom_empty_cardio">Add cardio at the end of session (optional)</string>
+
+    <string name="fmt_minutes_h">%1$dh%2$s</string>
+    <string name="fmt_minutes_only">%1$d min</string>
+
     <string name="fmt_duration_h_m">%1$dh %2$dmin</string>
     <string name="fmt_duration_m">%1$dmin</string>
     <string name="fmt_duration_s">%1$ds</string>
@@ -581,4 +643,47 @@
     <string name="onboarding_backup_found_body">We found a backup on your Drive. Restore it? All your current onboarding info will be replaced by the backup.</string>
     <string name="onboarding_backup_found_restore">Restore</string>
     <string name="onboarding_backup_found_later">Later</string>
+
+    <!-- Workout preview screen -->
+    <string name="preview_topbar_title">Your session</string>
+    <string name="preview_share_card_title">My session today</string>
+    <string name="preview_share_subtitle">%1$d min · %2$s</string>
+    <string name="preview_share_cd">Share session</string>
+    <string name="preview_favorite_cd">Favorite</string>
+    <string name="preview_fav_added">Session added to favorites</string>
+    <string name="preview_fav_removed">Session removed from favorites</string>
+    <string name="preview_empty_title">No session generated</string>
+    <string name="preview_empty_desc">Generate a session that fits your available time.</string>
+    <string name="preview_section_warmup">Warmup (%1$d min)</string>
+    <string name="preview_section_strength">Strength exercises (%1$d exercises)</string>
+    <string name="preview_section_cardio">Cardio (%1$d min)</string>
+    <string name="preview_error_unknown">Unknown error</string>
+    <string name="preview_error_start_failed">Could not start the session</string>
+    <string name="preview_error_prefix">Error: %1$s</string>
+    <string name="preview_start_button">START SESSION</string>
+    <string name="preview_summary_title">%1$s session</string>
+    <string name="preview_summary_total">%1$d min total</string>
+    <string name="preview_summary_compact">%1$s · %2$d min</string>
+    <string name="preview_summary_exos_count">%1$d exos</string>
+    <string name="preview_breakdown_warmup_label">Warmup</string>
+    <string name="preview_breakdown_strength_label">exos</string>
+    <string name="preview_breakdown_cardio_label">Cardio</string>
+    <string name="preview_breakdown_minutes">%1$dmin</string>
+    <string name="preview_swap_cd">Swap</string>
+    <string name="preview_settings_cd">Settings</string>
+    <string name="preview_stepper_series">Sets</string>
+    <string name="preview_stepper_reps">Reps</string>
+    <string name="preview_stepper_rest">Rest</string>
+    <string name="preview_card_summary_format">%1$d×%2$d-%3$d · %4$ds</string>
+    <string name="preview_card_reps_range">%1$d-%2$d</string>
+    <string name="preview_card_rest_seconds">%1$ds</string>
+    <string name="preview_cardio_minutes">%1$d minutes</string>
+    <string name="preview_routine_default">Full Body</string>
+
+    <!-- Swap exercise dialog -->
+    <string name="swap_dialog_title">Swap exercise</string>
+    <string name="swap_dialog_current">Current: %1$s (%2$s)</string>
+    <string name="swap_dialog_no_alternatives">No alternative available</string>
+    <string name="swap_dialog_choose">Choose a replacement:</string>
+    <string name="swap_dialog_close">Close</string>
 </resources>

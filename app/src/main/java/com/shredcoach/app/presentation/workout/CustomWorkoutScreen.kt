@@ -22,12 +22,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.ExerciseEntity
 import com.shredcoach.app.domain.model.MuscleGroup
 import com.shredcoach.app.domain.workout.RoutineCatalog
@@ -60,20 +62,20 @@ fun CustomWorkoutScreen(navController: NavController, viewModel: CustomWorkoutVi
         AlertDialog(
             onDismissRequest = { viewModel.cancelModeSwitch() },
             icon = { Icon(Icons.Default.SwapHoriz, null, tint = OrangeVibrant) },
-            title = { Text("Changer de mode ?", fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.custom_mode_switch_title), fontWeight = FontWeight.Bold) },
             text = {
                 Text(when (pending) {
-                    CreationMode.TEMPLATE -> "Ta séance actuelle sera remplacée par le modèle suggéré (4 échauffement + 7 muscu + 1 cardio)."
-                    CreationMode.BLANK -> "Ta séance actuelle sera effacée et tu repartiras d'une page blanche."
+                    CreationMode.TEMPLATE -> stringResource(R.string.custom_mode_switch_to_template)
+                    CreationMode.BLANK -> stringResource(R.string.custom_mode_switch_to_blank)
                 })
             },
             confirmButton = {
                 Button(
                     onClick = { viewModel.confirmModeSwitch() },
                     colors = ButtonDefaults.buttonColors(containerColor = OrangeVibrant)
-                ) { Text("Continuer") }
+                ) { Text(stringResource(R.string.custom_mode_switch_continue)) }
             },
-            dismissButton = { TextButton(onClick = { viewModel.cancelModeSwitch() }) { Text("Annuler") } }
+            dismissButton = { TextButton(onClick = { viewModel.cancelModeSwitch() }) { Text(stringResource(R.string.common_cancel)) } }
         )
     }
 
@@ -92,13 +94,13 @@ fun CustomWorkoutScreen(navController: NavController, viewModel: CustomWorkoutVi
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Créer ma séance", fontWeight = FontWeight.Bold) },
-                navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour") } },
+                title = { Text(stringResource(R.string.custom_title), fontWeight = FontWeight.Bold) },
+                navigationIcon = { IconButton(onClick = { navController.navigateUp() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.common_back)) } },
                 actions = {
                     IconButton(onClick = { viewModel.toggleFavorite() }) {
                         Icon(
                             if (state.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            "Favori",
+                            stringResource(R.string.custom_favorite_cd),
                             tint = if (state.isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                         )
                     }
@@ -116,7 +118,7 @@ fun CustomWorkoutScreen(navController: NavController, viewModel: CustomWorkoutVi
                 ) {
                     Icon(Icons.Default.PlayArrow, null, Modifier.size(24.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("LANCER LA SÉANCE", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.custom_launch_button), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -155,7 +157,7 @@ fun CustomWorkoutScreen(navController: NavController, viewModel: CustomWorkoutVi
                 // ─── Sélecteur routine (chips horizontaux) ───
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("Type de séance",
+                        Text(stringResource(R.string.custom_section_routine),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
@@ -190,7 +192,7 @@ fun CustomWorkoutScreen(navController: NavController, viewModel: CustomWorkoutVi
                 item {
                     OutlinedTextField(
                         state.name, { viewModel.onNameChanged(it) },
-                        label = { Text("Nom de la séance") },
+                        label = { Text(stringResource(R.string.custom_field_name_label)) },
                         modifier = Modifier.fillMaxWidth(), singleLine = true,
                         leadingIcon = { Icon(Icons.Default.Edit, null) }
                     )
@@ -259,19 +261,19 @@ private fun ExerciseSlotCard(
                     Box(Modifier.size(32.dp).clip(CircleShape).background(mgColor.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
                         Text("${index + 1}", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = mgColor)
                     }
-                    Text(slot.muscleGroup.displayName, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = mgColor)
+                    Text(stringResource(slot.muscleGroup.displayNameRes), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = mgColor)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = onMoveUp, Modifier.size(32.dp), enabled = canMoveUp) {
-                        Icon(Icons.Default.KeyboardArrowUp, "Monter", Modifier.size(20.dp),
+                        Icon(Icons.Default.KeyboardArrowUp, stringResource(R.string.custom_slot_move_up_cd), Modifier.size(20.dp),
                             tint = if (canMoveUp) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f))
                     }
                     IconButton(onClick = onMoveDown, Modifier.size(32.dp), enabled = canMoveDown) {
-                        Icon(Icons.Default.KeyboardArrowDown, "Descendre", Modifier.size(20.dp),
+                        Icon(Icons.Default.KeyboardArrowDown, stringResource(R.string.custom_slot_move_down_cd), Modifier.size(20.dp),
                             tint = if (canMoveDown) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f))
                     }
                     IconButton(onClick = onRemove, Modifier.size(32.dp)) {
-                        Icon(Icons.Default.Close, "Supprimer", Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
+                        Icon(Icons.Default.Close, stringResource(R.string.custom_slot_remove_cd), Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
                     }
                 }
             }
@@ -308,14 +310,14 @@ private fun ExerciseSlotCard(
                                 overflow = TextOverflow.Ellipsis,
                                 lineHeight = 18.sp
                             )
-                            Text(slot.selectedExercise.variant.displayName, style = MaterialTheme.typography.labelSmall, color = mgColor, maxLines = 1)
+                            Text(stringResource(slot.selectedExercise.variant.displayNameRes), style = MaterialTheme.typography.labelSmall, color = mgColor, maxLines = 1)
                         }
                     } else {
                         Box(Modifier.size(56.dp).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)),
                             contentAlignment = Alignment.Center) {
                             Icon(Icons.Default.Add, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                         }
-                        Text("Choisir un exercice", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f), modifier = Modifier.weight(1f))
+                        Text(stringResource(R.string.custom_slot_pick_exercise), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f), modifier = Modifier.weight(1f))
                     }
                     Icon(Icons.Default.SwapHoriz, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
                 }
@@ -329,21 +331,25 @@ private fun ExerciseSlotCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                        VerticalStepper("Séries", "${slot.series}", vibrationEnabled) { onUpdateSeries(it) }
+                        VerticalStepper(stringResource(R.string.custom_stepper_series), "${slot.series}", vibrationEnabled) { onUpdateSeries(it) }
                     }
                     Box(
                         Modifier.width(1.5.dp).fillMaxHeight().padding(vertical = 4.dp)
                             .background(OrangeVibrant.copy(alpha = 0.3f))
                     )
                     Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                        VerticalStepper("Reps", "${slot.repsMin}-${slot.repsMax}", vibrationEnabled) { onUpdateReps(it) }
+                        VerticalStepper(stringResource(R.string.custom_stepper_reps),
+                            stringResource(R.string.custom_stepper_reps_value, slot.repsMin, slot.repsMax),
+                            vibrationEnabled) { onUpdateReps(it) }
                     }
                     Box(
                         Modifier.width(1.5.dp).fillMaxHeight().padding(vertical = 4.dp)
                             .background(OrangeVibrant.copy(alpha = 0.3f))
                     )
                     Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                        VerticalStepper("Repos", "${slot.restSeconds}s", vibrationEnabled) { onUpdateRest(it * 15) }
+                        VerticalStepper(stringResource(R.string.custom_stepper_rest),
+                            stringResource(R.string.custom_stepper_rest_value, slot.restSeconds),
+                            vibrationEnabled) { onUpdateRest(it * 15) }
                     }
                 }
             }
@@ -352,7 +358,9 @@ private fun ExerciseSlotCard(
             if (isWarmupOrCardio && slot.selectedExercise != null) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    VerticalStepper("Durée", "${slot.durationMinutes ?: if (slot.muscleGroup == MuscleGroup.WARMUP) 3 else 15} min",
+                    val durMin = slot.durationMinutes ?: if (slot.muscleGroup == MuscleGroup.WARMUP) 3 else 15
+                    VerticalStepper(stringResource(R.string.custom_stepper_duration),
+                        stringResource(R.string.custom_stepper_duration_value, durMin),
                         vibrationEnabled) { onUpdateDuration(it) }
                 }
             }
@@ -417,7 +425,7 @@ private fun ExercisePickerDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Choisir : ${muscleGroup.displayName}", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.custom_picker_title, stringResource(muscleGroup.displayNameRes)), fontWeight = FontWeight.Bold) },
         text = {
             val ctx = LocalContext.current
             LazyColumn(Modifier.heightIn(max = 400.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -453,10 +461,11 @@ private fun ExercisePickerDialog(
                                 )
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                     Surface(shape = RoundedCornerShape(4.dp), color = Color(exercise.variant.color).copy(alpha = 0.2f)) {
-                                        Text(exercise.variant.displayName, Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                        Text(stringResource(exercise.variant.displayNameRes), Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                             style = MaterialTheme.typography.labelSmall, color = Color(exercise.variant.color), maxLines = 1)
                                     }
-                                    Text("${exercise.series}x${exercise.repsMin}-${exercise.repsMax} · ${exercise.restSeconds}s",
+                                    Text(stringResource(R.string.custom_picker_summary,
+                                        exercise.series, exercise.repsMin, exercise.repsMax, exercise.restSeconds),
                                         style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), maxLines = 1)
                                 }
                             }
@@ -466,7 +475,7 @@ private fun ExercisePickerDialog(
             }
         },
         confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Fermer") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.workout_action_close)) } }
     )
 }
 
@@ -514,14 +523,15 @@ private fun DurationHeroCard(
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 // ─── Row principale : estimée + cible + delta ───
                 Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    val ctx = LocalContext.current
                     Column(Modifier.weight(1f)) {
-                        Text("Durée estimée", style = MaterialTheme.typography.labelMedium,
+                        Text(stringResource(R.string.custom_hero_estimated), style = MaterialTheme.typography.labelMedium,
                             color = Color.White.copy(alpha = 0.85f), fontWeight = FontWeight.Medium)
                         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(formatMinutes(estimatedMinutes),
+                            Text(formatMinutes(estimatedMinutes, ctx),
                                 style = MaterialTheme.typography.displaySmall,
                                 fontWeight = FontWeight.ExtraBold, color = Color.White, fontSize = 40.sp)
-                            Text("/ cible ${targetMinutes} min",
+                            Text(stringResource(R.string.custom_hero_target_label, targetMinutes),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = Color.White.copy(alpha = 0.75f),
                                 modifier = Modifier.padding(bottom = 6.dp))
@@ -537,12 +547,13 @@ private fun DurationHeroCard(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                if (delta == 0) "OK" else "${if (delta > 0) "+" else ""}${delta}",
+                                if (delta == 0) stringResource(R.string.custom_hero_delta_ok)
+                                else "${if (delta > 0) "+" else ""}${delta}",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.ExtraBold, color = Color.White
                             )
                             if (delta != 0) {
-                                Text("min", style = MaterialTheme.typography.labelSmall,
+                                Text(stringResource(R.string.custom_hero_delta_min), style = MaterialTheme.typography.labelSmall,
                                     color = Color.White.copy(alpha = 0.85f))
                             }
                         }
@@ -565,10 +576,10 @@ private fun DurationHeroCard(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    BreakdownItem("Échauf.", warmupSec / 60, 0.95f)
-                    BreakdownItem("Muscu", strengthSec / 60, 0.7f)
-                    BreakdownItem("Cardio", cardioSec / 60, 0.45f)
-                    BreakdownItem("Transitions", transitionSec / 60, 0.25f)
+                    BreakdownItem(stringResource(R.string.custom_breakdown_warmup), warmupSec / 60, 0.95f)
+                    BreakdownItem(stringResource(R.string.custom_breakdown_strength), strengthSec / 60, 0.7f)
+                    BreakdownItem(stringResource(R.string.custom_breakdown_cardio), cardioSec / 60, 0.45f)
+                    BreakdownItem(stringResource(R.string.custom_breakdown_transitions), transitionSec / 60, 0.25f)
                 }
 
                 // ─── Chips de durée cible ───
@@ -576,7 +587,7 @@ private fun DurationHeroCard(
                     Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Cible :", style = MaterialTheme.typography.labelMedium,
+                    Text(stringResource(R.string.custom_hero_target_chips), style = MaterialTheme.typography.labelMedium,
                         color = Color.White.copy(alpha = 0.85f), fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(vertical = 8.dp))
                     presets.forEach { mins ->
@@ -588,7 +599,7 @@ private fun DurationHeroCard(
                             shape = RoundedCornerShape(10.dp)
                         ) {
                             Text(
-                                "${mins} min",
+                                stringResource(R.string.custom_hero_chip_min, mins),
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Medium,
@@ -612,7 +623,7 @@ private fun DurationHeroCard(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Icon(Icons.Default.AutoAwesome, null, Modifier.size(16.dp), tint = OrangeVibrant)
-                            Text("Rééquilibrer les exos muscu", style = MaterialTheme.typography.labelLarge,
+                            Text(stringResource(R.string.custom_hero_rebalance), style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.Bold, color = OrangeVibrant,
                                 modifier = Modifier.weight(1f))
                             Icon(Icons.Default.ChevronRight, null, Modifier.size(18.dp),
@@ -625,17 +636,20 @@ private fun DurationHeroCard(
     }
 }
 
-private fun formatMinutes(m: Int): String {
+private fun formatMinutes(m: Int, ctx: android.content.Context): String {
     val h = m / 60
     val mm = m % 60
-    return if (h > 0) "${h}h${if (mm > 0) String.format("%02d", mm) else ""}" else "${m} min"
+    return if (h > 0) {
+        val mmSuffix = if (mm > 0) String.format(java.util.Locale.US, "%02d", mm) else ""
+        ctx.getString(R.string.fmt_minutes_h, h, mmSuffix)
+    } else ctx.getString(R.string.fmt_minutes_only, m)
 }
 
 @Composable
 private fun BreakdownItem(label: String, minutes: Int, alpha: Float) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         Box(Modifier.size(8.dp).clip(RoundedCornerShape(2.dp)).background(Color.White.copy(alpha = alpha)))
-        Text("$label · ${minutes}'",
+        Text(stringResource(R.string.custom_breakdown_item, label, minutes),
             style = MaterialTheme.typography.labelSmall,
             color = Color.White.copy(alpha = 0.9f),
             fontWeight = FontWeight.Medium)
@@ -657,16 +671,16 @@ private fun ModeTabs(current: CreationMode, onSelect: (CreationMode) -> Unit) {
     ) {
         ModeTab(
             modifier = Modifier.weight(1f),
-            label = "Modèle suggéré",
-            subtitle = "Équilibré, personnalisable",
+            label = stringResource(R.string.custom_mode_template_label),
+            subtitle = stringResource(R.string.custom_mode_template_subtitle),
             icon = Icons.Default.AutoAwesome,
             selected = current == CreationMode.TEMPLATE,
             onClick = { onSelect(CreationMode.TEMPLATE) }
         )
         ModeTab(
             modifier = Modifier.weight(1f),
-            label = "Partir de zéro",
-            subtitle = "100% personnalisé",
+            label = stringResource(R.string.custom_mode_blank_label),
+            subtitle = stringResource(R.string.custom_mode_blank_subtitle),
             icon = Icons.Default.Tune,
             selected = current == CreationMode.BLANK,
             onClick = { onSelect(CreationMode.BLANK) }
@@ -772,9 +786,11 @@ private fun SectionHeader(
     ) {
         Icon(icon, null, Modifier.size(20.dp), tint = color)
         Column(Modifier.weight(1f)) {
-            Text(section.displayName, style = MaterialTheme.typography.titleMedium,
+            Text(stringResource(section.displayNameRes), style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold, color = color)
-            Text("$slotCount exercice${if (slotCount > 1) "s" else ""} · ${totalSeconds / 60} min",
+            val summaryRes = if (slotCount > 1) R.string.custom_section_header_summary_many
+                else R.string.custom_section_header_summary_one
+            Text(stringResource(summaryRes, slotCount, totalSeconds / 60),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
         }
@@ -785,7 +801,7 @@ private fun SectionHeader(
                 containerColor = color.copy(alpha = 0.15f), contentColor = color
             )
         ) {
-            Icon(Icons.Default.Add, "Ajouter", Modifier.size(18.dp))
+            Icon(Icons.Default.Add, stringResource(R.string.workout_action_add), Modifier.size(18.dp))
         }
     }
 }
@@ -793,9 +809,9 @@ private fun SectionHeader(
 @Composable
 private fun EmptySectionHint(section: WorkoutSection, onAddClick: () -> Unit) {
     val hint = when (section) {
-        WorkoutSection.WARMUP -> "Ajoute des exos d'échauffement pour préparer ton corps"
-        WorkoutSection.STRENGTH -> "Ajoute tes exos muscu par groupe musculaire"
-        WorkoutSection.CARDIO -> "Ajoute du cardio en fin de séance (optionnel)"
+        WorkoutSection.WARMUP -> stringResource(R.string.custom_empty_warmup)
+        WorkoutSection.STRENGTH -> stringResource(R.string.custom_empty_strength)
+        WorkoutSection.CARDIO -> stringResource(R.string.custom_empty_cardio)
     }
     Surface(
         onClick = onAddClick,
@@ -836,7 +852,7 @@ private fun AddSlotDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Ajouter à ${section.displayName}", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.custom_add_slot_title, stringResource(section.displayNameRes)), fontWeight = FontWeight.Bold) },
         text = {
             Column(
                 modifier = Modifier.heightIn(max = 400.dp).verticalScroll(rememberScrollState()),
@@ -853,7 +869,7 @@ private fun AddSlotDialog(
                             Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(mg.displayName, style = MaterialTheme.typography.bodyMedium,
+                            Text(stringResource(mg.displayNameRes), style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
                             Icon(Icons.Default.ChevronRight, null, Modifier.size(20.dp),
                                 tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
@@ -863,7 +879,7 @@ private fun AddSlotDialog(
             }
         },
         confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) } }
     )
 }
 

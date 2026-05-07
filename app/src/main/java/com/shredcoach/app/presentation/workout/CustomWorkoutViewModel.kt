@@ -114,10 +114,13 @@ data class CustomWorkoutState(
 data class IndexedSlot(val index: Int, val slot: CustomExerciseSlot)
 
 /** Les 3 grandes sections d'une séance. */
-enum class WorkoutSection(val displayName: String) {
-    WARMUP("Échauffement"),
-    STRENGTH("Musculation"),
-    CARDIO("Cardio")
+enum class WorkoutSection(
+    val displayName: String,
+    @androidx.annotation.StringRes val displayNameRes: Int,
+) {
+    WARMUP("Échauffement", com.shredcoach.app.R.string.workout_section_warmup),
+    STRENGTH("Musculation", com.shredcoach.app.R.string.workout_section_strength),
+    CARDIO("Cardio", com.shredcoach.app.R.string.workout_section_cardio)
 }
 
 @HiltViewModel
