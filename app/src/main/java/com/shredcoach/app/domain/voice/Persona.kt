@@ -64,7 +64,13 @@ enum class Gender { MALE, FEMALE }
 data class Persona(
     val id: String,
     val displayName: String,
+    /**
+     * Tagline FR par défaut (DB-stable, fallback si la locale n'a pas de
+     * traduction de [taglineRes]). L'UI doit toujours préférer
+     * `stringResource(persona.taglineRes)` pour un rendu locale-aware.
+     */
     val tagline: String,
+    @androidx.annotation.StringRes val taglineRes: Int,
     val gender: Gender,
     val engine: VoiceEngineId,
     val engineVoiceId: String,

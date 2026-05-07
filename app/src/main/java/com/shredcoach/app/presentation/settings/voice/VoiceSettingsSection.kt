@@ -326,7 +326,7 @@ private fun PersonaCard(
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                persona.tagline,
+                stringResource(persona.taglineRes),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center,
@@ -340,7 +340,10 @@ private fun PersonaCard(
 
 @Composable
 private fun GenderChip(gender: Gender, accent: Color) {
-    val label = if (gender == Gender.MALE) "Masc." else "Fém."
+    val label = stringResource(
+        if (gender == Gender.MALE) com.shredcoach.app.R.string.voice_gender_male_short
+        else com.shredcoach.app.R.string.voice_gender_female_short,
+    )
     Surface(
         shape = RoundedCornerShape(6.dp),
         color = accent.copy(alpha = 0.15f),

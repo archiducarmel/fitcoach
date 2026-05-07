@@ -367,6 +367,19 @@
     <string name="voice_engine_chirp3">Google Cloud · Chirp 3 HD</string>
     <string name="voice_engine_chirp3_tagline">Studio-grade neural voice</string>
 
+    <!-- Phase 5 — Voice persona taglines (4 personae × 2 engines) -->
+    <string name="voice_persona_marcus_android_tagline">Calm coach, deep voice</string>
+    <string name="voice_persona_lea_android_tagline">Bubbly, motivating</string>
+    <string name="voice_persona_hugo_android_tagline">Energetic, dynamic</string>
+    <string name="voice_persona_sophie_android_tagline">Clear, structured</string>
+    <string name="voice_persona_marcus_chirp_tagline">Deep voice, calm tone</string>
+    <string name="voice_persona_lea_chirp_tagline">Vibrant, encouraging</string>
+    <string name="voice_persona_hugo_chirp_tagline">Energetic, punchy</string>
+    <string name="voice_persona_sophie_chirp_tagline">Clear, structured</string>
+    <!-- Phase 5 — Gender chip in persona selection -->
+    <string name="voice_gender_male_short">Male</string>
+    <string name="voice_gender_female_short">Female</string>
+
     <!-- Plate types (meal scanner hints) -->
     <string name="plate_type_none">Not specified</string>
     <string name="plate_type_large">Dinner plate</string>

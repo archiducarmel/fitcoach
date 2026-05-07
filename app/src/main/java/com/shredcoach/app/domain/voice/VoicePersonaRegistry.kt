@@ -1,5 +1,7 @@
 package com.shredcoach.app.domain.voice
 
+import com.shredcoach.app.R
+
 /**
  * Catalogue **curaté** des personae disponibles dans l'app.
  *
@@ -24,6 +26,7 @@ object VoicePersonaRegistry {
             id = "marcus_android",
             displayName = "Marcus",
             tagline = "Coach posé, voix grave",
+            taglineRes = R.string.voice_persona_marcus_android_tagline,
             gender = Gender.MALE,
             engine = VoiceEngineId.ANDROID,
             engineVoiceId = "fr-FR",
@@ -34,6 +37,7 @@ object VoicePersonaRegistry {
             id = "lea_android",
             displayName = "Léa",
             tagline = "Pétillante, motivante",
+            taglineRes = R.string.voice_persona_lea_android_tagline,
             gender = Gender.FEMALE,
             engine = VoiceEngineId.ANDROID,
             engineVoiceId = "fr-FR",
@@ -44,6 +48,7 @@ object VoicePersonaRegistry {
             id = "hugo_android",
             displayName = "Hugo",
             tagline = "Énergique, dynamique",
+            taglineRes = R.string.voice_persona_hugo_android_tagline,
             gender = Gender.MALE,
             engine = VoiceEngineId.ANDROID,
             engineVoiceId = "fr-FR",
@@ -54,6 +59,7 @@ object VoicePersonaRegistry {
             id = "sophie_android",
             displayName = "Sophie",
             tagline = "Claire, structurée",
+            taglineRes = R.string.voice_persona_sophie_android_tagline,
             gender = Gender.FEMALE,
             engine = VoiceEngineId.ANDROID,
             engineVoiceId = "fr-FR",
@@ -75,6 +81,7 @@ object VoicePersonaRegistry {
             id = "marcus_chirp",
             displayName = "Marcus",
             tagline = "Voix grave, ton posé",
+            taglineRes = R.string.voice_persona_marcus_chirp_tagline,
             gender = Gender.MALE,
             engine = VoiceEngineId.GOOGLE_CHIRP3,
             engineVoiceId = "fr-FR-Chirp3-HD-Charon",
@@ -85,6 +92,7 @@ object VoicePersonaRegistry {
             id = "lea_chirp",
             displayName = "Léa",
             tagline = "Vibrante, encourageante",
+            taglineRes = R.string.voice_persona_lea_chirp_tagline,
             gender = Gender.FEMALE,
             engine = VoiceEngineId.GOOGLE_CHIRP3,
             engineVoiceId = "fr-FR-Chirp3-HD-Aoede",
@@ -95,6 +103,7 @@ object VoicePersonaRegistry {
             id = "hugo_chirp",
             displayName = "Hugo",
             tagline = "Énergique, percutant",
+            taglineRes = R.string.voice_persona_hugo_chirp_tagline,
             gender = Gender.MALE,
             engine = VoiceEngineId.GOOGLE_CHIRP3,
             engineVoiceId = "fr-FR-Chirp3-HD-Puck",
@@ -105,6 +114,7 @@ object VoicePersonaRegistry {
             id = "sophie_chirp",
             displayName = "Sophie",
             tagline = "Claire, structurée",
+            taglineRes = R.string.voice_persona_sophie_chirp_tagline,
             gender = Gender.FEMALE,
             engine = VoiceEngineId.GOOGLE_CHIRP3,
             engineVoiceId = "fr-FR-Chirp3-HD-Kore",
