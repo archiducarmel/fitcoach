@@ -4,11 +4,18 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.util.Log
+import com.shredcoach.app.data.auth.GoogleAuthRepository
+import com.shredcoach.app.data.backup.crypto.BackupKeyManager
+import com.shredcoach.app.data.backup.provider.BackupProvider
+import com.shredcoach.app.data.backup.provider.GoogleDriveBackupProvider
+import com.shredcoach.app.data.backup.provider.LocalSafBackupProvider
+import com.shredcoach.app.data.backup.provider.ProviderId
+import com.shredcoach.app.data.backup.provider.RemoteArchive
 import com.shredcoach.app.data.local.ShredCoachDatabase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -48,29 +55,61 @@ class BackupRepository @Inject constructor(
     private val importer: RoomSnapshotImporter,
     private val archive: BackupArchive,
     private val photoArchiver: PhotoArchiver,
+    private val localSafProvider: LocalSafBackupProvider,
+    private val driveProvider: GoogleDriveBackupProvider,
+    private val googleAuth: GoogleAuthRepository,
+    private val keyManager: BackupKeyManager,
 ) {
+
+    /**
+     * Sélectionne le provider courant en fonction des préférences. Pas de
+     * registry à la Hilt pour rester simple : 2 providers seulement, switch
+     * explicite. Si on en ajoute un 3e, refactor en map injectable.
+     */
+    private fun providerFor(id: ProviderId): BackupProvider = when (id) {
+        ProviderId.LOCAL_SAF -> localSafProvider
+        ProviderId.GOOGLE_DRIVE -> driveProvider
+    }
+
     /**
      * Snapshot observable de l'état utilisateur. Combine SettingsStore +
-     * meta dérivée pour l'UI Settings (Tier 4 V3).
+     * GoogleAuthStore + dérivé `isConfigured` (provider-dependent) pour l'UI.
      */
-    val state: Flow<State> = settings.snapshot.map { snap ->
+    val state: Flow<State> = combine(
+        settings.snapshot,
+        googleAuth.state,
+        keyManager.isEnabled,
+    ) { settingsSnap, authSnap, encryptionEnabled ->
+        val configured = when (settingsSnap.providerId) {
+            ProviderId.LOCAL_SAF -> settingsSnap.folderUri != null
+            ProviderId.GOOGLE_DRIVE -> authSnap.isLinked
+        }
         State(
-            isConfigured = snap.isConfigured,
-            folderUri = snap.folderUri,
-            lastBackupAt = snap.lastBackupAt,
-            autoBackupEnabled = snap.autoBackupEnabled,
+            providerId = settingsSnap.providerId,
+            isConfigured = configured,
+            folderUri = settingsSnap.folderUri,
+            googleAccountEmail = authSnap.linkedEmail.takeIf { authSnap.isLinked },
+            lastBackupAt = settingsSnap.lastBackupAt,
+            autoBackupEnabled = settingsSnap.autoBackupEnabled,
+            encryptionEnabled = encryptionEnabled,
         )
     }
 
     /**
-     * Lance un backup complet. Stateful : modifie [BackupSettingsStore] en cas
-     * de succès. Logue uniquement la **meta** (pas le contenu) — voir docstring
-     * [BackupManifest] pour la justification sécurité.
+     * Lance un backup complet via le provider sélectionné. Stateful : modifie
+     * [BackupSettingsStore.lastBackupAt] en cas de succès. Logue uniquement la
+     * **meta** (pas le contenu) — voir docstring [BackupManifest] pour la
+     * justification sécurité.
      */
     suspend fun runBackup(): BackupResult {
         val snap = settings.snapshot.first()
-        val folderUri = snap.folderUri
-            ?: return BackupResult.Failure("Aucun dossier de backup configuré")
+        val provider = providerFor(snap.providerId)
+
+        if (!provider.isConfigured()) {
+            return BackupResult.Failure(
+                "Sauvegarde non configurée (provider ${snap.providerId}). Va dans Paramètres → Sauvegarde."
+            )
+        }
 
         return runCatching {
             // 1. Snapshot DB
@@ -97,20 +136,32 @@ class BackupRepository @Inject constructor(
             // 4. Sérialisation
             val manifestJson = BackupGson.instance.toJson(manifest)
 
-            // 5. Pack
+            // 5. Upload via provider (avec clé d'encryption si activée)
             val fileName = buildFileName(Instant.now())
-            archive.packWithEntries(folderUri, fileName, manifestJson, scanned)
+            val key = keyManager.keyOrNull()
+            val uploadResult = provider.uploadArchive(fileName, manifestJson, scanned, key)
+            when (uploadResult) {
+                is BackupProvider.UploadResult.Failure -> {
+                    Log.e(TAG, "Upload failed via ${snap.providerId}: ${uploadResult.reason}", uploadResult.cause)
+                    return@runCatching BackupResult.Failure(uploadResult.reason)
+                }
+                is BackupProvider.UploadResult.Success -> {
+                    // 6. Update settings
+                    settings.setLastBackupAt(uploadResult.uploadedAt)
 
-            // 6. Update settings
-            val now = Instant.now()
-            settings.setLastBackupAt(now)
+                    // 7. Cleanup rétention (best-effort, ne bloque pas le succès)
+                    runCatching { applyRetention(provider) }
+                        .onFailure { Log.w(TAG, "Retention cleanup failed (non-bloquant)", it) }
 
-            // 7. Cleanup rétention (best-effort, ne bloque pas le succès)
-            runCatching { applyRetention(folderUri) }
-                .onFailure { Log.w(TAG, "Retention cleanup failed (non-bloquant)", it) }
-
-            Log.i(TAG, "Backup OK: ${tables.workoutLogs.size} séances, ${scanned.size} photos")
-            BackupResult.Success(at = now, fileName = fileName, photosCount = scanned.size)
+                    Log.i(TAG, "Backup OK [${snap.providerId}]: ${tables.workoutLogs.size} séances, ${scanned.size} photos, ${uploadResult.sizeBytes / 1024} Ko")
+                    BackupResult.Success(
+                        at = uploadResult.uploadedAt,
+                        fileName = uploadResult.fileName,
+                        photosCount = scanned.size,
+                        sizeBytes = uploadResult.sizeBytes,
+                    )
+                }
+            }
         }.getOrElse { e ->
             Log.e(TAG, "Backup failed", e)
             BackupResult.Failure(e.message ?: "Erreur inconnue")
@@ -118,13 +169,63 @@ class BackupRepository @Inject constructor(
     }
 
     /**
+     * Liste les archives disponibles pour le restore picker. Délègue au provider.
+     */
+    suspend fun listRemoteArchives(): List<RemoteArchive> {
+        val snap = settings.snapshot.first()
+        val provider = providerFor(snap.providerId)
+        return runCatching { provider.listArchives() }
+            .onFailure { Log.e(TAG, "List archives failed via ${snap.providerId}", it) }
+            .getOrDefault(emptyList())
+    }
+
+    /**
+     * Restaure une archive distante (Drive ou SAF). Télécharge si nécessaire
+     * puis délègue au pipeline classique.
+     *
+     * @param recoveryCode Optionnel — passé tel quel à [runRestore] pour le
+     *   cas "archive chiffrée + nouveau téléphone".
+     */
+    suspend fun runRestoreFromRemote(
+        remote: RemoteArchive,
+        recoveryCode: ByteArray? = null,
+    ): RestoreResult {
+        val provider = providerFor(remote.provider)
+        val localFile = runCatching { provider.downloadArchive(remote) }
+            .getOrElse { e ->
+                Log.e(TAG, "Download failed for ${remote.id}", e)
+                return RestoreResult.Failure("Téléchargement de l'archive impossible : ${e.message}")
+            }
+        return try {
+            runRestore(Uri.fromFile(localFile), recoveryCode)
+        } finally {
+            runCatching { localFile.delete() }
+        }
+    }
+
+    /**
      * Restaure une archive sélectionnée par l'utilisateur. Atomique :
      * si une étape échoue, la DB conserve son état d'avant-restore.
+     *
+     * @param archiveUri URI de l'archive ZIP (file:// pour les downloads cloud,
+     *   content:// pour le SAF picker).
+     * @param recoveryCode Code de récupération optionnel (32 bytes décodés).
+     *   Fourni quand l'user paste son code via le dialog "archive chiffrée +
+     *   pas de clé locale" — on l'importe puis on l'utilise pour décrypter.
+     *   Sinon on essaie d'abord la clé locale (KeyManager), et si l'archive
+     *   est chiffrée mais qu'on n'a pas de clé, on remonte
+     *   [RestoreResult.NeedsRecoveryCode] au caller.
      */
-    suspend fun runRestore(archiveUri: Uri): RestoreResult {
+    suspend fun runRestore(archiveUri: Uri, recoveryCode: ByteArray? = null): RestoreResult {
         return runCatching {
-            // 1. Unpack
-            val unpack = archive.unpack(archiveUri)
+            // **N'importe PAS la clé tant que le restore n'a pas réussi** : si
+            // l'user a tapé un code erroné, la décryption va échouer (GCM tag
+            // mismatch). Persister la clé en amont écraserait la vraie clé
+            // précédente. → On garde la clé en RAM pour ce restore, on la
+            // persiste seulement après succès en bas de la fonction.
+            val key = recoveryCode ?: keyManager.keyOrNull()
+            // 1. Unpack — peut throw EncryptedArchiveException si chiffré sans clé
+            val unpack = archive.unpack(archiveUri, key)
 
             // 2. Parse + validation versions
             val manifest = BackupGson.instance.fromJson(unpack.manifestJson, BackupManifest::class.java)
@@ -153,6 +254,12 @@ class BackupRepository @Inject constructor(
             // 4. Import atomique
             importer.import(patchedTables)
 
+            // 5. **Maintenant** que le restore a réussi de bout en bout, on
+            // persiste la clé saisie par l'user pour les futures ops (sinon,
+            // saisir le code à chaque restore — friction inutile sur un device
+            // où on vient de prouver que la clé est valide).
+            if (recoveryCode != null) keyManager.importKey(recoveryCode)
+
             Log.i(TAG, "Restore OK: ${patchedTables.workoutLogs.size} séances, ${originalToNew.size} photos restaurées (${unpack.skippedEntries.size} skippées)")
             RestoreResult.Success(
                 exportedAt = manifest.exportedAt,
@@ -161,7 +268,13 @@ class BackupRepository @Inject constructor(
             )
         }.getOrElse { e ->
             Log.e(TAG, "Restore failed", e)
-            RestoreResult.Failure(e.message ?: "Erreur inconnue")
+            // Cas spécifique : archive chiffrée mais pas de clé → remonter au
+            // caller pour qu'il prompte l'user. Pas une erreur logique.
+            if (e is BackupArchive.EncryptedArchiveException) {
+                RestoreResult.NeedsRecoveryCode(e.message ?: "Archive chiffrée — code de récupération requis")
+            } else {
+                RestoreResult.Failure(e.message ?: "Erreur inconnue")
+            }
         }
     }
 
@@ -192,18 +305,17 @@ class BackupRepository @Inject constructor(
     /**
      * Applique la rétention : on conserve les [MAX_ARCHIVES] archives les plus
      * récentes, on supprime les autres. Best-effort — si une suppression échoue
-     * (permissions SAF révoquées, etc.), on log et on continue.
+     * (permissions SAF révoquées, token Drive expiré, etc.), on log et on continue.
      *
-     * V2 : politique simple "N most recent". V2.5 ajoutera la politique
-     * 7 quotidiens + 4 hebdomadaires + 6 mensuels pour économiser le stockage
-     * cloud sur les longs historiques.
+     * Provider-agnostique : les archives sont listées et supprimées via la même
+     * interface, qu'elles soient SAF ou Drive.
      */
-    private fun applyRetention(folderUri: Uri) {
-        val all = archive.listArchives(folderUri)
+    private suspend fun applyRetention(provider: BackupProvider) {
+        val all = provider.listArchives()
         val toDelete = all.drop(MAX_ARCHIVES)
-        for (file in toDelete) {
-            runCatching { file.delete() }
-                .onFailure { Log.w(TAG, "Suppression archive ${file.name} échouée", it) }
+        for (rem in toDelete) {
+            runCatching { provider.deleteArchive(rem) }
+                .onFailure { Log.w(TAG, "Suppression archive ${rem.name} échouée", it) }
         }
         if (toDelete.isNotEmpty()) {
             Log.i(TAG, "Retention: ${toDelete.size} archives supprimées (${all.size} → ${MAX_ARCHIVES})")
@@ -225,20 +337,38 @@ class BackupRepository @Inject constructor(
     }.getOrDefault("")
 
     data class State(
+        val providerId: ProviderId,
         val isConfigured: Boolean,
+        /** Non-null uniquement pour LOCAL_SAF. */
         val folderUri: Uri?,
+        /** Non-null uniquement pour GOOGLE_DRIVE quand linké. */
+        val googleAccountEmail: String?,
         val lastBackupAt: Instant?,
         val autoBackupEnabled: Boolean,
+        /** True si l'encryption AES-GCM est activée (clé maître présente). */
+        val encryptionEnabled: Boolean,
     )
 
     sealed interface BackupResult {
-        data class Success(val at: Instant, val fileName: String, val photosCount: Int) : BackupResult
+        data class Success(
+            val at: Instant,
+            val fileName: String,
+            val photosCount: Int,
+            val sizeBytes: Long,
+        ) : BackupResult
         data class Failure(val message: String) : BackupResult
     }
 
     sealed interface RestoreResult {
         data class Success(val exportedAt: String, val photosCount: Int, val skippedPhotos: Int) : RestoreResult
         data class Failure(val message: String) : RestoreResult
+        /**
+         * Archive chiffrée mais aucune clé locale (cas restore sur un nouveau
+         * téléphone). Le caller doit prompter l'user pour son code de
+         * récupération, puis re-appeler [runRestore] / [runRestoreFromRemote]
+         * avec le `recoveryCode`.
+         */
+        data class NeedsRecoveryCode(val message: String) : RestoreResult
     }
 
     private companion object {
@@ -246,12 +376,12 @@ class BackupRepository @Inject constructor(
         const val MAX_ARCHIVES = 30
         /**
          * Version Room **courante**, à incrémenter manuellement quand
-         * [com.shredcoach.app.data.local.ShredCoachDatabase] passe à v35, v36...
+         * [com.shredcoach.app.data.local.ShredCoachDatabase] passe à v35, v36, v37...
          * Hardcodée car la version Room n'est pas exposée à runtime de manière
          * propre — `db.openHelper.readableDatabase.version` fonctionne mais
          * c'est un round-trip SQLite à chaque export, peu utile.
          */
-        const val ROOM_DB_VERSION = 34
+        const val ROOM_DB_VERSION = 37
         val ISO_FILE: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss'Z'")
     }
 }

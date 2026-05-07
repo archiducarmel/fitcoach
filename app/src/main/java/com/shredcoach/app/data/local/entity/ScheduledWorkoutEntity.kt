@@ -23,7 +23,7 @@ import java.time.LocalTime
  */
 @Entity(
     tableName = "scheduled_workouts",
-    indices = [Index("date"), Index("status")]
+    indices = [Index("date"), Index("status"), Index("routineId")]
 )
 @Immutable
 data class ScheduledWorkoutEntity(
@@ -38,7 +38,14 @@ data class ScheduledWorkoutEntity(
     val reminderShakerSent: Boolean = false,  // 2h avant — notif shaker
     val reminderStartSent: Boolean = false,   // 30min avant — notif "c'est l'heure"
     val source: String = "manual", // manual | ai_suggestion | auto_recurring
-    val createdAt: LocalDateTime = LocalDateTime.now()
+    val createdAt: LocalDateTime = LocalDateTime.now(),
+    /**
+     * Identifiant du [com.shredcoach.app.domain.workout.WorkoutRoutine] prévu
+     * pour cette planif. Default `"full_body"` (pré-v37). Permet au calendrier
+     * d'afficher "Pull mercredi" et au coach de raisonner sur la programmation
+     * hebdo par split.
+     */
+    val routineId: String = "full_body",
 )
 
 enum class ScheduleStatus { PLANNED, COMPLETED, SKIPPED, CANCELED }

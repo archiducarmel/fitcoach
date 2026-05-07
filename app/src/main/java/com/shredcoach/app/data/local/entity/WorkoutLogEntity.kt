@@ -18,7 +18,7 @@ import java.time.LocalDateTime
             onDelete = ForeignKey.SET_NULL
         )
     ],
-    indices = [Index("workoutId"), Index("date")]
+    indices = [Index("workoutId"), Index("date"), Index("routineId")]
 )
 @Immutable
 data class WorkoutLogEntity(
@@ -65,4 +65,12 @@ data class WorkoutLogEntity(
      * pas perdre le slot bonus au retour sur l'écran.
      */
     val extraSeriesJson: String = "{}",
+    // ─── v37 : type de séance (Push, Pull, Full Body, …) ───────────────────
+    /**
+     * Identifiant du [com.shredcoach.app.domain.workout.WorkoutRoutine] de la
+     * séance — capturé depuis [WorkoutEntity.routineId] au moment du démarrage.
+     * Default `"full_body"` pour les logs pré-v37 (backfill migration).
+     * Indexé pour les requêtes de stats par routine type.
+     */
+    val routineId: String = "full_body",
 )

@@ -98,6 +98,35 @@ object Migrations {
         }
     }
 
+    /**
+     * v36 → v37 : ouverture aux **routines split** (Push, Pull, Legs, Upper,
+     * Lower, Chest+Tri, Back+Bi) en plus de Full Body.
+     *
+     * - `workouts.routineId` : id de la routine du template (généré ou custom).
+     * - `workout_logs.routineId` : id capturé au démarrage de la séance, indexé
+     *   pour les stats par routine (volume hebdo, fréquence, etc.).
+     * - `scheduled_workouts.routineId` : id de la routine prévue, indexé pour
+     *   afficher le calendrier par split.
+     * - `user_profile.lastUsedRoutineId` : pré-sélection sur le RoutinePicker.
+     *
+     * Toutes les colonnes ont DEFAULT `'full_body'` → backfill implicite : tous
+     * les workouts/logs/planifs pré-v37 sont rétro-classés en Full Body, ce qui
+     * matche la réalité (l'app était mono-routine avant cette version).
+     *
+     * ALTER TABLE ADD COLUMN simple — pas de table-rebuild, pas de risque sur
+     * les données existantes. Index créés en `IF NOT EXISTS` pour idempotence.
+     */
+    fun migration36to37(): Migration = object : Migration(36, 37) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `workouts` ADD COLUMN `routineId` TEXT NOT NULL DEFAULT 'full_body'")
+            db.execSQL("ALTER TABLE `workout_logs` ADD COLUMN `routineId` TEXT NOT NULL DEFAULT 'full_body'")
+            db.execSQL("ALTER TABLE `scheduled_workouts` ADD COLUMN `routineId` TEXT NOT NULL DEFAULT 'full_body'")
+            db.execSQL("ALTER TABLE `user_profile` ADD COLUMN `lastUsedRoutineId` TEXT NOT NULL DEFAULT 'full_body'")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_workout_logs_routineId` ON `workout_logs` (`routineId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_scheduled_workouts_routineId` ON `scheduled_workouts` (`routineId`)")
+        }
+    }
+
     private fun copyApiKeysToSecureStore(context: Context, db: SupportSQLiteDatabase) {
         try {
             val masterKey = MasterKey.Builder(context)

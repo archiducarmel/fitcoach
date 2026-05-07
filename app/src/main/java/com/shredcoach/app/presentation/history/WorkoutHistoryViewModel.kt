@@ -30,6 +30,11 @@ enum class HistoryFilter(val displayName: String) {
 data class WorkoutHistoryState(
     val items: List<HistoryListItem> = emptyList(),
     val filter: HistoryFilter = HistoryFilter.ALL,
+    /**
+     * Filtre par routine (Push, Pull, …). `null` = toutes les routines.
+     * Indépendant de [filter] (status) — combinable.
+     */
+    val routineFilter: String? = null,
     val isLoading: Boolean = true,
     val totalWorkouts: Int = 0,
     val totalVolumeKg: Double = 0.0,
@@ -56,6 +61,11 @@ class WorkoutHistoryViewModel @Inject constructor(
 
     fun setFilter(filter: HistoryFilter) {
         _state.update { it.copy(filter = filter) }
+    }
+
+    /** `null` = toutes les routines (filtre désactivé). */
+    fun setRoutineFilter(routineId: String?) {
+        _state.update { it.copy(routineFilter = routineId) }
     }
 
     private fun load() {

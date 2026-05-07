@@ -33,6 +33,9 @@ class UserRepository @Inject constructor(
     suspend fun incrementTotalWorkouts() =
         userProfileDao.incrementTotalWorkouts()
 
+    suspend fun updateLastUsedRoutineId(routineId: String) =
+        userProfileDao.updateLastUsedRoutineId(routineId)
+
     // Weight logs
     fun getAllWeightLogs() = userProfileDao.getAllWeightLogs()
     suspend fun getWeightLogsSince(since: LocalDate) = userProfileDao.getWeightLogsSince(since)

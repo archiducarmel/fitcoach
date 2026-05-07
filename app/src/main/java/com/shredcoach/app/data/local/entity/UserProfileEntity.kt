@@ -81,7 +81,14 @@ data class UserProfileEntity(
     val llmProvider: String = "GROQ", // GROQ, OPENAI, CLAUDE
     val llmModel: String = "", // vide = défaut du provider
     // Profile photo
-    val profilePhotoPath: String? = null
+    val profilePhotoPath: String? = null,
+    // ── Routines / Splits (v37) ──
+    /**
+     * Dernier [com.shredcoach.app.domain.workout.WorkoutRoutine] utilisé par
+     * l'utilisateur — sert de pré-sélection sur le RoutinePicker au prochain
+     * lancement. Default `"full_body"` (rétro-compat).
+     */
+    val lastUsedRoutineId: String = "full_body"
     // NOTE : les clés API (llmApiKey, geminiApiKey, groqMealApiKey, mistralApiKey)
     // ont été retirées en v34 et déplacées vers SecureKeyStore (Phase C).
     // Voir ShredCoachDatabase.DropLegacyApiKeyColumns pour la migration.

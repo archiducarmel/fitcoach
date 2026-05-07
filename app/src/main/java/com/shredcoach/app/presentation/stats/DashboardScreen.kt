@@ -37,6 +37,8 @@ import androidx.navigation.NavController
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import com.shredcoach.app.domain.training.SetMetricFormatter
+import com.shredcoach.app.domain.training.SetMetricFormatter.ExerciseKind
 import com.shredcoach.app.presentation.common.AnimatedCounter
 import com.shredcoach.app.presentation.common.tabularNum
 import com.shredcoach.app.presentation.theme.NeonGreen
@@ -53,10 +55,51 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
     val context = LocalContext.current
     var selectedTab by remember { mutableStateOf(0) }
 
+    var showShareStats by remember { mutableStateOf(false) }
+    var showExportStats by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    if (showShareStats) {
+        // Génère la share card en fonction du tab sélectionné
+        com.shredcoach.app.presentation.share.ShareSheet(
+            data = if (selectedTab == 0) buildWorkoutStatsShareData(state) else buildNutritionStatsShareData(nutritionStats),
+            onDismiss = { showShareStats = false },
+        )
+    }
+    if (showExportStats) {
+        com.shredcoach.app.presentation.share.ExportSheet(
+            title = if (selectedTab == 0) "Statistiques séances" else "Statistiques nutrition",
+            onPick = { format ->
+                showExportStats = false
+                scope.launch {
+                    val payload = if (selectedTab == 0) buildWorkoutStatsExportPayload(state)
+                    else buildNutritionStatsExportPayload(nutritionStats)
+                    val content = com.shredcoach.app.presentation.share.DataExporter.render(payload, format)
+                    val uri = com.shredcoach.app.presentation.share.DataExporter.saveToCache(
+                        context, content, format,
+                        baseFilename = if (selectedTab == 0) "shredcoach_stats_seances" else "shredcoach_stats_nutrition",
+                    )
+                    com.shredcoach.app.presentation.share.DataExporter.launchShareIntent(
+                        context, uri, format, subject = payload.title,
+                    )
+                }
+            },
+            onDismiss = { showExportStats = false },
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Mes Statistiques", fontWeight = FontWeight.Bold) },
+                actions = {
+                    IconButton(onClick = { showShareStats = true }) {
+                        Icon(Icons.Default.Share, "Partager mes stats")
+                    }
+                    IconButton(onClick = { showExportStats = true }) {
+                        Icon(Icons.Default.FileDownload, "Exporter")
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = androidx.compose.material3.MaterialTheme.colorScheme.background)
             )
         }
@@ -181,6 +224,12 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
                     }
                     if (state.muscleDistribution.isNotEmpty()) {
                         item { MuscleDistributionSection(state.muscleDistribution) }
+                    }
+                    // Volume par routine — apparaît dès qu'on a 1+ routine.
+                    // Vraiment utile à partir de 2 routines distinctes (split user)
+                    // mais on l'affiche aussi pour 1 routine pour confirmer le focus.
+                    if (state.routineBreakdown.isNotEmpty()) {
+                        item { RoutineBreakdownSection(state.routineBreakdown, state.selectedPeriod) }
                     }
                 }
 
@@ -693,13 +742,37 @@ private fun PersonalRecordsSection(records: List<PRDisplay>) {
                     Text("${i + 1}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = if (i < 3) Color.White else MaterialTheme.colorScheme.onSurface)
                 }
                 Spacer(Modifier.width(12.dp))
+                // Sous-ligne contextuelle (kind-aware) :
+                //  - WEIGHTED        : "1RM: 110 kg"
+                //  - BODYWEIGHT_REPS : "Poids du corps" (ou "+10 kg" si lesté)
+                //  - TIMED           : "Tenue maximale"
+                val subtitle = when (pr.kind) {
+                    ExerciseKind.WEIGHTED -> pr.estimated1RM?.let { "1RM: %.0f kg".format(it) } ?: ""
+                    ExerciseKind.BODYWEIGHT_REPS -> if (pr.weight > 0.0) "+${SetMetricFormatter.formatWeight(pr.weight)} kg lesté" else "Poids du corps"
+                    ExerciseKind.TIMED -> "Tenue maximale"
+                }
                 Column(Modifier.weight(1f)) {
                     Text(pr.exerciseName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text("1RM: %.0f kg".format(pr.estimated1RM), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                    if (subtitle.isNotBlank()) {
+                        Text(subtitle, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                    }
                 }
+                // Bloc de droite : valeur principale + détail kind-aware
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("${pr.weight} kg", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
-                    Text("x${pr.reps}", style = MaterialTheme.typography.labelSmall)
+                    when (pr.kind) {
+                        ExerciseKind.WEIGHTED -> {
+                            Text("${SetMetricFormatter.formatWeight(pr.weight)} kg", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
+                            Text("× ${pr.reps}", style = MaterialTheme.typography.labelSmall)
+                        }
+                        ExerciseKind.BODYWEIGHT_REPS -> {
+                            Text("${pr.reps}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
+                            Text("reps", style = MaterialTheme.typography.labelSmall)
+                        }
+                        ExerciseKind.TIMED -> {
+                            Text(SetMetricFormatter.formatDuration(pr.reps), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
+                            Text("tenue", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
                 }
             }
         }
@@ -848,6 +921,113 @@ private fun MuscleDistributionSection(data: List<MuscleSlice>) {
                     Box(Modifier.size(10.dp).clip(CircleShape).background(colors[i % colors.size]))
                     Text(s.displayName, style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text("${(s.percentage * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
+// ═══════════════════════════════════════
+// VOLUME PAR ROUTINE (Push, Pull, Legs, …)
+// ═══════════════════════════════════════
+/**
+ * Stack-bar horizontale + légende. Premium FAANG : tabular nums sur les
+ * pourcentages, ellipsis sur les noms longs, hauteur fixe pour shimmer-safe.
+ *
+ * Affiche jusqu'à 6 routines max dans la légende — au-delà c'est rare et la
+ * stack-bar sature visuellement, donc on regroupe le reste en "Autres".
+ */
+@Composable
+private fun RoutineBreakdownSection(data: List<RoutineSlice>, period: TimePeriod) {
+    val totalSessions = data.sumOf { it.sessionCount }
+    val totalVolumeKg = data.sumOf { it.volume }
+    SecTitle("Volume par Routine (${period.label})", Icons.Default.Whatshot)
+    val colors = listOf(OrangeVibrant, Color(0xFF3B82F6), NeonGreen, Color(0xFF8B5CF6), Color(0xFFEC4899), Color(0xFFF59E0B), Color(0xFF14B8A6), Color(0xFF6366F1))
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(16.dp),
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Hero numérique : total séances + volume cumulé
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Column {
+                    Text("$totalSessions séances", style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold, maxLines = 1)
+                    Text("${totalVolumeKg.toInt()} kg cumulés",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f))
+                }
+                Surface(shape = RoundedCornerShape(6.dp), color = OrangeVibrant.copy(alpha = 0.10f)) {
+                    Text("${data.size} ${if (data.size > 1) "types" else "type"}",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold, color = OrangeVibrant)
+                }
+            }
+
+            // Stack bar (8dp height, rounded)
+            Row(
+                Modifier.fillMaxWidth().height(10.dp).clip(RoundedCornerShape(5.dp)),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                data.forEachIndexed { i, slice ->
+                    if (slice.percentage > 0f) {
+                        Box(
+                            Modifier
+                                .weight(slice.percentage.coerceAtLeast(0.5f))
+                                .fillMaxHeight()
+                                .background(colors[i % colors.size])
+                        )
+                    }
+                }
+            }
+
+            // Légende — top 6 routines
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                data.take(6).forEachIndexed { i, slice ->
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Box(Modifier.size(10.dp).clip(CircleShape).background(colors[i % colors.size]))
+                        Text(slice.icon, fontSize = 14.sp)
+                        Text(
+                            slice.displayName,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.weight(1f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            "${slice.sessionCount}× · ${slice.volume.toInt()} kg",
+                            style = MaterialTheme.typography.labelSmall.tabularNum(),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            maxLines = 1,
+                        )
+                        Text(
+                            "${slice.percentage.toInt()}%",
+                            style = MaterialTheme.typography.labelMedium.tabularNum(),
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.widthIn(min = 40.dp),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.End,
+                        )
+                    }
+                }
+                if (data.size > 6) {
+                    val extra = data.drop(6)
+                    val extraVol = extra.sumOf { it.volume }.toInt()
+                    val extraSessions = extra.sumOf { it.sessionCount }
+                    val extraPct = extra.sumOf { it.percentage.toDouble() }.toInt()
+                    Text(
+                        "+ ${extra.size} autres routines · $extraSessions× · $extraVol kg ($extraPct%)",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
+                    )
                 }
             }
         }
@@ -1047,3 +1227,137 @@ private fun SecTitle(title: String, icon: androidx.compose.ui.graphics.vector.Im
 private fun fmtVol(v: Double): String = when { v >= 1_000_000 -> String.format(java.util.Locale.US, "%.1fM",v / 1_000_000); v >= 1_000 -> String.format(java.util.Locale.US, "%.1fk",v / 1_000); else -> "%.0f kg".format(v) }
 private fun fmtDur(s: Long): String { val h = s / 3600; return if (h > 0) "${h}h" else "${s / 60}min" }
 private fun fmtVolShort(v: Float): String = when { v >= 1000 -> "%.0fk".format(v / 1000); else -> "%.0f".format(v) }
+
+// ──────────────────────────────────────────────────────────
+// Builders : transforment les états ViewModel en payloads share/export
+// ──────────────────────────────────────────────────────────
+
+private fun periodLabel(period: TimePeriod): String = when (period) {
+    TimePeriod.WEEK -> "7 derniers jours"
+    TimePeriod.MONTH -> "30 derniers jours"
+    TimePeriod.QUARTER -> "90 derniers jours"
+    TimePeriod.YEAR -> "365 derniers jours"
+    TimePeriod.ALL -> "Toute la période"
+}
+
+private fun buildWorkoutStatsShareData(state: StatsState): com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate {
+    return com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate(
+        title = "Mes stats séances",
+        subtitle = periodLabel(state.selectedPeriod),
+        accentEmoji = "💪",
+        keyMetrics = listOf(
+            com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
+                label = "Séances",
+                value = state.workoutCount.toString(),
+            ),
+            com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
+                label = "Volume",
+                value = state.totalVolume.toInt().toString(),
+                unit = "kg",
+            ),
+            com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
+                label = "Reps",
+                value = state.totalReps.toString(),
+            ),
+            com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
+                label = "Durée",
+                value = (state.totalDuration / 60).toString(),
+                unit = "min",
+            ),
+        ),
+    )
+}
+
+private fun buildNutritionStatsShareData(stats: NutritionStatsData): com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate {
+    return com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate(
+        title = "Mes stats nutrition",
+        subtitle = periodLabel(stats.period),
+        accentEmoji = "🥗",
+        keyMetrics = listOf(
+            com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
+                label = "Kcal/jour",
+                value = stats.avgCalories.toString(),
+                unit = "kcal",
+            ),
+            com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
+                label = "Protéines",
+                value = stats.avgProteins.toString(),
+                unit = "g",
+            ),
+            com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
+                label = "Compliance",
+                value = "${stats.complianceDays}/${stats.daysInPeriod}",
+                unit = "j",
+            ),
+            com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
+                label = "Score santé",
+                value = stats.avgHealthScore.toString(),
+                unit = "/100",
+            ),
+        ),
+    )
+}
+
+private fun buildWorkoutStatsExportPayload(state: StatsState): com.shredcoach.app.presentation.share.DataExporter.ExportPayload {
+    return com.shredcoach.app.presentation.share.DataExporter.ExportPayload(
+        title = "ShredCoach — Statistiques séances",
+        description = "Période : ${periodLabel(state.selectedPeriod)}",
+        columns = listOf("Métrique", "Valeur", "Unité"),
+        rows = listOf(
+            listOf("Nombre de séances", state.workoutCount.toString(), ""),
+            listOf("Volume total", state.totalVolume.toInt().toString(), "kg"),
+            listOf("Durée totale", state.totalDuration.toString(), "secondes"),
+            listOf("Reps totales", state.totalReps.toString(), ""),
+            listOf("Calories estimées", state.estimatedCalories.toString(), "kcal"),
+            listOf("Séances ce mois", state.monthWorkouts.toString(), ""),
+            listOf("Volume ce mois", state.monthVolume.toInt().toString(), "kg"),
+            listOf("Séances all-time", state.allTimeWorkouts.toString(), ""),
+            listOf("Volume all-time", state.allTimeVolume.toInt().toString(), "kg"),
+            listOf("Durée all-time", state.allTimeDuration.toString(), "secondes"),
+            listOf("Muscle le + entraîné", state.mostTrainedMuscle, ""),
+            listOf("Exercice le + fait", state.mostDoneExercise, ""),
+            listOf("Temps échauffement (all)", state.warmupSeconds.toString(), "secondes"),
+            listOf("Temps cardio (all)", state.cardioSeconds.toString(), "secondes"),
+            listOf("Temps musculation (all)", state.strengthSeconds.toString(), "secondes"),
+        ),
+        summary = listOf(
+            "Période" to periodLabel(state.selectedPeriod),
+            "Total séances" to state.workoutCount.toString(),
+            "Volume total" to "${state.totalVolume.toInt()} kg",
+        ),
+    )
+}
+
+private fun buildNutritionStatsExportPayload(stats: NutritionStatsData): com.shredcoach.app.presentation.share.DataExporter.ExportPayload {
+    return com.shredcoach.app.presentation.share.DataExporter.ExportPayload(
+        title = "ShredCoach — Statistiques nutrition",
+        description = "Période : ${periodLabel(stats.period)}",
+        columns = listOf("Métrique", "Valeur", "Unité"),
+        rows = listOf(
+            listOf("Calories moyennes/jour", stats.avgCalories.toString(), "kcal"),
+            listOf("Protéines moyennes/jour", stats.avgProteins.toString(), "g"),
+            listOf("Glucides moyens/jour", stats.avgCarbs.toString(), "g"),
+            listOf("Lipides moyens/jour", stats.avgFats.toString(), "g"),
+            listOf("Jours suivis", stats.daysTracked.toString(), "/${stats.daysInPeriod}"),
+            listOf("Cible calories", stats.targetCalories.toString(), "kcal"),
+            listOf("Cible protéines", stats.targetProteins.toString(), "g"),
+            listOf("Jours compliants", stats.complianceDays.toString(), ""),
+            listOf("Total scans", stats.totalScans.toString(), ""),
+            listOf("Score santé moyen", stats.avgHealthScore.toString(), "/100"),
+            listOf("Prot/kg poids", "%.2f".format(stats.protPerKg), "g/kg"),
+            listOf("% kcal protéines", "%.0f".format(stats.proteinKcalPct), "%"),
+            listOf("% kcal glucides", "%.0f".format(stats.carbsKcalPct), "%"),
+            listOf("% kcal lipides", "%.0f".format(stats.fatsKcalPct), "%"),
+            listOf("Nutri-Score A", stats.nutriCountA.toString(), ""),
+            listOf("Nutri-Score B", stats.nutriCountB.toString(), ""),
+            listOf("Nutri-Score C", stats.nutriCountC.toString(), ""),
+            listOf("Nutri-Score D", stats.nutriCountD.toString(), ""),
+            listOf("Nutri-Score E", stats.nutriCountE.toString(), ""),
+        ),
+        summary = listOf(
+            "Période" to periodLabel(stats.period),
+            "Kcal/jour" to "${stats.avgCalories} kcal",
+            "Compliance" to "${stats.complianceDays}/${stats.daysInPeriod} jours",
+        ),
+    )
+}

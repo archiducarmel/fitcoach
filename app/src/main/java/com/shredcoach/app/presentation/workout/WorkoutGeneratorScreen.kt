@@ -1,6 +1,7 @@
 package com.shredcoach.app.presentation.workout
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +23,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.shredcoach.app.data.local.entity.EquipmentType
 import com.shredcoach.app.data.local.entity.FitnessLevel
+import com.shredcoach.app.domain.workout.RoutineCatalog
+import com.shredcoach.app.domain.workout.WorkoutRoutine
 import com.shredcoach.app.presentation.navigation.Screen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
 
@@ -34,9 +37,12 @@ fun WorkoutGeneratorScreen(
     val selectedDuration by viewModel.selectedDuration.collectAsState()
     val selectedLevel by viewModel.selectedLevel.collectAsState()
     val selectedEquipment by viewModel.selectedEquipment.collectAsState()
+    val selectedRoutineId by viewModel.selectedRoutineId.collectAsState()
     val generatedWorkout by viewModel.generatedWorkout.collectAsState()
     val isGenerating by viewModel.isGenerating.collectAsState()
     val error by viewModel.error.collectAsState()
+
+    val selectedRoutine = remember(selectedRoutineId) { RoutineCatalog.byId(selectedRoutineId) }
 
     // Navigate to preview when workout is generated
     LaunchedEffect(generatedWorkout) {
@@ -53,8 +59,9 @@ fun WorkoutGeneratorScreen(
                         verticalArrangement = Arrangement.Center) {
                         Text("Générer une séance", style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold, lineHeight = 24.sp)
-                        Text("Full Body personnalisée", style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 16.sp)
+                        Text("${selectedRoutine.displayName} personnalisée", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 16.sp,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -90,19 +97,30 @@ fun WorkoutGeneratorScreen(
                     )
                     Column {
                         Text(
-                            "Séance Full Body Intelligente",
+                            "Séance ${selectedRoutine.displayName} Intelligente",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                         Text(
-                            "L'algorithme sélectionne les meilleurs exercices selon vos paramètres",
+                            selectedRoutine.tagline,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
             }
+
+            // Routine Selection (Full Body, Push, Pull, Legs, …)
+            RoutineSelectionSection(
+                routines = RoutineCatalog.builtIn,
+                selectedRoutineId = selectedRoutineId,
+                onRoutineSelected = { viewModel.selectRoutine(it) }
+            )
 
             // Duration Selection
             DurationSelectionSection(
@@ -169,6 +187,89 @@ fun WorkoutGeneratorScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+/**
+ * Sélecteur de routine (Full Body, Push, Pull, Legs, Upper, Lower, Chest+Tri,
+ * Back+Bi). Chips horizontaux scrollables — pattern FAANG (Apple Fitness+,
+ * Strong, Hevy) pour exposer 8 options sans casser la verticalité de la page.
+ *
+ * Chaque chip affiche l'icône emoji + le displayName ; la routine sélectionnée
+ * apparaît en orange plein, les autres en surfaceVariant.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RoutineSelectionSection(
+    routines: List<WorkoutRoutine>,
+    selectedRoutineId: String,
+    onRoutineSelected: (String) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                Icons.Default.Whatshot,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                "Type de séance",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            routines.forEach { routine ->
+                RoutineChip(
+                    routine = routine,
+                    isSelected = routine.id == selectedRoutineId,
+                    onClick = { onRoutineSelected(routine.id) }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RoutineChip(
+    routine: WorkoutRoutine,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(14.dp),
+        color = if (isSelected) OrangeVibrant else MaterialTheme.colorScheme.surfaceVariant,
+        border = if (isSelected) BorderStroke(2.dp, OrangeVibrant)
+            else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        tonalElevation = if (isSelected) 0.dp else 1.dp,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                routine.icon,
+                fontSize = 16.sp,
+            )
+            Text(
+                routine.displayName,
+                fontSize = 13.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }

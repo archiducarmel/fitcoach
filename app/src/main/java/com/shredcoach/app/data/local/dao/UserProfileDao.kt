@@ -27,6 +27,9 @@ interface UserProfileDao {
     @Query("UPDATE user_profile SET totalWorkouts = totalWorkouts + 1 WHERE id = 1")
     suspend fun incrementTotalWorkouts()
 
+    @Query("UPDATE user_profile SET lastUsedRoutineId = :routineId WHERE id = 1")
+    suspend fun updateLastUsedRoutineId(routineId: String)
+
     // ── Weight Logs ──
     @Query("SELECT * FROM weight_logs ORDER BY date DESC")
     fun getAllWeightLogs(): Flow<List<WeightLogEntity>>

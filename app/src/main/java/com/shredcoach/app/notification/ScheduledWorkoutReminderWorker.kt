@@ -12,6 +12,7 @@ import com.shredcoach.app.data.repository.ChatRepository
 import com.shredcoach.app.data.repository.ScheduledWorkoutRepository
 import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.data.repository.WorkoutRepository
+import com.shredcoach.app.domain.workout.RoutineCatalog
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.withTimeout
@@ -59,17 +60,50 @@ class ScheduledWorkoutReminderWorker @AssistedInject constructor(
         val timeStr = scheduled.time?.toString()?.substring(0, 5) ?: ""
         val firstName = profile.firstName.ifBlank { "toi" }
 
+        // Enrichissement routine-aware : si la séance est un split (Push/Pull/…),
+        // on l'ajoute en préfixe au nom + on l'injecte dans le contexte LLM pour
+        // que le coach puisse la mentionner naturellement. Skip pour Full Body
+        // (historique de l'app — éviterait un doublon "Full Body : Full Body").
+        val routine = RoutineCatalog.byId(scheduled.routineId)
+        val isSplit = routine.id != RoutineCatalog.Default.id
+        val routineLabel = if (isSplit) routine.displayName else null
+        // Le titre push sera "Push · Squat 90min" plutôt que juste "Squat 90min"
+        // si la routine est un split. Sinon, on garde le nom brut.
+        val displayName = if (routineLabel != null && !workoutName.contains(routineLabel, ignoreCase = true)) {
+            "$routineLabel · $workoutName"
+        } else workoutName
+
         // ─── Construire le prompt LLM selon le type ───
         val (systemPrompt, userPrompt, fallback) = when (type) {
             TYPE_SHAKER -> Triple(
                 SHAKER_SYSTEM_PROMPT,
-                "Séance '$workoutName' prévue à $timeStr (dans 2h). Propose à $firstName un shaker ou collation pré-training pour être au top.",
-                "Dans 2h : $workoutName. Pense à ton shaker 🥤 (whey + banane = top pré-training)."
+                buildString {
+                    append("Séance '$displayName' prévue à $timeStr (dans 2h).")
+                    if (routineLabel != null) {
+                        append(" Type de séance : $routineLabel.")
+                    }
+                    append(" Propose à $firstName un shaker ou collation pré-training pour être au top.")
+                },
+                if (routineLabel != null) {
+                    "Dans 2h : $routineLabel. Pense à ton shaker 🥤 (whey + banane = top pré-training)."
+                } else {
+                    "Dans 2h : $workoutName. Pense à ton shaker 🥤 (whey + banane = top pré-training)."
+                }
             )
             TYPE_START -> Triple(
                 START_SYSTEM_PROMPT,
-                "Séance '$workoutName' prévue à $timeStr (dans 30 min). Motive $firstName pour qu'il se prépare maintenant.",
-                "Dans 30 min : $workoutName. Prépare tes affaires et allume la flamme ! 🔥"
+                buildString {
+                    append("Séance '$displayName' prévue à $timeStr (dans 30 min).")
+                    if (routineLabel != null) {
+                        append(" Type de séance : $routineLabel.")
+                    }
+                    append(" Motive $firstName pour qu'il se prépare maintenant.")
+                },
+                if (routineLabel != null) {
+                    "Dans 30 min : $routineLabel. Prépare tes affaires et allume la flamme ! 🔥"
+                } else {
+                    "Dans 30 min : $workoutName. Prépare tes affaires et allume la flamme ! 🔥"
+                }
             )
             else -> return Result.failure()
         }

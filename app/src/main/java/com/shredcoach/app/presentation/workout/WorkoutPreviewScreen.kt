@@ -33,6 +33,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.shredcoach.app.data.local.entity.ExerciseEntity
 import com.shredcoach.app.domain.model.MuscleGroup
+import com.shredcoach.app.domain.workout.RoutineCatalog
 import com.shredcoach.app.presentation.common.EmptyState
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
@@ -51,6 +52,7 @@ fun WorkoutPreviewScreen(
     var exerciseToSwap by remember { mutableStateOf<ExerciseEntity?>(null) }
     var alternatives by remember { mutableStateOf<List<ExerciseEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
+    var showSharePreview by remember { mutableStateOf(false) }
 
     // Show swap dialog
     if (exerciseToSwap != null) {
@@ -66,6 +68,30 @@ fun WorkoutPreviewScreen(
                 exerciseToSwap = null
                 alternatives = emptyList()
             }
+        )
+    }
+
+    // Share preview bottom sheet
+    val workoutForShare = generatedWorkout
+    if (showSharePreview && workoutForShare != null) {
+        val routineForShare = RoutineCatalog.byId(workoutForShare.routineId)
+        com.shredcoach.app.presentation.share.ShareSheet(
+            data = com.shredcoach.app.presentation.share.ShareCardData.WorkoutPlanned(
+                title = "Ma séance du jour",
+                subtitle = "${workoutForShare.totalDuration} min · ${routineForShare.displayName}",
+                durationMinutes = workoutForShare.totalDuration,
+                exerciseCount = workoutForShare.exerciseCount,
+                warmupCount = workoutForShare.warmupExercises.size,
+                cardioCount = workoutForShare.cardioExercises.size,
+                muscleGroups = workoutForShare.exercises
+                    .map { it.muscleGroup.name.replace("_", " ").lowercase().replaceFirstChar { c -> c.uppercase() } }
+                    .distinct(),
+                // Pas de pré-troncation : la share card a son propre cap
+                // (16 visibles + footer overflow) et adapte la densité (mode
+                // ultra-compact pour 13+ items).
+                firstFewExercises = workoutForShare.exercises.map { it.name },
+            ),
+            onDismiss = { showSharePreview = false },
         )
     }
 
@@ -92,6 +118,16 @@ fun WorkoutPreviewScreen(
                     val isFavorite by viewModel.markAsFavorite.collectAsState()
                     val snackbarHostState = com.shredcoach.app.presentation.navigation.LocalSnackbarHostState.current
                     val snackScope = rememberCoroutineScope()
+                    // Bouton partager — n'apparaît que si une séance est générée
+                    if (generatedWorkout != null) {
+                        IconButton(onClick = { showSharePreview = true }) {
+                            Icon(
+                                androidx.compose.material.icons.Icons.Default.Share,
+                                contentDescription = "Partager la séance",
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            )
+                        }
+                    }
                     IconButton(onClick = {
                         viewModel.toggleFavorite()
                         snackScope.launch { snackbarHostState.showSnackbar(
@@ -120,7 +156,7 @@ fun WorkoutPreviewScreen(
                 EmptyState(
                     icon = Icons.Default.FitnessCenter,
                     title = "Aucune séance générée",
-                    description = "Lance la génération d'une séance full body adaptée à ta durée disponible."
+                    description = "Lance la génération d'une séance adaptée à ta durée disponible."
                 )
             }
         } else {
@@ -143,6 +179,7 @@ fun WorkoutPreviewScreen(
                     warmupMinutes = workout.warmupMinutes,
                     exerciseCount = workout.exerciseCount,
                     cardioMinutes = workout.cardioMinutes,
+                    routineDisplayName = RoutineCatalog.byId(workout.routineId).displayName,
                     collapsed = isCollapsed,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
@@ -366,6 +403,7 @@ fun WorkoutSummaryCard(
     warmupMinutes: Int,
     exerciseCount: Int,
     cardioMinutes: Int,
+    routineDisplayName: String = "Full Body",
     modifier: Modifier = Modifier,
     collapsed: Boolean = false
 ) {
@@ -383,8 +421,9 @@ fun WorkoutSummaryCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Icon(Icons.Default.FitnessCenter, null, Modifier.size(20.dp), tint = Color.White.copy(alpha = 0.7f))
-                Text("Full Body · $totalDuration min", style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.weight(1f))
+                Text("$routineDisplayName · $totalDuration min", style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.weight(1f),
+                    maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                 Text("$exerciseCount exos", style = MaterialTheme.typography.labelMedium,
                     color = Color.White.copy(alpha = 0.85f))
             }
@@ -396,8 +435,9 @@ fun WorkoutSummaryCard(
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween) {
                     Column(Modifier.weight(1f)) {
-                        Text("Séance Full Body", style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold, color = Color.White)
+                        Text("Séance $routineDisplayName", style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold, color = Color.White,
+                            maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                         Text("$totalDuration min au total", style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.85f))
                     }

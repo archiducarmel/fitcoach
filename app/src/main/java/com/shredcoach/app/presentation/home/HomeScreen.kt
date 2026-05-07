@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -39,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.shredcoach.app.domain.workout.RoutineCatalog
 import com.shredcoach.app.presentation.common.AnimatedCounter
 import com.shredcoach.app.presentation.common.StaggeredAppear
 import com.shredcoach.app.presentation.navigation.Screen
@@ -180,19 +182,45 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         lineHeight = 30.sp
                     )
-                    // Programme jour : "Full Body · 2/3 cette semaine".
+                    // Programme jour : "{Routine} · 2/3 cette semaine".
                     // Affiché seulement si l'user a un planning (workoutDays != vide).
-                    // Pourquoi "Full Body" hardcodé : le programme PDF source est un
-                    // Full Body 3x/sem (cf reference_pdf_program). Quand on supportera
-                    // d'autres splits (PPL, Upper/Lower), on stockera le splitName
-                    // dans UserProfile.
+                    // La routine affichée = lastUsedRoutineId du profil (Full Body
+                    // par défaut). Si l'user a fait plusieurs routines cette
+                    // semaine, on affiche en plus un breakdown chip-row détaillé.
                     if (greetingInfo.totalSessionsPerWeek > 0) {
+                        // Compteur de séances neutre — pas de préfixe routine pour
+                        // ne pas figer une perception de type de séance unique.
+                        // Le breakdown détaillé par routine apparaît juste en-dessous
+                        // si l'user a fait plusieurs routines cette semaine.
                         Text(
-                            text = "Full Body · ${greetingInfo.sessionsThisWeek}/${greetingInfo.totalSessionsPerWeek} cette semaine",
+                            text = "${greetingInfo.sessionsThisWeek}/${greetingInfo.totalSessionsPerWeek} cette semaine",
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Medium,
                             color = OrangeVibrant,
                         )
+                        if (greetingInfo.routinesBreakdownThisWeek.isNotEmpty()) {
+                            Row(
+                                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                greetingInfo.routinesBreakdownThisWeek.forEach { (id, count) ->
+                                    val routine = RoutineCatalog.byId(id)
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = OrangeVibrant.copy(alpha = 0.10f),
+                                    ) {
+                                        Text(
+                                            "${routine.icon} $count× ${routine.displayName}",
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = OrangeVibrant,
+                                            maxLines = 1,
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                     Text(
                         subtitle,
@@ -298,10 +326,11 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                                 // élevé → on préfère un wrap propre à une ellipsis.
                                 Text("GÉNÉRER UNE SÉANCE", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
                                 Spacer(Modifier.height(4.dp))
-                                // maxLines=2 : la sub-line peut s'étaler sur 2 lignes si
-                                // l'écran est étroit, sans grossir indéfiniment. Donne
-                                // un comportement responsive sans truncation visible.
-                                Text("Full Body • ${userProfile?.preferredWorkoutDuration ?: 90} min • Adapté à ton niveau",
+                                // Sub-line agnostique du type de séance — l'utilisateur
+                                // choisira sa routine (FB, Push, Pull, …) sur l'écran de
+                                // génération. Affichage volontairement neutre pour ne pas
+                                // suggérer que l'app est dédiée à un seul type.
+                                Text("${userProfile?.preferredWorkoutDuration ?: 90} min • Adapté à ton niveau",
                                     style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f),
                                     maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                             }

@@ -37,6 +37,18 @@ data class PersonalRecord(
     val reps: Int
 )
 
+/**
+ * Record "max-reps" — utilisé pour les exos bodyweight (ex: pompes max) et
+ * pour les exos time-based où `reps` stocke en réalité la durée en secondes
+ * (ex: gainage 60s). Le caller distingue les deux cas via [ExerciseEntity.isTimeBased].
+ */
+@Immutable
+data class MaxRepsRecord(
+    val exerciseId: Long,
+    val maxReps: Int,
+    val weightKg: Double  // 0 pour bodyweight pur, > 0 pour traction lestée
+)
+
 @Immutable
 data class MuscleGroupSets(
     val muscleGroup: String,
@@ -133,6 +145,14 @@ interface WorkoutLogDao {
     @Query("SELECT MAX(weightKg) FROM workout_sets WHERE exerciseId = :exerciseId AND completed = 1 AND weightKg > 0")
     suspend fun getMaxWeightForExercise(exerciseId: Long): Double?
 
+    /**
+     * Max reps sur un exercice — pour les exos bodyweight (record de pompes/
+     * tractions) et time-based (record de tenue, `reps` étant les secondes).
+     * Le caller distingue via [ExerciseEntity.isTimeBased].
+     */
+    @Query("SELECT MAX(reps) FROM workout_sets WHERE exerciseId = :exerciseId AND completed = 1 AND reps > 0")
+    suspend fun getMaxRepsForExercise(exerciseId: Long): Int?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWorkoutSet(set: WorkoutSetEntity): Long
 
@@ -199,6 +219,26 @@ interface WorkoutLogDao {
     """)
     suspend fun getPersonalRecords(): List<PersonalRecord>
 
+    /**
+     * Records "max-reps" pour TOUS les exercices (bodyweight purs, time-based,
+     * et même les weighted où on s'intéresserait au volume reps). Le caller
+     * (StatsViewModel) joint ensuite avec ExerciseEntity pour décider du
+     * format d'affichage : pour un time-based, ces "reps" sont en fait des
+     * secondes de tenue ; pour un bodyweight, ce sont vraiment des reps.
+     *
+     * On retient le set qui a le PLUS DE REPS sur l'exo. En cas d'égalité de
+     * reps, on prend celui avec le plus haut poids (cas bodyweight lesté).
+     */
+    @Query("""
+        SELECT ws.exerciseId, ws.reps as maxReps, ws.weightKg
+        FROM workout_sets ws
+        WHERE ws.completed = 1 AND ws.reps > 0
+        AND ws.reps = (SELECT MAX(ws2.reps) FROM workout_sets ws2 WHERE ws2.exerciseId = ws.exerciseId AND ws2.completed = 1)
+        GROUP BY ws.exerciseId
+        ORDER BY maxReps DESC
+    """)
+    suspend fun getMaxRepsRecords(): List<MaxRepsRecord>
+
     @Query("""
         SELECT e.muscleGroup, COUNT(ws.id) as setCount
         FROM workout_sets ws
@@ -222,6 +262,20 @@ interface WorkoutLogDao {
     @Query("SELECT SUM(totalReps) FROM workout_logs WHERE completed = 1")
     suspend fun getTotalRepsAllTime(): Int?
 
+    /**
+     * Volume + nombre de séances par routine (Push, Pull, …) sur une période.
+     * Utilisé par le Dashboard widget "Volume par routine 4 sem". Tri par
+     * volume décroissant pour mettre en avant la routine dominante.
+     */
+    @Query("""
+        SELECT routineId, COALESCE(SUM(totalVolume), 0.0) as volume, COUNT(*) as sessionCount
+        FROM workout_logs
+        WHERE completed = 1 AND date(date) >= :startDate
+        GROUP BY routineId
+        ORDER BY volume DESC
+    """)
+    suspend fun getVolumeByRoutine(startDate: LocalDate): List<RoutineVolumeStat>
+
     /** Somme des durees (en secondes) par groupe musculaire. Utilise exerciseDurationSeconds du dernier set de chaque exercice. */
     @Query("""
         SELECT e.muscleGroup as muscleGroup, COALESCE(SUM(ws.exerciseDurationSeconds), 0) as totalSeconds
@@ -238,4 +292,12 @@ interface WorkoutLogDao {
 data class MuscleGroupDuration(
     val muscleGroup: String,
     val totalSeconds: Long
+)
+
+/** Volume cumulé + nombre de séances par routine sur une période donnée. */
+@Immutable
+data class RoutineVolumeStat(
+    val routineId: String,
+    val volume: Double,
+    val sessionCount: Int,
 )

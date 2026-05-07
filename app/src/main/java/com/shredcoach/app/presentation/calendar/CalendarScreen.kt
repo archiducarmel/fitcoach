@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.shredcoach.app.data.local.entity.ScheduledWorkoutEntity
+import com.shredcoach.app.domain.workout.RoutineCatalog
 import com.shredcoach.app.presentation.navigation.Screen
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
@@ -546,12 +547,39 @@ private fun ScheduleCard(
                 )
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    sched.title.ifBlank { "Séance" },
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2
-                )
+                Row(verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        sched.title.ifBlank { "Séance" },
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    // Pill routine — visible en un coup d'œil pour distinguer
+                    // "Push jeudi" / "Pull samedi". Bord coloré statusColor pour
+                    // rester cohérent avec le code visuel de la card.
+                    val routine = RoutineCatalog.byId(sched.routineId)
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = statusColor.copy(alpha = 0.10f),
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(3.dp),
+                        ) {
+                            Text(routine.icon, fontSize = 10.sp)
+                            Text(
+                                routine.displayName,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = statusColor,
+                                maxLines = 1,
+                            )
+                        }
+                    }
+                }
                 val subtitle = buildString {
                     sched.time?.let { append(it.toString().substring(0, 5)) }
                     if (sched.note.isNotBlank()) {

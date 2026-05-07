@@ -16,6 +16,7 @@ import com.shredcoach.app.domain.streak.StreakMilestoneStore
 import com.shredcoach.app.domain.streak.StreakService
 import com.shredcoach.app.domain.training.PlateauDetector
 import com.shredcoach.app.domain.training.ProgressStatus
+import com.shredcoach.app.domain.workout.RoutineCatalog
 import com.shredcoach.app.domain.wellness.WellnessStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -55,6 +56,13 @@ data class GreetingInfo(
      */
     val sessionsThisWeek: Int = 0,
     val totalSessionsPerWeek: Int = 0,
+    /**
+     * Décomposition des routines pratiquées cette semaine, ordonnée par
+     * fréquence décroissante. Ex: `[("push", 2), ("pull", 1), ("legs", 1)]`.
+     * Vide si une seule routine. Affiché en chip row sur la home pour les
+     * users qui font du split.
+     */
+    val routinesBreakdownThisWeek: List<Pair<String, Int>> = emptyList(),
 )
 
 @HiltViewModel
@@ -267,23 +275,38 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** Crée une séance libre (workout vide + log) et expose l'ID pour navigation. */
-    fun startFreestyleWorkout() {
+    /**
+     * Crée une séance libre (workout vide + log) et expose l'ID pour navigation.
+     *
+     * @param routineId Routine cible (ex: `"push"`). `null` → fallback sur le
+     *                  `lastUsedRoutineId` du profil (default `"full_body"`).
+     *                  Permet à la home de proposer un mini-picker au lancement
+     *                  ou de simplement reprendre la routine habituelle.
+     */
+    fun startFreestyleWorkout(routineId: String? = null) {
         viewModelScope.launch {
+            val effectiveRoutineId = routineId
+                ?: userRepository.getUserProfileOnce()?.lastUsedRoutineId
+                ?: RoutineCatalog.Default.id
+            // Garde-fou : un id inconnu est résolu en Default (jamais d'exception).
+            val resolved = RoutineCatalog.byId(effectiveRoutineId).id
+
             val workout = WorkoutEntity(
                 name = "Séance libre",
                 durationMinutes = 0,
                 exerciseCount = 0,
                 createdAt = LocalDateTime.now(),
                 isCustom = true,
-                isFreestyle = true
+                isFreestyle = true,
+                routineId = resolved,
             )
             val workoutId = workoutRepository.insertWorkout(workout)
             val log = WorkoutLogEntity(
                 workoutId = workoutId,
                 date = LocalDateTime.now(),
                 durationMinutes = 0,
-                completed = false
+                completed = false,
+                routineId = resolved,
             )
             val logId = workoutRepository.insertWorkoutLog(log)
             _freestyleLogId.value = logId
@@ -326,11 +349,21 @@ class HomeViewModel @Inject constructor(
         // Séances cette semaine — semaine ISO (lundi → dimanche).
         // weekFields.firstDayOfWeek = MONDAY en Locale.FRANCE (cohérent avec la culture user).
         val weekStart = today.with(java.time.DayOfWeek.MONDAY)
-        val sessionsThisWeek = completedLogs.count { log ->
+        val weekLogs = completedLogs.filter { log ->
             val d = log.date.toLocalDate()
             !d.isBefore(weekStart) && !d.isAfter(today)
         }
+        val sessionsThisWeek = weekLogs.size
         val totalSessionsPerWeek = profile?.workoutDays?.size ?: 3
+
+        // Breakdown routines de la semaine : Pair(routineId, count).
+        // Affiché côté UI seulement si l'user a fait > 1 routine cette semaine
+        // (sinon le hero "Push · 2/3" suffit, pas besoin de chips redondants).
+        val routinesBreakdown = weekLogs
+            .groupingBy { it.routineId }.eachCount()
+            .entries.sortedByDescending { it.value }
+            .map { it.key to it.value }
+            .takeIf { it.size > 1 } ?: emptyList()
 
         _greetingInfo.value = GreetingInfo(
             isTodayWorkoutDay = isTodayWorkoutDay,
@@ -342,6 +375,7 @@ class HomeViewModel @Inject constructor(
             pendingMilestone = nextToCelebrate,
             sessionsThisWeek = sessionsThisWeek,
             totalSessionsPerWeek = totalSessionsPerWeek,
+            routinesBreakdownThisWeek = routinesBreakdown,
         )
         Log.i(
             TAG,

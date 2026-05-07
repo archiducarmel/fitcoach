@@ -14,6 +14,7 @@ import com.shredcoach.app.data.repository.WorkoutRepository
 import com.shredcoach.app.domain.usecase.GenerateWorkoutUseCase
 import com.shredcoach.app.domain.usecase.GeneratedWorkout
 import com.shredcoach.app.domain.usecase.WorkoutConfig
+import com.shredcoach.app.domain.workout.RoutineCatalog
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,6 +41,14 @@ class WorkoutGeneratorViewModel @Inject constructor(
     private val _selectedEquipment = MutableStateFlow(EquipmentType.FULL_GYM)
     val selectedEquipment: StateFlow<EquipmentType> = _selectedEquipment.asStateFlow()
 
+    /**
+     * Routine sélectionnée pour la prochaine génération. Initialisée au
+     * `lastUsedRoutineId` du profil pour que l'utilisateur retombe naturellement
+     * sur sa routine habituelle (Push s'il splitte, Full Body sinon).
+     */
+    private val _selectedRoutineId = MutableStateFlow(RoutineCatalog.Default.id)
+    val selectedRoutineId: StateFlow<String> = _selectedRoutineId.asStateFlow()
+
     private val _generatedWorkout = MutableStateFlow<GeneratedWorkout?>(null)
     val generatedWorkout: StateFlow<GeneratedWorkout?> = _generatedWorkout.asStateFlow()
 
@@ -57,6 +66,8 @@ class WorkoutGeneratorViewModel @Inject constructor(
         loadUserPreferences()
     }
 
+    private var routineHydrated = false
+
     private fun loadUserPreferences() {
         viewModelScope.launch {
             userRepository.getUserProfile().collect { profile ->
@@ -64,6 +75,13 @@ class WorkoutGeneratorViewModel @Inject constructor(
                     _selectedDuration.value = it.preferredWorkoutDuration
                     _selectedLevel.value = it.level
                     _selectedEquipment.value = it.equipment
+                    // Hydrate la routine UNE SEULE FOIS depuis lastUsedRoutineId
+                    // pour ne pas écraser un choix utilisateur en cours sur cet écran
+                    // si le profil change ailleurs (ex: import settings).
+                    if (!routineHydrated) {
+                        _selectedRoutineId.value = RoutineCatalog.byId(it.lastUsedRoutineId).id
+                        routineHydrated = true
+                    }
                 }
             }
         }
@@ -81,21 +99,33 @@ class WorkoutGeneratorViewModel @Inject constructor(
         _selectedEquipment.value = equipment
     }
 
+    fun selectRoutine(routineId: String) {
+        // Résout immédiatement pour rejeter un id invalide (sécurité défensive
+        // si la liste UI dérive d'une source distante un jour).
+        _selectedRoutineId.value = RoutineCatalog.byId(routineId).id
+    }
+
     fun generateWorkout() {
         viewModelScope.launch {
             _isGenerating.value = true
             _error.value = null
 
             try {
+                val routineId = _selectedRoutineId.value
                 val config = WorkoutConfig(
                     durationMinutes = _selectedDuration.value,
                     fitnessLevel = _selectedLevel.value,
-                    equipmentType = _selectedEquipment.value
+                    equipmentType = _selectedEquipment.value,
+                    routineId = routineId,
                 )
 
                 val workout = generateWorkoutUseCase.execute(config)
                 _generatedWorkout.value = workout
 
+                // Persiste la routine sélectionnée pour pré-remplir la prochaine
+                // génération. Best-effort : si l'écriture DB échoue, on ne casse
+                // pas l'UX de génération.
+                runCatching { userRepository.updateLastUsedRoutineId(routineId) }
             } catch (e: Exception) {
                 _error.value = "Erreur lors de la génération : ${e.message}"
             } finally {
@@ -133,7 +163,8 @@ class WorkoutGeneratorViewModel @Inject constructor(
 
             val entity = WorkoutEntity(
                 name = name, durationMinutes = workout.totalDuration,
-                exerciseCount = allExos.size, isTemplate = true, isFavorite = true
+                exerciseCount = allExos.size, isTemplate = true, isFavorite = true,
+                routineId = workout.routineId,
             )
             val workoutId = workoutRepository.insertWorkout(entity)
             _savedFavoriteId.value = workoutId
@@ -146,9 +177,10 @@ class WorkoutGeneratorViewModel @Inject constructor(
     }
 
     private fun buildWorkoutName(workout: com.shredcoach.app.domain.usecase.GeneratedWorkout): String {
+        val routine = RoutineCatalog.byId(workout.routineId)
         val muscles = workout.exercises.map { it.muscleGroup.displayName }.distinct().take(3)
         val date = java.time.LocalDate.now().let { "${it.dayOfMonth}/${it.monthValue}" }
-        return "Full Body $date — ${muscles.joinToString(", ")}"
+        return "${routine.displayName} $date — ${muscles.joinToString(", ")}"
     }
 
     fun clearWorkout() {
@@ -234,7 +266,8 @@ class WorkoutGeneratorViewModel @Inject constructor(
                     durationMinutes = workout.totalDuration,
                     exerciseCount = totalExercises,
                     isTemplate = _markAsFavorite.value,
-                    isFavorite = _markAsFavorite.value
+                    isFavorite = _markAsFavorite.value,
+                    routineId = workout.routineId,
                 )
                 val newId = workoutRepository.insertWorkout(workoutEntity)
 
@@ -257,7 +290,8 @@ class WorkoutGeneratorViewModel @Inject constructor(
             val now = LocalDateTime.now()
             val workoutLog = WorkoutLogEntity(
                 workoutId = workoutId, date = now, startTime = now,
-                durationMinutes = workout.totalDuration, completed = false
+                durationMinutes = workout.totalDuration, completed = false,
+                routineId = workout.routineId,
             )
             workoutRepository.insertWorkoutLog(workoutLog)
         } catch (e: Exception) {

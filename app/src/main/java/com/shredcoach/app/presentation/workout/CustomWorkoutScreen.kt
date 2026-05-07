@@ -30,6 +30,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.shredcoach.app.data.local.entity.ExerciseEntity
 import com.shredcoach.app.domain.model.MuscleGroup
+import com.shredcoach.app.domain.workout.RoutineCatalog
 import com.shredcoach.app.presentation.navigation.Screen
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
@@ -150,6 +151,41 @@ fun CustomWorkoutScreen(navController: NavController, viewModel: CustomWorkoutVi
                         current = state.creationMode,
                         onSelect = { viewModel.switchCreationMode(it) }
                     )
+                }
+                // ─── Sélecteur routine (chips horizontaux) ───
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("Type de séance",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                        Row(
+                            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            RoutineCatalog.builtIn.forEach { routine ->
+                                val selected = routine.id == state.routineId
+                                Surface(
+                                    onClick = { viewModel.selectRoutine(routine.id) },
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = if (selected) OrangeVibrant else MaterialTheme.colorScheme.surfaceVariant,
+                                ) {
+                                    Row(
+                                        Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Text(routine.icon, fontSize = 14.sp)
+                                        Text(routine.displayName,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                            color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface,
+                                            maxLines = 1)
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
                 item {
                     OutlinedTextField(

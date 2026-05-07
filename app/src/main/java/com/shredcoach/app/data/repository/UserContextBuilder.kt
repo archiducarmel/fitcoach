@@ -2,6 +2,7 @@ package com.shredcoach.app.data.repository
 
 import com.shredcoach.app.data.local.entity.UserProfileEntity
 import com.shredcoach.app.data.local.entity.WorkoutLogEntity
+import com.shredcoach.app.domain.workout.RoutineCatalog
 import kotlinx.coroutines.flow.first
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -16,9 +17,9 @@ import javax.inject.Singleton
 
 /**
  * Construit le contexte utilisateur pour le system prompt de Shreddy.
- * 11 blocs : profil, santé, temporel, stats, tendances, comportement,
- * régularité, déséquilibres musculaires, historique, PRs, nutrition.
- * Budget total : ~1,300 tokens.
+ * 12 blocs : profil, santé, temporel, stats, tendances, comportement,
+ * régularité, déséquilibres musculaires, **routines (split coverage)**,
+ * historique, PRs, nutrition. Budget total : ~1,400 tokens.
  */
 @Singleton
 class UserContextBuilder @Inject constructor(
@@ -48,6 +49,7 @@ class UserContextBuilder @Inject constructor(
         sb.appendLine(buildBehaviorBlock(allRecentLogs))
         sb.appendLine(buildRegularityBlock(profile, now, allRecentLogs))
         sb.appendLine(buildMuscleBalanceBlock(now, allRecentLogs))
+        sb.appendLine(buildRoutineBlock(profile, now, allRecentLogs))
         sb.appendLine(buildRecentHistoryBlock(allRecentLogs))
         sb.appendLine(buildPRBlock())
         sb.appendLine(buildNutritionBlock(now))
@@ -278,6 +280,50 @@ Mensurations: taille ${p.waistCm}cm, poitrine ${p.chestCm}cm, bras ${p.armCm}cm,
             if (quadSets > 0 && hamSets == 0) sb.appendLine("⚠ Ischio-jambiers jamais travaillés — risque blessure")
 
         } catch (_: Exception) { sb.appendLine("Données insuffisantes.") }
+        return sb.toString().trimEnd()
+    }
+
+    // ═══════════════════════════════════════
+    // 8.5 ROUTINES / SPLIT COVERAGE (4 sem)
+    // ═══════════════════════════════════════
+    /**
+     * Donne au LLM la cartographie des routines effectivement pratiquées sur
+     * les 28 derniers jours + dernière routine + routine habituelle. Permet au
+     * coach de suggérer la routine complémentaire (Push fait → propose Pull),
+     * ou d'alerter sur une couverture déséquilibrée (5x Push / 0x Pull).
+     */
+    private fun buildRoutineBlock(p: UserProfileEntity, now: LocalDate, allLogs: List<WorkoutLogEntity>): String {
+        val sb = StringBuilder("[ROUTINES 4 SEMAINES]\n")
+        val cutoff = now.minusDays(28)
+        val recent = allLogs.filter { it.date.toLocalDate() >= cutoff }
+        if (recent.isEmpty()) {
+            sb.appendLine("Aucune séance sur les 4 dernières semaines.")
+            return sb.toString().trimEnd()
+        }
+        val byRoutine = recent.groupingBy { it.routineId }.eachCount()
+            .entries.sortedByDescending { it.value }
+        val total = recent.size
+        byRoutine.forEach { (id, count) ->
+            val routine = RoutineCatalog.byId(id)
+            val pct = count * 100 / total
+            sb.appendLine("• ${routine.displayName}: $count séances ($pct%)")
+        }
+
+        // Dernière routine pratiquée — utile pour suggérer la complémentaire.
+        val last = allLogs.firstOrNull()
+        if (last != null) {
+            val lastRoutine = RoutineCatalog.byId(last.routineId)
+            val daysAgo = ChronoUnit.DAYS.between(last.date.toLocalDate(), now).toInt()
+            sb.appendLine("Dernière routine: ${lastRoutine.displayName} (il y a ${daysAgo}j)")
+            lastRoutine.complementaryRoutineId?.let { compId ->
+                val comp = RoutineCatalog.byId(compId)
+                sb.appendLine("→ Routine complémentaire suggérée: ${comp.displayName}")
+            }
+        }
+
+        // Routine habituelle (préférence persistée du dernier choix utilisateur).
+        val habitual = RoutineCatalog.byId(p.lastUsedRoutineId)
+        sb.appendLine("Routine habituelle (dernier choix): ${habitual.displayName}")
         return sb.toString().trimEnd()
     }
 

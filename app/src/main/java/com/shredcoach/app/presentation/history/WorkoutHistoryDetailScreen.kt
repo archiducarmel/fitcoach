@@ -25,6 +25,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.shredcoach.app.domain.training.SetMetricFormatter
+import com.shredcoach.app.domain.training.SetMetricFormatter.ExerciseKind
+import com.shredcoach.app.domain.workout.RoutineCatalog
 import com.shredcoach.app.presentation.navigation.Screen
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
@@ -38,6 +41,55 @@ fun WorkoutHistoryDetailScreen(
 ) {
     val state by viewModel.state.collectAsState()
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showShare by remember { mutableStateOf(false) }
+
+    if (showShare) {
+        // Build share data from the loaded state — same WorkoutFinished
+        // variante that l'écran de fin de séance utilise. Cohérence parfaite :
+        // même rendu visuel pour la séance qu'on vient de finir et pour une
+        // séance ouverte depuis l'historique.
+        val log = state.log
+        if (log != null) {
+            val items = state.performances.map { perf ->
+                val maxWeight = perf.maxWeightKg
+                val nonSkipped = perf.sets.count { it.reps > 0 }
+                val reps = perf.sets.filter { it.reps > 0 }.map { it.reps }
+                val repsPart = when {
+                    reps.isEmpty() -> "${perf.sets.size} séries"
+                    reps.toSet().size == 1 -> "${nonSkipped}×${reps.first()}"
+                    else -> "${nonSkipped}×${reps.min()}-${reps.max()}"
+                }
+                val metric = if (maxWeight > 0) "$repsPart · ${maxWeight.toInt()} kg" else repsPart
+                com.shredcoach.app.presentation.share.ShareCardData.ExerciseProgressItem(
+                    name = perf.exercise.name,
+                    status = if (perf.sets.isEmpty())
+                        com.shredcoach.app.presentation.share.ShareCardData.ExerciseStatus.SKIPPED
+                    else
+                        com.shredcoach.app.presentation.share.ShareCardData.ExerciseStatus.DONE,
+                    metric = metric,
+                )
+            }
+            val dateLabel = log.startTime.format(
+                java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy", java.util.Locale.FRENCH)
+            )
+            com.shredcoach.app.presentation.share.ShareSheet(
+                data = com.shredcoach.app.presentation.share.ShareCardData.WorkoutFinished(
+                    title = state.workoutName.ifBlank { "Séance" },
+                    subtitle = dateLabel,
+                    durationSeconds = log.actualDurationSeconds,
+                    totalVolumeKg = log.totalVolume,
+                    totalSets = log.totalSets,
+                    totalReps = log.totalReps,
+                    exerciseCount = state.performances.size,
+                    completedExercises = items,
+                ),
+                onDismiss = { showShare = false },
+            )
+        } else {
+            // Pas de log → on ferme silencieusement.
+            showShare = false
+        }
+    }
 
     // Navigation vers nouvelle séance relancée
     LaunchedEffect(state.relaunchedLogId) {
@@ -59,6 +111,11 @@ fun WorkoutHistoryDetailScreen(
                     }
                 },
                 actions = {
+                    if (state.log != null) {
+                        IconButton(onClick = { showShare = true }) {
+                            Icon(Icons.Default.Share, "Partager")
+                        }
+                    }
                     IconButton(onClick = { showDeleteConfirm = true }) {
                         Icon(Icons.Default.DeleteOutline, "Supprimer",
                             tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f))
@@ -188,6 +245,28 @@ private fun DetailHeaderCard(state: HistoryDetailState) {
                     state.workoutName, style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.ExtraBold, color = Color.White
                 )
+                // Pill routine — visuellement secondaire au nom mais toujours
+                // présente, y compris pour Full Body. Cohérence avec
+                // HistoryCard (liste d'historique) et SessionTopBar (séance active).
+                val routine = RoutineCatalog.byId(log.routineId)
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color.White.copy(alpha = 0.18f),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Text(routine.icon, fontSize = 13.sp)
+                        Text(
+                            routine.displayName,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                        )
+                    }
+                }
                 Text(
                     formatLongDate(log.date), style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.9f)
@@ -313,14 +392,36 @@ private fun ExercisePerformanceCard(perf: ExercisePerformance) {
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
             }
 
-            // Mini résumé toujours visible
+            // Mini résumé toujours visible — kind-aware :
+            //  - WEIGHTED        : reps · max kg · volume
+            //  - BODYWEIGHT_REPS : reps · max reps/série · volume (= 0 ici)
+            //  - TIMED           : durée totale · max tenue · — (volume non pertinent)
+            val exerciseKind = SetMetricFormatter.kindOf(perf.exercise)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                MiniStat("${perf.totalReps}", "reps")
-                MiniStat(
-                    if (perf.maxWeightKg > 0) String.format(Locale.FRANCE, "%.1f kg", perf.maxWeightKg) else "—",
-                    "max"
-                )
-                MiniStat(formatVolume(perf.totalVolume), "volume")
+                when (exerciseKind) {
+                    ExerciseKind.TIMED -> {
+                        // Total = somme des durées, max = meilleure tenue
+                        val totalDuration = perf.sets.sumOf { it.reps }
+                        val bestDuration = perf.sets.maxOfOrNull { it.reps } ?: 0
+                        MiniStat(SetMetricFormatter.formatDuration(totalDuration), "total")
+                        MiniStat(SetMetricFormatter.formatDuration(bestDuration), "max tenue")
+                        MiniStat("${perf.sets.size}", "séries")
+                    }
+                    ExerciseKind.BODYWEIGHT_REPS -> {
+                        val maxReps = perf.sets.maxOfOrNull { it.reps } ?: 0
+                        MiniStat("${perf.totalReps}", "total reps")
+                        MiniStat("$maxReps", "max/série")
+                        MiniStat("${perf.sets.size}", "séries")
+                    }
+                    ExerciseKind.WEIGHTED -> {
+                        MiniStat("${perf.totalReps}", "reps")
+                        MiniStat(
+                            if (perf.maxWeightKg > 0) String.format(Locale.FRANCE, "%.1f kg", perf.maxWeightKg) else "—",
+                            "max"
+                        )
+                        MiniStat(formatVolume(perf.totalVolume), "volume")
+                    }
+                }
             }
 
             // Détail des sets (expandable)
@@ -328,7 +429,7 @@ private fun ExercisePerformanceCard(perf: ExercisePerformance) {
                 Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)))
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     perf.sets.forEach { set ->
-                        SetRow(set.setNumber, set.reps, set.targetReps, set.weightKg, set.completed)
+                        SetRow(set.setNumber, set.reps, set.targetReps, set.weightKg, set.completed, exerciseKind)
                     }
                 }
             }
@@ -346,7 +447,14 @@ private fun MiniStat(value: String, label: String) {
 }
 
 @Composable
-private fun SetRow(setNumber: Int, reps: Int, targetReps: Int, weightKg: Double, completed: Boolean) {
+private fun SetRow(
+    setNumber: Int,
+    reps: Int,
+    targetReps: Int,
+    weightKg: Double,
+    completed: Boolean,
+    exerciseKind: ExerciseKind,
+) {
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
@@ -363,14 +471,50 @@ private fun SetRow(setNumber: Int, reps: Int, targetReps: Int, weightKg: Double,
                 color = if (completed) NeonGreen else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
         }
         Spacer(Modifier.width(12.dp))
-        Text("$reps${if (targetReps > 0 && targetReps != reps) " / $targetReps" else ""} reps",
-            style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.weight(1f))
-        Text(
-            if (weightKg > 0) String.format(Locale.FRANCE, "%.1f kg", weightKg) else "Poids du corps",
-            style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold,
-            color = OrangeVibrant
-        )
+        when (exerciseKind) {
+            ExerciseKind.TIMED -> {
+                // Pour un exo time-based, `reps` = secondes de tenue
+                val targetSuffix = if (targetReps > 0 && targetReps != reps) " / ${SetMetricFormatter.formatDuration(targetReps)}" else ""
+                Text(
+                    "${SetMetricFormatter.formatDuration(reps)}$targetSuffix",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = OrangeVibrant,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            ExerciseKind.BODYWEIGHT_REPS -> {
+                Text(
+                    "$reps${if (targetReps > 0 && targetReps != reps) " / $targetReps" else ""} reps",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(1f)
+                )
+                // Lesté éventuel — affiché à droite avec un préfixe "+"
+                if (weightKg > 0.0) {
+                    Text(
+                        "+${SetMetricFormatter.formatWeight(weightKg)} kg",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = OrangeVibrant
+                    )
+                }
+            }
+            ExerciseKind.WEIGHTED -> {
+                Text(
+                    "$reps${if (targetReps > 0 && targetReps != reps) " / $targetReps" else ""} reps",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    if (weightKg > 0) String.format(Locale.FRANCE, "%.1f kg", weightKg) else "—",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = OrangeVibrant
+                )
+            }
+        }
     }
 }
 

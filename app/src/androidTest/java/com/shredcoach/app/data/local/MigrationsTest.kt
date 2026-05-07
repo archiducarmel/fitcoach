@@ -214,4 +214,167 @@ class MigrationsTest {
             }
         }
     }
+
+    /**
+     * v36 → v37 : ajout de `routineId` sur 3 tables + `lastUsedRoutineId` sur
+     * `user_profile` + 2 indexes. Le test valide :
+     *  - Le schéma final matche `schemas/37.json` (validation Room interne)
+     *  - Les colonnes existent sur les 4 tables
+     *  - Les valeurs pré-existantes héritent du DEFAULT 'full_body' (backfill)
+     *  - Les indexes routineId sont créés (sinon les queries stats par routine
+     *    feraient un table-scan)
+     *
+     * Pourquoi tester via SQL brut (pas DAOs) : à v36 les DAOs Kotlin attendent
+     * déjà la structure v37, ils ne peuvent pas opérer sur la DB pré-migration.
+     */
+    @Test
+    fun migrate36to37_ajoute_routineId_avec_default_full_body() {
+        // ─── 1. Créer DB v36 avec une séance terminée + un workout + une planif ───
+        helper.createDatabase(testDbName, 36).use { db ->
+            // Workout existant (template)
+            db.execSQL(
+                """
+                INSERT INTO workouts (
+                    id, name, durationMinutes, exerciseCount, createdAt,
+                    isTemplate, isFavorite, isCustom, isFreestyle
+                ) VALUES (
+                    42, 'Mon FB perso', 90, 8, '2026-01-15T10:00:00',
+                    1, 1, 0, 0
+                )
+                """.trimIndent()
+            )
+            // WorkoutLog associé (séance terminée pré-v37)
+            db.execSQL(
+                """
+                INSERT INTO workout_logs (
+                    id, workoutId, date, durationMinutes, actualDurationSeconds,
+                    startTime, endTime, totalVolume, totalSets, totalReps,
+                    totalRestSeconds, exercisesCompleted, exercisesSkipped, completed,
+                    currentSetTimedTotalSeconds, currentRestTotalSeconds, extraSeriesJson
+                ) VALUES (
+                    100, 42, '2026-01-15T10:00:00', 90, 5400,
+                    '2026-01-15T10:00:00', '2026-01-15T11:30:00', 5000.0, 30, 240,
+                    1500, 8, 0, 1,
+                    0, 0, '{}'
+                )
+                """.trimIndent()
+            )
+            // Séance planifiée future
+            db.execSQL(
+                """
+                INSERT INTO scheduled_workouts (
+                    id, date, time, workoutId, status, title, note,
+                    reminderShakerSent, reminderStartSent, source, createdAt
+                ) VALUES (
+                    7, '2026-02-01', '18:00', 42, 'PLANNED', 'Séance FB jeudi', '',
+                    0, 0, 'manual', '2026-01-30T20:00:00'
+                )
+                """.trimIndent()
+            )
+            // user_profile minimal (les autres champs ont des défauts via Room)
+            db.execSQL(
+                """
+                INSERT INTO user_profile (
+                    id, firstName, lastName, age, sex, heightCm,
+                    currentWeightKg, targetWeightKg, level, equipment, goal,
+                    preferredWorkoutDuration, bedTime, workoutDays,
+                    waistCm, chestCm, armCm, thighCm, hipCm, calfCm, bodyFatPercent,
+                    bodyScanImagePath, bodyMeshImagePath, bodyScanTimestamp,
+                    bodyScanConfidence, bodyScanNotes,
+                    useImperial, darkMode, themePalette, currentStreakDays, totalWorkouts,
+                    autoStartAfterRest, vibrationEnabled, soundEnabled, voiceEnabled,
+                    defaultRestSeconds, showCoachTips, suggestBonusSeries,
+                    notificationsEnabled, notifBreakfast, notifLunch, notifSnack,
+                    notifDinner, notifShaker, notifBedtime, notifMotivation,
+                    notifMealDebrief, notifWorkoutDebrief,
+                    mealDebriefDelayMinutes, workoutDebriefDelayMinutes,
+                    breakfastTime, lunchTime, snackTime, dinnerTime,
+                    shakerMorningTime, shakerEveningTime,
+                    healthNotes, mealScanProvider, geminiModel,
+                    llmProvider, llmModel, profilePhotoPath
+                ) VALUES (
+                    1, 'Sitou', '', 30, 'M', 178,
+                    80.0, 75.0, 'INTERMEDIATE', 'FULL_GYM', 'SHRED',
+                    90, NULL, '1,3,5',
+                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                    NULL, NULL, NULL, '', '',
+                    0, 'auto', 'sunset', 0, 0,
+                    1, 1, 1, 1, 90, 1, 0,
+                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                    45, 30,
+                    '08:00', '12:30', '16:00', '19:00', '07:30', '22:00',
+                    '', 'GEMINI', 'gemini-2.5-flash', 'GROQ', '', NULL
+                )
+                """.trimIndent()
+            )
+        }
+
+        // ─── 2. Exécuter la migration v36 → v37 ───
+        helper.runMigrationsAndValidate(
+            testDbName,
+            37,
+            true,
+            Migrations.migration36to37()
+        ).use { db ->
+            // ─── 3. Vérifier que routineId existe sur les 3 tables et vaut 'full_body' ───
+            db.query("SELECT routineId FROM workouts WHERE id = 42").use { c ->
+                assertThat(c.moveToFirst()).isTrue()
+                assertThat(c.getString(0)).isEqualTo("full_body")
+            }
+            db.query("SELECT routineId FROM workout_logs WHERE id = 100").use { c ->
+                assertThat(c.moveToFirst()).isTrue()
+                assertThat(c.getString(0)).isEqualTo("full_body")
+            }
+            db.query("SELECT routineId FROM scheduled_workouts WHERE id = 7").use { c ->
+                assertThat(c.moveToFirst()).isTrue()
+                assertThat(c.getString(0)).isEqualTo("full_body")
+            }
+            db.query("SELECT lastUsedRoutineId FROM user_profile WHERE id = 1").use { c ->
+                assertThat(c.moveToFirst()).isTrue()
+                assertThat(c.getString(0)).isEqualTo("full_body")
+            }
+
+            // ─── 4. Vérifier que les indexes routineId sont en place ───
+            // (sinon les queries stats par routine sur 100k+ logs feraient table-scan)
+            val indexNames = mutableListOf<String>()
+            db.query("PRAGMA index_list('workout_logs')").use { c ->
+                while (c.moveToNext()) indexNames.add(c.getString(c.getColumnIndexOrThrow("name")))
+            }
+            assertThat(indexNames).contains("index_workout_logs_routineId")
+
+            val schedIndexes = mutableListOf<String>()
+            db.query("PRAGMA index_list('scheduled_workouts')").use { c ->
+                while (c.moveToNext()) schedIndexes.add(c.getString(c.getColumnIndexOrThrow("name")))
+            }
+            assertThat(schedIndexes).contains("index_scheduled_workouts_routineId")
+
+            // ─── 5. Vérifier que les valeurs pré-existantes (firstName etc.) sont intactes ───
+            db.query("SELECT firstName, currentWeightKg FROM user_profile WHERE id = 1").use { c ->
+                assertThat(c.moveToFirst()).isTrue()
+                assertThat(c.getString(0)).isEqualTo("Sitou")
+                assertThat(c.getDouble(1)).isEqualTo(80.0)
+            }
+        }
+    }
+
+    /**
+     * Cas limite : DB v36 vide (utilisateur fraîchement installé). La migration
+     * doit passer sans crash et créer les colonnes/indexes.
+     */
+    @Test
+    fun migrate36to37_db_vide_ne_crashe_pas() {
+        helper.createDatabase(testDbName, 36).close()
+        helper.runMigrationsAndValidate(testDbName, 37, true, Migrations.migration36to37()).use { db ->
+            // Tables et indexes créés malgré 0 ligne
+            db.query("SELECT COUNT(*) FROM workouts").use { c ->
+                c.moveToFirst()
+                assertThat(c.getInt(0)).isEqualTo(0)
+            }
+            db.query("PRAGMA table_info(workouts)").use { c ->
+                val columns = mutableListOf<String>()
+                while (c.moveToNext()) columns.add(c.getString(c.getColumnIndexOrThrow("name")))
+                assertThat(columns).contains("routineId")
+            }
+        }
+    }
 }

@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.shredcoach.app.data.local.entity.WorkoutLogEntity
+import com.shredcoach.app.domain.workout.RoutineCatalog
+import kotlinx.coroutines.launch
 import com.shredcoach.app.presentation.navigation.Screen
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
@@ -43,22 +45,72 @@ fun WorkoutHistoryScreen(
     var selectedTab by remember { mutableStateOf(0) } // 0 = Sport, 1 = Nutrition
 
     // Filtrage sport
-    val filteredItems = remember(state.items, state.filter) {
-        when (state.filter) {
+    val filteredItems = remember(state.items, state.filter, state.routineFilter) {
+        val byStatus = when (state.filter) {
             HistoryFilter.ALL -> state.items
             HistoryFilter.COMPLETED -> state.items.filter { it.log.completed }
             HistoryFilter.ABANDONED -> state.items.filter { !it.log.completed }
         }
+        val routine = state.routineFilter
+        if (routine == null) byStatus else byStatus.filter { it.log.routineId == routine }
+    }
+    // Routines présentes dans l'historique — sert à n'afficher dans le filter
+    // bar que les routines qu'on a effectivement croisées (évite le bruit
+    // de chips vides si l'user n'a jamais fait de Pull).
+    val availableRoutineIds = remember(state.items) {
+        state.items.map { it.log.routineId }.distinct()
     }
     val grouped = remember(filteredItems) { groupByBucket(filteredItems) }
 
     // Scans nutrition
     val mealScans by remember { viewModel.mealScans }.collectAsState()
 
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var showShareHistory by remember { mutableStateOf(false) }
+    var showExportHistory by remember { mutableStateOf(false) }
+
+    if (showShareHistory) {
+        com.shredcoach.app.presentation.share.ShareSheet(
+            data = if (selectedTab == 0) buildWorkoutHistoryShareData(filteredItems)
+            else buildNutritionHistoryShareData(mealScans),
+            onDismiss = { showShareHistory = false },
+        )
+    }
+    if (showExportHistory) {
+        com.shredcoach.app.presentation.share.ExportSheet(
+            title = if (selectedTab == 0) "Historique séances" else "Historique repas scannés",
+            onPick = { format ->
+                showExportHistory = false
+                scope.launch {
+                    val payload = if (selectedTab == 0) buildWorkoutHistoryExportPayload(filteredItems)
+                    else buildNutritionHistoryExportPayload(mealScans)
+                    val content = com.shredcoach.app.presentation.share.DataExporter.render(payload, format)
+                    val uri = com.shredcoach.app.presentation.share.DataExporter.saveToCache(
+                        context, content, format,
+                        baseFilename = if (selectedTab == 0) "shredcoach_historique_seances" else "shredcoach_historique_nutrition",
+                    )
+                    com.shredcoach.app.presentation.share.DataExporter.launchShareIntent(
+                        context, uri, format, subject = payload.title,
+                    )
+                }
+            },
+            onDismiss = { showExportHistory = false },
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Historique", fontWeight = FontWeight.Bold) },
+                actions = {
+                    IconButton(onClick = { showShareHistory = true }) {
+                        Icon(Icons.Default.Share, "Partager l'historique")
+                    }
+                    IconButton(onClick = { showExportHistory = true }) {
+                        Icon(Icons.Default.FileDownload, "Exporter")
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
                 )
@@ -135,6 +187,16 @@ fun WorkoutHistoryScreen(
 
                     // ═══ Filter chips ═══
                     item { FilterChipsRow(state.filter, onSelect = viewModel::setFilter) }
+                    // ═══ Routine filter (apparait seulement si > 1 routine en historique) ═══
+                    if (availableRoutineIds.size > 1) {
+                        item {
+                            RoutineFilterChipsRow(
+                                availableRoutineIds = availableRoutineIds,
+                                current = state.routineFilter,
+                                onSelect = viewModel::setRoutineFilter,
+                            )
+                        }
+                    }
 
                     if (filteredItems.isEmpty()) {
                         item {
@@ -489,6 +551,62 @@ private fun FilterChipsRow(current: HistoryFilter, onSelect: (HistoryFilter) -> 
     }
 }
 
+/**
+ * Filtre par routine — chips horizontaux. Affiche "Toutes" + une chip par
+ * routine présente dans l'historique. Pas affiché s'il n'y a qu'une seule
+ * routine (sinon c'est du bruit visuel pour 0 valeur).
+ */
+@Composable
+private fun RoutineFilterChipsRow(
+    availableRoutineIds: List<String>,
+    current: String?,
+    onSelect: (String?) -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // "Toutes" reset
+        val allSelected = current == null
+        Surface(
+            modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable { onSelect(null) },
+            color = if (allSelected) OrangeVibrant else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text(
+                "Toutes routines",
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = if (allSelected) FontWeight.Bold else FontWeight.Medium,
+                color = if (allSelected) Color.White else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
+        }
+        availableRoutineIds.forEach { id ->
+            val routine = RoutineCatalog.byId(id)
+            val selected = current == id
+            Surface(
+                modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable { onSelect(id) },
+                color = if (selected) OrangeVibrant else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(routine.icon, fontSize = 12.sp)
+                    Text(
+                        routine.displayName,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                        color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
+            }
+        }
+    }
+}
+
 // ═══════════════════════════════════════
 // HISTORY CARD
 // ═══════════════════════════════════════
@@ -524,15 +642,33 @@ private fun HistoryCard(entry: HistoryListItem, onClick: () -> Unit) {
                     )
                 }
                 Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
                         entry.workoutName, style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold, maxLines = 1,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
+                    // Routine pill seule sur sa ligne — la date pleine ("Vendredi 7
+                    // mai à 18:30") est trop longue pour cohabiter sur la même
+                    // ligne avec le pill et le StatusBadge à droite. Sur sa propre
+                    // ligne (full width via softWrap), elle ne peut JAMAIS être
+                    // tronquée même sur petit écran.
+                    val routine = RoutineCatalog.byId(log.routineId)
                     Text(
-                        formatLongDate(log.date), style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
+                        "${routine.icon} ${routine.displayName}",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = OrangeVibrant.copy(alpha = 0.85f),
+                        maxLines = 1,
+                    )
+                    Text(
+                        formatLongDate(log.date),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                        // Pas de maxLines : on autorise un wrap éventuel sur 2
+                        // lignes plutôt qu'une troncature ; en pratique la date
+                        // tient sur une ligne car elle a tout le width dispo.
+                        softWrap = true,
                     )
                 }
                 StatusBadge(log.completed)
@@ -626,4 +762,137 @@ private fun groupByBucket(items: List<HistoryListItem>): Map<String, List<Histor
         groups.getOrPut(bucket) { mutableListOf() }.add(item)
     }
     return groups
+}
+
+// ──────────────────────────────────────────────────────────
+// Share / Export builders
+// ──────────────────────────────────────────────────────────
+
+private val historyDateFmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.FRENCH)
+
+private fun buildWorkoutHistoryShareData(
+    items: List<HistoryListItem>,
+): com.shredcoach.app.presentation.share.ShareCardData.HistorySummary {
+    val totalSeances = items.size
+    val totalVolume = items.sumOf { it.log.totalVolume }
+    val totalSets = items.sumOf { it.log.totalSets }
+    val totalReps = items.sumOf { it.log.totalReps }
+    val totalDurationSec = items.sumOf { it.log.actualDurationSeconds }
+    return com.shredcoach.app.presentation.share.ShareCardData.HistorySummary(
+        title = "Mon historique séances",
+        subtitle = "Total cumulé",
+        accentEmoji = "📅",
+        totalCount = totalSeances,
+        countLabel = "séances",
+        keyMetrics = listOf(
+            com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
+                label = "Volume", value = totalVolume.toInt().toString(), unit = "kg",
+            ),
+            com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
+                label = "Séries", value = totalSets.toString(),
+            ),
+            com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
+                label = "Reps", value = totalReps.toString(),
+            ),
+            com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
+                label = "Durée", value = (totalDurationSec / 60).toString(), unit = "min",
+            ),
+        ),
+    )
+}
+
+private fun buildNutritionHistoryShareData(
+    scans: List<com.shredcoach.app.data.local.entity.MealScanEntity>,
+): com.shredcoach.app.presentation.share.ShareCardData.HistorySummary {
+    val totalCalories = scans.sumOf { it.totalCalories }
+    val avgHealth = if (scans.isNotEmpty()) scans.map { it.healthScore }.average().toInt() else 0
+    val avgProt = if (scans.isNotEmpty()) scans.map { it.totalProteins }.average().toInt() else 0
+    return com.shredcoach.app.presentation.share.ShareCardData.HistorySummary(
+        title = "Mon historique repas",
+        subtitle = "Tous mes scans",
+        accentEmoji = "🍽️",
+        totalCount = scans.size,
+        countLabel = "repas scannés",
+        keyMetrics = listOf(
+            com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
+                label = "Total kcal", value = totalCalories.toString(), unit = "kcal",
+            ),
+            com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
+                label = "Score moyen", value = avgHealth.toString(), unit = "/100",
+            ),
+            com.shredcoach.app.presentation.share.ShareCardData.StatsAggregate.KeyMetric(
+                label = "Protéines/repas", value = avgProt.toString(), unit = "g",
+            ),
+        ),
+    )
+}
+
+private fun buildWorkoutHistoryExportPayload(
+    items: List<HistoryListItem>,
+): com.shredcoach.app.presentation.share.DataExporter.ExportPayload {
+    return com.shredcoach.app.presentation.share.DataExporter.ExportPayload(
+        title = "ShredCoach — Historique séances",
+        description = "${items.size} séances exportées",
+        columns = listOf(
+            "Date", "Séance", "Durée (min)", "Volume (kg)", "Séries",
+            "Reps", "Repos total (s)", "Exos terminés", "Exos passés", "Statut",
+        ),
+        rows = items.map { item ->
+            val log = item.log
+            listOf(
+                log.date.format(historyDateFmt),
+                item.workoutName.ifBlank { "Séance" },
+                (log.actualDurationSeconds / 60).toString(),
+                "%.1f".format(log.totalVolume),
+                log.totalSets.toString(),
+                log.totalReps.toString(),
+                log.totalRestSeconds.toString(),
+                log.exercisesCompleted.toString(),
+                log.exercisesSkipped.toString(),
+                if (log.completed) "Terminée" else "Abandonnée",
+            )
+        },
+        summary = listOf(
+            "Total séances" to items.size.toString(),
+            "Volume cumulé" to "${items.sumOf { it.log.totalVolume }.toInt()} kg",
+            "Durée cumulée" to "${items.sumOf { it.log.actualDurationSeconds } / 60} min",
+        ),
+    )
+}
+
+private fun buildNutritionHistoryExportPayload(
+    scans: List<com.shredcoach.app.data.local.entity.MealScanEntity>,
+): com.shredcoach.app.presentation.share.DataExporter.ExportPayload {
+    return com.shredcoach.app.presentation.share.DataExporter.ExportPayload(
+        title = "ShredCoach — Historique nutrition (scans)",
+        description = "${scans.size} repas scannés",
+        columns = listOf(
+            "Date", "Type repas", "Plat", "Cuisine",
+            "Kcal", "Protéines (g)", "Glucides (g)", "Lipides (g)", "Fibres (g)",
+            "Poids (g)", "Score santé", "Nutri-Score", "Verdict", "Ajouté au suivi",
+        ),
+        rows = scans.map { s ->
+            listOf(
+                s.timestamp.format(historyDateFmt),
+                s.mealType,
+                s.dishName,
+                s.cuisine,
+                s.totalCalories.toString(),
+                "%.1f".format(s.totalProteins),
+                "%.1f".format(s.totalCarbs),
+                "%.1f".format(s.totalFats),
+                "%.1f".format(s.totalFibers),
+                s.totalWeight.toString(),
+                s.healthScore.toString(),
+                s.nutriScoreGrade,
+                s.verdict,
+                if (s.addedToTracking) "Oui" else "Non",
+            )
+        },
+        summary = listOf(
+            "Total scans" to scans.size.toString(),
+            "Kcal cumulées" to scans.sumOf { it.totalCalories }.toString(),
+            "Score santé moyen" to (if (scans.isNotEmpty()) scans.map { it.healthScore }.average().toInt() else 0).toString(),
+        ),
+    )
 }

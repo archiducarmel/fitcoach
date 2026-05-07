@@ -9,6 +9,7 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -54,6 +55,9 @@ import androidx.navigation.NavController
 import com.shredcoach.app.data.local.entity.ExerciseEntity
 import com.shredcoach.app.domain.model.ExerciseVariant
 import com.shredcoach.app.domain.model.MuscleGroup
+import com.shredcoach.app.domain.training.SetMetricFormatter
+import com.shredcoach.app.domain.training.SetMetricFormatter.ExerciseKind
+import com.shredcoach.app.domain.workout.RoutineCatalog
 import com.shredcoach.app.presentation.common.tabularNum
 import com.shredcoach.app.presentation.theme.BrightYellow
 import com.shredcoach.app.presentation.theme.NeonGreen
@@ -115,13 +119,75 @@ fun WorkoutSessionScreen(
         }
     }
 
-    // Vibration + son + voix à la fin du repos
-    LaunchedEffect(state.isRestTimerActive, state.restTimeRemaining) {
-        if (!state.isRestTimerActive && state.restTimeElapsed > 0 && state.restTimeRemaining == 0) {
+    // ─── Vibration + son à la fin du repos ───
+    // **Important** : on détecte la fin du repos par TRANSITION d'état
+    // (was active → no longer active) plutôt que par la condition
+    // `restTimeElapsed > 0` qui était fragile : `markRestCompleted()` côté
+    // ViewModel reset `currentRestElapsed = 0` AVANT que la LaunchedEffect
+    // puisse fire son trigger → la vibration/son se manquaient au moment
+    // critique. La détection par transition est immune à ce reset.
+    //
+    // **Pourquoi PAS d'appel à `viewModel.onRestComplete()` ici** : la sauvegarde
+    // de l'actual rest est déjà gérée côté ViewModel via `handleRestEnded()` qui
+    // appelle `saveActualRest()` AVANT le reset. Si on l'appelait depuis ici (post-
+    // reset), `restTimeElapsed` serait à 0 → on écraserait la bonne valeur avec 0.
+    val previousIsRestActive = remember { mutableStateOf(false) }
+    LaunchedEffect(state.isRestTimerActive) {
+        val wasActive = previousIsRestActive.value
+        val nowActive = state.isRestTimerActive
+        previousIsRestActive.value = nowActive
+        if (wasActive && !nowActive) {
             if (state.vibrationEnabled) vibrate(context)
             if (state.soundEnabled) playRestEndSound(context)
-            if (state.voiceEnabled) voice?.speakRestEnd()
-            viewModel.onRestComplete()
+        }
+    }
+
+    // ─── Annonce vocale CONTEXTUELLE au démarrage de chaque série ───
+    // Trigger : transition `isSetInProgress` false → true. Cela couvre :
+    //  - 1ère série du 1er exercice (jamais précédée d'un repos)
+    //  - Toute série post-repos (autoStart=true → fire immédiatement après
+    //    le tick qui a clos le repos ; autoStart=false → fire au tap user)
+    //  - Toute série post-transition d'exo (1ère série du nouvel exo)
+    //
+    // La phrase est choisie par cascade de priorités dans le phrasebook
+    // (dernière série/dernier exo > premier exo > sprint final > etc.) et
+    // le rotation index garantit la variété même quand le même contexte
+    // revient. Remplace l'ancien `speakRestEnd()` qui balançait 7 phrases
+    // génériques sans aucun contexte.
+    val previousIsSetInProgress = remember { mutableStateOf(false) }
+    val voiceRotation = remember { mutableStateOf(0) }
+    LaunchedEffect(state.isSetInProgress) {
+        val wasInProgress = previousIsSetInProgress.value
+        val nowInProgress = state.isSetInProgress
+        previousIsSetInProgress.value = nowInProgress
+        if (!wasInProgress && nowInProgress && state.voiceEnabled && voice != null) {
+            // Phrase contextuelle même pour les sets timed (gainage/cardio).
+            // Pas de chevauchement avec le countdown vocal : speakCountdown
+            // ne déclenche qu'à 10 puis 5..1 secondes, jamais au démarrage.
+            val sessionRoutine = RoutineCatalog.byId(state.routineId)
+            val complementaryName = sessionRoutine.complementaryRoutineId
+                ?.let { RoutineCatalog.byId(it).displayName }
+            val ctx = com.shredcoach.app.domain.voice.WorkoutVoicePhrasebook.SetStartContext(
+                firstName = state.userFirstName,
+                exerciseName = state.currentExercise?.name.orEmpty(),
+                currentSet = state.currentSeries,
+                totalSets = state.totalSeriesForCurrentExercise,
+                currentExerciseIndex = state.currentExerciseIndex,
+                totalExercises = state.totalExercises,
+                isWarmup = state.isWarmupExercise,
+                isCardio = state.isCardioExercise,
+                isFreestyle = state.isFreestyle,
+                routineName = sessionRoutine.displayName,
+                complementaryRoutineName = complementaryName,
+                // Source unique de vérité : Full Body est la routine "default"
+                // historique. Tout ce qui n'est pas FB est un split → annonces
+                // routine-aware activées.
+                isSplitRoutine = sessionRoutine.id != RoutineCatalog.Default.id,
+            )
+            val phrase = com.shredcoach.app.domain.voice.WorkoutVoicePhrasebook
+                .setStartPhrase(ctx, voiceRotation.value)
+            voiceRotation.value = voiceRotation.value + 1
+            voice.speak(phrase)
         }
     }
 
@@ -179,6 +245,83 @@ fun WorkoutSessionScreen(
         )
     }
 
+    var showSessionShare by remember { mutableStateOf(false) }
+    if (showSessionShare) {
+        // Construit la liste exo + statut depuis l'état courant.
+        //
+        // **Règle DONE/CURRENT** : un exo est DONE dès que le nb de séries
+        // effectuées (complétées + skippées) atteint les séries prévues —
+        // PAS via comparaison d'index. Pourquoi : juste après la dernière
+        // série, `currentExerciseIndex` pointe encore sur l'exo qu'on vient
+        // de finir tant que la transition n'a pas tiré. Sans cette règle,
+        // l'exo terminé apparaissait à tort comme "en cours".
+        val setsByExoId = state.completedSets.groupBy { it.exerciseId }
+        val plannedItems = state.exercises.mapIndexed { idx, ex ->
+            val expected = ex.series + (state.extraSeriesMap[idx] ?: 0)
+            val setsForExo = setsByExoId[ex.id] ?: emptyList()
+            val doneCount = setsForExo.size
+            // Même règle que l'overview panel — cohérence cross-views.
+            val isOnThisExo = idx == state.currentExerciseIndex
+            val activelyEngagedHere = isOnThisExo &&
+                (state.isSetInProgress || state.isRestTimerActive)
+            val isFullyDone = if (state.isFreestyle) {
+                doneCount > 0 && !activelyEngagedHere
+            } else {
+                expected > 0 && doneCount >= expected
+            }
+            // Cascade IDENTIQUE à ExerciseOverviewPanel pour cohérence
+            // visuelle entre les 2 vues. Notamment `idx < currentExerciseIndex
+            // → DONE` couvre le cas où l'utilisateur a sauté en avant
+            // (jumpToExercise) sans skip explicite — l'overview marque DONE,
+            // la share card aussi.
+            val status = when {
+                idx in state.skippedExercises ->
+                    com.shredcoach.app.presentation.share.ShareCardData.ExerciseStatus.SKIPPED
+                isFullyDone ->
+                    com.shredcoach.app.presentation.share.ShareCardData.ExerciseStatus.DONE
+                idx < state.currentExerciseIndex ->
+                    com.shredcoach.app.presentation.share.ShareCardData.ExerciseStatus.DONE
+                idx == state.currentExerciseIndex ->
+                    com.shredcoach.app.presentation.share.ShareCardData.ExerciseStatus.CURRENT
+                doneCount > 0 ->
+                    // Exo partiel à un index FUTUR (rare : user revenu en arrière
+                    // après progression). Marqué DONE pour ne pas masquer le travail.
+                    com.shredcoach.app.presentation.share.ShareCardData.ExerciseStatus.DONE
+                else ->
+                    com.shredcoach.app.presentation.share.ShareCardData.ExerciseStatus.UPCOMING
+            }
+            // Métrique compacte "X×Y · Zkg" pour les exos avec au moins 1 série
+            // complétée. Donne au lecteur de la share card une vraie idée du
+            // travail fait, pas juste un check vert anonyme.
+            val metric = if (doneCount > 0) buildSetSummary(setsForExo) else null
+            com.shredcoach.app.presentation.share.ShareCardData.ExerciseProgressItem(
+                name = ex.name,
+                status = status,
+                metric = metric,
+            )
+        }
+        // Compteur "exos done" cohérent avec la règle ci-dessus
+        // (≠ currentExerciseIndex qui peut être en retard).
+        val exercisesDoneCount = plannedItems.count {
+            it.status == com.shredcoach.app.presentation.share.ShareCardData.ExerciseStatus.DONE ||
+                it.status == com.shredcoach.app.presentation.share.ShareCardData.ExerciseStatus.SKIPPED
+        }
+        com.shredcoach.app.presentation.share.ShareSheet(
+            data = com.shredcoach.app.presentation.share.ShareCardData.WorkoutInProgress(
+                title = "Séance en cours",
+                subtitle = state.currentExercise?.name,
+                elapsedMinutes = (state.globalChronoSeconds / 60).toInt(),
+                exercisesDone = exercisesDoneCount,
+                totalExercises = state.totalExercises,
+                totalSetsCompleted = state.totalSetsCompleted,
+                totalReps = state.totalRepsCompleted,
+                totalVolumeKg = state.totalVolume,
+                plannedExercises = plannedItems,
+            ),
+            onDismiss = { showSessionShare = false },
+        )
+    }
+
     Scaffold(
         topBar = { SessionTopBar(state,
             onBack = {
@@ -200,7 +343,8 @@ fun WorkoutSessionScreen(
             },
             onToggleChrono = { if (state.globalChronoRunning) viewModel.stopGlobalChrono() else viewModel.resumeGlobalChrono() },
             onStop = { showStopConfirm = true },
-            onShowOverview = { viewModel.toggleExerciseOverview() }
+            onShowOverview = { viewModel.toggleExerciseOverview() },
+            onShare = { showSessionShare = true },
         ) }
     ) { pad ->
         // Cle d'etat pour AnimatedContent
@@ -360,7 +504,8 @@ private fun SessionTopBar(
     onBack: () -> Unit,
     onToggleChrono: () -> Unit,
     onStop: () -> Unit,
-    onShowOverview: () -> Unit = {}
+    onShowOverview: () -> Unit = {},
+    onShare: () -> Unit = {},
 ) {
     Surface(tonalElevation = 2.dp) {
         Row(
@@ -370,9 +515,19 @@ private fun SessionTopBar(
             IconButton(onClick = onBack, modifier = Modifier.size(36.dp)) {
                 Icon(Icons.Default.Close, "Retour", Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             }
+            // Routine de la séance (Full Body, Push, …) + position dans la séance.
+            // Format : "Push · 3/8" — affiche le contexte split, indispensable
+            // sur des journées Push/Pull où on enchaîne 2 séances complémentaires.
+            val routineLabel = remember(state.routineId) {
+                RoutineCatalog.byId(state.routineId).displayName
+            }
             Text(
-                "Exercice ${state.currentExerciseIndex + 1}/${state.totalExercises}",
-                style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold
+                "$routineLabel · ${state.currentExerciseIndex + 1}/${state.totalExercises}",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                softWrap = false,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             )
             // Bouton vue d'ensemble
             IconButton(onClick = onShowOverview, modifier = Modifier.size(36.dp)) {
@@ -398,6 +553,20 @@ private fun SessionTopBar(
             }
             IconButton(onClick = onToggleChrono, modifier = Modifier.size(36.dp)) {
                 Icon(if (state.globalChronoRunning) Icons.Default.Pause else Icons.Default.PlayArrow, null, Modifier.size(18.dp), tint = OrangeVibrant)
+            }
+            // Bouton partager — capture l'état mid-séance (live progress card).
+            // Petit (32dp) pour rester cohérent dans la barre custom déjà
+            // dense ; visible uniquement si au moins 1 série a été complétée
+            // pour éviter une card "vide" (0/N exos, 0 volume).
+            if (state.totalSetsCompleted > 0) {
+                IconButton(onClick = onShare, modifier = Modifier.size(36.dp)) {
+                    Icon(
+                        Icons.Default.Share,
+                        contentDescription = "Partager la progression",
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    )
+                }
             }
             IconButton(onClick = onStop, modifier = Modifier.size(36.dp)) {
                 Icon(Icons.Default.Stop, "Arrêter", Modifier.size(18.dp), tint = MaterialTheme.colorScheme.error)
@@ -438,15 +607,55 @@ private fun ExerciseHeader(exercise: ExerciseEntity, chronoSec: Long, onSkip: ()
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                 }
             }
-            // Nom + badges
+            // Identité — nom (marquee) + badges (responsive avec weight + ellipsis).
+            // Le `weight(1f)` du Column donne tout l'espace restant après GIF +
+            // colonne chrono/skip, et c'est dans cet espace que la marquee
+            // calcule son débordement.
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(exercise.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    TagBadge(exercise.muscleGroup.displayName, MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
-                    TagBadge(exercise.variant.displayName, Color(exercise.variant.color).copy(alpha = 0.2f), Color(exercise.variant.color))
+                // basicMarquee : pattern premium (Spotify, YouTube Music) qui
+                // scrolle horizontalement les noms qui dépassent au lieu de
+                // tronquer brutalement. 3 itérations + delay 1.2s = lisible
+                // sans devenir agaçant. Quand le nom tient, c'est statique.
+                @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+                Text(
+                    exercise.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.fillMaxWidth().basicMarquee(
+                        iterations = 3,
+                        initialDelayMillis = 1200,
+                        repeatDelayMillis = 2000,
+                    ),
+                )
+                // Badges responsifs : `weight(1f, fill = false)` permet à chaque
+                // badge de prendre sa taille naturelle si elle tient, sinon de
+                // shrink à la moitié de l'espace disponible et ellipsize.
+                // Sans cette protection, "Adducteurs / Abducteurs" + "Haltères
+                // / Barre" (≈245dp combiné) débordait des 190dp disponibles
+                // sur un 360dp et le 2e badge disparaissait silencieusement.
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    TagBadge(
+                        text = exercise.muscleGroup.displayName,
+                        bgColor = MaterialTheme.colorScheme.primaryContainer,
+                        textColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    TagBadge(
+                        text = exercise.variant.displayName,
+                        bgColor = Color(exercise.variant.color).copy(alpha = 0.2f),
+                        textColor = Color(exercise.variant.color),
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
                 }
             }
-            // Chrono + Skip empilés
+            // Chrono + Skip — colonne compacte. Skip iconisé pour libérer de
+            // la largeur (gain ~15-20dp vs "SKIP" en texte) → plus d'espace
+            // pour les badges et le nom marquee.
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Surface(shape = RoundedCornerShape(6.dp), color = OrangeVibrant.copy(alpha = 0.12f)) {
                     Text(fmtChrono(chronoSec), Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
@@ -456,11 +665,19 @@ private fun ExerciseHeader(exercise: ExerciseEntity, chronoSec: Long, onSkip: ()
                 Surface(
                     onClick = onSkip,
                     shape = RoundedCornerShape(6.dp),
-                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.1f)
+                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
                 ) {
-                    Text("SKIP", Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                        style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.error)
+                    Box(
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            Icons.Default.SkipNext,
+                            contentDescription = "Passer cet exercice",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.error,
+                        )
+                    }
                 }
             }
         }
@@ -620,9 +837,21 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
                 ) {
                 if (state.addExerciseStep == 0 && state.addExerciseSearchQuery.isBlank()) {
                     // ─── Étape 1 : groupes musculaires en cards ───
-                    val muscleGroups = if (state.isFreestyle) MuscleGroup.values().toList()
+                    val allGroups = if (state.isFreestyle) MuscleGroup.values().toList()
                         else MuscleGroup.values().filter { it != MuscleGroup.WARMUP }
-                    muscleGroups.forEach { mg ->
+
+                    // Si on a une routine non-FullBody, on prioritise ses groupes en
+                    // tête (section "Recommandé pour {routine}") puis les autres en
+                    // override. Pour Full Body (qui cible tout), pas de séparation
+                    // — la liste plate suffit.
+                    val routine = remember(state.routineId) { RoutineCatalog.byId(state.routineId) }
+                    val isSplitRoutine = routine.id != RoutineCatalog.Default.id
+                    val recommendedSet = remember(routine) { routine.allTargetGroups.toSet() }
+                    val recommended = if (isSplitRoutine) allGroups.filter { it in recommendedSet } else emptyList()
+                    val others = if (isSplitRoutine) allGroups.filter { it !in recommendedSet } else allGroups
+
+                    @Composable
+                    fun MuscleGroupRow(mg: MuscleGroup) {
                         Card(
                             onClick = { viewModel.selectAddExerciseMuscleGroup(mg) },
                             modifier = Modifier.fillMaxWidth(),
@@ -641,6 +870,26 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
                             }
                         }
                     }
+
+                    if (recommended.isNotEmpty()) {
+                        Text(
+                            "Recommandé pour ${routine.displayName}".uppercase(),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = OrangeVibrant,
+                            modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp)
+                        )
+                        recommended.forEach { MuscleGroupRow(it) }
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            "Autres groupes".uppercase(),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                            modifier = Modifier.padding(start = 4.dp, bottom = 2.dp)
+                        )
+                    }
+                    others.forEach { MuscleGroupRow(it) }
                 } else {
                     // ─── Étape 2 : exercices du groupe ───
                     if (state.addExerciseOptions.isEmpty()) {
@@ -946,7 +1195,9 @@ private fun SeriesTimeline(state: WorkoutSessionState, exercise: ExerciseEntity,
                 completedSet != null && completedSet.skipped -> SkippedSeriesCard(seriesNum)
                 completedSet != null -> {
                     val isLastDone = setsForExercise.lastOrNull { !it.skipped }?.seriesNumber == seriesNum
+                    val exerciseKind = SetMetricFormatter.kindOf(exercise)
                     CompletedSeriesCard(seriesNum, completedSet,
+                        exerciseKind = exerciseKind,
                         showRedo = isLastDone && isCurrent.not(),
                         onRedo = if (isLastDone) {{ viewModel.redoLastSeries() }} else null)
                 }
@@ -1101,7 +1352,13 @@ private fun CardioSessionCard(exercise: ExerciseEntity, state: WorkoutSessionSta
 }
 
 @Composable
-private fun CompletedSeriesCard(seriesNumber: Int, data: WorkoutSetData, showRedo: Boolean = false, onRedo: (() -> Unit)? = null) {
+private fun CompletedSeriesCard(
+    seriesNumber: Int,
+    data: WorkoutSetData,
+    exerciseKind: ExerciseKind,
+    showRedo: Boolean = false,
+    onRedo: (() -> Unit)? = null,
+) {
     Card(colors = CardDefaults.cardColors(containerColor = NeonGreen.copy(alpha = 0.08f))) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(36.dp).clip(CircleShape).background(NeonGreen.copy(alpha = 0.2f)), contentAlignment = Alignment.Center) {
@@ -1110,16 +1367,46 @@ private fun CompletedSeriesCard(seriesNumber: Int, data: WorkoutSetData, showRed
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
                 Text("Série $seriesNumber", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                // Affichage kind-aware :
+                //  - WEIGHTED : "80 kg" + "10 reps" (2 fragments)
+                //  - BODYWEIGHT_REPS : "10 reps" (+ "+10 kg" en cas de lesté)
+                //  - TIMED : "1m30" tenue
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("${data.weight} kg", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
-                    Text("${data.reps} reps", style = MaterialTheme.typography.bodyMedium)
+                    when (exerciseKind) {
+                        ExerciseKind.WEIGHTED -> {
+                            Text("${SetMetricFormatter.formatWeight(data.weight)} kg",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold, color = OrangeVibrant)
+                            Text("${data.reps} reps", style = MaterialTheme.typography.bodyMedium)
+                        }
+                        ExerciseKind.BODYWEIGHT_REPS -> {
+                            Text("${data.reps} reps",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold, color = OrangeVibrant)
+                            if (data.weight > 0.0) {
+                                Text("+${SetMetricFormatter.formatWeight(data.weight)} kg",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                            }
+                        }
+                        ExerciseKind.TIMED -> {
+                            Text(SetMetricFormatter.formatDuration(data.reps),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold, color = OrangeVibrant)
+                        }
+                    }
                 }
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                data.setDurationSeconds?.let {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(Icons.Default.FitnessCenter, null, Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
-                        Text("${it}s", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                // Pour TIMED, on ne montre pas setDurationSeconds (redondant avec
+                // l'affichage principal). Pour WEIGHTED/BODYWEIGHT, c'est la
+                // durée RÉELLE de la série (chrono), info complémentaire utile.
+                if (exerciseKind != ExerciseKind.TIMED) {
+                    data.setDurationSeconds?.let {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Icon(Icons.Default.FitnessCenter, null, Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                            Text("${it}s", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                        }
                     }
                 }
                 data.restSecondsActual?.let {
@@ -1369,32 +1656,51 @@ private fun ActiveSeriesCard(seriesNum: Int, totalSeries: Int, state: WorkoutSes
                     }
                 }
             }
-            // Suggestions : derniere seance + PR + bouton Suggerer
-            // Masqué pour les exos au poids du corps (pas de progression en charge)
-            val isBodyweightExo = state.currentExercise?.variant == ExerciseVariant.BODYWEIGHT
-            if (!isBodyweightExo && (state.lastSessionWeight != null || state.personalRecordWeight != null)) {
+            // Suggestions : dernière séance + PR + bouton Suggérer (kind-aware)
+            //
+            // Avant : on cachait tout pour `variant == BODYWEIGHT`. Maintenant on
+            // affiche "Dernière fois 12 reps" / "Record 25 reps" pour bodyweight,
+            // et "Record 1m45" pour time-based. Le bouton "+5 kg" reste masqué
+            // hors WEIGHTED car il n'a pas de sens (on n'incrémente pas un temps
+            // de tenue ou un nombre de reps de la même manière).
+            val exerciseKind = SetMetricFormatter.kindOf(state.currentExercise)
+            val lastTimeText = SetMetricFormatter.formatLastTime(
+                kind = exerciseKind,
+                weightKg = state.lastSessionWeight,
+                reps = state.lastSessionReps,
+            )
+            // Record kind-aware : pour WEIGHTED on prend le `personalRecordWeight`
+            // (max kg). Pour BODYWEIGHT_REPS et TIMED on prend `personalRecordReps`
+            // qui contient soit le nb de reps max (bodyweight pur) soit la durée
+            // max en secondes (time-based).
+            val recordText = when (exerciseKind) {
+                ExerciseKind.WEIGHTED -> state.personalRecordWeight?.let { "${SetMetricFormatter.formatWeight(it)} kg" }
+                ExerciseKind.BODYWEIGHT_REPS -> state.personalRecordReps?.let { "$it reps" }
+                ExerciseKind.TIMED -> state.personalRecordReps?.let { SetMetricFormatter.formatDuration(it) }
+            }
+            if (lastTimeText != null || recordText != null) {
                 Row(
                     Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        if (state.lastSessionWeight != null) {
+                        if (lastTimeText != null) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Icon(Icons.Default.History, null, Modifier.size(14.dp),
                                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                                 Text(
-                                    "Dernière fois : ${state.lastSessionWeight} kg × ${state.lastSessionReps ?: "?"}",
+                                    "Dernière fois : $lastTimeText",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
-                        if (state.personalRecordWeight != null) {
+                        if (recordText != null) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Icon(Icons.Default.Star, null, Modifier.size(14.dp), tint = BrightYellow)
                                 Text(
-                                    "Record : ${state.personalRecordWeight} kg",
+                                    "Record : $recordText",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = BrightYellow,
                                     fontWeight = FontWeight.SemiBold
@@ -1402,8 +1708,8 @@ private fun ActiveSeriesCard(seriesNum: Int, totalSeries: Int, state: WorkoutSes
                             }
                         }
                     }
-                    // Bouton Suggerer
-                    if (state.lastSessionWeight != null) {
+                    // Bouton Suggérer — uniquement pour WEIGHTED (incrément kg)
+                    if (exerciseKind == ExerciseKind.WEIGHTED && state.lastSessionWeight != null) {
                         FilledTonalButton(
                             onClick = { viewModel.suggestWeight() },
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
@@ -1428,9 +1734,12 @@ private fun ActiveSeriesCard(seriesNum: Int, totalSeries: Int, state: WorkoutSes
                     if (milestone) com.shredcoach.app.presentation.util.hapticHeavy(localCtx)
                     else com.shredcoach.app.presentation.util.hapticClick(localCtx)
                 }
-                // Poids (kg) — masqué pour les exos au poids du corps (le volume utilise userWeight/2)
-                val isBodyweight = state.currentExercise?.variant == ExerciseVariant.BODYWEIGHT
-                if (!isBodyweight) {
+                // Poids (kg) — masqué pour les exos sans charge :
+                //  - BODYWEIGHT_REPS : pompes/tractions/dips (poids = corps)
+                //  - TIMED           : gainage/planche (input = durée, pas de kg)
+                //  Seul WEIGHTED expose le stepper poids.
+                val activeExerciseKind = SetMetricFormatter.kindOf(state.currentExercise)
+                if (activeExerciseKind == ExerciseKind.WEIGHTED) {
                     Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                         SessionStepper(
                             label = "Poids (kg)",
@@ -1605,15 +1914,36 @@ private fun ExerciseOverviewPanel(state: WorkoutSessionState, viewModel: Workout
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             itemsIndexed(state.exercises) { index, exercise ->
-                // Calcul rigoureux : un exercice est "done" quand TOUTES ses séries sont complétées
-                // (base + bonus), ou quand il a été entièrement skipped.
+                // Calcul du statut.
+                //
+                // **Bug freestyle historique** : `allSetsDone` exigeait
+                // `totalSetsExpected > 0` ET `setsDone >= totalSetsExpected`.
+                // En freestyle, si l'exo a `series=0` ou si l'utilisateur a
+                // ajouté du bonus puis fait moins (ou si on est sur la 1re
+                // séance freestyle non encore configurée), `setsDone < expected`
+                // → l'exo restait "en cours" même après que l'utilisateur ait
+                // arrêté ses séries.
+                //
+                // **Règle robuste** :
+                //  - Mode "non-freestyle" : DONE si toutes les séries (base +
+                //    bonus) sont complétées. Strict.
+                //  - Mode freestyle : DONE dès qu'au moins 1 série est faite ET
+                //    que l'utilisateur n'est pas activement en train de bosser
+                //    sur cet exo (pas d'isSetInProgress, pas de rest timer
+                //    actif). Sinon CURRENT pendant le travail.
                 val totalSetsExpected = exercise.series + (state.extraSeriesMap[index] ?: 0)
                 val setsDone = state.completedSets.count { it.exerciseId == exercise.id && !it.skipped }
                 val skippedAll = state.skippedExercises.contains(index)
-                val allSetsDone = setsDone >= totalSetsExpected && totalSetsExpected > 0
+                val isOnThisExo = index == state.currentExerciseIndex
+                val activelyEngagedHere = isOnThisExo &&
+                    (state.isSetInProgress || state.isRestTimerActive)
+                val allSetsDone = if (state.isFreestyle) {
+                    setsDone > 0 && !activelyEngagedHere
+                } else {
+                    setsDone >= totalSetsExpected && totalSetsExpected > 0
+                }
                 val isDone = skippedAll || allSetsDone || index < state.currentExerciseIndex
-                // "isCurrent" = pointeur du VM ET sets pas tous finis (évite "en cours" sur exo terminé en freestyle)
-                val isCurrent = index == state.currentExerciseIndex && !isDone
+                val isCurrent = isOnThisExo && !isDone
                 val isFuture = !isDone && !isCurrent
 
                 OverviewExerciseCard(
@@ -1946,6 +2276,38 @@ private fun ExerciseTransitionOverlay(
 
         Spacer(Modifier.height(20.dp))
 
+        // Bouton Partager — moment "achievement" naturel après un exo réussi.
+        // Subtle, en outline pour ne pas concurrencer le CTA "Prochain exercice"
+        // en bas (qui est l'action primaire).
+        var showExoShare by remember { mutableStateOf(false) }
+        if (showExoShare) {
+            com.shredcoach.app.presentation.share.ShareSheet(
+                data = com.shredcoach.app.presentation.share.ShareCardData.ExerciseCompleted(
+                    title = fromName,
+                    subtitle = "Exo $exercisesDone/$totalExercises",
+                    setsCompleted = exoSets,
+                    totalReps = exoReps,
+                    volumeKg = exoVolume,
+                    durationSeconds = exoDuration,
+                    isPersonalRecord = false, // TODO : wire `state.isPersonalRecord` quand on aura accès au state ici
+                    coachMessage = shreddyMessage.takeIf { it.isNotBlank() && !isShreddyThinking },
+                ),
+                onDismiss = { showExoShare = false },
+            )
+        }
+        OutlinedButton(
+            onClick = { showExoShare = true },
+            modifier = Modifier.align(Alignment.End),
+            shape = RoundedCornerShape(12.dp),
+            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+        ) {
+            Icon(Icons.Default.Share, null, Modifier.size(16.dp), tint = OrangeVibrant)
+            Spacer(Modifier.width(6.dp))
+            Text("Partager", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+        }
+
+        Spacer(Modifier.height(8.dp))
+
         // Stats de l'exercice terminé
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
@@ -2048,12 +2410,37 @@ private fun CoachTipCard(exercise: ExerciseEntity) {
     }
 }
 
-/** Badge à hauteur uniforme */
+/**
+ * Badge à hauteur uniforme. Accepte un `modifier` externe (typiquement
+ * `weight(1f, fill = false)` quand utilisé dans un Row contraint) pour
+ * coopérer avec les contraintes parent.
+ *
+ * **maxLines = 1 + Ellipsis** : sans ça, le Text déborde le Surface
+ * silencieusement et le 2e badge disparaît du Row au lieu de s'ellipsizer.
+ */
 @Composable
-private fun TagBadge(text: String, bgColor: Color, textColor: Color) {
-    Surface(shape = RoundedCornerShape(6.dp), color = bgColor, modifier = Modifier.height(28.dp)) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 8.dp)) {
-            Text(text, style = MaterialTheme.typography.labelSmall, color = textColor, maxLines = 1)
+private fun TagBadge(
+    text: String,
+    bgColor: Color,
+    textColor: Color,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        shape = RoundedCornerShape(6.dp),
+        color = bgColor,
+        modifier = modifier.height(28.dp),
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.padding(horizontal = 8.dp),
+        ) {
+            Text(
+                text,
+                style = MaterialTheme.typography.labelSmall,
+                color = textColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
@@ -2152,4 +2539,30 @@ private fun vibrate(context: Context) {
             else @Suppress("DEPRECATION") v.vibrate(longArrayOf(0, 300, 200, 300, 200, 500), -1)
         }
     } catch (_: Exception) {}
+}
+
+/**
+ * Compose un résumé compact "Nx{reps} · {kg}kg" pour la share card. Exemples :
+ *  - "4×10 · 80 kg" : weighted, reps homogènes
+ *  - "4×8-10 · 80 kg" : weighted, reps variant
+ *  - "3×12" : bodyweight (poids = 0)
+ *  - "3 séries" : si pas de reps ni poids exploitable (timed)
+ *
+ * Utilisé pour les `ExerciseProgressItem.metric` afin que la liste des exos
+ * partagée montre du contenu utile, pas juste un check vert anonyme.
+ */
+internal fun buildSetSummary(
+    sets: List<com.shredcoach.app.presentation.workout.WorkoutSetData>,
+): String? {
+    if (sets.isEmpty()) return null
+    val nonSkipped = sets.filter { !it.skipped }
+    if (nonSkipped.isEmpty()) return "${sets.size} skip${if (sets.size > 1) "s" else ""}"
+    val n = nonSkipped.size
+    val reps = nonSkipped.map { it.reps }
+    val maxKg = nonSkipped.maxOf { it.weight }
+    val repsPart = when {
+        reps.toSet().size == 1 -> "${n}×${reps.first()}"
+        else -> "${n}×${reps.min()}-${reps.max()}"
+    }
+    return if (maxKg > 0) "$repsPart · ${maxKg.toInt()} kg" else repsPart
 }

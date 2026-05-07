@@ -11,6 +11,8 @@ import com.shredcoach.app.data.local.dao.*
 import com.shredcoach.app.data.local.entity.ExerciseEntity
 import com.shredcoach.app.data.repository.StatsRepository
 import com.shredcoach.app.domain.model.MuscleGroup
+import com.shredcoach.app.domain.training.SetMetricFormatter
+import com.shredcoach.app.domain.training.SetMetricFormatter.ExerciseKind
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -27,10 +29,42 @@ enum class TimePeriod(val label: String, val days: Long) {
 }
 
 // ── Data classes ──
-data class PRDisplay(val exerciseName: String, val weight: Double, val reps: Int, val estimated1RM: Double)
+/**
+ * Personal record affiché dans la card "Records perso".
+ *
+ * [kind] détermine comment formater l'affichage :
+ *  - WEIGHTED         : "100 kg × 5" + "1RM 110 kg"
+ *  - BODYWEIGHT_REPS  : "25 reps" (pas de 1RM)
+ *  - TIMED            : "1m45" (pas de 1RM)
+ *
+ * Pour TIMED, [reps] contient en réalité la durée en secondes (cf. modèle
+ * de données : exos time-based stockent la durée dans `WorkoutSetEntity.reps`).
+ */
+data class PRDisplay(
+    val exerciseName: String,
+    val kind: ExerciseKind,
+    val weight: Double,
+    val reps: Int,
+    val estimated1RM: Double?
+)
 data class WeightPoint(val date: LocalDate, val weight: Double, val reps: Int)
 data class VolumeBar(val label: String, val volume: Double)
 data class MuscleSlice(val muscleGroup: String, val displayName: String, val count: Int, val percentage: Float)
+/**
+ * Slice routine pour le widget "Volume par routine" du dashboard.
+ *
+ * - [volume] : kg cumulés sur la période (agrégat WorkoutLog.totalVolume)
+ * - [sessionCount] : nb de séances
+ * - [percentage] : part du volume total (0..100)
+ */
+data class RoutineSlice(
+    val routineId: String,
+    val displayName: String,
+    val icon: String,
+    val volume: Double,
+    val sessionCount: Int,
+    val percentage: Float,
+)
 data class PeriodComparison(
     val currentWorkouts: Int, val previousWorkouts: Int,
     val currentVolume: Double, val previousVolume: Double,
@@ -91,6 +125,9 @@ data class StatsState(
 
     // Muscle distribution
     val muscleDistribution: List<MuscleSlice> = emptyList(),
+
+    // Routine breakdown (Push/Pull/Legs/FB/…) sur la période
+    val routineBreakdown: List<RoutineSlice> = emptyList(),
 
     // Training frequency
     val trainingDays: Map<LocalDate, Int> = emptyMap(),
@@ -156,6 +193,13 @@ data class NutritionStatsData(
     val weeklyCalories: List<Pair<String, Int>> = emptyList(),
     /** Calories quotidiennes brutes triées chronologiquement (pour smooth curve). */
     val dailyCaloriesSeries: List<Pair<LocalDate, Int>> = emptyList(),
+    /**
+     * Cible adaptative quotidienne, parallèle à [weeklyCalories] (même index = même jour).
+     * Variable d'un jour à l'autre car = base sédentaire + bonus MET des séances
+     * réelles complétées ce jour-là. Utilisée pour la ligne "Objectif" du chart
+     * et pour le coloring des barres (vert/orange/rouge contre LE target du jour).
+     */
+    val weeklyTargets: List<Int> = emptyList(),
 
     // ── Macro split % du total kcal ──
     /** % du total kcal apportés par les protéines (1g prot = 4 kcal). */
@@ -321,6 +365,24 @@ class StatsViewModel @Inject constructor(
                 // Comparaison période vs période précédente
                 val comparison = calculateComparison(startDate, endDate, period.days)
 
+                // Volume par routine (Push, Pull, Legs, FB, …) sur la période.
+                // Calculé indépendamment des muscleSlices pour rester aligné avec
+                // l'agrégat WorkoutLog.totalVolume (déjà dénormalisé), sans
+                // re-parcourir tous les sets.
+                val routineRaw = try { statsRepository.getVolumeByRoutine(startDate) } catch (_: Exception) { emptyList() }
+                val totalRoutineVolume = routineRaw.sumOf { it.volume }.coerceAtLeast(1.0)
+                val routineBreakdown = routineRaw.map { stat ->
+                    val routine = com.shredcoach.app.domain.workout.RoutineCatalog.byId(stat.routineId)
+                    RoutineSlice(
+                        routineId = stat.routineId,
+                        displayName = routine.displayName,
+                        icon = routine.icon,
+                        volume = stat.volume,
+                        sessionCount = stat.sessionCount,
+                        percentage = (stat.volume / totalRoutineVolume * 100).toFloat(),
+                    )
+                }
+
                 // Temps par catégorie (WARMUP / CARDIO / Strength)
                 val durationByGroup = try { statsRepository.getDurationByMuscleGroup() } catch (_: Exception) { emptyList() }
                 val warmupSeconds = durationByGroup.firstOrNull { it.muscleGroup == MuscleGroup.WARMUP.name }?.totalSeconds ?: 0L
@@ -339,6 +401,7 @@ class StatsViewModel @Inject constructor(
                         personalRecords = prs, weeklyVolume = weeklyVolume,
                         volumeChangePercent = volumeChange, movingAverage = movingAvg,
                         muscleDistribution = muscleDistribution,
+                        routineBreakdown = routineBreakdown,
                         trainingDays = trainingDays, currentStreak = current, longestStreak = longest,
                         weeklyCompliance = compliance, comparison = comparison,
                         warmupSeconds = warmupSeconds, cardioSeconds = cardioSeconds, strengthSeconds = strengthSeconds,
@@ -514,11 +577,68 @@ class StatsViewModel @Inject constructor(
     }
 
     private suspend fun loadPersonalRecords(): List<PRDisplay> {
-        return statsRepository.getPersonalRecords().take(10).mapNotNull { pr ->
-            statsRepository.getExerciseById(pr.exerciseId)?.let { exercise ->
-                if (pr.maxWeight > 0) PRDisplay(exercise.name, pr.maxWeight, pr.reps, pr.maxWeight * (1 + pr.reps / 30.0)) else null
+        // On unifie 2 sources :
+        //  1. PRs "lourds" — max(weightKg) par exercice (exos weighted)
+        //  2. Records "max reps" — max(reps) par exercice (couvre bodyweight
+        //     purs + time-based où reps = durée en secondes)
+        // Pour un exo donné, sa nature (kind) tranche quelle source consommer :
+        //  - WEIGHTED         → source #1
+        //  - BODYWEIGHT_REPS  → source #2 (afficher reps, pas le poids)
+        //  - TIMED            → source #2 (afficher la durée)
+        val weightedById = statsRepository.getPersonalRecords().associateBy { it.exerciseId }
+        val maxRepsById = statsRepository.getMaxRepsRecords().associateBy { it.exerciseId }
+        val allExerciseIds = (weightedById.keys + maxRepsById.keys).toSet()
+
+        val items = allExerciseIds.mapNotNull { exId ->
+            val exercise = statsRepository.getExerciseById(exId) ?: return@mapNotNull null
+            val kind = SetMetricFormatter.kindOf(exercise)
+            when (kind) {
+                ExerciseKind.WEIGHTED -> weightedById[exId]?.let { pr ->
+                    if (pr.maxWeight <= 0) return@let null
+                    PRDisplay(
+                        exerciseName = exercise.name,
+                        kind = ExerciseKind.WEIGHTED,
+                        weight = pr.maxWeight,
+                        reps = pr.reps,
+                        estimated1RM = pr.maxWeight * (1.0 + pr.reps / 30.0)
+                    )
+                }
+                ExerciseKind.BODYWEIGHT_REPS -> maxRepsById[exId]?.let { rec ->
+                    if (rec.maxReps <= 0) return@let null
+                    PRDisplay(
+                        exerciseName = exercise.name,
+                        kind = ExerciseKind.BODYWEIGHT_REPS,
+                        weight = rec.weightKg,  // > 0 pour bodyweight lesté
+                        reps = rec.maxReps,
+                        estimated1RM = null
+                    )
+                }
+                ExerciseKind.TIMED -> maxRepsById[exId]?.let { rec ->
+                    if (rec.maxReps <= 0) return@let null
+                    PRDisplay(
+                        exerciseName = exercise.name,
+                        kind = ExerciseKind.TIMED,
+                        weight = 0.0,
+                        reps = rec.maxReps,  // = secondes pour TIMED
+                        estimated1RM = null
+                    )
+                }
             }
-        }.sortedByDescending { it.weight }
+        }
+
+        // Tri intelligent : on ne peut pas comparer 100kg avec 60s. On
+        // catégorise puis on ordonne par catégorie (weighted en tête car
+        // c'est le PR le plus "spectaculaire" du grand public), puis par
+        // valeur intra-catégorie.
+        return items.sortedWith(
+            compareBy<PRDisplay>(
+                { when (it.kind) {
+                    ExerciseKind.WEIGHTED -> 0
+                    ExerciseKind.BODYWEIGHT_REPS -> 1
+                    ExerciseKind.TIMED -> 2
+                } }
+            ).thenByDescending { if (it.kind == ExerciseKind.WEIGHTED) it.weight else it.reps.toDouble() }
+        ).take(10)
     }
 
     private fun aggregateWeeklyVolume(daily: List<DailyVolume>): List<VolumeBar> {
@@ -584,11 +704,11 @@ class StatsViewModel @Inject constructor(
                 }
 
                 // ─── Période courante : agrégation jour par jour ───
-                val current = aggregatePeriod(today.minusDays((daysInPeriod - 1).toLong()), today, targetCal)
+                val current = aggregatePeriod(today.minusDays((daysInPeriod - 1).toLong()), today, targetCal, profile)
                 // ─── Période précédente (pour la comparaison) ───
                 val prevEnd = today.minusDays(daysInPeriod.toLong())
                 val prevStart = prevEnd.minusDays((daysInPeriod - 1).toLong())
-                val previous = aggregatePeriod(prevStart, prevEnd, targetCal)
+                val previous = aggregatePeriod(prevStart, prevEnd, targetCal, profile)
 
                 // ─── Macro split % en calories (4/4/9 kcal/g) ───
                 val (protPct, carbPct, fatPct) = computeMacroSplit(
@@ -659,6 +779,7 @@ class StatsViewModel @Inject constructor(
                         complianceDays = current.complianceDays, totalScans = scansInPeriod.size,
                         avgHealthScore = avgScore,
                         weeklyCalories = current.dailyForBars,
+                        weeklyTargets = current.dailyTargets,
                         dailyCaloriesSeries = current.dailySeries,
                         protPerKg = protKg,
                         proteinKcalPct = protPct, carbsKcalPct = carbPct, fatsKcalPct = fatPct,
@@ -697,15 +818,28 @@ class StatsViewModel @Inject constructor(
         val dailyForBars: List<Pair<String, Int>>,
         /** Liste pour smooth curve (date, kcal). */
         val dailySeries: List<Pair<LocalDate, Int>>,
+        /**
+         * Cible adaptative par jour, parallèle à [dailyForBars].
+         * Calculée via [DailyCalorieTargetCalculator] = base sédentaire + bonus
+         * MET des séances réelles ce jour-là. Si profile null → fallback sur
+         * la cible statique du goal.
+         */
+        val dailyTargets: List<Int>,
     )
 
-    private suspend fun aggregatePeriod(start: LocalDate, end: LocalDate, targetCal: Int): PeriodAggregate {
+    private suspend fun aggregatePeriod(
+        start: LocalDate,
+        end: LocalDate,
+        targetCal: Int,
+        profile: com.shredcoach.app.data.local.entity.UserProfileEntity?,
+    ): PeriodAggregate {
         var totalCal = 0.0; var totalProt = 0.0; var totalCarbs = 0.0; var totalFats = 0.0
         var daysTracked = 0; var complianceDays = 0
         val barFmt = DateTimeFormatter.ofPattern("EEE", java.util.Locale.FRANCE)
         val barFmtLong = DateTimeFormatter.ofPattern("d/M", java.util.Locale.FRANCE)
         val barData = mutableListOf<Pair<String, Int>>()
         val series = mutableListOf<Pair<LocalDate, Int>>()
+        val targets = mutableListOf<Int>()
         val days = ChronoUnit.DAYS.between(start, end).toInt() + 1
         val useShortDay = days <= 7
 
@@ -717,19 +851,37 @@ class StatsViewModel @Inject constructor(
                 else d.format(barFmtLong)
             barData += label to dayCal
             series += d to dayCal
+
+            // Target adaptatif du jour : base sédentaire + bonus MET des séances
+            // RÉELLES complétées (vs cible statique du goal qui ne reflète pas
+            // l'activité réelle). On lit l'historique workout pour ce jour précis.
+            val dayTarget = if (profile != null) {
+                val logsForDay = workoutLogDao.getCompletedLogsOnDateOnce(d)
+                com.shredcoach.app.domain.nutrition.DailyCalorieTargetCalculator.adaptiveTarget(
+                    profile = profile, completedLogsToday = logsForDay
+                )
+            } else {
+                targetCal
+            }
+            targets += dayTarget
+
             if (totals.totalCalories > 0) {
                 totalCal += totals.totalCalories; totalProt += totals.totalProteins
                 totalCarbs += totals.totalCarbs; totalFats += totals.totalFats
                 daysTracked++
-                if (totals.totalCalories >= targetCal * 0.9 && totals.totalCalories <= targetCal * 1.1) {
+                // Compliance comparée au target DU JOUR, pas à la cible statique.
+                if (totals.totalCalories >= dayTarget * 0.9 && totals.totalCalories <= dayTarget * 1.1) {
                     complianceDays++
                 }
             }
             d = d.plusDays(1)
         }
         return PeriodAggregate(
-            totalCal, totalProt, totalCarbs, totalFats,
-            daysTracked, complianceDays, barData, series
+            totalCal = totalCal, totalProt = totalProt,
+            totalCarbs = totalCarbs, totalFats = totalFats,
+            daysTracked = daysTracked, complianceDays = complianceDays,
+            dailyForBars = barData, dailySeries = series,
+            dailyTargets = targets,
         )
     }
 

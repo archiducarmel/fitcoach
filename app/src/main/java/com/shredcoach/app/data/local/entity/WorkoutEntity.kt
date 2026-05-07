@@ -26,5 +26,12 @@ data class WorkoutEntity(
      * si la "fin du dernier exo" propose la vue d'ensemble (freestyle) ou ferme
      * directement la séance (workout structuré).
      */
-    val isFreestyle: Boolean = false
+    val isFreestyle: Boolean = false,
+    /**
+     * Identifiant du [com.shredcoach.app.domain.workout.WorkoutRoutine] (Push,
+     * Pull, Full Body, …). Default `"full_body"` pour rétro-compatibilité avec
+     * les workouts pré-v37. Persisté tel quel pour permettre l'introduction de
+     * routines custom (Phase 4 premium) sans migration de schéma.
+     */
+    val routineId: String = "full_body",
 )

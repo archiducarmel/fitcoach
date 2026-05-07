@@ -2,6 +2,7 @@ package com.shredcoach.app.presentation.onboarding
 
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -9,6 +10,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -38,7 +41,7 @@ import com.shredcoach.app.data.local.entity.FitnessLevel
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
 
-private const val TOTAL_PAGES = 7
+private const val TOTAL_PAGES = 8
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -90,6 +93,7 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
                 4 -> GoalPage(state, viewModel)
                 5 -> LevelEquipmentPage(state, viewModel)
                 6 -> NutritionPage(state, viewModel)
+                7 -> GoogleBackupPage(onboardingVm = viewModel)
             }
         }
 
@@ -166,7 +170,7 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
         Text("Ce que ShredCoach fait pour toi", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(24.dp))
-        FeatureItem(Icons.Default.FitnessCenter, "Séances Full Body", "Générateur intelligent avec 68+ exercices, chronomètre, suivi des poids", OrangeVibrant)
+        FeatureItem(Icons.Default.FitnessCenter, "Séances Full Body & Split", "Générateur intelligent (Full Body, Push/Pull/Legs, …), chronomètre, suivi des poids", OrangeVibrant)
         Spacer(Modifier.height(16.dp))
         FeatureItem(Icons.Default.Restaurant, "Suivi Nutrition", "57 aliments, tracking macros, objectifs personnalisés", NeonGreen)
         Spacer(Modifier.height(16.dp))
@@ -421,5 +425,239 @@ fun OnboardingScreen(navController: NavController, viewModel: OnboardingViewMode
                 Text("Tu pourras modifier tout ça plus tard dans les paramètres.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             }
         }
+    }
+}
+
+/**
+ * Page 7 onboarding — propose à l'utilisateur de connecter Google Drive pour
+ * activer la sauvegarde automatique. Si une sauvegarde existe déjà sur ce
+ * compte (cas réinstallation / nouveau device), on propose la restauration
+ * juste après le link → court-circuit l'onboarding via [OnboardingViewModel.markCompletedFromRestore].
+ *
+ * **Optionnel** : skip-able sans pression. L'utilisateur peut toujours linker
+ * plus tard depuis Paramètres → Sauvegarde. La page elle-même ne bloque pas
+ * la nav vers le bouton "C'est parti !" final.
+ */
+@Composable
+private fun GoogleBackupPage(
+    onboardingVm: OnboardingViewModel,
+    backupVm: com.shredcoach.app.presentation.settings.backup.BackupSettingsViewModel = hiltViewModel(),
+) {
+    val backupState by backupVm.state.collectAsState()
+    val remoteArchives by backupVm.remoteArchives.collectAsState()
+    val event by backupVm.events.collectAsState()
+    val running = backupState.running
+
+    val consentLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        backupVm.completeGoogleLink(result.data)
+    }
+
+    var showRestorePrompt by remember { mutableStateOf<com.shredcoach.app.data.backup.provider.RemoteArchive?>(null) }
+    var didCheckArchives by remember { mutableStateOf(false) }
+
+    // Quand le link réussit, on charge la liste d'archives → si non-vide,
+    // on propose la restauration de la plus récente. didCheckArchives évite
+    // de re-déclencher si l'user revient sur la page après un restore raté.
+    LaunchedEffect(backupState.googleAccountEmail, didCheckArchives) {
+        if (backupState.googleAccountEmail != null && !didCheckArchives) {
+            didCheckArchives = true
+            backupVm.loadRemoteArchives()
+        }
+    }
+    LaunchedEffect(remoteArchives, backupState.googleAccountEmail) {
+        if (backupState.googleAccountEmail != null && remoteArchives.isNotEmpty() && showRestorePrompt == null) {
+            showRestorePrompt = remoteArchives.first()
+        }
+    }
+    var showEncryptedRestoreNotice by remember { mutableStateOf(false) }
+    LaunchedEffect(event) {
+        when (val e = event) {
+            is com.shredcoach.app.presentation.settings.backup.BackupSettingsViewModel.UiEvent.RestoreOk -> {
+                backupVm.consumeEvent()
+                onboardingVm.markCompletedFromRestore()
+            }
+            com.shredcoach.app.presentation.settings.backup.BackupSettingsViewModel.UiEvent.PromptRecoveryCode -> {
+                // Archive chiffrée détectée pendant onboarding. On ne peut pas
+                // gérer le full prompt code-input pendant l'onboarding (UX
+                // dégradée + scope) — on redirige l'user vers Settings après
+                // qu'il ait fini son onboarding.
+                backupVm.cancelRecoveryPrompt()
+                backupVm.consumeEvent()
+                showEncryptedRestoreNotice = true
+            }
+            else -> Unit
+        }
+    }
+
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.Center
+    ) {
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = OrangeVibrant.copy(alpha = 0.12f),
+            modifier = Modifier.size(72.dp).align(Alignment.CenterHorizontally),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.CloudUpload, null, Modifier.size(36.dp), tint = OrangeVibrant)
+            }
+        }
+        Spacer(Modifier.height(24.dp))
+        Text(
+            "Protège tes données",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            "Connecte ton compte Google pour sauvegarder automatiquement tes séances, repas, photos et conversations dans ton Drive privé.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(28.dp))
+
+        BackupBenefit(Icons.Default.Schedule, "Sauvegarde auto chaque nuit à 3h")
+        Spacer(Modifier.height(12.dp))
+        BackupBenefit(Icons.AutoMirrored.Filled.TrendingUp, "Restaure tout sur n'importe quel appareil")
+        Spacer(Modifier.height(12.dp))
+        BackupBenefit(Icons.Default.Lock, "Dossier Drive privé, invisible pour toi")
+
+        Spacer(Modifier.height(32.dp))
+
+        if (backupState.googleAccountEmail == null) {
+            val isLinking = running == com.shredcoach.app.presentation.settings.backup.BackupSettingsViewModel.RunningOp.LINKING
+            Button(
+                onClick = {
+                    backupVm.linkGoogleAccount { sender ->
+                        consentLauncher.launch(IntentSenderRequest.Builder(sender).build())
+                    }
+                },
+                enabled = !isLinking && running == com.shredcoach.app.presentation.settings.backup.BackupSettingsViewModel.RunningOp.NONE,
+                colors = ButtonDefaults.buttonColors(containerColor = OrangeVibrant),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+            ) {
+                if (isLinking) {
+                    CircularProgressIndicator(
+                        Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Connexion…", fontWeight = FontWeight.Bold)
+                } else {
+                    Icon(Icons.Default.Login, null, Modifier.size(20.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Continuer avec Google", fontWeight = FontWeight.Bold)
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            Text(
+                "Plus tard — tu pourras le faire depuis les paramètres",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+            )
+        } else {
+            // État linké — confirmation visuelle + lien Déconnecter discret
+            Card(colors = CardDefaults.cardColors(containerColor = NeonGreen.copy(alpha = 0.12f))) {
+                Row(
+                    Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Icon(Icons.Default.CheckCircle, null, Modifier.size(28.dp), tint = NeonGreen)
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Connecté à Google Drive",
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+                        Text(
+                            backupState.googleAccountEmail.orEmpty(),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    if (showEncryptedRestoreNotice) {
+        AlertDialog(
+            onDismissRequest = { showEncryptedRestoreNotice = false },
+            icon = { Icon(Icons.Default.Lock, null, tint = OrangeVibrant) },
+            title = { Text("Sauvegarde chiffrée") },
+            text = {
+                Text(
+                    "Cette sauvegarde est chiffrée. Termine d'abord ton onboarding " +
+                        "(quelques infos rapides), puis va dans Réglages → Sauvegarde → " +
+                        "Restaurer pour la rétablir avec ton code de récupération."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { showEncryptedRestoreNotice = false },
+                    colors = ButtonDefaults.textButtonColors(contentColor = OrangeVibrant),
+                ) { Text("Compris", fontWeight = FontWeight.SemiBold) }
+            },
+        )
+    }
+
+    val pendingRestore = showRestorePrompt
+    if (pendingRestore != null) {
+        AlertDialog(
+            onDismissRequest = { showRestorePrompt = null },
+            icon = { Icon(Icons.Default.Restore, null, tint = OrangeVibrant) },
+            title = { Text("Sauvegarde trouvée") },
+            text = {
+                Text(
+                    "On a trouvé une sauvegarde sur ton Drive. Veux-tu la restaurer ? " +
+                        "Toutes tes infos d'onboarding actuelles seront remplacées par celles de la sauvegarde."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        backupVm.runRestoreFromRemote(pendingRestore)
+                        showRestorePrompt = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = OrangeVibrant),
+                ) { Text("Restaurer", fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRestorePrompt = null }) { Text("Plus tard") }
+            },
+        )
+    }
+}
+
+@Composable
+private fun BackupBenefit(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Surface(
+            shape = CircleShape,
+            color = OrangeVibrant.copy(alpha = 0.12f),
+            modifier = Modifier.size(36.dp),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(icon, null, Modifier.size(18.dp), tint = OrangeVibrant)
+            }
+        }
+        Text(label, style = MaterialTheme.typography.bodyMedium)
     }
 }

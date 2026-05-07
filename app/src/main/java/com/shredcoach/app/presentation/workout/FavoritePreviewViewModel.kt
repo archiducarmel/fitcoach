@@ -92,7 +92,8 @@ class FavoritePreviewViewModel @Inject constructor(
             val now = LocalDateTime.now()
             val log = WorkoutLogEntity(
                 workoutId = workout.id, date = now, startTime = now,
-                durationMinutes = workout.durationMinutes, completed = false
+                durationMinutes = workout.durationMinutes, completed = false,
+                routineId = workout.routineId,
             )
             val logId = workoutRepository.insertWorkoutLog(log)
             _state.update { it.copy(launchedLogId = logId) }

@@ -58,7 +58,14 @@ data class WorkoutSessionState(
     // ── Suggestion poids (dernière séance) ──
     val lastSessionWeight: Double? = null,
     val lastSessionReps: Int? = null,
-    val personalRecordWeight: Double? = null, // Record absolu pour l'exercice
+    val personalRecordWeight: Double? = null, // Record absolu pour l'exercice (kg, exos weighted)
+    /**
+     * Record "max-reps" pour l'exercice :
+     *  - Bodyweight (pompes, tractions) : nb de reps max sur une série
+     *  - Time-based (gainage, planche) : durée max tenue en secondes
+     *  Pour les exos weighted classiques, ce champ est facultatif (on privilégie [personalRecordWeight]).
+     */
+    val personalRecordReps: Int? = null,
     val isPersonalRecord: Boolean = false, // PR si poids actuel > personalRecordWeight
 
     // ── Chrono global ──
@@ -126,6 +133,9 @@ data class WorkoutSessionState(
 
     // ── Mode freestyle (séance libre) ──
     val isFreestyle: Boolean = false,
+
+    // ── Routine de la séance (Full Body, Push, Pull, …) capturée au démarrage. ──
+    val routineId: String = "full_body",
 
     // ── Ajout exercice à la volée (2 étapes : groupe musculaire → exercice) ──
     val showAddExerciseDialog: Boolean = false,
@@ -404,6 +414,7 @@ class WorkoutSessionViewModel @Inject constructor(
 
                         val lastSets = loadLastSetsForExercise(currentExo.id)
                         val prWeight = runCatching { workoutRepository.getMaxWeightForExercise(currentExo.id) }.getOrNull()
+                        val prReps = runCatching { workoutRepository.getMaxRepsForExercise(currentExo.id) }.getOrNull()
                         val initialWeight = if (currentExo.isTimeBased) fmtWeightValue(bodyWeight)
                             else lastSets.firstOrNull()?.let { s -> s.weightKg.toString() } ?: extractWeight(currentExo)
 
@@ -419,6 +430,7 @@ class WorkoutSessionViewModel @Inject constructor(
                                 // ajoutés). Sans ça, la fin du dernier exo court-circuite
                                 // l'overview et termine la séance prématurément.
                                 isFreestyle = isFreestyleSession,
+                                routineId = workoutLog.routineId,
                                 extraSeriesMap = restoredExtras,
                                 exerciseStartTimes = restored?.exerciseStartTimes
                                     ?: mapOf(0 to now),
@@ -433,6 +445,7 @@ class WorkoutSessionViewModel @Inject constructor(
                                 lastSessionWeight = lastSets.firstOrNull()?.weightKg,
                                 lastSessionReps = lastSets.firstOrNull()?.reps,
                                 personalRecordWeight = prWeight,
+                                personalRecordReps = prReps,
                                 isLoading = false
                             )
                         }
@@ -712,6 +725,7 @@ class WorkoutSessionViewModel @Inject constructor(
             viewModelScope.launch {
                 val lastSets = loadLastSetsForExercise(exercise.id)
                 val prWeight = runCatching { workoutRepository.getMaxWeightForExercise(exercise.id) }.getOrNull()
+                val prReps = runCatching { workoutRepository.getMaxRepsForExercise(exercise.id) }.getOrNull()
                 val bodyWeight = s.userBodyWeightKg
                 val initialWeight = if (exercise.isTimeBased) fmtWeightValue(bodyWeight)
                     else lastSets?.firstOrNull()?.let { w -> w.weightKg.toString() } ?: extractWeight(exercise)
@@ -741,6 +755,7 @@ class WorkoutSessionViewModel @Inject constructor(
                         lastSessionWeight = lastSets?.firstOrNull()?.weightKg,
                         lastSessionReps = lastSets?.firstOrNull()?.reps,
                         personalRecordWeight = prWeight,
+                        personalRecordReps = prReps,
                         isPersonalRecord = false,
                         showPostLastSetPrompt = false
                     )
@@ -1337,6 +1352,7 @@ class WorkoutSessionViewModel @Inject constructor(
             val lastSets = nextExercise?.let { loadLastSetsForExercise(it.id) }
             val suggestedWeight = lastSets?.firstOrNull()?.weightKg
             val prWeight = nextExercise?.let { runCatching { workoutRepository.getMaxWeightForExercise(it.id) }.getOrNull() }
+            val prReps = nextExercise?.let { runCatching { workoutRepository.getMaxRepsForExercise(it.id) }.getOrNull() }
 
             _state.update {
                 it.copy(
@@ -1362,6 +1378,7 @@ class WorkoutSessionViewModel @Inject constructor(
                     lastSessionWeight = suggestedWeight,
                     lastSessionReps = lastSets?.firstOrNull()?.reps,
                     personalRecordWeight = prWeight,
+                    personalRecordReps = prReps,
                     isPersonalRecord = false,
                     pendingNextIndex = -1,
                     pendingNextStartTimes = emptyMap()
@@ -1387,6 +1404,14 @@ class WorkoutSessionViewModel @Inject constructor(
         // Lire le chrono directement depuis la source (pas le state qui peut être en retard)
         val actualDuration = sessionManager.getCurrentSeconds()
         // Sauver les stats AVANT de détruire la session
+        // Calcule un résumé "4×10 · 80kg" par exo pour enrichir la share
+        // card finale. Map<index, "metric"> car les noms peuvent se répéter.
+        val setsByExoId = s.completedSets.groupBy { it.exerciseId }
+        val perExoMetrics = s.exercises.mapIndexedNotNull { idx, ex ->
+            val sets = setsByExoId[ex.id] ?: return@mapIndexedNotNull null
+            val summary = buildSetSummary(sets) ?: return@mapIndexedNotNull null
+            idx to summary
+        }.toMap()
         sessionManager.saveSessionStats(
             duration = actualDuration,
             volume = s.totalVolume,
@@ -1394,7 +1419,11 @@ class WorkoutSessionViewModel @Inject constructor(
             reps = s.totalRepsCompleted,
             restSeconds = s.totalRestSeconds,
             skipped = s.skippedExercises.size,
-            workoutLogId = s.workoutLogId ?: 0
+            workoutLogId = s.workoutLogId ?: 0,
+            exerciseCount = s.exercises.size,
+            exerciseNames = s.exercises.map { it.name },
+            skippedIndices = s.skippedExercises,
+            exerciseMetrics = perExoMetrics,
         )
         sessionManager.stopSession()
 
@@ -1519,6 +1548,7 @@ class WorkoutSessionViewModel @Inject constructor(
             val lastSets = loadLastSetsForExercise(nextExercise.id)
             val suggestedWeight = lastSets.firstOrNull()?.weightKg
             val prWeight = runCatching { workoutRepository.getMaxWeightForExercise(nextExercise.id) }.getOrNull()
+            val prReps = runCatching { workoutRepository.getMaxRepsForExercise(nextExercise.id) }.getOrNull()
 
             _state.update {
                 it.copy(
@@ -1538,6 +1568,7 @@ class WorkoutSessionViewModel @Inject constructor(
                     lastSessionWeight = suggestedWeight,
                     lastSessionReps = lastSets.firstOrNull()?.reps,
                     personalRecordWeight = prWeight,
+                    personalRecordReps = prReps,
                     isPersonalRecord = false,
                     shreddyCoachMessage = "", isShreddyThinking = false
                 )

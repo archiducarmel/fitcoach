@@ -26,6 +26,13 @@ class StatsRepository @Inject constructor(
     suspend fun getPersonalRecords() =
         workoutLogDao.getPersonalRecords()
 
+    /**
+     * PRs en "max-reps" — utile pour les exos bodyweight (max pompes/tractions)
+     * et time-based (max durée tenue, le `reps` étant la durée en secondes).
+     */
+    suspend fun getMaxRepsRecords() =
+        workoutLogDao.getMaxRepsRecords()
+
     suspend fun getMuscleGroupDistribution(since: LocalDate) =
         workoutLogDao.getMuscleGroupDistribution(since)
 
@@ -35,6 +42,10 @@ class StatsRepository @Inject constructor(
     suspend fun getTotalRepsAllTime() = workoutLogDao.getTotalRepsAllTime() ?: 0
 
     suspend fun getDurationByMuscleGroup() = workoutLogDao.getDurationByMuscleGroup()
+
+    /** Volume cumulé + nb séances par routine sur une période. */
+    suspend fun getVolumeByRoutine(since: LocalDate) =
+        workoutLogDao.getVolumeByRoutine(since)
 
     suspend fun getWorkoutCountInPeriod(start: LocalDate, end: LocalDate) =
         workoutLogDao.getWorkoutCountInPeriod(start, end)

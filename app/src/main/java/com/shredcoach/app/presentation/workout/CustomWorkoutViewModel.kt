@@ -9,6 +9,7 @@ import com.shredcoach.app.data.repository.ExerciseRepository
 import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.data.repository.WorkoutRepository
 import com.shredcoach.app.domain.model.MuscleGroup
+import com.shredcoach.app.domain.workout.RoutineCatalog
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -47,7 +48,13 @@ data class CustomWorkoutState(
     val savedWorkoutLogId: Long? = null,
     val isFavorite: Boolean = false,
     val savedFavoriteId: Long? = null,
-    val vibrationEnabled: Boolean = true
+    val vibrationEnabled: Boolean = true,
+    /**
+     * Routine cible (Full Body, Push, Pull, …). Utilisée à la création du
+     * [WorkoutEntity] et du [WorkoutLogEntity] pour que la séance custom
+     * apparaisse correctement dans les stats par routine.
+     */
+    val routineId: String = "full_body",
 ) {
     /** Nombre d'exos muscu recommandé pour la durée choisie (hors warmup + cardio). */
     val recommendedStrengthCount: Int
@@ -128,8 +135,19 @@ class CustomWorkoutViewModel @Inject constructor(
     private fun loadVibrationSetting() {
         viewModelScope.launch {
             val profile = userRepository.getUserProfileOnce()
-            _state.update { it.copy(vibrationEnabled = profile?.vibrationEnabled ?: true) }
+            _state.update { it.copy(
+                vibrationEnabled = profile?.vibrationEnabled ?: true,
+                // Pré-sélection de la routine sur le dernier choix utilisateur.
+                routineId = profile?.lastUsedRoutineId
+                    ?.let { id -> RoutineCatalog.byId(id).id }
+                    ?: RoutineCatalog.Default.id,
+            ) }
         }
+    }
+
+    /** Change la routine cible. Résolution défensive via [RoutineCatalog.byId]. */
+    fun selectRoutine(routineId: String) {
+        _state.update { it.copy(routineId = RoutineCatalog.byId(routineId).id) }
     }
 
     private fun loadExercises() {
@@ -291,7 +309,8 @@ class CustomWorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             val entity = WorkoutEntity(
                 name = s.name, durationMinutes = s.durationMinutes, exerciseCount = slotsWithExo.size,
-                isTemplate = true, isCustom = true, isFavorite = true
+                isTemplate = true, isCustom = true, isFavorite = true,
+                routineId = s.routineId,
             )
             val workoutId = workoutRepository.insertWorkout(entity)
             workoutRepository.insertWorkoutExercises(slotsWithExo.mapIndexed { i, slot ->
@@ -440,7 +459,8 @@ class CustomWorkoutViewModel @Inject constructor(
             val workoutId = s.savedFavoriteId ?: run {
                 val workout = WorkoutEntity(
                     name = s.name, durationMinutes = s.durationMinutes, exerciseCount = exercises.size,
-                    isTemplate = true, isCustom = true, isFavorite = s.isFavorite
+                    isTemplate = true, isCustom = true, isFavorite = s.isFavorite,
+                    routineId = s.routineId,
                 )
                 val newId = workoutRepository.insertWorkout(workout)
                 // Sauver les overrides utilisateur (séries/reps/repos) dans WorkoutExerciseEntity
@@ -461,7 +481,8 @@ class CustomWorkoutViewModel @Inject constructor(
             val now = LocalDateTime.now()
             val log = WorkoutLogEntity(
                 workoutId = workoutId, date = now,
-                startTime = now, durationMinutes = s.durationMinutes, completed = false
+                startTime = now, durationMinutes = s.durationMinutes, completed = false,
+                routineId = s.routineId,
             )
             val workoutLogId = workoutRepository.insertWorkoutLog(log)
             _state.update { it.copy(isSaved = true, savedWorkoutLogId = workoutLogId) }

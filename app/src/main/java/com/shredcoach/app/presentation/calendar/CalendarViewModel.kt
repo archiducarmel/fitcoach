@@ -186,16 +186,25 @@ class CalendarViewModel @Inject constructor(
         workoutId: Long? = null,
         title: String = "",
         note: String = "",
-        source: String = "manual"
+        source: String = "manual",
+        routineId: String? = null,
     ) {
         viewModelScope.launch {
+            // Si pas de routine explicite, fallback sur celle du template (si fourni)
+            // ou sur le `lastUsedRoutineId` du profil. Évite que toutes les séances
+            // planifiées soient classées Full Body par défaut quand l'user splitte.
+            val resolvedRoutineId = routineId
+                ?: workoutId?.let { workoutRepository.getWorkoutById(it)?.routineId }
+                ?: userRepository.getUserProfileOnce()?.lastUsedRoutineId
+                ?: "full_body"
             val entity = ScheduledWorkoutEntity(
                 date = date,
                 time = time,
                 workoutId = workoutId,
                 title = title,
                 note = note,
-                source = source
+                source = source,
+                routineId = resolvedRoutineId,
             )
             val id = scheduledRepo.insert(entity)
             // Programmer les rappels (shaker 2h + start 30min)
@@ -296,12 +305,17 @@ Pas de salutations, pas de liste — juste la phrase.
         val dates = _state.value.suggestedDates
         if (dates.isEmpty()) return
         viewModelScope.launch {
+            // Toutes les suggestions IA héritent de la routine habituelle de l'user
+            // (lastUsedRoutineId) à défaut d'une logique de cycle PPL plus avancée.
+            val defaultRoutineId = userRepository.getUserProfileOnce()?.lastUsedRoutineId
+                ?: "full_body"
             dates.forEach { date ->
                 val entity = ScheduledWorkoutEntity(
                     date = date,
                     time = null,
                     source = "ai_suggestion",
-                    title = "Séance Shreddy"
+                    title = "Séance Shreddy",
+                    routineId = defaultRoutineId,
                 )
                 scheduledRepo.insert(entity)
             }
