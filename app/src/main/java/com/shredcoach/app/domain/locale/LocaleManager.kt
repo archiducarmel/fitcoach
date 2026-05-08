@@ -3,9 +3,12 @@ package com.shredcoach.app.domain.locale
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
+import android.os.Handler
 import android.os.LocaleList
+import android.os.Looper
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
+import com.shredcoach.app.ShredCoachApplication
 import com.shredcoach.app.data.repository.UserRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -83,6 +86,23 @@ class LocaleManager @Inject constructor(
         if (profile?.languageTag == appLocale.tag) return // déjà actif
         userRepository.updateLanguageTag(appLocale.tag)
         applyToFramework(appLocale)
+        // Force le recreate de l'Activity courante : AppCompatDelegate ne le fait
+        // automatiquement QUE pour les AppCompatActivity. MainActivity étant une
+        // ComponentActivity (Compose pure), il faut déclencher manuellement sinon
+        // les Composables ne re-évaluent jamais `stringResource()` avec la nouvelle
+        // Configuration. Voir [ShredCoachApplication.currentActivity].
+        //
+        // **Fire-and-forget via Handler** plutôt que `withContext(Main)` car la
+        // coroutine appelante (viewModelScope) sera cancelled dès le `recreate()`
+        // (VM cleared) — un await sur Main risquerait d'être annulé avant exécution.
+        // Le post sur le Looper Main est non-tied à la coroutine, garanti de fire.
+        scheduleRecreateCurrentActivity()
+    }
+
+    private fun scheduleRecreateCurrentActivity() {
+        val activity = (context.applicationContext as? ShredCoachApplication)
+            ?.currentActivity() ?: return
+        Handler(Looper.getMainLooper()).post { activity.recreate() }
     }
 
     /**

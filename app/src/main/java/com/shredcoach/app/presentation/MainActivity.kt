@@ -1,10 +1,14 @@
 package com.shredcoach.app.presentation
 
+import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.lifecycleScope
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.layout.Box
@@ -43,6 +47,33 @@ class MainActivity : ComponentActivity() {
     // initial est chargé. @Volatile : le splashscreen lit ce flag depuis
     // sa boucle de frame, on garantit la visibilité cross-thread.
     @Volatile private var splashKeptForProfile: Boolean = true
+
+    /**
+     * Applique la locale stockée par AppCompatDelegate au Context de base de
+     * l'Activity. **Indispensable pour API <33** (Android 12 et inférieur) :
+     * AppCompatDelegate.setApplicationLocales() ne propage pas automatiquement
+     * la locale aux ComponentActivity (seulement aux AppCompatActivity). Sans
+     * cet override, après un recreate() les `stringResource()` continueraient
+     * de servir l'ancienne locale.
+     *
+     * **Sur API 33+** : le système applique déjà la locale au Context de base
+     * via le per-app locale framework, donc ce code est un no-op (early-return
+     * via `Build.VERSION.SDK_INT >= 33`). Conservé inchangé pour ces APIs pour
+     * éviter de doubler un travail déjà fait par le système.
+     */
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(applyAppLocaleToContext(newBase))
+    }
+
+    private fun applyAppLocaleToContext(base: Context): Context {
+        if (Build.VERSION.SDK_INT >= 33) return base
+        val locales = AppCompatDelegate.getApplicationLocales()
+        if (locales.isEmpty) return base
+        val locale = locales[0] ?: return base
+        val config = Configuration(base.resources.configuration)
+        config.setLocale(locale)
+        return base.createConfigurationContext(config)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()

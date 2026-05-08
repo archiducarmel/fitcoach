@@ -1,10 +1,13 @@
 package com.shredcoach.app
 
+import android.app.Activity
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import android.os.Bundle
 import android.os.StrictMode
+import java.lang.ref.WeakReference
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import coil.ImageLoader
@@ -38,6 +41,21 @@ class ShredCoachApplication : Application(), Configuration.Provider, ImageLoader
      */
     private val bootstrapScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
+    /**
+     * Référence faible vers l'Activity actuellement au foreground (RESUMED).
+     * **Pourquoi WeakReference** : éviter de retenir une Activity détruite si
+     * pour une raison quelconque (rotation, finish externe) on ne reçoit pas
+     * le `onPaused` correspondant — pas de leak mémoire.
+     *
+     * **Usage** : [LocaleManager] l'utilise pour appeler `recreate()` après un
+     * changement de langue. AppCompatDelegate ne recrée que les AppCompatActivity
+     * automatiquement ; or notre MainActivity est une ComponentActivity (Compose
+     * pure). On force donc le recreate manuellement.
+     */
+    @Volatile private var currentActivityRef: WeakReference<Activity>? = null
+
+    fun currentActivity(): Activity? = currentActivityRef?.get()
+
     override fun onCreate() {
         // StrictMode AVANT super.onCreate() pour capturer les violations
         // dès le démarrage de l'app (init Hilt, init lazy injects, etc.).
@@ -49,6 +67,19 @@ class ShredCoachApplication : Application(), Configuration.Provider, ImageLoader
             enableStrictMode()
         }
         super.onCreate()
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityResumed(activity: Activity) {
+                currentActivityRef = WeakReference(activity)
+            }
+            override fun onActivityPaused(activity: Activity) {
+                if (currentActivityRef?.get() === activity) currentActivityRef = null
+            }
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
+            override fun onActivityStarted(activity: Activity) {}
+            override fun onActivityStopped(activity: Activity) {}
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+            override fun onActivityDestroyed(activity: Activity) {}
+        })
         createNotificationChannels()
         shreddyVoice.init(this)
         // Worker quotidien qui resync UserProfile.currentStreakDays avec la
