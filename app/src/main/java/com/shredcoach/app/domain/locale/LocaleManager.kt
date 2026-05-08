@@ -82,27 +82,40 @@ class LocaleManager @Inject constructor(
      * inutile qui ferait flasher l'UI).
      */
     suspend fun setLocale(appLocale: AppLocale) {
+        android.util.Log.i(TAG, "setLocale called with tag=${appLocale.tag}")
         val profile = userRepository.getUserProfileOnce()
-        if (profile?.languageTag == appLocale.tag) return // déjà actif
+        android.util.Log.i(TAG, "current DB tag=${profile?.languageTag}")
+        if (profile?.languageTag == appLocale.tag) {
+            android.util.Log.i(TAG, "early-return: locale already active")
+            return
+        }
         userRepository.updateLanguageTag(appLocale.tag)
+        android.util.Log.i(TAG, "DB updated → calling applyToFramework")
         applyToFramework(appLocale)
-        // Force le recreate de l'Activity courante : AppCompatDelegate ne le fait
-        // automatiquement QUE pour les AppCompatActivity. MainActivity étant une
-        // ComponentActivity (Compose pure), il faut déclencher manuellement sinon
-        // les Composables ne re-évaluent jamais `stringResource()` avec la nouvelle
-        // Configuration. Voir [ShredCoachApplication.currentActivity].
-        //
-        // **Fire-and-forget via Handler** plutôt que `withContext(Main)` car la
-        // coroutine appelante (viewModelScope) sera cancelled dès le `recreate()`
-        // (VM cleared) — un await sur Main risquerait d'être annulé avant exécution.
-        // Le post sur le Looper Main est non-tied à la coroutine, garanti de fire.
+        android.util.Log.i(TAG, "applyToFramework done → scheduling recreate")
         scheduleRecreateCurrentActivity()
     }
 
     private fun scheduleRecreateCurrentActivity() {
-        val activity = (context.applicationContext as? ShredCoachApplication)
-            ?.currentActivity() ?: return
-        Handler(Looper.getMainLooper()).post { activity.recreate() }
+        val app = context.applicationContext as? ShredCoachApplication
+        if (app == null) {
+            android.util.Log.w(TAG, "applicationContext is NOT ShredCoachApplication — recreate skipped")
+            return
+        }
+        val activity = app.currentActivity()
+        if (activity == null) {
+            android.util.Log.w(TAG, "currentActivity() returned null — recreate skipped")
+            return
+        }
+        android.util.Log.i(TAG, "posting recreate() on Main looper for $activity")
+        Handler(Looper.getMainLooper()).post {
+            android.util.Log.i(TAG, "Main looper tick → calling activity.recreate()")
+            activity.recreate()
+        }
+    }
+
+    companion object {
+        private const val TAG = "LocaleManager"
     }
 
     /**
@@ -139,6 +152,13 @@ class LocaleManager @Inject constructor(
     private fun applyToFramework(appLocale: AppLocale) {
         val list = LocaleListCompat.forLanguageTags(appLocale.tag)
         AppCompatDelegate.setApplicationLocales(list)
+        // Force la propagation synchrone à `Locale.getDefault()` — certaines
+        // APIs internes (formatters, ICU) lisent via getDefault() sans passer
+        // par Resources. Sans ce setDefault, on peut avoir un décalage entre
+        // setApplicationLocales (async côté framework) et la première lecture
+        // de getDefault par les Composables après recreate.
+        java.util.Locale.setDefault(appLocale.toJavaLocale())
+        android.util.Log.i(TAG, "applyToFramework: AppCompat+Locale.setDefault → ${appLocale.tag}")
     }
 
     private fun systemDefaultLocale(): Locale {

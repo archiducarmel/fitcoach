@@ -50,28 +50,30 @@ class MainActivity : ComponentActivity() {
 
     /**
      * Applique la locale stockée par AppCompatDelegate au Context de base de
-     * l'Activity. **Indispensable pour API <33** (Android 12 et inférieur) :
-     * AppCompatDelegate.setApplicationLocales() ne propage pas automatiquement
-     * la locale aux ComponentActivity (seulement aux AppCompatActivity). Sans
-     * cet override, après un recreate() les `stringResource()` continueraient
-     * de servir l'ancienne locale.
+     * l'Activity. Appliqué INCONDITIONNELLEMENT (tous niveaux API) :
      *
-     * **Sur API 33+** : le système applique déjà la locale au Context de base
-     * via le per-app locale framework, donc ce code est un no-op (early-return
-     * via `Build.VERSION.SDK_INT >= 33`). Conservé inchangé pour ces APIs pour
-     * éviter de doubler un travail déjà fait par le système.
+     *  - **API <33** (Android 12-) : indispensable, AppCompatDelegate ne propage
+     *    pas la locale aux ComponentActivity (seulement aux AppCompatActivity).
+     *  - **API 33+** : le système applique déjà la locale via le per-app locale
+     *    framework. Notre re-application est idempotente (même locale = no-op
+     *    visuel) mais sert de ceinture-bretelles si le système a un retard de
+     *    propagation entre `setApplicationLocales()` et la création du Context
+     *    de la nouvelle Activity post-recreate.
      */
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(applyAppLocaleToContext(newBase))
     }
 
     private fun applyAppLocaleToContext(base: Context): Context {
-        if (Build.VERSION.SDK_INT >= 33) return base
         val locales = AppCompatDelegate.getApplicationLocales()
-        if (locales.isEmpty) return base
+        if (locales.isEmpty) {
+            android.util.Log.i("MainActivity", "attachBaseContext: appLocales empty, base unchanged")
+            return base
+        }
         val locale = locales[0] ?: return base
         val config = Configuration(base.resources.configuration)
         config.setLocale(locale)
+        android.util.Log.i("MainActivity", "attachBaseContext: applying locale=${locale.toLanguageTag()}")
         return base.createConfigurationContext(config)
     }
 
@@ -80,6 +82,18 @@ class MainActivity : ComponentActivity() {
         splashScreen.setKeepOnScreenCondition { splashKeptForProfile }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // Diagnostic locale au démarrage de l'Activity (utile pour debug
+        // changement de langue : on voit si la nouvelle Activity post-recreate
+        // a effectivement la bonne locale).
+        runCatching {
+            val appLocales = AppCompatDelegate.getApplicationLocales().toLanguageTags()
+            val resLocale = resources.configuration.locales.takeIf { !it.isEmpty }?.get(0)
+            android.util.Log.i(
+                "MainActivity",
+                "onCreate: SDK=${Build.VERSION.SDK_INT} appLocales='$appLocales' " +
+                "resLocale='$resLocale' default='${java.util.Locale.getDefault().toLanguageTag()}'"
+            )
+        }
         if (intent?.getBooleanExtra(AppNotificationDispatcher.EXTRA_OPEN_NOTIFICATIONS, false) == true) {
             openNotificationsState.value = openNotificationsState.value + 1
         }

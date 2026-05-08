@@ -43,11 +43,15 @@ class LanguageSettingsViewModel @Inject constructor(
     val isApplying: StateFlow<Boolean> = _isApplying.asStateFlow()
 
     fun selectLocale(locale: AppLocale) {
-        // Garde-fou : on ne propose pas (encore) les locales V2 aux users — la
-        // UI les affiche en grisé avec "Bientôt disponible". Si quelqu'un
-        // arrive à cliquer (édge case race), on rejette poliment.
-        if (!locale.isV1) return
-        if (currentLocale.value == locale) return // déjà actif
+        android.util.Log.i("LanguageSettingsVM", "selectLocale tapped: ${locale.tag} (isV1=${locale.isV1}, current=${currentLocale.value.tag})")
+        if (!locale.isV1) {
+            android.util.Log.w("LanguageSettingsVM", "early-return: locale not V1")
+            return
+        }
+        if (currentLocale.value == locale) {
+            android.util.Log.w("LanguageSettingsVM", "early-return: locale already current")
+            return
+        }
         viewModelScope.launch {
             _isApplying.value = true
             try {
