@@ -37,7 +37,7 @@
             android:name=".presentation.MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|uiMode|density|fontScale|navigation|locale|layoutDirection"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|uiMode|density|fontScale|navigation"
             android:theme="@style/Theme.ShredCoach">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
