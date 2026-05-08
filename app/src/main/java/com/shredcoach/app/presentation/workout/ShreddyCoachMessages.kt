@@ -85,7 +85,13 @@ ABSOLUTE PROHIBITIONS:
 Reply with ONLY the message, nothing else."""
 
     val COACH_SYSTEM_PROMPT: String
-        get() = PromptLocale.pick(fr = COACH_SYSTEM_PROMPT_FR, en = COACH_SYSTEM_PROMPT_EN)
+        get() {
+            val base = PromptLocale.pick(fr = COACH_SYSTEM_PROMPT_FR, en = COACH_SYSTEM_PROMPT_EN)
+            // V2 : ES/IT/PT/DE → on préfixe la directive output language au prompt
+            // EN véhiculaire pour forcer le LLM à produire sa réponse dans la
+            // langue cible (ex: ES → "Reply in español"). FR et EN : no-op.
+            return PromptLocale.outputLanguageDirective() + base
+        }
 
     fun buildExercisePrompt(
         firstName: String, exerciseName: String, sets: Int, reps: Int,
@@ -93,7 +99,11 @@ Reply with ONLY the message, nothing else."""
         exercisesDone: Int, totalExercises: Int,
         isPersonalRecord: Boolean, goalName: String
     ): String {
-        val en = PromptLocale.isEn()
+        // **V2** : ES/IT/PT/DE → utilisent le prompt EN véhiculaire +
+        // `outputLanguageDirective()` injecté au boot pour que le LLM produise
+        // sa sortie dans la langue cible. Sans cette modif, ces locales
+        // recevaient le prompt FR et le LLM répondait en FR ou EN aléatoirement.
+        val en = !PromptLocale.isFr()
         val remaining = totalExercises - exercisesDone
         val goal = if (en) when (goalName) { "SHRED" -> "shred"; "BULK" -> "bulk"; else -> "maintain" }
                    else when (goalName) { "SHRED" -> "sèche"; "BULK" -> "prise de masse"; else -> "maintien" }
@@ -126,7 +136,8 @@ Reply with ONLY the message, nothing else."""
         durationMinutes: Long, exercisesCompleted: Int, exercisesSkipped: Int,
         streak: Int, goalName: String
     ): String {
-        val en = PromptLocale.isEn()
+        // V2 : ES/IT/PT/DE → prompt EN véhiculaire (cf. buildExercisePrompt)
+        val en = !PromptLocale.isFr()
         val goal = if (en) when (goalName) { "SHRED" -> "shred"; "BULK" -> "bulk"; else -> "maintain" }
                    else when (goalName) { "SHRED" -> "sèche"; "BULK" -> "prise de masse"; else -> "maintien" }
         val volStr = if (totalVolume >= 1000) "%.1ft".format(totalVolume / 1000) else "%.0fkg".format(totalVolume)
@@ -190,7 +201,8 @@ Reply with ONLY the message, nothing else."""
         isPersonalRecord: Boolean = false,
         goalName: String = "SHRED"
     ): String {
-        val en = PromptLocale.isEn()
+        // V2 : non-FR utilise le pool EN véhiculaire.
+        val en = !PromptLocale.isFr()
         val remaining = totalExercises - exercisesDone
         // "Champion" est commun FR/EN (mot identique). Garder un seul fallback.
         val name = firstName.ifBlank { "Champion" }
@@ -353,7 +365,8 @@ Reply with ONLY the message, nothing else."""
         streak: Int,
         goalName: String = "SHRED"
     ): String {
-        val en = PromptLocale.isEn()
+        // V2 : ES/IT/PT/DE → utilisent le pool EN véhiculaire (cf. notes ailleurs).
+        val en = !PromptLocale.isFr()
         val name = firstName.ifBlank { "Champion" }
         val volStr = when {
             totalVolume >= 1000 -> if (en) "%.1f tons".format(totalVolume / 1000) else "%.1f tonnes".format(totalVolume / 1000)

@@ -56,6 +56,42 @@ class ShreddyVoice @Inject constructor(
         "Rest's over, let's roll!",
         "This is your moment, give it all!",
     )
+    private val restEndPhrasesEs = listOf(
+        "¡Vamos!",
+        "¡Siguiente serie!",
+        "¡A darle!",
+        "¡Vamos, otra vez!",
+        "¡Tú puedes!",
+        "¡Descanso terminado, seguimos!",
+        "¡Es el momento, dale todo!",
+    )
+    private val restEndPhrasesIt = listOf(
+        "Andiamo!",
+        "Prossima serie!",
+        "Si riparte!",
+        "Forza, di nuovo!",
+        "Vai, ce la fai!",
+        "Recupero finito, riprendiamo!",
+        "È il momento, dai tutto!",
+    )
+    private val restEndPhrasesPt = listOf(
+        "Vamos!",
+        "Próxima série!",
+        "Bora lá!",
+        "Vamos, mais uma!",
+        "Você consegue!",
+        "Descanso acabou, vamos!",
+        "É a hora, dá tudo!",
+    )
+    private val restEndPhrasesDe = listOf(
+        "Los geht's!",
+        "Nächster Satz!",
+        "Weiter so!",
+        "Komm schon, weiter!",
+        "Du schaffst das!",
+        "Pause vorbei, weiter!",
+        "Jetzt alles geben!",
+    )
 
     private val countdownPhrasesFr = mapOf(
         10 to "10 secondes",
@@ -73,14 +109,49 @@ class ShreddyVoice @Inject constructor(
         2 to "2",
         1 to "1",
     )
+    private val countdownPhrasesEs = mapOf(
+        10 to "10 segundos",
+        5 to "5", 4 to "4", 3 to "3", 2 to "2", 1 to "1",
+    )
+    private val countdownPhrasesIt = mapOf(
+        10 to "10 secondi",
+        5 to "5", 4 to "4", 3 to "3", 2 to "2", 1 to "1",
+    )
+    private val countdownPhrasesPt = mapOf(
+        10 to "10 segundos",
+        5 to "5", 4 to "4", 3 to "3", 2 to "2", 1 to "1",
+    )
+    private val countdownPhrasesDe = mapOf(
+        10 to "10 Sekunden",
+        5 to "5", 4 to "4", 3 to "3", 2 to "2", 1 to "1",
+    )
 
-    /** Bascule FR/EN selon la locale courante. ES/IT/PT/DE → EN véhiculaire,
-     *  cohérent avec [WorkoutVoicePhrasebook.providerForCurrentLocale]. */
+    /** Cascade par locale. Tous V2 ont leur propre liste. */
     private val restEndPhrases: List<String>
-        get() = if (com.shredcoach.app.domain.i18n.PromptLocale.isFr()) restEndPhrasesFr else restEndPhrasesEn
+        get() {
+            val pl = com.shredcoach.app.domain.i18n.PromptLocale
+            return when {
+                pl.isFr() -> restEndPhrasesFr
+                pl.isEs() -> restEndPhrasesEs
+                pl.isIt() -> restEndPhrasesIt
+                pl.isPt() -> restEndPhrasesPt
+                pl.isDe() -> restEndPhrasesDe
+                else -> restEndPhrasesEn
+            }
+        }
 
     private val countdownPhrases: Map<Int, String>
-        get() = if (com.shredcoach.app.domain.i18n.PromptLocale.isFr()) countdownPhrasesFr else countdownPhrasesEn
+        get() {
+            val pl = com.shredcoach.app.domain.i18n.PromptLocale
+            return when {
+                pl.isFr() -> countdownPhrasesFr
+                pl.isEs() -> countdownPhrasesEs
+                pl.isIt() -> countdownPhrasesIt
+                pl.isPt() -> countdownPhrasesPt
+                pl.isDe() -> countdownPhrasesDe
+                else -> countdownPhrasesEn
+            }
+        }
 
     private var phraseIndex = 0
 

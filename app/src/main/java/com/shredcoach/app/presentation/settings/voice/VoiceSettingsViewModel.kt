@@ -95,7 +95,15 @@ class VoiceSettingsViewModel @Inject constructor(
      * AVANT de quitter Settings et de tomber sur sa première séance.
      */
     fun playPreview() {
-        val phrases = if (com.shredcoach.app.domain.i18n.PromptLocale.isFr()) SAMPLE_PHRASES_FR else SAMPLE_PHRASES_EN
+        val pl = com.shredcoach.app.domain.i18n.PromptLocale
+        val phrases = when {
+            pl.isFr() -> SAMPLE_PHRASES_FR
+            pl.isEs() -> SAMPLE_PHRASES_ES
+            pl.isIt() -> SAMPLE_PHRASES_IT
+            pl.isPt() -> SAMPLE_PHRASES_PT
+            pl.isDe() -> SAMPLE_PHRASES_DE
+            else -> SAMPLE_PHRASES_EN
+        }
         shreddyVoice.speak(phrases.random())
     }
 
@@ -125,6 +133,30 @@ class VoiceSettingsViewModel @Inject constructor(
             "You're making great progress, keep this rhythm.",
             "Rest's over, let's go with power.",
             "Top execution, keep this momentum going.",
+        )
+        val SAMPLE_PHRASES_ES = listOf(
+            "¡Vamos campeón, última serie, no aflojes!",
+            "Estás progresando bien, mantén ese ritmo.",
+            "Descanso terminado, seguimos con fuerza.",
+            "Excelente ejecución, sigamos con esta dinámica.",
+        )
+        val SAMPLE_PHRASES_IT = listOf(
+            "Forza campione, ultima serie, non mollare!",
+            "Stai progredendo bene, mantieni questo ritmo.",
+            "Recupero finito, andiamo con potenza.",
+            "Ottima esecuzione, continuiamo su questa dinamica.",
+        )
+        val SAMPLE_PHRASES_PT = listOf(
+            "Vamos campeão, última série, não desista!",
+            "Você está progredindo bem, mantenha esse ritmo.",
+            "Descanso acabou, bora com força.",
+            "Excelente execução, segue nessa dinâmica.",
+        )
+        val SAMPLE_PHRASES_DE = listOf(
+            "Komm schon Champion, letzter Satz, nicht aufgeben!",
+            "Du machst gute Fortschritte, halte diesen Rhythmus.",
+            "Pause vorbei, weiter mit Power.",
+            "Top-Ausführung, halte dieses Momentum.",
         )
     }
 }

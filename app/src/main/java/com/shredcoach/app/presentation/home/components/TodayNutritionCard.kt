@@ -200,7 +200,13 @@ fun TodayNutritionCard(
                 ) {
                     Icon(Icons.Default.CameraAlt, null, Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text(stringResource(R.string.home_nutrition_btn_scan), style = MaterialTheme.typography.labelLarge)
+                    Text(
+                        stringResource(R.string.home_nutrition_btn_scan),
+                        style = MaterialTheme.typography.labelLarge,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    )
                 }
                 FilledTonalButton(
                     onClick = onAddManual,
@@ -209,7 +215,13 @@ fun TodayNutritionCard(
                 ) {
                     Icon(Icons.Default.Add, null, Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text(stringResource(R.string.home_nutrition_btn_manual), style = MaterialTheme.typography.labelLarge)
+                    Text(
+                        stringResource(R.string.home_nutrition_btn_manual),
+                        style = MaterialTheme.typography.labelLarge,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    )
                 }
             }
         }

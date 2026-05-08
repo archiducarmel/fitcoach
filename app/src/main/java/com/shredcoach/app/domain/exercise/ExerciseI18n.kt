@@ -63,12 +63,24 @@ object ExerciseI18n {
         val resName = "$PREFIX${key}_$field"
         val resId = context.resources.getIdentifier(resName, "string", context.packageName)
         if (resId == 0) return fallback
-        // Defensive : Android peut throw NotFoundException si la ressource est
-        // déclarée dans values-en/ uniquement et que la locale courante (ex: ES)
-        // n'a ni values-es/ ni la clé dans values/ (default FR). Le fallback DB
-        // FR canonique reste cohérent et lisible — préférable à un crash.
         return try {
-            context.getString(resId)
+            val lang = java.util.Locale.getDefault().language.lowercase()
+            when (lang) {
+                "fr" -> fallback // FR canonique en DB (évite resource lookup inutile)
+                "en" -> context.getString(resId)
+                else -> {
+                    // **V2 — ES/IT/PT/DE** : `exo_*` n'est traduit QUE en EN
+                    // (values-en/) par design (volume catalogue 441 exos × 5 fields
+                    // = 2200 keys/lang trop coûteux à traduire dans 4 langues
+                    // supplémentaires). Le fallback Android natif passerait sur
+                    // values/ (FR) — mauvais : un user hispanophone verrait du FR.
+                    // On force le lookup en EN explicitement → cohérent avec
+                    // PromptLocale (cascade FR → EN véhiculaire).
+                    val enConfig = android.content.res.Configuration(context.resources.configuration)
+                    enConfig.setLocale(java.util.Locale.ENGLISH)
+                    context.createConfigurationContext(enConfig).getString(resId)
+                }
+            }
         } catch (_: android.content.res.Resources.NotFoundException) {
             fallback
         }
