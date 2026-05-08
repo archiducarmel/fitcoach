@@ -105,7 +105,7 @@ data class Persona(
         "en" -> "en-US"
         "es" -> "es-ES"
         "it" -> "it-IT"
-        "pt" -> "pt-PT"
+        "pt" -> "pt-BR"  // PT-BR (brésilien) car c'est notre cible V2, pas pt-PT (européen)
         "de" -> "de-DE"
         else -> "fr-FR"
     }

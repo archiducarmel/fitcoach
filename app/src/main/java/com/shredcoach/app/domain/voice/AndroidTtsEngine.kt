@@ -29,14 +29,24 @@ class AndroidTtsEngine @Inject constructor() : VoiceEngine {
 
     @Volatile private var ready: Boolean = false
 
-    /** Meilleure voix masculine FR sélectionnée à l'init (cachée). */
+    /** Meilleure voix masculine sélectionnée pour la locale [cachedLocaleTag]. */
     private var bestMaleVoice: Voice? = null
 
-    /** Meilleure voix féminine FR sélectionnée à l'init (cachée). */
+    /** Meilleure voix féminine sélectionnée pour la locale [cachedLocaleTag]. */
     private var bestFemaleVoice: Voice? = null
 
     /** Voix par défaut si aucune n'a pu être catégorisée par genre. */
     private var fallbackVoice: Voice? = null
+
+    /**
+     * Tag BCP-47 de la locale pour laquelle [bestMaleVoice]/[bestFemaleVoice]
+     * ont été cachées. Si `Locale.getDefault().language` diffère lors d'un
+     * `speak()`, on re-cache. **Sans ce mécanisme** : le singleton survit
+     * au recreate de l'Activity post-changement de langue, et continue à
+     * utiliser la voix FR pour énoncer du texte ES/IT/PT/DE → user entend
+     * "¡Vamos campeón!" prononcé avec phonèmes français.
+     */
+    @Volatile private var cachedLocaleTag: String = ""
 
     override val isReady: Boolean
         get() = ready
@@ -50,19 +60,28 @@ class AndroidTtsEngine @Inject constructor() : VoiceEngine {
                 return@TextToSpeech
             }
             val engine = tts ?: return@TextToSpeech
-            // Locale-aware : on suit la locale courante (overlay AppCompatDelegate),
-            // pas Locale.FRANCE figé. Si la voix de la locale n'est pas dispo on
-            // retombe sur en-US (langue universelle des moteurs TTS Android).
-            val targetLocale = Locale.getDefault()
-            val result = engine.setLanguage(targetLocale)
-            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                Log.w(TAG, "Locale $targetLocale non supporté TTS, fallback en-US")
-                engine.setLanguage(Locale.US)
-            }
-            cacheBestVoicesByGender(engine, targetLocale)
+            applyLocaleAndRecache(engine, Locale.getDefault())
             ready = true
-            Log.i(TAG, "TTS prêt — M=${bestMaleVoice?.name}, F=${bestFemaleVoice?.name}")
+            Log.i(TAG, "TTS prêt — locale=$cachedLocaleTag M=${bestMaleVoice?.name} F=${bestFemaleVoice?.name}")
         }
+    }
+
+    /**
+     * Applique la locale au moteur TTS et re-cache les meilleures voix M/F.
+     * Idempotent : appelable depuis [init] (boot) ET [speak] (si la locale
+     * a changé depuis le dernier cache).
+     */
+    private fun applyLocaleAndRecache(engine: TextToSpeech, targetLocale: Locale) {
+        val result = engine.setLanguage(targetLocale)
+        val effective = if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+            Log.w(TAG, "Locale $targetLocale non supporté TTS, fallback en-US")
+            engine.setLanguage(Locale.US)
+            Locale.US
+        } else {
+            targetLocale
+        }
+        cacheBestVoicesByGender(engine, effective)
+        cachedLocaleTag = effective.language.lowercase()
     }
 
     private fun cacheBestVoicesByGender(engine: TextToSpeech, targetLocale: Locale) {
@@ -116,6 +135,17 @@ class AndroidTtsEngine @Inject constructor() : VoiceEngine {
     override fun speak(text: String, persona: Persona) {
         val engine = tts ?: return
         if (!ready) return
+
+        // **Locale-aware reactive** : si la locale a changé depuis le dernier
+        // cache (ex: user a switché FR → ES via Settings), on re-applique la
+        // langue au moteur TTS et on re-cache les meilleures voix M/F dans
+        // cette langue. Sans ça, le singleton survivant au recreate Activity
+        // continue à parler avec la voix FR cachée à l'init.
+        val currentLang = Locale.getDefault().language.lowercase()
+        if (currentLang != cachedLocaleTag) {
+            Log.i(TAG, "Locale changée ($cachedLocaleTag → $currentLang), re-cache voices")
+            applyLocaleAndRecache(engine, Locale.getDefault())
+        }
 
         // Picks la voix mappée au genre de la persona, avec fallback safe.
         val target = when (persona.gender) {
