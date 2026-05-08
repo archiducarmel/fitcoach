@@ -10,6 +10,7 @@ import com.shredcoach.app.data.local.entity.NutritionScheduleEntity
 import com.shredcoach.app.data.local.entity.UserProfileEntity
 import com.shredcoach.app.data.repository.ExerciseRepository
 import com.shredcoach.app.data.repository.NutritionRepository
+import com.shredcoach.app.domain.locale.withCurrentLocale
 import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.data.repository.WorkoutRepository
 import com.shredcoach.app.data.local.dao.WorkoutLogDao
@@ -75,6 +76,7 @@ class HomeViewModel @Inject constructor(
     private val exerciseRepository: ExerciseRepository,
     private val workoutRepository: WorkoutRepository,
     private val nutritionRepository: NutritionRepository,
+    private val scheduledWorkoutRepository: com.shredcoach.app.data.repository.ScheduledWorkoutRepository,
     private val streakService: StreakService,
     private val streakMilestoneStore: StreakMilestoneStore,
     private val plateauDetector: PlateauDetector,
@@ -156,6 +158,53 @@ class HomeViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = null,
     )
+
+    /**
+     * Jeûne nocturne — combine les repas de J + ceux de J-1 pour exposer les
+     * timestamps que la card consomme (avec ticker live côté Composable).
+     * Re-emit à minuit via [todayDateFlow] et à chaque ajout/suppression de
+     * repas sur l'une des 2 journées.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val nightFasting: StateFlow<com.shredcoach.app.presentation.home.components.NightFastingDisplay?> =
+        todayDateFlow.flatMapLatest { date ->
+            val yesterday = date.minusDays(1)
+            combine(
+                nutritionRepository.getMealsForDate(date),
+                nutritionRepository.getMealsForDate(yesterday),
+            ) { todayMeals, yesterdayMeals ->
+                val firstToday = todayMeals.mapNotNull { it.time }.minOrNull()
+                val lastYesterday = yesterdayMeals.mapNotNull { it.time }.maxOrNull()
+                com.shredcoach.app.presentation.home.components.NightFastingDisplay(
+                    lastMealAt = lastYesterday?.let { LocalDateTime.of(yesterday, it) },
+                    firstMealAt = firstToday?.let { LocalDateTime.of(date, it) },
+                    isToday = true,
+                )
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = null,
+        )
+
+    /**
+     * Top 3 des prochaines séances planifiées (toutes périodes, statut PLANNED).
+     * Utilisé par la card calendrier sur la home pour rendre la feature visible
+     * et offrir un raccourci direct vers le screen calendrier.
+     */
+    val upcomingSessions: StateFlow<List<com.shredcoach.app.data.local.entity.ScheduledWorkoutEntity>> =
+        scheduledWorkoutRepository.getAll()
+            .map { all ->
+                val today = LocalDate.now()
+                all.filter { it.status == "PLANNED" && !it.date.isBefore(today) }
+                    .sortedWith(compareBy({ it.date }, { it.time ?: java.time.LocalTime.MIN }))
+                    .take(3)
+            }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = emptyList(),
+            )
 
     /**
      * Reprise de séance — observe le dernier log non complété, le filtre <24h
@@ -296,7 +345,7 @@ class HomeViewModel @Inject constructor(
             val resolved = RoutineCatalog.byId(effectiveRoutineId).id
 
             val workout = WorkoutEntity(
-                name = appContext.getString(R.string.history_freestyle_session_name),
+                name = appContext.withCurrentLocale().getString(R.string.history_freestyle_session_name),
                 durationMinutes = 0,
                 exerciseCount = 0,
                 createdAt = LocalDateTime.now(),

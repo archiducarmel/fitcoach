@@ -1,28 +1,75 @@
 package com.shredcoach.app.presentation.calendar
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.automirrored.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.EventBusy
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Today
+import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -33,6 +80,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.ScheduledWorkoutEntity
+import com.shredcoach.app.data.local.entity.WorkoutLogEntity
 import com.shredcoach.app.domain.workout.RoutineCatalog
 import com.shredcoach.app.presentation.navigation.Screen
 import com.shredcoach.app.presentation.theme.NeonGreen
@@ -44,15 +92,18 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
+private val PurpleSchool = Color(0xFF8B5CF6)
+private val ErrorRed = Color(0xFFEF4444)
+private val InfoBlue = Color(0xFF3B82F6)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarScreen(
     navController: NavController,
-    viewModel: CalendarViewModel = hiltViewModel()
+    viewModel: CalendarViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
 
-    // Bottom sheet création
     if (state.showScheduleSheet) {
         QuickScheduleSheet(
             state = state,
@@ -63,7 +114,6 @@ fun CalendarScreen(
         )
     }
 
-    // Bottom sheet suggestions IA
     if (state.suggestedDates.isNotEmpty() || state.isSuggesting) {
         AiSuggestionsSheet(
             isLoading = state.isSuggesting,
@@ -74,11 +124,14 @@ fun CalendarScreen(
         )
     }
 
-    Scaffold(
+    androidx.compose.material3.Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
                         Icon(Icons.Default.CalendarMonth, null, Modifier.size(22.dp), tint = OrangeVibrant)
                         Text(stringResource(R.string.calendar_title), fontWeight = FontWeight.Bold)
                     }
@@ -93,253 +146,586 @@ fun CalendarScreen(
                         Icon(Icons.Default.Today, stringResource(R.string.calendar_today_cd), tint = OrangeVibrant)
                     }
                     IconButton(onClick = { viewModel.suggestNextSessions() }) {
-                        Icon(Icons.Default.AutoAwesome, stringResource(R.string.calendar_ai_suggestion_cd), tint = NeonGreen)
+                        Icon(
+                            Icons.Default.AutoAwesome,
+                            stringResource(R.string.calendar_ai_suggestion_cd),
+                            tint = NeonGreen,
+                        )
                     }
-                }
+                },
             )
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { viewModel.openScheduleSheet(state.selectedDate) },
                 containerColor = OrangeVibrant,
-                contentColor = Color.White
+                contentColor = Color.White,
             ) {
                 Icon(Icons.Default.Add, null)
                 Spacer(Modifier.width(8.dp))
                 Text(stringResource(R.string.calendar_fab_schedule), fontWeight = FontWeight.Bold)
             }
-        }
+        },
     ) { pad ->
-        Column(
-            Modifier.fillMaxSize().padding(pad).verticalScroll(rememberScrollState())
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(pad),
+            contentPadding = PaddingValues(bottom = 100.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            // Stats header (streak + assiduité + prochaine séance)
-            CalendarStatsHeader(state)
+            item { Spacer(Modifier.height(4.dp)) }
 
-            // Navigation mois
-            MonthNavigator(
-                month = state.currentMonth,
-                onPrev = { viewModel.goPrevMonth() },
-                onNext = { viewModel.goNextMonth() }
-            )
-
-            // Grid 7x6
-            MonthGrid(
-                month = state.currentMonth,
-                selectedDate = state.selectedDate,
-                scheduled = state.monthScheduled,
-                logs = state.monthLogs,
-                holidays = state.holidays,
-                schoolHolidays = state.schoolHolidays,
-                workoutDays = state.workoutDays,
-                onDayClick = { viewModel.selectDate(it) }
-            )
-
-            // Panel détails jour sélectionné
-            state.selectedDate?.let { date ->
-                DayDetailsPanel(
-                    date = date,
-                    scheduled = state.monthScheduled.filter { it.date == date },
-                    logs = state.monthLogs.filter { it.date.toLocalDate() == date },
-                    holiday = state.holidays[date],
-                    isSchoolHoliday = date in state.schoolHolidays,
-                    onAddClick = { viewModel.openScheduleSheet(date) },
-                    onDeleteSchedule = { viewModel.deleteSchedule(it) },
-                    onMarkSkipped = { viewModel.markSkipped(it) },
-                    onStartSession = { sched ->
-                        // Lancer directement via WorkoutGenerator si pas de workoutId, sinon session
+            // ─── HERO : prochaine séance avec countdown ───
+            item {
+                NextSessionHeroCard(
+                    next = state.nextUpcoming,
+                    isSuggesting = state.isSuggesting,
+                    onPlan = { viewModel.openScheduleSheet() },
+                    onAi = { viewModel.suggestNextSessions() },
+                    onStart = { sched ->
                         if (sched.workoutId != null) {
-                            // Note : lancer depuis un favori nécessiterait un flow dédié
-                            // Pour MVP, on ouvre le preview du favori
                             navController.navigate(Screen.FavoritePreview.createRoute(sched.workoutId))
                         } else {
                             navController.navigate(Screen.WorkoutGenerator.route)
                         }
-                    }
+                    },
+                    modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
 
-            Spacer(Modifier.height(100.dp)) // espace FAB
+            // ─── Métriques : adherence ring + streak + completed ───
+            item {
+                MonthMetricsCard(
+                    adherencePercent = state.adherencePercent,
+                    completedThisMonth = state.completedThisMonth,
+                    plannedThisMonth = state.plannedThisMonth.coerceAtLeast(state.completedThisMonth),
+                    streakDays = state.streakDays,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+            }
+
+            // ─── Mois courant : navigateur + grille ───
+            item {
+                Column(Modifier.padding(horizontal = 4.dp)) {
+                    MonthNavigator(
+                        month = state.currentMonth,
+                        onPrev = { viewModel.goPrevMonth() },
+                        onNext = { viewModel.goNextMonth() },
+                    )
+                    MonthGrid(
+                        month = state.currentMonth,
+                        selectedDate = state.selectedDate,
+                        scheduled = state.monthScheduled,
+                        logs = state.monthLogs,
+                        holidays = state.holidays,
+                        schoolHolidays = state.schoolHolidays,
+                        workoutDays = state.workoutDays,
+                        onDayClick = { viewModel.selectDate(it) },
+                    )
+                    LegendStrip(modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
+                }
+            }
+
+            // ─── Détails du jour sélectionné (pliable) ───
+            state.selectedDate?.let { date ->
+                item {
+                    DayDetailsPanel(
+                        date = date,
+                        scheduled = state.monthScheduled.filter { it.date == date },
+                        logs = state.monthLogs.filter { it.date.toLocalDate() == date },
+                        holiday = state.holidays[date],
+                        isSchoolHoliday = date in state.schoolHolidays,
+                        onAddClick = { viewModel.openScheduleSheet(date) },
+                        onDeleteSchedule = { viewModel.deleteSchedule(it) },
+                        onMarkSkipped = { viewModel.markSkipped(it) },
+                        onStartSession = { sched ->
+                            if (sched.workoutId != null) {
+                                navController.navigate(Screen.FavoritePreview.createRoute(sched.workoutId))
+                            } else {
+                                navController.navigate(Screen.WorkoutGenerator.route)
+                            }
+                        },
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+                }
+            }
+
+            // ─── Timeline À venir (toutes périodes) ───
+            item {
+                UpcomingTimeline(
+                    upcoming = state.upcomingSessions,
+                    onClickDate = {
+                        viewModel.selectDate(it)
+                        // Si la date est hors mois courant, on jump
+                        val ym = YearMonth.from(it)
+                        if (ym != state.currentMonth) {
+                            // VM gère via loadMonth
+                        }
+                    },
+                    onPlan = { viewModel.openScheduleSheet() },
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+            }
         }
     }
 }
 
-// ═══════════════════════════════════════
-// HEADER STATS (streak + assiduité + prochaine)
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
+// HERO : prochaine séance avec countdown ergonomique
+// ═══════════════════════════════════════════════════════════════════════
 
 @Composable
-private fun CalendarStatsHeader(state: CalendarState) {
-    Surface(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-        shape = RoundedCornerShape(20.dp),
-        color = Color.Transparent
+private fun NextSessionHeroCard(
+    next: ScheduledWorkoutEntity?,
+    isSuggesting: Boolean,
+    onPlan: () -> Unit,
+    onAi: () -> Unit,
+    onStart: (ScheduledWorkoutEntity) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val today = LocalDate.now()
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
     ) {
+        if (next == null) {
+            // ── Empty state premium : appel à l'action en 2 voies ──
+            Column(
+                Modifier.fillMaxWidth()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                OrangeVibrant.copy(alpha = 0.18f),
+                                OrangeVibrant.copy(alpha = 0.04f),
+                            )
+                        )
+                    )
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Box(
+                        Modifier.size(44.dp).clip(RoundedCornerShape(12.dp))
+                            .background(OrangeVibrant.copy(alpha = 0.18f)),
+                        contentAlignment = Alignment.Center,
+                    ) { Icon(Icons.Default.EventBusy, null, Modifier.size(22.dp), tint = OrangeVibrant) }
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            stringResource(R.string.calendar_hero_no_session_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            stringResource(R.string.calendar_hero_no_session_body),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        )
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = onPlan,
+                        modifier = Modifier.weight(1f).height(44.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = OrangeVibrant),
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        Icon(Icons.Default.Add, null, Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            stringResource(R.string.calendar_hero_action_plan),
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = onAi,
+                        enabled = !isSuggesting,
+                        modifier = Modifier.weight(1f).height(44.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, NeonGreen.copy(alpha = 0.5f)),
+                    ) {
+                        Icon(Icons.Default.AutoAwesome, null, Modifier.size(16.dp), tint = NeonGreen)
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            stringResource(R.string.calendar_hero_action_ai),
+                            color = NeonGreen,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                        )
+                    }
+                }
+            }
+            return@Card
+        }
+
+        // ── Cas next != null : countdown + détails + start ──
+        val daysUntil = java.time.temporal.ChronoUnit.DAYS.between(today, next.date).toInt()
+        val timeStr = next.time?.toString()?.substring(0, 5)
+        val countdownLabel = when {
+            daysUntil == 0 -> if (timeStr != null)
+                stringResource(R.string.calendar_hero_today_at, timeStr)
+                else stringResource(R.string.calendar_hero_today)
+            daysUntil == 1 -> if (timeStr != null)
+                stringResource(R.string.calendar_hero_tomorrow_at, timeStr)
+                else stringResource(R.string.calendar_hero_tomorrow)
+            else -> if (timeStr != null)
+                stringResource(R.string.calendar_hero_in_days_at, daysUntil, timeStr)
+                else stringResource(R.string.calendar_hero_in_days, daysUntil)
+        }
+        val routine = RoutineCatalog.byId(next.routineId)
+        val titleStr = next.title.ifBlank { stringResource(R.string.calendar_sched_default_title) }
+        val dayDateLabel = next.date.format(DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.getDefault()))
+            .replaceFirstChar { it.uppercase() }
+        val isStartable = daysUntil == 0
+
         Column(
             Modifier.fillMaxWidth()
                 .background(
                     Brush.linearGradient(
-                        listOf(OrangeVibrant.copy(alpha = 0.95f), OrangeVibrant.copy(alpha = 0.75f))
+                        colors = listOf(
+                            OrangeVibrant,
+                            Color(0xFFE65100),
+                        )
                     )
                 )
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .padding(horizontal = 20.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                // Streak
-                Column {
-                    Text(stringResource(R.string.calendar_stat_streak_label), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.8f))
-                    Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("${state.streakDays}", style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.ExtraBold, color = Color.White)
-                        Text(stringResource(R.string.calendar_stat_streak_unit), style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.8f), modifier = Modifier.padding(bottom = 6.dp))
-                    }
-                }
-                VerticalDividerLight()
-                // Assiduité
-                Column {
-                    Text(stringResource(R.string.calendar_stat_adherence_label), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.8f))
-                    Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("${state.adherencePercent}", style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.ExtraBold, color = Color.White)
-                        Text("%", style = MaterialTheme.typography.titleMedium,
-                            color = Color.White.copy(alpha = 0.8f), modifier = Modifier.padding(bottom = 6.dp))
-                    }
-                    Text(stringResource(R.string.calendar_stat_adherence_count, state.completedThisMonth, state.plannedThisMonth.coerceAtLeast(state.completedThisMonth)),
-                        style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.75f))
-                }
-                VerticalDividerLight()
-                // Prochaine séance
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.calendar_stat_next_label), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.8f))
-                    val next = state.nextUpcoming
-                    if (next != null) {
-                        val dayLabel = next.date.format(DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault()))
-                        val timeLabel = next.time?.let { " · ${it.toString().substring(0, 5)}" } ?: ""
+            // Header : "Prochaine séance" + countdown chip
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.calendar_hero_next_session),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White.copy(alpha = 0.85f),
+                )
+                Spacer(Modifier.weight(1f))
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = Color.White.copy(alpha = 0.22f),
+                ) {
+                    Row(
+                        Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    ) {
+                        Icon(Icons.Default.Schedule, null, Modifier.size(13.dp), tint = Color.White)
                         Text(
-                            dayLabel.replaceFirstChar { it.uppercase() } + timeLabel,
-                            style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = Color.White,
-                            maxLines = 2, lineHeight = 16.sp
+                            countdownLabel,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.White,
+                            maxLines = 1,
                         )
-                    } else {
-                        Text(stringResource(R.string.calendar_stat_next_none), style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.7f))
                     }
+                }
+            }
+
+            // Hero : routine icon + title + date
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                Box(
+                    Modifier.size(56.dp).clip(RoundedCornerShape(16.dp))
+                        .background(Color.White.copy(alpha = 0.20f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(routine.icon, fontSize = 28.sp)
+                }
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        titleStr,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color.White,
+                        maxLines = 2,
+                    )
+                    Text(
+                        "${routine.displayName} · $dayDateLabel",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.85f),
+                        maxLines = 2,
+                    )
+                }
+            }
+
+            // Action : Start (today) / Plan otherwise
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (isStartable) {
+                    Button(
+                        onClick = { onStart(next) },
+                        modifier = Modifier.weight(1f).height(46.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = OrangeVibrant,
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        Icon(Icons.Default.PlayArrow, null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            stringResource(R.string.calendar_hero_action_start),
+                            fontWeight = FontWeight.ExtraBold,
+                        )
+                    }
+                }
+                OutlinedButton(
+                    onClick = onPlan,
+                    modifier = Modifier
+                        .let { if (isStartable) it.weight(1f) else it.fillMaxWidth() }
+                        .height(46.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.7f)),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                ) {
+                    Icon(Icons.Default.Add, null, Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        stringResource(R.string.calendar_hero_action_plan),
+                        fontWeight = FontWeight.Bold,
+                    )
                 }
             }
         }
     }
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// MÉTRIQUES : ring d'assiduité + streak + faites
+// ═══════════════════════════════════════════════════════════════════════
+
 @Composable
-private fun VerticalDividerLight() {
-    Box(Modifier.width(1.dp).height(44.dp).background(Color.White.copy(alpha = 0.25f)))
+private fun MonthMetricsCard(
+    adherencePercent: Int,
+    completedThisMonth: Int,
+    plannedThisMonth: Int,
+    streakDays: Int,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            // Ring d'assiduité (gauche)
+            AdherenceRing(
+                percent = adherencePercent,
+                modifier = Modifier.size(72.dp),
+            )
+            // Mini-tiles (droite, en colonne)
+            Column(
+                Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                MetricTile(
+                    icon = Icons.Default.LocalFireDepartment,
+                    iconTint = OrangeVibrant,
+                    label = stringResource(R.string.calendar_metric_streak_label),
+                    value = "${streakDays}j",
+                    accent = OrangeVibrant,
+                )
+                MetricTile(
+                    icon = Icons.Default.CheckCircle,
+                    iconTint = NeonGreen,
+                    label = stringResource(R.string.calendar_metric_completed_label),
+                    value = "$completedThisMonth/$plannedThisMonth",
+                    accent = NeonGreen,
+                )
+            }
+        }
+    }
 }
 
-// ═══════════════════════════════════════
-// NAVIGATION MOIS
-// ═══════════════════════════════════════
+@Composable
+private fun AdherenceRing(percent: Int, modifier: Modifier = Modifier) {
+    val animated by animateFloatAsState(
+        targetValue = (percent / 100f).coerceIn(0f, 1f),
+        animationSpec = tween(700),
+        label = "adherenceRing",
+    )
+    val track = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val accent = when {
+        percent >= 80 -> NeonGreen
+        percent >= 50 -> OrangeVibrant
+        else -> ErrorRed
+    }
+    Box(modifier, contentAlignment = Alignment.Center) {
+        Canvas(Modifier.fillMaxSize()) {
+            val stroke = size.minDimension * 0.13f
+            val padding = stroke / 2f
+            val arcSize = Size(size.width - padding * 2, size.height - padding * 2)
+            val topLeft = Offset(padding, padding)
+            // track
+            drawArc(
+                color = track,
+                startAngle = -90f,
+                sweepAngle = 360f,
+                useCenter = false,
+                size = arcSize,
+                topLeft = topLeft,
+                style = Stroke(width = stroke, cap = StrokeCap.Round),
+            )
+            // value
+            drawArc(
+                color = accent,
+                startAngle = -90f,
+                sweepAngle = animated * 360f,
+                useCenter = false,
+                size = arcSize,
+                topLeft = topLeft,
+                style = Stroke(width = stroke, cap = StrokeCap.Round),
+            )
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                "$percent",
+                style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"),
+                fontWeight = FontWeight.ExtraBold,
+                color = onSurface,
+                fontSize = 22.sp,
+            )
+            Text(
+                "%",
+                style = MaterialTheme.typography.labelSmall,
+                color = onSurface.copy(alpha = 0.5f),
+                fontWeight = FontWeight.Bold,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MetricTile(
+    icon: ImageVector,
+    iconTint: Color,
+    label: String,
+    value: String,
+    accent: Color,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(accent.copy(alpha = 0.08f))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    ) {
+        Icon(icon, null, Modifier.size(18.dp), tint = iconTint)
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            value,
+            style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
+            fontWeight = FontWeight.ExtraBold,
+            color = accent,
+        )
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// NAVIGATEUR DE MOIS
+// ═══════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun MonthNavigator(month: YearMonth, onPrev: () -> Unit, onNext: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         IconButton(onClick = onPrev) {
-            Icon(Icons.Default.ChevronLeft, stringResource(R.string.calendar_nav_prev_month_cd), tint = MaterialTheme.colorScheme.onSurface)
+            Icon(Icons.Default.ChevronLeft, stringResource(R.string.calendar_nav_prev_month_cd))
         }
         Text(
             month.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault()))
                 .replaceFirstChar { it.uppercase() },
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.ExtraBold
+            fontWeight = FontWeight.ExtraBold,
         )
         IconButton(onClick = onNext) {
-            Icon(Icons.Default.ChevronRight, stringResource(R.string.calendar_nav_next_month_cd), tint = MaterialTheme.colorScheme.onSurface)
+            Icon(Icons.Default.ChevronRight, stringResource(R.string.calendar_nav_next_month_cd))
         }
     }
 }
 
-// ═══════════════════════════════════════
-// GRILLE MENSUELLE 7×6
-// ═══════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
+// GRILLE MENSUELLE — cellules + heatmap
+// ═══════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun MonthGrid(
     month: YearMonth,
     selectedDate: LocalDate?,
     scheduled: List<ScheduledWorkoutEntity>,
-    logs: List<com.shredcoach.app.data.local.entity.WorkoutLogEntity>,
+    logs: List<WorkoutLogEntity>,
     holidays: Map<LocalDate, String>,
     schoolHolidays: Set<LocalDate>,
     workoutDays: Set<Int>,
-    onDayClick: (LocalDate) -> Unit
+    onDayClick: (LocalDate) -> Unit,
 ) {
-    // En-têtes jours locale-aware (NARROW = 1 lettre, démarre lundi)
     val dayNames = remember {
         listOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
             DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
-            .map { it.getDisplayName(TextStyle.NARROW, Locale.getDefault()).uppercase() }
+            .map { it.getDisplayName(TextStyle.SHORT, Locale.getDefault()).take(3).uppercase() }
     }
     val firstOfMonth = month.atDay(1)
-    // Offset : 0 si lundi, 6 si dimanche
-    val leadingEmpty = (firstOfMonth.dayOfWeek.value - 1) // DayOfWeek: Lundi=1, Dimanche=7
+    val leadingEmpty = (firstOfMonth.dayOfWeek.value - 1)
     val daysInMonth = month.lengthOfMonth()
     val totalCells = leadingEmpty + daysInMonth
-    val rows = ((totalCells + 6) / 7).coerceAtLeast(5) // minimum 5 lignes pour stabilité visuelle
+    val rows = ((totalCells + 6) / 7).coerceAtLeast(5)
 
     Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
-        // Headers
+        // Headers (Lun → Dim, 3 lettres pour la lisibilité)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
             dayNames.forEach {
                 Text(
                     it,
-                    modifier = Modifier.weight(1f).padding(vertical = 6.dp),
+                    modifier = Modifier.weight(1f).padding(vertical = 8.dp),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
                 )
             }
         }
 
-        // Cells
         val today = LocalDate.now()
         repeat(rows) { row ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 repeat(7) { col ->
                     val cellIndex = row * 7 + col
                     val dayNumber = cellIndex - leadingEmpty + 1
-
                     if (dayNumber in 1..daysInMonth) {
                         val date = month.atDay(dayNumber)
                         val daySchedules = scheduled.filter { it.date == date }
                         val dayLogs = logs.filter { it.date.toLocalDate() == date }
-                        val isToday = date == today
-                        val isSelected = date == selectedDate
-                        val isHoliday = holidays.containsKey(date)
-                        val isSchoolHoliday = date in schoolHolidays
-                        val isWorkoutDay = (date.dayOfWeek.value in workoutDays)
-
                         DayCell(
                             date = date,
-                            isToday = isToday,
-                            isSelected = isSelected,
-                            isHoliday = isHoliday,
-                            isSchoolHoliday = isSchoolHoliday,
-                            isWorkoutDay = isWorkoutDay,
+                            isToday = date == today,
+                            isSelected = date == selectedDate,
+                            isHoliday = holidays.containsKey(date),
+                            isSchoolHoliday = date in schoolHolidays,
+                            isWorkoutDay = (date.dayOfWeek.value in workoutDays),
                             scheduleCount = daySchedules.size,
                             hasCompleted = dayLogs.any { it.completed },
                             hasPlanned = daySchedules.any { it.status == "PLANNED" },
                             hasSkipped = daySchedules.any { it.status == "SKIPPED" },
                             modifier = Modifier.weight(1f),
-                            onClick = { onDayClick(date) }
+                            onClick = { onDayClick(date) },
                         )
                     } else {
-                        Box(Modifier.weight(1f).height(54.dp))
+                        Box(Modifier.weight(1f).height(60.dp))
                     }
                 }
             }
@@ -360,139 +746,360 @@ private fun DayCell(
     hasPlanned: Boolean,
     hasSkipped: Boolean,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
-    val selectionScale by animateFloatAsState(
-        targetValue = if (isSelected) 1f else 0.92f,
-        animationSpec = tween(200),
-        label = "selScale"
-    )
+    // **Hierarchie visuelle** :
+    //  1. Cellule sélectionnée  → bord OrangeVibrant épais
+    //  2. Aujourd'hui            → halo OrangeVibrant subtil
+    //  3. Séance terminée        → disque NeonGreen plein derrière le numéro
+    //  4. Séance planifiée       → ring OrangeVibrant
+    //  5. Séance skippée         → barre rouge en dessous
+    //  6. Jour habituel inactif  → numéro en orange clair (pour repérer le pattern)
+    val cellBg = when {
+        isSchoolHoliday -> PurpleSchool.copy(alpha = 0.06f)
+        isHoliday -> OrangeVibrant.copy(alpha = 0.05f)
+        else -> Color.Transparent
+    }
+    val border = when {
+        isSelected -> BorderStroke(2.dp, OrangeVibrant)
+        isToday -> BorderStroke(1.dp, OrangeVibrant.copy(alpha = 0.5f))
+        else -> null
+    }
+    val numberBgColor = when {
+        hasCompleted -> NeonGreen
+        hasPlanned -> OrangeVibrant.copy(alpha = 0.18f)
+        else -> Color.Transparent
+    }
+    val numberRing = if (hasPlanned && !hasCompleted) {
+        BorderStroke(1.5.dp, OrangeVibrant)
+    } else null
+    val numberColor = when {
+        hasCompleted -> Color.White
+        hasPlanned -> OrangeVibrant
+        isToday -> OrangeVibrant
+        isHoliday -> OrangeVibrant.copy(alpha = 0.85f)
+        isWorkoutDay -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+        else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
+    }
 
     Box(
         modifier = modifier
             .padding(2.dp)
-            .height(54.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(
-                when {
-                    isSelected -> OrangeVibrant.copy(alpha = 0.15f)
-                    isSchoolHoliday -> Color(0xFF8B5CF6).copy(alpha = 0.08f) // light purple
-                    isHoliday -> OrangeVibrant.copy(alpha = 0.06f)
-                    else -> Color.Transparent
-                }
-            )
+            .height(60.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(cellBg)
+            .let {
+                if (border != null) it.border(border, RoundedCornerShape(12.dp)) else it
+            }
             .clickable { onClick() },
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+            verticalArrangement = Arrangement.spacedBy(3.dp),
         ) {
-            // Numéro du jour
             Box(
                 Modifier
-                    .size(if (isToday) 30.dp else 28.dp)
+                    .size(if (hasCompleted || hasPlanned) 32.dp else 28.dp)
                     .clip(CircleShape)
-                    .background(
-                        when {
-                            isToday -> OrangeVibrant
-                            else -> Color.Transparent
-                        }
-                    ),
-                contentAlignment = Alignment.Center
+                    .background(numberBgColor)
+                    .let {
+                        if (numberRing != null) it.border(numberRing, CircleShape) else it
+                    },
+                contentAlignment = Alignment.Center,
             ) {
                 Text(
                     "${date.dayOfMonth}",
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = if (isToday || isSelected) FontWeight.ExtraBold else FontWeight.Medium,
-                    color = when {
-                        isToday -> Color.White
-                        isHoliday -> OrangeVibrant
-                        isWorkoutDay && !hasCompleted && !hasPlanned -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
-                        else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    }
+                    fontWeight = if (isToday || isSelected || hasCompleted || hasPlanned) FontWeight.ExtraBold else FontWeight.Medium,
+                    color = numberColor,
                 )
             }
-
-            // Indicateurs : dots sous le jour
+            // Indicateur secondaire : skip ou multi-séances ou jour habituel inactif
             Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                if (hasCompleted) {
-                    Box(Modifier.size(5.dp).clip(CircleShape).background(NeonGreen))
-                }
-                if (hasPlanned && !hasCompleted) {
-                    Box(Modifier.size(5.dp).clip(CircleShape).background(OrangeVibrant))
-                }
                 if (hasSkipped) {
-                    Box(Modifier.size(5.dp).clip(CircleShape).background(Color(0xFFEF4444).copy(alpha = 0.6f)))
-                }
-                // Si c'est un workoutDay sans rien de planifié → petit tiret discret
-                if (isWorkoutDay && !hasCompleted && !hasPlanned && !hasSkipped && !isToday) {
-                    Box(Modifier.size(4.dp).clip(CircleShape).background(OrangeVibrant.copy(alpha = 0.4f)))
+                    Box(Modifier.size(width = 14.dp, height = 3.dp).clip(RoundedCornerShape(2.dp)).background(ErrorRed.copy(alpha = 0.7f)))
+                } else if (scheduleCount > 1) {
+                    repeat((scheduleCount - 1).coerceAtMost(2)) {
+                        Box(Modifier.size(4.dp).clip(CircleShape).background(OrangeVibrant.copy(alpha = 0.7f)))
+                    }
+                } else if (isWorkoutDay && !hasCompleted && !hasPlanned && !isToday) {
+                    Box(Modifier.size(4.dp).clip(CircleShape).background(OrangeVibrant.copy(alpha = 0.35f)))
                 }
             }
         }
     }
 }
 
-// ═══════════════════════════════════════
-// PANEL DÉTAILS JOUR
-// ═══════════════════════════════════════
+@Composable
+private fun LegendStrip(modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        LegendDot(NeonGreen, stringResource(R.string.calendar_legend_completed), filled = true)
+        LegendDot(OrangeVibrant, stringResource(R.string.calendar_legend_planned), filled = false)
+        LegendDot(ErrorRed.copy(alpha = 0.7f), stringResource(R.string.calendar_legend_skipped), filled = true, isBar = true)
+        LegendDot(OrangeVibrant.copy(alpha = 0.45f), stringResource(R.string.calendar_legend_workout_day), filled = true, small = true)
+    }
+}
+
+@Composable
+private fun LegendDot(color: Color, label: String, filled: Boolean, small: Boolean = false, isBar: Boolean = false) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        if (isBar) {
+            Box(Modifier.size(width = 12.dp, height = 3.dp).clip(RoundedCornerShape(2.dp)).background(color))
+        } else if (filled) {
+            Box(Modifier.size(if (small) 5.dp else 9.dp).clip(CircleShape).background(color))
+        } else {
+            Box(
+                Modifier.size(9.dp).clip(CircleShape).border(BorderStroke(1.5.dp, color), CircleShape)
+            )
+        }
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+        )
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// TIMELINE "À VENIR"
+// ═══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun UpcomingTimeline(
+    upcoming: List<ScheduledWorkoutEntity>,
+    onClickDate: (LocalDate) -> Unit,
+    onPlan: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.TrendingUp, null, Modifier.size(18.dp), tint = OrangeVibrant)
+            Spacer(Modifier.width(8.dp))
+            Text(
+                stringResource(R.string.calendar_upcoming_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.ExtraBold,
+            )
+            Spacer(Modifier.weight(1f))
+            if (upcoming.isNotEmpty()) {
+                val countText = if (upcoming.size == 1)
+                    stringResource(R.string.calendar_upcoming_count_one)
+                else stringResource(R.string.calendar_upcoming_count_many, upcoming.size)
+                Text(
+                    countText,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                )
+            }
+        }
+
+        if (upcoming.isEmpty()) {
+            Card(
+                Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Default.EventBusy, null, Modifier.size(22.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        stringResource(R.string.calendar_upcoming_empty),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f),
+                        modifier = Modifier.weight(1f),
+                    )
+                    FilledTonalButton(
+                        onClick = onPlan,
+                        contentPadding = PaddingValues(horizontal = 12.dp),
+                    ) {
+                        Icon(Icons.Default.Add, null, Modifier.size(14.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            stringResource(R.string.calendar_fab_schedule),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+            }
+        } else {
+            upcoming.forEach { sched ->
+                UpcomingRow(sched = sched, onClick = { onClickDate(sched.date) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun UpcomingRow(sched: ScheduledWorkoutEntity, onClick: () -> Unit) {
+    val today = LocalDate.now()
+    val daysUntil = java.time.temporal.ChronoUnit.DAYS.between(today, sched.date).toInt()
+    val routine = RoutineCatalog.byId(sched.routineId)
+    val titleStr = sched.title.ifBlank { stringResource(R.string.calendar_sched_default_title) }
+    val timeStr = sched.time?.toString()?.substring(0, 5)
+    val context = LocalContext.current
+    val countdown = remember(daysUntil, timeStr, context) {
+        when {
+            daysUntil == 0 -> if (timeStr != null)
+                context.getString(R.string.calendar_hero_today_at, timeStr)
+                else context.getString(R.string.calendar_hero_today)
+            daysUntil == 1 -> if (timeStr != null)
+                context.getString(R.string.calendar_hero_tomorrow_at, timeStr)
+                else context.getString(R.string.calendar_hero_tomorrow)
+            else -> if (timeStr != null)
+                context.getString(R.string.calendar_hero_in_days_at, daysUntil, timeStr)
+                else context.getString(R.string.calendar_hero_in_days, daysUntil)
+        }
+    }
+    val dateLabel = sched.date.format(DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault()))
+        .replaceFirstChar { it.uppercase() }
+
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            // Date "tile" : jour numérique + jour semaine
+            Column(
+                Modifier.size(width = 48.dp, height = 52.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(OrangeVibrant.copy(alpha = 0.12f)),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    "${sched.date.dayOfMonth}",
+                    style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
+                    fontWeight = FontWeight.ExtraBold,
+                    color = OrangeVibrant,
+                )
+                Text(
+                    sched.date.format(DateTimeFormatter.ofPattern("MMM", Locale.getDefault()))
+                        .uppercase().take(3),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = OrangeVibrant.copy(alpha = 0.85f),
+                )
+            }
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(routine.icon, fontSize = 14.sp)
+                    Text(
+                        titleStr,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                    )
+                }
+                Text(
+                    "$dateLabel · ${routine.displayName}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                    maxLines = 1,
+                )
+            }
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = OrangeVibrant.copy(alpha = 0.10f),
+            ) {
+                Text(
+                    countdown,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = OrangeVibrant,
+                    maxLines = 1,
+                )
+            }
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// PANEL DÉTAILS JOUR (jour sélectionné)
+// ═══════════════════════════════════════════════════════════════════════
 
 @Composable
 private fun DayDetailsPanel(
     date: LocalDate,
     scheduled: List<ScheduledWorkoutEntity>,
-    logs: List<com.shredcoach.app.data.local.entity.WorkoutLogEntity>,
+    logs: List<WorkoutLogEntity>,
     holiday: String?,
     isSchoolHoliday: Boolean,
     onAddClick: () -> Unit,
     onDeleteSchedule: (Long) -> Unit,
     onMarkSkipped: (Long) -> Unit,
-    onStartSession: (ScheduledWorkoutEntity) -> Unit
+    onStartSession: (ScheduledWorkoutEntity) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val fmt = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.getDefault())
-
+    val fmt = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.getDefault())
     Column(
-        Modifier.fillMaxWidth().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        // Header du jour
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 date.format(fmt).replaceFirstChar { it.uppercase() },
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
-            if (holiday != null) {
-                TagBadge(holiday, OrangeVibrant.copy(alpha = 0.15f), OrangeVibrant)
-            }
+            holiday?.let { TagBadge(it, OrangeVibrant.copy(alpha = 0.15f), OrangeVibrant) }
             if (isSchoolHoliday) {
-                TagBadge(stringResource(R.string.calendar_school_holiday_badge), Color(0xFF8B5CF6).copy(alpha = 0.15f), Color(0xFF8B5CF6))
+                TagBadge(stringResource(R.string.calendar_school_holiday_badge), PurpleSchool.copy(alpha = 0.15f), PurpleSchool)
             }
         }
-
-        // Séances planifiées
         if (scheduled.isEmpty() && logs.isEmpty()) {
             Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                ),
             ) {
-                Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    Modifier.fillMaxWidth().padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
                     Icon(Icons.Default.EventBusy, null, Modifier.size(32.dp),
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
                     Spacer(Modifier.height(8.dp))
-                    Text(stringResource(R.string.calendar_day_no_session), style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                    Text(
+                        stringResource(R.string.calendar_day_no_session),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                    )
                     Spacer(Modifier.height(12.dp))
                     FilledTonalButton(
                         onClick = onAddClick,
                         colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = OrangeVibrant.copy(alpha = 0.15f)
-                        )
+                            containerColor = OrangeVibrant.copy(alpha = 0.15f),
+                        ),
                     ) {
                         Icon(Icons.Default.Add, null, Modifier.size(16.dp), tint = OrangeVibrant)
                         Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.calendar_day_schedule_cta), color = OrangeVibrant, fontWeight = FontWeight.Bold)
+                        Text(
+                            stringResource(R.string.calendar_day_schedule_cta),
+                            color = OrangeVibrant,
+                            fontWeight = FontWeight.Bold,
+                        )
                     }
                 }
             }
@@ -502,13 +1109,10 @@ private fun DayDetailsPanel(
                     sched = sched,
                     onDelete = { onDeleteSchedule(sched.id) },
                     onSkip = { onMarkSkipped(sched.id) },
-                    onStart = { onStartSession(sched) }
+                    onStart = { onStartSession(sched) },
                 )
             }
-            // Logs historiques (séances réalisées ce jour)
-            logs.forEach { log ->
-                LogCard(log)
-            }
+            logs.forEach { log -> LogCard(log) }
         }
     }
 }
@@ -518,30 +1122,29 @@ private fun ScheduleCard(
     sched: ScheduledWorkoutEntity,
     onDelete: () -> Unit,
     onSkip: () -> Unit,
-    onStart: () -> Unit
+    onStart: () -> Unit,
 ) {
     val statusColor = when (sched.status) {
         "COMPLETED" -> NeonGreen
-        "SKIPPED" -> Color(0xFFEF4444)
+        "SKIPPED" -> ErrorRed
         "CANCELED" -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
         else -> OrangeVibrant
     }
-
     Card(
         Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        border = BorderStroke(1.dp, statusColor.copy(alpha = 0.3f))
+        border = BorderStroke(1.dp, statusColor.copy(alpha = 0.3f)),
     ) {
         Row(
             Modifier.fillMaxWidth().padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Box(
                 Modifier.size(44.dp).clip(RoundedCornerShape(10.dp))
                     .background(statusColor.copy(alpha = 0.12f)),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     when (sched.status) {
@@ -549,28 +1152,21 @@ private fun ScheduleCard(
                         "SKIPPED" -> Icons.Default.Cancel
                         else -> Icons.Default.FitnessCenter
                     },
-                    null, Modifier.size(22.dp), tint = statusColor
+                    null, Modifier.size(22.dp), tint = statusColor,
                 )
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     val defaultSchedTitle = stringResource(R.string.calendar_sched_default_title)
                     Text(
                         sched.title.ifBlank { defaultSchedTitle },
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         maxLines = 2,
-                        modifier = Modifier.weight(1f, fill = false)
+                        modifier = Modifier.weight(1f, fill = false),
                     )
-                    // Pill routine — visible en un coup d'œil pour distinguer
-                    // "Push jeudi" / "Pull samedi". Bord coloré statusColor pour
-                    // rester cohérent avec le code visuel de la card.
                     val routine = RoutineCatalog.byId(sched.routineId)
-                    Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = statusColor.copy(alpha = 0.10f),
-                    ) {
+                    Surface(shape = RoundedCornerShape(6.dp), color = statusColor.copy(alpha = 0.10f)) {
                         Row(
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -606,38 +1202,48 @@ private fun ScheduleCard(
                     }
                 }
                 if (subtitle.isNotBlank()) {
-                    Text(subtitle, style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f))
+                    Text(
+                        subtitle,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                    )
                 }
-                // Actions uniquement si PLANNED
                 if (sched.status == "PLANNED") {
                     Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Button(
                             onClick = onStart,
                             modifier = Modifier.height(32.dp),
                             contentPadding = PaddingValues(horizontal = 10.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = OrangeVibrant)
+                            colors = ButtonDefaults.buttonColors(containerColor = OrangeVibrant),
                         ) {
                             Icon(Icons.Default.PlayArrow, null, Modifier.size(14.dp))
                             Spacer(Modifier.width(3.dp))
-                            Text(stringResource(R.string.calendar_sched_action_start), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                            Text(
+                                stringResource(R.string.calendar_sched_action_start),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                            )
                         }
                         OutlinedButton(
                             onClick = onSkip,
                             modifier = Modifier.height(32.dp),
                             contentPadding = PaddingValues(horizontal = 10.dp),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
                         ) {
                             Text(stringResource(R.string.calendar_sched_action_skip), style = MaterialTheme.typography.labelSmall)
                         }
                         OutlinedButton(
                             onClick = onDelete,
-                            modifier = Modifier.height(40.dp),
+                            modifier = Modifier.height(32.dp),
                             contentPadding = PaddingValues(horizontal = 10.dp),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f))
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f)),
                         ) {
-                            Icon(Icons.Default.Delete, stringResource(R.string.calendar_sched_action_delete_cd), Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f))
+                            Icon(
+                                Icons.Default.Delete,
+                                stringResource(R.string.calendar_sched_action_delete_cd),
+                                Modifier.size(14.dp),
+                                tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
+                            )
                         }
                     }
                 }
@@ -647,27 +1253,34 @@ private fun ScheduleCard(
 }
 
 @Composable
-private fun LogCard(log: com.shredcoach.app.data.local.entity.WorkoutLogEntity) {
+private fun LogCard(log: WorkoutLogEntity) {
     Card(
         Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = NeonGreen.copy(alpha = 0.08f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
-        Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            Modifier.fillMaxWidth().padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
             Box(
                 Modifier.size(40.dp).clip(CircleShape).background(NeonGreen.copy(alpha = 0.2f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.Check, null, Modifier.size(20.dp), tint = NeonGreen)
-            }
+                contentAlignment = Alignment.Center,
+            ) { Icon(Icons.Default.Check, null, Modifier.size(20.dp), tint = NeonGreen) }
             Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.calendar_log_completed), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    stringResource(R.string.calendar_log_completed),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                )
                 val duration = log.actualDurationSeconds / 60
-                Text(stringResource(R.string.calendar_log_subtitle, log.totalSets, duration, log.totalVolume.toInt()),
+                Text(
+                    stringResource(R.string.calendar_log_subtitle, log.totalSets, duration, log.totalVolume.toInt()),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f))
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                )
             }
         }
     }
@@ -681,7 +1294,8 @@ private fun TagBadge(text: String, bg: Color, fg: Color) {
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
-            color = fg
+            color = fg,
         )
     }
 }
+

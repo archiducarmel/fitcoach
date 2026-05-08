@@ -157,18 +157,20 @@ data class FastingStats(
     val isEmpty: Boolean get() = daysMeasured == 0
 
     /**
-     * Verdict qualitatif basé sur la moyenne :
+     * Verdict qualitatif basé sur la moyenne — exprimé en R.string.X i18n.
+     * Null si pas assez de données. L'UI résout via `stringResource`.
      *  - ≥ 16h : format 16-8 atteint en moyenne
      *  - 14-16h : jeûne nocturne respecté
      *  - 12-14h : jeûne court, marge de progression
      *  - < 12h : fenêtre alimentaire trop large
      */
-    val verdictText: String
+    @get:androidx.annotation.StringRes
+    val verdictRes: Int?
         get() = when {
-            isEmpty -> ""
-            averageHours >= 16.0 -> "Format 16-8 atteint en moyenne"
-            averageHours >= 14.0 -> "Jeûne nocturne bien respecté"
-            averageHours >= 12.0 -> "Jeûne court — vise 14h+ pour les bénéfices métaboliques"
-            else -> "Fenêtre alimentaire trop large — module les heures de repas"
+            isEmpty -> null
+            averageHours >= 16.0 -> com.shredcoach.app.R.string.stats_fasting_verdict_16_8
+            averageHours >= 14.0 -> com.shredcoach.app.R.string.stats_fasting_verdict_respected
+            averageHours >= 12.0 -> com.shredcoach.app.R.string.stats_fasting_verdict_short
+            else -> com.shredcoach.app.R.string.stats_fasting_verdict_too_wide
         }
 }

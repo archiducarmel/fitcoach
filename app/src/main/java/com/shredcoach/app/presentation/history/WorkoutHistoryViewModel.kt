@@ -11,6 +11,7 @@ import com.shredcoach.app.data.local.entity.MealScanEntity
 import com.shredcoach.app.data.local.entity.WorkoutLogEntity
 import com.shredcoach.app.data.repository.NutritionRepository
 import com.shredcoach.app.data.repository.WorkoutRepository
+import com.shredcoach.app.domain.locale.withCurrentLocale
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -82,7 +83,7 @@ class WorkoutHistoryViewModel @Inject constructor(
                     // Pour les freestyles (incluant ceux créés avant l'i18n V2 avec name="Séance libre"
                     // figé en DB), on remplace toujours par la string localisée → cohérence cross-locale.
                     val workoutName = if (workout == null || workout.isFreestyle) {
-                        appContext.getString(R.string.history_freestyle_session_name)
+                        appContext.withCurrentLocale().getString(R.string.history_freestyle_session_name)
                     } else {
                         workout.name
                     }

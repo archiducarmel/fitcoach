@@ -63,6 +63,8 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
     val userProfile by viewModel.userProfile.collectAsState()
     val greetingInfo by viewModel.greetingInfo.collectAsState()
     val todayNutrition by viewModel.todayNutrition.collectAsState()
+    val nightFasting by viewModel.nightFasting.collectAsState()
+    val upcomingSessions by viewModel.upcomingSessions.collectAsState()
     val resumableSession by viewModel.resumableSession.collectAsState()
     val weeklyInsight by viewModel.weeklyInsight.collectAsState()
     val todayMood by viewModel.todayMood.collectAsState()
@@ -451,11 +453,38 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             }
 
             // ═══════════════════════════════════════
-            // INSIGHT DE LA SEMAINE (H3)
+            // JEÛNE NOCTURNE (H2bis)
+            // Live ticker tant qu'aucun repas n'est pris aujourd'hui ; figé
+            // dès le 1er repas. Apparaît seulement si on a un dernier repas
+            // hier qui sert d'ancre — sinon la card masque elle-même son
+            // header pour ne pas polluer la home avec un message d'attente.
+            // ═══════════════════════════════════════
+            nightFasting?.lastMealAt?.let {
+                StaggeredAppear(index = 7) {
+                    com.shredcoach.app.presentation.home.components.NightFastingCard(
+                        data = nightFasting!!,
+                    )
+                }
+            }
+
+            // ═══════════════════════════════════════
+            // CALENDRIER (H3a) — visibilité forte de la feature
+            // 3 prochaines séances + raccourci vers le calendrier complet.
+            // Empty state CTA-able si rien planifié.
+            // ═══════════════════════════════════════
+            StaggeredAppear(index = 7) {
+                com.shredcoach.app.presentation.home.components.CalendarPreviewCard(
+                    upcoming = upcomingSessions,
+                    onClick = { navController.navigate(Screen.Calendar.route) },
+                )
+            }
+
+            // ═══════════════════════════════════════
+            // INSIGHT DE LA SEMAINE (H3b)
             // PR récent / Progression / Plateau — un seul highlight
             // ═══════════════════════════════════════
             weeklyInsight?.let { insight ->
-                StaggeredAppear(index = 7) {
+                StaggeredAppear(index = 8) {
                     com.shredcoach.app.presentation.home.components.WeeklyInsightCard(
                         insight = insight,
                         onClick = { navController.switchTo(Screen.Stats.route) },

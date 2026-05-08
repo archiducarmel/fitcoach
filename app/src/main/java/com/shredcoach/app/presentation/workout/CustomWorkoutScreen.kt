@@ -430,6 +430,7 @@ private fun ExercisePickerDialog(
             val ctx = LocalContext.current
             LazyColumn(Modifier.heightIn(max = 400.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 items(exercises) { exercise ->
+                    val localized = com.shredcoach.app.domain.exercise.rememberLocalizedExercise(exercise)
                     Card(
                         Modifier.fillMaxWidth().clickable { onSelect(exercise) },
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
@@ -442,7 +443,7 @@ private fun ExercisePickerDialog(
                                     SubcomposeAsyncImage(
                                         model = ImageRequest.Builder(ctx).data(exercise.gifUrl)
                                             .size(Size(96, 96)).crossfade(true).build(),
-                                        contentDescription = exercise.name, modifier = Modifier.fillMaxSize(),
+                                        contentDescription = localized.name, modifier = Modifier.fillMaxSize(),
                                         contentScale = ContentScale.Crop,
                                         error = { Icon(Icons.Default.FitnessCenter, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)) }
                                     )
@@ -452,7 +453,7 @@ private fun ExercisePickerDialog(
                             }
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text(
-                                    exercise.name,
+                                    localized.name,
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     maxLines = 2,

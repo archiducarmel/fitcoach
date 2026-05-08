@@ -87,6 +87,15 @@ fun NutritionScreen(navController: NavController, viewModel: NutritionViewModel 
             // ── Résumé macros ──
             item { MacrosSummaryCard(state) }
 
+            // ── Jeûne nocturne (J-1 dernier repas → J premier repas) ──
+            // Placé HAUT car c'est l'info la plus dynamique de la journée :
+            // dès le 1er repas logué, la fenêtre se fixe ; un repas plus tôt
+            // re-shrink la fenêtre. L'user perçoit immédiatement l'impact
+            // sur son jeûne sans avoir à aller dans Stats.
+            item {
+                com.shredcoach.app.presentation.home.components.NightFastingCard(state.nightFasting)
+            }
+
             // ── Empty state si aucun repas ──
             if (state.meals.isEmpty()) {
                 item {

@@ -60,27 +60,36 @@ object ExerciseI18n {
     ): String {
         val key = exercise.exerciseKey
         if (key.isBlank()) return fallback
+
+        val lang = java.util.Locale.getDefault().language.lowercase()
+        // FR : la DB porte le texte canonique, on évite un resource lookup
+        // inutile (et aussi le risque de fallback values/ qui contient l'EN
+        // catalogue — cf. note plus bas sur la promotion EN→default).
+        if (lang == "fr") return fallback
+
         val resName = "$PREFIX${key}_$field"
         val resId = context.resources.getIdentifier(resName, "string", context.packageName)
         if (resId == 0) return fallback
+
         return try {
-            val lang = java.util.Locale.getDefault().language.lowercase()
-            when (lang) {
-                "fr" -> fallback // FR canonique en DB (évite resource lookup inutile)
-                "en" -> context.getString(resId)
-                else -> {
-                    // **V2 — ES/IT/PT/DE** : `exo_*` n'est traduit QUE en EN
-                    // (values-en/) par design (volume catalogue 441 exos × 5 fields
-                    // = 2200 keys/lang trop coûteux à traduire dans 4 langues
-                    // supplémentaires). Le fallback Android natif passerait sur
-                    // values/ (FR) — mauvais : un user hispanophone verrait du FR.
-                    // On force le lookup en EN explicitement → cohérent avec
-                    // PromptLocale (cascade FR → EN véhiculaire).
-                    val enConfig = android.content.res.Configuration(context.resources.configuration)
-                    enConfig.setLocale(java.util.Locale.ENGLISH)
-                    context.createConfigurationContext(enConfig).getString(resId)
-                }
+            // **Architecture i18n exo** :
+            //  - `values/strings.xml` (default) contient le catalogue EN — sert
+            //    de source de vérité aux R IDs (aapt2 n'enregistre dans R que
+            //    les ressources définies dans le default config).
+            //  - `values-{es,it,pt,de}/strings_exo.xml` overrident pour leur
+            //    locale.
+            //  - `values-en/strings.xml` n'a plus le catalogue (fallback values/
+            //    qui est déjà EN).
+            //  - FR short-circuit ci-dessus → DB canonique.
+            //  - Locales hors palette (ja, zh, …) → fallback Android natif sur
+            //    values/ (EN), comportement véhiculaire correct.
+            val targetLocale = when (lang) {
+                "en", "es", "it", "pt", "de" -> java.util.Locale.forLanguageTag(lang)
+                else -> java.util.Locale.ENGLISH
             }
+            val cfg = android.content.res.Configuration(context.resources.configuration)
+            cfg.setLocale(targetLocale)
+            context.createConfigurationContext(cfg).resources.getString(resId)
         } catch (_: android.content.res.Resources.NotFoundException) {
             fallback
         }

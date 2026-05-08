@@ -114,7 +114,8 @@ fun WeeklyInsightCard(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = palette.color,
-                        maxLines = 1,
+                        maxLines = 2,
+                        lineHeight = 20.sp,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     )
                 }

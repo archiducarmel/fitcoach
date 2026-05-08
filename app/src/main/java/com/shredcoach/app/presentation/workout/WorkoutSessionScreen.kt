@@ -97,6 +97,22 @@ fun WorkoutSessionScreen(
         }
     }
 
+    // Exit silencieux : freestyle vide annulée → on pop sans summary, retour
+    // à Home (ou écran précédent dans la stack).
+    LaunchedEffect(state.shouldExit) {
+        if (state.shouldExit) {
+            val popped = navController.popBackStack()
+            if (!popped) {
+                navController.navigate(com.shredcoach.app.presentation.navigation.Screen.Home.route) {
+                    launchSingleTop = true
+                    popUpTo(com.shredcoach.app.presentation.navigation.Screen.Home.route) {
+                        inclusive = true
+                    }
+                }
+            }
+        }
+    }
+
     // Countdown vocal du repos (5, 3, 2, 1)
     LaunchedEffect(state.restTimeRemaining) {
         if (state.isRestTimerActive && state.voiceEnabled && voice != null) {
@@ -330,18 +346,17 @@ fun WorkoutSessionScreen(
     Scaffold(
         topBar = { SessionTopBar(state,
             onBack = {
-                // Retour idiomatique : on dépile la session et on revient à
-                // l'écran précédent (Home, Preview, History…). Le chrono global
-                // continue de tourner via ActiveSessionManager → la bannière
-                // s'affichera automatiquement sur l'écran de destination.
-                // Si la session est l'unique entry du back stack (cas pathologique
-                // — deeplink direct), on retombe sur Home sans dupliquer Home.
-                val popped = navController.popBackStack()
-                if (!popped) {
-                    navController.navigate(com.shredcoach.app.presentation.navigation.Screen.Home.route) {
-                        launchSingleTop = true
-                        popUpTo(com.shredcoach.app.presentation.navigation.Screen.Home.route) {
-                            inclusive = true
+                // Retour idiomatique : on délègue au VM (qui purge la séance
+                // freestyle vide AVANT de pop, sinon laisse l'active session
+                // vivre — bannière de reprise sur l'écran de destination).
+                viewModel.exitSession {
+                    val popped = navController.popBackStack()
+                    if (!popped) {
+                        navController.navigate(com.shredcoach.app.presentation.navigation.Screen.Home.route) {
+                            launchSingleTop = true
+                            popUpTo(com.shredcoach.app.presentation.navigation.Screen.Home.route) {
+                                inclusive = true
+                            }
                         }
                     }
                 }
@@ -588,6 +603,7 @@ private fun SessionTopBar(
 @Composable
 private fun ExerciseHeader(exercise: ExerciseEntity, chronoSec: Long, onSkip: () -> Unit) {
     var showGifFullscreen by remember { mutableStateOf(false) }
+    val localized = com.shredcoach.app.domain.exercise.rememberLocalizedExercise(exercise)
 
     // ─── Dialog GIF fullscreen ───
     if (showGifFullscreen && exercise.gifUrl != null) {
@@ -624,7 +640,7 @@ private fun ExerciseHeader(exercise: ExerciseEntity, chronoSec: Long, onSkip: ()
                 // sans devenir agaçant. Quand le nom tient, c'est statique.
                 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
                 Text(
-                    exercise.name,
+                    localized.name,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
@@ -722,11 +738,12 @@ private fun ExerciseGif(gifUrl: String, modifier: Modifier = Modifier) {
 
 @Composable
 private fun GifFullscreenDialog(exercise: ExerciseEntity, onDismiss: () -> Unit) {
+    val localized = com.shredcoach.app.domain.exercise.rememberLocalizedExercise(exercise)
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.fillMaxWidth(),
         title = {
-            Text(exercise.name, style = MaterialTheme.typography.titleLarge,
+            Text(localized.name, style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
         },
         text = {
@@ -747,26 +764,26 @@ private fun GifFullscreenDialog(exercise: ExerciseEntity, onDismiss: () -> Unit)
 
                 // Badges
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    TagBadge(exercise.muscleGroup.displayName, MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
-                    TagBadge(exercise.variant.displayName, Color(exercise.variant.color).copy(alpha = 0.2f), Color(exercise.variant.color))
-                    TagBadge(exercise.equipment, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant)
+                    TagBadge(stringResource(exercise.muscleGroup.displayNameRes), MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
+                    TagBadge(stringResource(exercise.variant.displayNameRes), Color(exercise.variant.color).copy(alpha = 0.2f), Color(exercise.variant.color))
+                    TagBadge(localized.equipment, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant)
                 }
 
                 // Conseils d'exécution
-                if (exercise.executionKey.isNotBlank()) {
-                    Text(exercise.executionKey, style = MaterialTheme.typography.bodyMedium,
+                if (localized.execution.isNotBlank()) {
+                    Text(localized.execution, style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f))
                 }
 
                 // Tips
-                if (exercise.tips.isNotBlank()) {
+                if (localized.tips.isNotBlank()) {
                     Surface(
                         shape = RoundedCornerShape(10.dp),
                         color = OrangeVibrant.copy(alpha = 0.08f)
                     ) {
                         Row(Modifier.padding(10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Icon(Icons.Default.Lightbulb, null, Modifier.size(16.dp), tint = OrangeVibrant)
-                            Text(exercise.tips, style = MaterialTheme.typography.bodySmall,
+                            Text(localized.tips, style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                         }
                     }
@@ -1122,6 +1139,7 @@ private fun WarmupBlockView(state: WorkoutSessionState, viewModel: WorkoutSessio
 
 @Composable
 private fun WarmupStepCard(stepNumber: Int, exercise: ExerciseEntity, isCompleted: Boolean, isCurrent: Boolean, duration: Long?) {
+    val localized = com.shredcoach.app.domain.exercise.rememberLocalizedExercise(exercise)
     Card(
         colors = CardDefaults.cardColors(
             containerColor = when {
@@ -1146,9 +1164,10 @@ private fun WarmupStepCard(stepNumber: Int, exercise: ExerciseEntity, isComplete
                 }
             }
             Column(Modifier.weight(1f)) {
-                Text(exercise.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold,
+                Text(localized.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold,
                     color = if (!isCurrent && !isCompleted) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f) else MaterialTheme.colorScheme.onSurface)
-                // Durée recommandée
+                // Durée recommandée — heuristique sur le nom FR canonique (DB) car
+                // le warmup type est encodé dedans ; ne dépend pas de la locale UI.
                 val recommendedTime = when {
                     exercise.name.contains("Cardio", true) -> "5-10 min"
                     exercise.name.contains("Mobilisation", true) -> "2-3 min"
@@ -1157,8 +1176,8 @@ private fun WarmupStepCard(stepNumber: Int, exercise: ExerciseEntity, isComplete
                     else -> "${exercise.repsMin}-${exercise.repsMax} reps"
                 }
                 Text(recommendedTime, style = MaterialTheme.typography.labelSmall, color = OrangeVibrant.copy(alpha = 0.8f))
-                if (isCurrent && exercise.executionKey.isNotBlank()) {
-                    Text(exercise.executionKey, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                if (isCurrent && localized.execution.isNotBlank()) {
+                    Text(localized.execution, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                 }
             }
             duration?.let {
@@ -2022,6 +2041,7 @@ private fun OverviewExerciseCard(
     onDelete: (() -> Unit)?
 ) {
     val alpha = if (isDone && !isCurrent) 0.45f else 1f
+    val localized = com.shredcoach.app.domain.exercise.rememberLocalizedExercise(exercise)
 
     Card(
         onClick = { onJump?.invoke() },
@@ -2090,13 +2110,13 @@ private fun OverviewExerciseCard(
             // Info exercice — 3 lignes indépendantes, jamais comprimées
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 // Ligne 1 : nom de l'exercice (pleine largeur, tronque si besoin)
-                Text(exercise.name, style = MaterialTheme.typography.bodyMedium,
+                Text(localized.name, style = MaterialTheme.typography.bodyMedium,
                     fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium,
                     maxLines = 2, overflow = TextOverflow.Ellipsis)
 
                 // Ligne 2 : groupe musculaire + badge EN COURS
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(exercise.muscleGroup.displayName, style = MaterialTheme.typography.labelSmall,
+                    Text(stringResource(exercise.muscleGroup.displayNameRes), style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                     if (isCurrent) {
                         Surface(shape = RoundedCornerShape(4.dp), color = OrangeVibrant) {
@@ -2413,6 +2433,7 @@ private fun TransitionStat(icon: androidx.compose.ui.graphics.vector.ImageVector
 @Composable
 private fun CoachTipCard(exercise: ExerciseEntity) {
     var expanded by remember { mutableStateOf(false) }
+    val localized = com.shredcoach.app.domain.exercise.rememberLocalizedExercise(exercise)
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)),
         modifier = Modifier.clickable { expanded = !expanded }
@@ -2426,8 +2447,8 @@ private fun CoachTipCard(exercise: ExerciseEntity) {
                 Icon(if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore, stringResource(R.string.workout_cd_toggle), Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f))
             }
             if (expanded) {
-                if (exercise.tips.isNotBlank()) Text(exercise.tips, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f))
-                if (exercise.executionKey.isNotBlank()) Text(exercise.executionKey, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f))
+                if (localized.tips.isNotBlank()) Text(localized.tips, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f))
+                if (localized.execution.isNotBlank()) Text(localized.execution, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f))
             }
         }
     }

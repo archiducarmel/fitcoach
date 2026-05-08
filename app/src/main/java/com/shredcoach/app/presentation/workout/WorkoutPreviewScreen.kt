@@ -532,6 +532,7 @@ fun ExercisePreviewCard(
     var expanded by remember { mutableStateOf(false) }
     val isStrength = exercise.muscleGroup != MuscleGroup.WARMUP && exercise.muscleGroup != MuscleGroup.CARDIO
     val canExpand = isStrength && onSeriesChange != null
+    val localized = com.shredcoach.app.domain.exercise.rememberLocalizedExercise(exercise)
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -554,7 +555,7 @@ fun ExercisePreviewCard(
                             SubcomposeAsyncImage(
                                 model = ImageRequest.Builder(ctx).data(exercise.gifUrl)
                                     .size(Size(128, 128)).crossfade(true).build(),
-                                contentDescription = exercise.name, modifier = Modifier.fillMaxSize(),
+                                contentDescription = localized.name, modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop,
                                 error = { Icon(Icons.Default.FitnessCenter, null, Modifier.size(26.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)) }
                             )
@@ -575,7 +576,7 @@ fun ExercisePreviewCard(
 
                 // Exercise Info
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(exercise.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold,
+                    Text(localized.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold,
                         maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, lineHeight = 18.sp)
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Surface(shape = MaterialTheme.shapes.small, color = Color(exercise.variant.color).copy(alpha = 0.2f)) {
@@ -665,6 +666,7 @@ fun CardioExerciseCard(
     onSwap: (() -> Unit)? = null
 ) {
     val ctx = LocalContext.current
+    val localized = com.shredcoach.app.domain.exercise.rememberLocalizedExercise(exercise)
     Card(
         onClick = { onClick?.invoke() },
         modifier = modifier.fillMaxWidth(),
@@ -683,7 +685,7 @@ fun CardioExerciseCard(
                     SubcomposeAsyncImage(
                         model = ImageRequest.Builder(ctx).data(exercise.gifUrl)
                             .size(Size(128, 128)).crossfade(true).build(),
-                        contentDescription = exercise.name, modifier = Modifier.fillMaxSize(),
+                        contentDescription = localized.name, modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,
                         error = { Icon(Icons.AutoMirrored.Filled.DirectionsRun, null, Modifier.size(28.dp), tint = NeonGreen) }
                     )
@@ -698,7 +700,7 @@ fun CardioExerciseCard(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    exercise.name,
+                    localized.name,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -722,9 +724,9 @@ fun CardioExerciseCard(
                     )
                 }
 
-                if (exercise.tips.isNotBlank()) {
+                if (localized.tips.isNotBlank()) {
                     Text(
-                        exercise.tips.take(80) + if (exercise.tips.length > 80) "..." else "",
+                        localized.tips.take(80) + if (localized.tips.length > 80) "..." else "",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
@@ -753,6 +755,7 @@ fun SwapExerciseDialog(
     onSelect: (ExerciseEntity) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val localizedCurrent = com.shredcoach.app.domain.exercise.rememberLocalizedExercise(exercise)
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -765,7 +768,7 @@ fun SwapExerciseDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    stringResource(R.string.swap_dialog_current, exercise.name, stringResource(exercise.variant.displayNameRes)),
+                    stringResource(R.string.swap_dialog_current, localizedCurrent.name, stringResource(exercise.variant.displayNameRes)),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
@@ -791,6 +794,7 @@ fun SwapExerciseDialog(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(alternatives, key = { it.id }) { alt ->
+                            val localizedAlt = com.shredcoach.app.domain.exercise.rememberLocalizedExercise(alt)
                             Card(
                                 onClick = { onSelect(alt) },
                                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -807,7 +811,7 @@ fun SwapExerciseDialog(
                                             SubcomposeAsyncImage(
                                                 model = ImageRequest.Builder(ctx).data(alt.gifUrl)
                                                     .size(Size(112, 112)).crossfade(true).build(),
-                                                contentDescription = alt.name, modifier = Modifier.fillMaxSize(),
+                                                contentDescription = localizedAlt.name, modifier = Modifier.fillMaxSize(),
                                                 contentScale = ContentScale.Crop,
                                                 error = { Icon(Icons.Default.FitnessCenter, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)) }
                                             )
@@ -816,8 +820,8 @@ fun SwapExerciseDialog(
                                         }
                                     }
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Text(alt.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                                        Text("${alt.equipment.take(40)}${if (alt.equipment.length > 40) "..." else ""}",
+                                        Text(localizedAlt.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                        Text("${localizedAlt.equipment.take(40)}${if (localizedAlt.equipment.length > 40) "..." else ""}",
                                             style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                                     }
                                     Surface(shape = MaterialTheme.shapes.small, color = Color(alt.variant.color).copy(alpha = 0.2f)) {

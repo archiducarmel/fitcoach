@@ -16,6 +16,7 @@ import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.data.repository.WorkoutRepository
 import com.shredcoach.app.domain.calendar.FrenchHolidays
 import com.shredcoach.app.domain.calendar.FrenchSchoolHolidays
+import com.shredcoach.app.domain.locale.withCurrentLocale
 import com.shredcoach.app.notification.NotificationScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -51,6 +52,8 @@ data class CalendarState(
     val streakDays: Int = 0,
     // Prochaine séance à venir
     val nextUpcoming: ScheduledWorkoutEntity? = null,
+    /** Top 5 des prochaines séances PLANNED — toutes périodes confondues. */
+    val upcomingSessions: List<ScheduledWorkoutEntity> = emptyList(),
     // Suggestions IA
     val isSuggesting: Boolean = false,
     val suggestedDates: List<LocalDate> = emptyList(),
@@ -100,11 +103,15 @@ class CalendarViewModel @Inject constructor(
         viewModelScope.launch {
             scheduledRepo.getAll().collect { all ->
                 val today = LocalDate.now()
-                val upcoming = all
+                val upcomingAll = all
                     .filter { it.status == "PLANNED" && !it.date.isBefore(today) }
                     .sortedWith(compareBy({ it.date }, { it.time ?: LocalTime.MIN }))
-                    .firstOrNull()
-                _state.update { it.copy(nextUpcoming = upcoming) }
+                _state.update {
+                    it.copy(
+                        nextUpcoming = upcomingAll.firstOrNull(),
+                        upcomingSessions = upcomingAll.take(5),
+                    )
+                }
             }
         }
         loadMonth(_state.value.currentMonth)
@@ -300,7 +307,7 @@ Pas de salutations, pas de liste — juste la phrase.
                 } catch (_: Exception) { null }
             } else null
 
-            val fallbackMsg = appContext.getString(com.shredcoach.app.R.string.ai_sugg_fallback, suggestions.size)
+            val fallbackMsg = appContext.withCurrentLocale().getString(com.shredcoach.app.R.string.ai_sugg_fallback, suggestions.size)
 
             _state.update {
                 it.copy(

@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.shredcoach.app.data.local.dao.*
 import com.shredcoach.app.data.local.entity.ExerciseEntity
 import com.shredcoach.app.data.repository.StatsRepository
+import com.shredcoach.app.domain.locale.withCurrentLocale
 import com.shredcoach.app.domain.model.MuscleGroup
 import com.shredcoach.app.domain.training.SetMetricFormatter
 import com.shredcoach.app.domain.training.SetMetricFormatter.ExerciseKind
@@ -165,6 +166,9 @@ data class ExerciseProgressionEntry(
  * Tranches horaires utilisées pour la timeline "Quand tu manges".
  * Bornes inclusives sur start, exclusives sur end (sauf NUIT qui boucle).
  */
+/** Tonalité du verdict macro — découple la couleur UI de la chaîne localisée. */
+enum class MacroVerdictTone { OPTIMAL, WARNING, NEUTRAL }
+
 enum class MealHourBucket(
     val label: String,
     @androidx.annotation.StringRes val labelRes: Int,
@@ -218,6 +222,8 @@ data class NutritionStatsData(
     val fatsKcalPct: Float = 0f,
     /** Verdict qualitatif sur le split (ex: "Split optimal pour la sèche"). */
     val macroSplitVerdict: String = "",
+    /** Tonalité du verdict — sert à colorer l'UI sans dépendre du texte localisé. */
+    val macroSplitVerdictTone: MacroVerdictTone = MacroVerdictTone.NEUTRAL,
 
     // ── Distribution Nutri-Score sur la période (depuis MealScanEntity) ──
     val nutriCountA: Int = 0,
@@ -275,6 +281,14 @@ class StatsViewModel @Inject constructor(
 
     private val _nutritionStats = MutableStateFlow(NutritionStatsData())
     val nutritionStats: StateFlow<NutritionStatsData> = _nutritionStats.asStateFlow()
+
+    /**
+     * Context wrappé sur la locale runtime — toute lecture de R.string côté
+     * ViewModel doit passer par lui (les insights, verdicts, etc. émis vers
+     * l'UI sont sinon servis dans la locale système au lieu de celle choisie
+     * par l'user).
+     */
+    private val localized: Context get() = appContext.withCurrentLocale()
 
     init { loadExercises(); loadStats(); loadNutritionStats() }
 
@@ -362,7 +376,7 @@ class StatsViewModel @Inject constructor(
                 val totalSets = muscleData.sumOf { it.setCount }.coerceAtLeast(1)
                 val muscleDistribution = muscleData.map { data ->
                     val mg = try { MuscleGroup.valueOf(data.muscleGroup) } catch (_: Exception) { null }
-                    val displayName = mg?.displayNameRes?.let { appContext.getString(it) } ?: data.muscleGroup
+                    val displayName = mg?.displayNameRes?.let { localized.getString(it) } ?: data.muscleGroup
                     MuscleSlice(data.muscleGroup, displayName, data.setCount, data.setCount.toFloat() / totalSets)
                 }
                 val mostTrainedMuscle = muscleDistribution.maxByOrNull { it.count }?.displayName ?: ""
@@ -460,11 +474,11 @@ class StatsViewModel @Inject constructor(
 
             val vd = volumeDelta.toInt()
             val insight: String = when {
-                vd > 20 -> appContext.getString(R.string.stats_period_insight_strong_progress, vd)
-                vd > 5 -> appContext.getString(R.string.stats_period_insight_progress, vd)
-                vd > -5 -> appContext.getString(R.string.stats_period_insight_stable)
-                vd > -20 -> appContext.getString(R.string.stats_period_insight_slight_drop, -vd)
-                else -> appContext.getString(R.string.stats_period_insight_drop, -vd)
+                vd > 20 -> localized.getString(R.string.stats_period_insight_strong_progress, vd)
+                vd > 5 -> localized.getString(R.string.stats_period_insight_progress, vd)
+                vd > -5 -> localized.getString(R.string.stats_period_insight_stable)
+                vd > -20 -> localized.getString(R.string.stats_period_insight_slight_drop, -vd)
+                else -> localized.getString(R.string.stats_period_insight_drop, -vd)
             }
 
             return PeriodComparison(currWorkouts, prevWorkouts, currVolume, prevVolume, workoutDelta, volumeDelta, insight)
@@ -503,12 +517,12 @@ class StatsViewModel @Inject constructor(
         val projected = lastWeight + slope * 4
 
         val suggestion = when {
-            isPlateauing && plateauWeeks >= 4 -> appContext.getString(R.string.stats_trend_plateau)
-            slope > 2.0 -> appContext.getString(R.string.stats_trend_fast)
-            slope > 0.5 -> appContext.getString(R.string.stats_trend_steady)
-            slope > 0 -> appContext.getString(R.string.stats_trend_slow)
-            slope < -1 -> appContext.getString(R.string.stats_trend_regression)
-            else -> appContext.getString(R.string.stats_trend_stagnation)
+            isPlateauing && plateauWeeks >= 4 -> localized.getString(R.string.stats_trend_plateau)
+            slope > 2.0 -> localized.getString(R.string.stats_trend_fast)
+            slope > 0.5 -> localized.getString(R.string.stats_trend_steady)
+            slope > 0 -> localized.getString(R.string.stats_trend_slow)
+            slope < -1 -> localized.getString(R.string.stats_trend_regression)
+            else -> localized.getString(R.string.stats_trend_stagnation)
         }
 
         return TrendData(slope, isPlateauing, plateauWeeks, projected.coerceAtLeast(0.0), suggestion)
@@ -729,7 +743,7 @@ class StatsViewModel @Inject constructor(
                 val (protPct, carbPct, fatPct) = computeMacroSplit(
                     current.totalProt, current.totalCarbs, current.totalFats
                 )
-                val macroVerdict = computeMacroVerdict(protPct, carbPct, fatPct, profile?.goal)
+                val (macroVerdict, macroVerdictTone) = computeMacroVerdict(protPct, carbPct, fatPct, profile?.goal)
 
                 // ─── Heures de repas (timeline buckets) ───
                 val mealsByBucket = computeMealHourBuckets(today.minusDays((daysInPeriod - 1).toLong()), today)
@@ -799,6 +813,7 @@ class StatsViewModel @Inject constructor(
                         protPerKg = protKg,
                         proteinKcalPct = protPct, carbsKcalPct = carbPct, fatsKcalPct = fatPct,
                         macroSplitVerdict = macroVerdict,
+                        macroSplitVerdictTone = macroVerdictTone,
                         nutriCountA = nA, nutriCountB = nB, nutriCountC = nC, nutriCountD = nD, nutriCountE = nE,
                         prevAvgCalories = prevAvgCal,
                         caloriesDelta = avgCal - prevAvgCal,
@@ -922,25 +937,25 @@ class StatsViewModel @Inject constructor(
     private fun computeMacroVerdict(
         protPct: Float, carbPct: Float, fatPct: Float,
         goal: com.shredcoach.app.data.local.entity.FitnessGoal?
-    ): String {
-        if (protPct + carbPct + fatPct < 0.5f) return ""  // pas assez de données
+    ): Pair<String, MacroVerdictTone> {
+        if (protPct + carbPct + fatPct < 0.5f) return "" to MacroVerdictTone.NEUTRAL  // pas assez de données
         return when (goal) {
             com.shredcoach.app.data.local.entity.FitnessGoal.SHRED -> when {
-                protPct < 0.30f -> appContext.getString(R.string.stats_macro_shred_low_prot)
-                fatPct > 0.40f -> appContext.getString(R.string.stats_macro_shred_high_fat)
-                carbPct > 0.50f -> appContext.getString(R.string.stats_macro_shred_high_carb)
-                protPct >= 0.35f && fatPct <= 0.30f -> appContext.getString(R.string.stats_macro_shred_optimal)
-                else -> appContext.getString(R.string.stats_macro_shred_balanced)
+                protPct < 0.30f -> localized.getString(R.string.stats_macro_shred_low_prot) to MacroVerdictTone.WARNING
+                fatPct > 0.40f -> localized.getString(R.string.stats_macro_shred_high_fat) to MacroVerdictTone.NEUTRAL
+                carbPct > 0.50f -> localized.getString(R.string.stats_macro_shred_high_carb) to MacroVerdictTone.NEUTRAL
+                protPct >= 0.35f && fatPct <= 0.30f -> localized.getString(R.string.stats_macro_shred_optimal) to MacroVerdictTone.OPTIMAL
+                else -> localized.getString(R.string.stats_macro_shred_balanced) to MacroVerdictTone.OPTIMAL
             }
             com.shredcoach.app.data.local.entity.FitnessGoal.BULK -> when {
-                carbPct < 0.40f -> appContext.getString(R.string.stats_macro_bulk_low_carb)
-                protPct < 0.20f -> appContext.getString(R.string.stats_macro_bulk_low_prot)
-                else -> appContext.getString(R.string.stats_macro_bulk_optimal)
+                carbPct < 0.40f -> localized.getString(R.string.stats_macro_bulk_low_carb) to MacroVerdictTone.WARNING
+                protPct < 0.20f -> localized.getString(R.string.stats_macro_bulk_low_prot) to MacroVerdictTone.WARNING
+                else -> localized.getString(R.string.stats_macro_bulk_optimal) to MacroVerdictTone.OPTIMAL
             }
             else -> when {
-                protPct < 0.20f -> appContext.getString(R.string.stats_macro_maintain_low_prot)
-                fatPct > 0.40f -> appContext.getString(R.string.stats_macro_maintain_high_fat)
-                else -> appContext.getString(R.string.stats_macro_maintain_balanced)
+                protPct < 0.20f -> localized.getString(R.string.stats_macro_maintain_low_prot) to MacroVerdictTone.WARNING
+                fatPct > 0.40f -> localized.getString(R.string.stats_macro_maintain_high_fat) to MacroVerdictTone.NEUTRAL
+                else -> localized.getString(R.string.stats_macro_maintain_balanced) to MacroVerdictTone.OPTIMAL
             }
         }
     }
@@ -981,45 +996,45 @@ class StatsViewModel @Inject constructor(
         streak: Int,
         fasting: com.shredcoach.app.domain.nutrition.FastingStats,
     ): List<String> {
-        if (daysTracked == 0) return listOf(appContext.getString(R.string.stats_insight_no_data))
+        if (daysTracked == 0) return listOf(localized.getString(R.string.stats_insight_no_data))
         val list = mutableListOf<String>()
 
         // 1. Alertes protéines (priorité haute en sèche)
         if (profileGoal == com.shredcoach.app.data.local.entity.FitnessGoal.SHRED && protKg in 0.01..1.4) {
-            list += appContext.getString(R.string.stats_insight_low_protein, "%.1f".format(protKg))
+            list += localized.getString(R.string.stats_insight_low_protein, "%.1f".format(protKg))
         }
 
         // 2. Compliance / trends calories
         val complianceShare = if (daysInPeriod > 0) complianceDays.toFloat() / daysInPeriod else 0f
         when {
-            complianceShare >= 0.7f -> list += appContext.getString(R.string.stats_insight_compliance_high, complianceDays, daysInPeriod)
-            complianceShare >= 0.4f -> list += appContext.getString(R.string.stats_insight_compliance_mid, complianceDays, daysInPeriod)
-            avgCal < targetCal * 0.8 -> list += appContext.getString(R.string.stats_insight_deficit, targetCal - avgCal)
-            avgCal > targetCal * 1.2 -> list += appContext.getString(R.string.stats_insight_surplus, avgCal - targetCal)
+            complianceShare >= 0.7f -> list += localized.getString(R.string.stats_insight_compliance_high, complianceDays, daysInPeriod)
+            complianceShare >= 0.4f -> list += localized.getString(R.string.stats_insight_compliance_mid, complianceDays, daysInPeriod)
+            avgCal < targetCal * 0.8 -> list += localized.getString(R.string.stats_insight_deficit, targetCal - avgCal)
+            avgCal > targetCal * 1.2 -> list += localized.getString(R.string.stats_insight_surplus, avgCal - targetCal)
         }
 
         // 3. Comparaison vs période précédente
         if (kotlin.math.abs(caloriesDelta) > 50) {
             val sign = if (caloriesDelta >= 0) "+" else ""
-            list += appContext.getString(R.string.stats_insight_kcal_delta, sign, caloriesDelta)
+            list += localized.getString(R.string.stats_insight_kcal_delta, sign, caloriesDelta)
         }
-        if (proteinsDelta >= 15) list += appContext.getString(R.string.stats_insight_protein_delta, proteinsDelta)
+        if (proteinsDelta >= 15) list += localized.getString(R.string.stats_insight_protein_delta, proteinsDelta)
 
         // 4. Qualité Nutri-Score
-        if (nutriHighShare >= 0.7f) list += appContext.getString(R.string.stats_insight_nutri_high, (nutriHighShare * 100).toInt())
-        else if (nutriHighShare in 0.01f..0.3f) list += appContext.getString(R.string.stats_insight_nutri_low)
+        if (nutriHighShare >= 0.7f) list += localized.getString(R.string.stats_insight_nutri_high, (nutriHighShare * 100).toInt())
+        else if (nutriHighShare in 0.01f..0.3f) list += localized.getString(R.string.stats_insight_nutri_low)
 
         // 5. Streak
-        if (streak >= 7) list += appContext.getString(R.string.stats_insight_streak, streak)
+        if (streak >= 7) list += localized.getString(R.string.stats_insight_streak, streak)
 
         // 6. Jeûne intermittent
         if (!fasting.isEmpty && fasting.daysMeasured >= 3) {
             val avg = fasting.averageHours
             when {
-                avg >= 16.0 -> list += appContext.getString(R.string.stats_insight_fasting_16h, formatHours(avg))
-                avg >= 14.0 && fasting.daysWith16h >= 1 -> list += appContext.getString(R.string.stats_insight_fasting_with_16h, formatHours(avg), fasting.daysWith16h)
-                avg >= 14.0 -> list += appContext.getString(R.string.stats_insight_fasting_progress, formatHours(avg))
-                avg < 12.0 -> list += appContext.getString(R.string.stats_insight_fasting_low, formatHours(avg))
+                avg >= 16.0 -> list += localized.getString(R.string.stats_insight_fasting_16h, formatHours(avg))
+                avg >= 14.0 && fasting.daysWith16h >= 1 -> list += localized.getString(R.string.stats_insight_fasting_with_16h, formatHours(avg), fasting.daysWith16h)
+                avg >= 14.0 -> list += localized.getString(R.string.stats_insight_fasting_progress, formatHours(avg))
+                avg < 12.0 -> list += localized.getString(R.string.stats_insight_fasting_low, formatHours(avg))
             }
         }
 

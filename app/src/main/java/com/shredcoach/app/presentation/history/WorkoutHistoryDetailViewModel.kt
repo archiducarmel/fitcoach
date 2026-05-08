@@ -11,6 +11,7 @@ import com.shredcoach.app.data.local.entity.ExerciseEntity
 import com.shredcoach.app.data.local.entity.WorkoutLogEntity
 import com.shredcoach.app.data.local.entity.WorkoutSetEntity
 import com.shredcoach.app.data.repository.WorkoutRepository
+import com.shredcoach.app.domain.locale.withCurrentLocale
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
@@ -54,7 +55,7 @@ class WorkoutHistoryDetailViewModel @Inject constructor(
             val log = workoutRepository.getWorkoutLogById(logId) ?: return@launch
             val workout = log.workoutId?.let { workoutRepository.getWorkoutById(it) }
             val workoutName = if (workout == null || workout.isFreestyle) {
-                appContext.getString(R.string.history_freestyle_session_name)
+                appContext.withCurrentLocale().getString(R.string.history_freestyle_session_name)
             } else {
                 workout.name
             }

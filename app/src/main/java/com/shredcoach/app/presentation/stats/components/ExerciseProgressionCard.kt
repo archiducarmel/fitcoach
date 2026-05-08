@@ -28,6 +28,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.geometry.Offset
@@ -40,6 +42,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.shredcoach.app.R
 import com.shredcoach.app.domain.training.ExerciseProgression
 import com.shredcoach.app.domain.training.ProgressStatus
 
@@ -68,10 +71,16 @@ fun ExerciseProgressionCard(
     modifier: Modifier = Modifier,
 ) {
     val accent = statusColor(progression.status, progression.hasFreshPr)
-    val statusLabelA11y = a11yStatusLabel(progression.status, progression.hasFreshPr)
-    val cardA11y = "$exerciseName, 1RM ${formatKg(progression.estimatedOneRmKg)} kg, " +
-        "$statusLabelA11y, ${progression.sessionsCount} séances analysées, " +
-        "record perso ${formatKg(progression.bestOneRmKg)} kg"
+    val ctx = LocalContext.current
+    val statusLabelA11y = a11yStatusLabel(ctx, progression.status, progression.hasFreshPr)
+    val cardA11y = stringResource(
+        R.string.stats_progression_a11y_card,
+        exerciseName,
+        formatKg(progression.estimatedOneRmKg),
+        statusLabelA11y,
+        progression.sessionsCount,
+        formatKg(progression.bestOneRmKg),
+    )
 
     Card(
         modifier = modifier
@@ -114,14 +123,14 @@ fun ExerciseProgressionCard(
                     color = accent,
                 )
                 Text(
-                    text = " kg 1RM",
+                    text = " " + stringResource(R.string.stats_progression_unit_1rm),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 6.dp),
                 )
                 Spacer(Modifier.weight(1f))
                 Text(
-                    text = "${progression.sessionsCount} séances",
+                    text = stringResource(R.string.stats_progression_sessions_count, progression.sessionsCount),
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -144,7 +153,7 @@ fun ExerciseProgressionCard(
                 )
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "best",
+                        text = stringResource(R.string.stats_progression_best_label),
                         fontSize = 9.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -168,17 +177,17 @@ private fun StatusBadge(status: ProgressStatus, hasFreshPr: Boolean) {
             // %.1f : la pente est l'info clé du badge — tronquer à 0.5kg près
             // (comme formatKg) ferait afficher "+0.5kg/sem" pour une pente
             // réelle de 0.7, juste au-dessus du seuil 0.6 → confusion utilisateur.
-            "+%.1fkg/sem".format(status.weeklyDeltaKg),
+            stringResource(R.string.stats_progression_badge_kg_per_week, "%.1f".format(status.weeklyDeltaKg)),
             Color(0xFF00C853),
             Icons.Filled.NorthEast,
         )
-        status is ProgressStatus.Stable -> Triple("Stable", Color(0xFF78909C), Icons.Filled.Remove)
+        status is ProgressStatus.Stable -> Triple(stringResource(R.string.stats_progression_badge_stable), Color(0xFF78909C), Icons.Filled.Remove)
         status is ProgressStatus.Plateau -> Triple(
-            "Plateau ${status.weeksFlat}sem",
+            stringResource(R.string.stats_progression_badge_plateau, status.weeksFlat),
             Color(0xFFE53935),
             Icons.Filled.SouthEast,
         )
-        else -> Triple("Stable", Color(0xFF78909C), Icons.Filled.Remove)
+        else -> Triple(stringResource(R.string.stats_progression_badge_stable), Color(0xFF78909C), Icons.Filled.Remove)
     }
 
     Row(
@@ -295,13 +304,13 @@ private fun formatKg(value: Double): String =
  * Phrase TalkBack-friendly pour le statut. Évite les daltoniens / utilisateurs
  * non-voyants à dépendre du seul code couleur du badge.
  */
-private fun a11yStatusLabel(status: ProgressStatus, hasFreshPr: Boolean): String = when {
-    hasFreshPr -> "nouveau record personnel"
+private fun a11yStatusLabel(ctx: android.content.Context, status: ProgressStatus, hasFreshPr: Boolean): String = when {
+    hasFreshPr -> ctx.getString(R.string.stats_progression_a11y_pr)
     status is ProgressStatus.Progressing ->
-        "en progression de ${"%.1f".format(status.weeklyDeltaKg)} kg par semaine"
+        ctx.getString(R.string.stats_progression_a11y_progressing, "%.1f".format(status.weeklyDeltaKg))
     status is ProgressStatus.Plateau ->
-        "plateau depuis ${status.weeksFlat} semaines"
-    else -> "stable"
+        ctx.getString(R.string.stats_progression_a11y_plateau, status.weeksFlat)
+    else -> ctx.getString(R.string.stats_progression_a11y_stable)
 }
 
 /**

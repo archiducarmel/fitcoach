@@ -23,6 +23,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -241,14 +242,10 @@ fun MacroSplitDonutCard(state: NutritionStatsData) {
 
             // Verdict qualitatif
             if (state.macroSplitVerdict.isNotEmpty()) {
-                val color = when {
-                    state.macroSplitVerdict.contains("optimal", ignoreCase = true) -> NeonGreen
-                    state.macroSplitVerdict.contains("équilibre", ignoreCase = true) ||
-                        state.macroSplitVerdict.contains("adapté", ignoreCase = true) ||
-                        state.macroSplitVerdict.contains("correct", ignoreCase = true) -> NeonGreen
-                    state.macroSplitVerdict.contains("Manque", ignoreCase = true) ||
-                        state.macroSplitVerdict.contains("Pas assez", ignoreCase = true) -> ErrorRed
-                    else -> OrangeVibrant
+                val color = when (state.macroSplitVerdictTone) {
+                    MacroVerdictTone.OPTIMAL -> NeonGreen
+                    MacroVerdictTone.WARNING -> ErrorRed
+                    MacroVerdictTone.NEUTRAL -> OrangeVibrant
                 }
                 Surface(
                     shape = RoundedCornerShape(10.dp),
@@ -503,7 +500,22 @@ private fun MealHourBucketBar(bucket: MealHourBucket, count: Int, ratio: Float, 
         Text(bucket.emoji, fontSize = 16.sp)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(bucket.labelRes), style = MaterialTheme.typography.labelMedium, modifier = Modifier.weight(1f))
+                // Label "Matin (5h-11h)" : créneau horaire en parenthèses pour
+                // que l'user sache à quoi correspond chaque bucket sans avoir
+                // à deviner. Pour NIGHT (23h→6h, wrap minuit), le format reste
+                // "23h-6h" qui se comprend naturellement.
+                Text(
+                    stringResource(
+                        R.string.stats_meal_bucket_label_with_range,
+                        stringResource(bucket.labelRes),
+                        bucket.startHour,
+                        bucket.endHour,
+                    ),
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
                 val pct = if (total > 0) (count.toFloat() / total * 100).toInt() else 0
                 Text(
                     stringResource(R.string.nutri_widget_meals_count_pct, count, pct),
@@ -586,6 +598,7 @@ private fun CaloriesBarsChart(state: NutritionStatsData) {
         fontWeight = FontWeight.Bold,
     )
     val tm = rememberTextMeasurer()
+    val targetLabelCtx = LocalContext.current
 
     Column(
         Modifier.fillMaxWidth(),
@@ -691,7 +704,8 @@ private fun CaloriesBarsChart(state: NutritionStatsData) {
                 // Label "Cible XXXX" du dernier jour, posé à droite avec un
                 // fond surface pour ne pas être barré par la ligne.
                 val lastTarget = targets.last()
-                val tl = tm.measure("Cible $lastTarget", labelStyle)
+                val targetLabelText = targetLabelCtx.getString(R.string.stats_calories_target_label, lastTarget)
+                val tl = tm.measure(targetLabelText, labelStyle)
                 val labelPad = 3f
                 val labelX = (w - tl.size.width - labelPad).coerceAtLeast(0f)
                 val labelY = (centersY.last() - tl.size.height / 2f)
@@ -736,6 +750,8 @@ private fun CaloriesSmoothChart(state: NutritionStatsData) {
         return
     }
     val target = state.targetCalories.toFloat()
+    val ctx = LocalContext.current
+    val targetLabel = ctx.getString(R.string.stats_calories_target_label, target.toInt())
     val textMeasurer = rememberTextMeasurer()
     val labelStyle = TextStyle(
         fontSize = 10.sp,
@@ -829,7 +845,6 @@ private fun CaloriesSmoothChart(state: NutritionStatsData) {
         drawCircle(Color.White, 2.5f, last)
 
         // Label "Objectif" à droite
-        val targetLabel = "Cible ${target.toInt()}"
         val tlT = textMeasurer.measure(targetLabel, labelStyle.copy(color = targetColor))
         drawText(tlT, topLeft = Offset(w - padR - tlT.size.width, yTarget - tlT.size.height - 2f))
     }
@@ -860,7 +875,7 @@ fun FastingWindowCard(stats: com.shredcoach.app.domain.nutrition.FastingStats) {
     // 14h+16h qui dilue le focus et alourdit la card.
     val showSixteen = stats.daysWith16h > 0 || stats.averageHours >= 14.0
     val milestoneCount = if (showSixteen) stats.daysWith16h else stats.daysWith14h
-    val milestoneLabel = if (showSixteen) "Jours ≥ 16h" else "Jours ≥ 14h"
+    val milestoneLabel = if (showSixteen) stringResource(R.string.stats_fasting_days_16h) else stringResource(R.string.stats_fasting_days_14h)
     val milestoneAccent = if (milestoneCount > 0) NeonGreen else mutedTextColor
 
     Card(
@@ -879,7 +894,7 @@ fun FastingWindowCard(stats: com.shredcoach.app.domain.nutrition.FastingStats) {
             ) {
                 Icon(Icons.Default.NightsStay, null, Modifier.size(20.dp), tint = accent)
                 Text(
-                    "Jeûne intermittent",
+                    stringResource(R.string.stats_fasting_title),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -905,7 +920,7 @@ fun FastingWindowCard(stats: com.shredcoach.app.domain.nutrition.FastingStats) {
                         softWrap = false
                     )
                     Text(
-                        "jeûne moyen",
+                        stringResource(R.string.stats_fasting_avg_label),
                         style = MaterialTheme.typography.labelSmall,
                         color = mutedTextColor
                     )
@@ -925,7 +940,7 @@ fun FastingWindowCard(stats: com.shredcoach.app.domain.nutrition.FastingStats) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        "Fenêtre alimentaire ",
+                        stringResource(R.string.stats_fasting_window_label),
                         style = MaterialTheme.typography.labelMedium,
                         color = mutedTextColor,
                         maxLines = 1,
@@ -961,10 +976,23 @@ fun FastingWindowCard(stats: com.shredcoach.app.domain.nutrition.FastingStats) {
                 )
             }
 
+            // ── Chart temporel jeûne (≥ 2 jours mesurés) ──
+            // Même langage visuel que le chart calories : courbe lissée +
+            // gradient sous-jacent, ligne objectif 16h en pointillés, zone
+            // optimale 14-16h teintée. Permet à l'user de voir la régularité
+            // de son jeûne au fil des jours, pas juste la moyenne.
+            if (stats.series.size >= 2) {
+                FastingSeriesChart(
+                    series = stats.series,
+                    accent = accent,
+                    modifier = Modifier.fillMaxWidth().height(140.dp)
+                )
+            }
+
             // ── Verdict footer ── ton subtil, centré, sans ornement
-            if (stats.verdictText.isNotBlank()) {
+            stats.verdictRes?.let { res ->
                 Text(
-                    stats.verdictText,
+                    stringResource(res),
                     style = MaterialTheme.typography.bodySmall,
                     color = fastingVerdictColor(stats.averageHours),
                     textAlign = TextAlign.Center,
@@ -1140,6 +1168,140 @@ private fun formatClockCompact(hours: Double): String {
     val h = hours.toInt()
     val m = ((hours - h) * 60).toInt()
     return if (m < 5) "${h}h" else "${h}h${m.toString().padStart(2, '0')}"
+}
+
+/**
+ * Chart temporel adaptatif des heures de jeûne nocturne par jour.
+ * Même langage visuel que [CaloriesSmoothChart] : courbe lissée + gradient,
+ * ligne pointillée à 16h (objectif 16-8), zone teintée 14-16h.
+ *
+ * Adaptatif :
+ *  - Y axis bornée à [0, max(maxValue, 18h)] pour garder l'objectif 16h
+ *    visible même quand l'user ne dépasse jamais 12h.
+ *  - X axis : un point par jour mesuré (la série peut couvrir 7/30/90j
+ *    selon la période sélectionnée).
+ *  - Anim alpha 0→1 pour effet "fade in" à la première compo.
+ */
+@Composable
+private fun FastingSeriesChart(
+    series: List<Pair<java.time.LocalDate, Double>>,
+    accent: Color,
+    modifier: Modifier = Modifier,
+) {
+    if (series.size < 2) {
+        Box(modifier, contentAlignment = Alignment.Center) {
+            Text(
+                stringResource(R.string.nutri_widget_chart_no_data),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+            )
+        }
+        return
+    }
+    val target = 16f
+    val zoneMin = 14f
+    val textMeasurer = rememberTextMeasurer()
+    val labelStyle = TextStyle(
+        fontSize = 10.sp,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+        fontFeatureSettings = "tnum",
+    )
+    val gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+    val targetColor = NeonGreen
+    val zoneColor = NeonGreen.copy(alpha = 0.10f)
+    val animatedAlpha = remember { Animatable(0f) }
+    LaunchedEffect(series) {
+        animatedAlpha.snapTo(0f)
+        animatedAlpha.animateTo(1f, tween(700))
+    }
+
+    Canvas(modifier = modifier) {
+        val w = size.width; val h = size.height
+        val padL = 32f; val padR = 8f; val padT = 10f; val padB = 22f
+        val chartW = w - padL - padR; val chartH = h - padT - padB
+
+        val values = series.map { it.second.toFloat() }
+        val rawMax = max(values.max(), target + 2f)
+        val yMin = 0f
+        val yMax = rawMax
+        val yRange = (yMax - yMin).coerceAtLeast(2f)
+
+        // Grid Y (4 paliers)
+        val grid = 4
+        for (i in 0..grid) {
+            val v = yMin + yRange * i / grid
+            val y = padT + chartH * (1f - i.toFloat() / grid)
+            drawLine(gridColor, Offset(padL, y), Offset(w - padR, y), strokeWidth = 1f)
+            val lbl = "${v.toInt()}h"
+            val tl = textMeasurer.measure(lbl, labelStyle)
+            drawText(tl, topLeft = Offset(padL - tl.size.width - 4f, y - tl.size.height / 2f))
+        }
+
+        // Zone optimale 14h-16h
+        val yLowOpt = padT + chartH * (1f - ((zoneMin - yMin) / yRange))
+        val yHighOpt = padT + chartH * (1f - ((target - yMin) / yRange))
+        drawRect(
+            color = zoneColor,
+            topLeft = Offset(padL, yHighOpt.coerceAtLeast(padT)),
+            size = Size(chartW, (yLowOpt - yHighOpt).coerceAtLeast(0f)),
+        )
+
+        // Ligne objectif 16h
+        val yTarget = padT + chartH * (1f - ((target - yMin) / yRange))
+        if (yTarget in padT..(padT + chartH)) {
+            drawLine(
+                color = targetColor.copy(alpha = 0.7f),
+                start = Offset(padL, yTarget),
+                end = Offset(w - padR, yTarget),
+                strokeWidth = 2f,
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 6f)),
+            )
+            // Label "16h" à droite
+            val lblT = "16h"
+            val tlT = textMeasurer.measure(lblT, labelStyle.copy(color = targetColor))
+            drawText(tlT, topLeft = Offset(w - padR - tlT.size.width, yTarget - tlT.size.height - 2f))
+        }
+
+        // Courbe lissée
+        val n = series.size
+        val stepX = chartW / (n - 1).coerceAtLeast(1)
+        val pts = series.mapIndexed { i, (_, hours) ->
+            Offset(padL + i * stepX, padT + chartH * (1f - ((hours.toFloat() - yMin) / yRange)))
+        }
+        val curve = buildSmoothPath(pts)
+
+        // Gradient sous courbe
+        val fillPath = Path().apply {
+            addPath(curve)
+            lineTo(pts.last().x, padT + chartH)
+            lineTo(pts.first().x, padT + chartH)
+            close()
+        }
+        drawPath(
+            path = fillPath,
+            brush = Brush.verticalGradient(
+                colors = listOf(accent.copy(alpha = 0.32f * animatedAlpha.value), accent.copy(alpha = 0f)),
+                startY = padT, endY = padT + chartH,
+            ),
+        )
+        drawPath(curve, accent.copy(alpha = animatedAlpha.value),
+            style = Stroke(width = 3f, cap = StrokeCap.Round))
+
+        // Marqueur dernier point
+        val last = pts.last()
+        drawCircle(accent.copy(alpha = 0.25f * animatedAlpha.value), 12f, last)
+        drawCircle(accent.copy(alpha = animatedAlpha.value), 5f, last)
+        drawCircle(Color.White, 2.5f, last)
+
+        // Label X axis : 1ère et dernière date (compact)
+        val firstDate = series.first().first
+        val lastDate = series.last().first
+        val dateFmt = java.time.format.DateTimeFormatter.ofPattern("d/M")
+        val tlFirst = textMeasurer.measure(firstDate.format(dateFmt), labelStyle)
+        val tlLast = textMeasurer.measure(lastDate.format(dateFmt), labelStyle)
+        drawText(tlFirst, topLeft = Offset(padL, padT + chartH + 4f))
+        drawText(tlLast, topLeft = Offset(w - padR - tlLast.size.width, padT + chartH + 4f))
+    }
 }
 
 private fun buildSmoothPath(pts: List<Offset>): Path {

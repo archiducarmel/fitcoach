@@ -14,6 +14,7 @@ import com.shredcoach.app.data.repository.ChatRepository
 import com.shredcoach.app.data.repository.ExerciseRepository
 import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.data.repository.WorkoutRepository
+import com.shredcoach.app.domain.locale.withCurrentLocale
 import com.shredcoach.app.domain.model.ExerciseVariant
 import com.shredcoach.app.domain.model.MuscleGroup
 import com.shredcoach.app.domain.session.ActiveSessionManager
@@ -112,6 +113,12 @@ data class WorkoutSessionState(
 
     // ── Fin de séance ──
     val isSessionComplete: Boolean = false,
+    /**
+     * Signal d'exit silencieux — la séance n'est pas allée au bout (annulée vide
+     * en freestyle), donc on pop le screen sans écran de récap. Distinct de
+     * [isSessionComplete] qui déclenche l'écran summary.
+     */
+    val shouldExit: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null,
 
@@ -237,6 +244,11 @@ class WorkoutSessionViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(WorkoutSessionState())
     val state: StateFlow<WorkoutSessionState> = _state.asStateFlow()
+
+    // Context locale-aware pour résoudre R.string côté backend (appContext
+    // ApplicationContext étant figé sur la locale système).
+    private val localized: android.content.Context
+        get() = appContext.withCurrentLocale()
 
     // Plus de jobs locaux pour les chronos d'exo / de série : tout est géré
     // wall-clock par ActiveSessionManager (cf. startExerciseChrono no-op,
@@ -462,10 +474,10 @@ class WorkoutSessionViewModel @Inject constructor(
                     }
                     startGlobalChrono()
                 } else {
-                    _state.update { it.copy(error = appContext.getString(R.string.workout_vm_session_not_found), isLoading = false) }
+                    _state.update { it.copy(error = localized.getString(R.string.workout_vm_session_not_found), isLoading = false) }
                 }
             } catch (e: Exception) {
-                _state.update { it.copy(error = e.message ?: appContext.getString(R.string.workout_vm_error_generic), isLoading = false) }
+                _state.update { it.copy(error = e.message ?: localized.getString(R.string.workout_vm_error_generic), isLoading = false) }
             }
         }
     }
@@ -1121,7 +1133,7 @@ class WorkoutSessionViewModel @Inject constructor(
         val totalReps = doneSets.sumOf { set -> set.reps }
         val totalVol = doneSets.sumOf { set -> set.weight * set.reps }
 
-        val firstName = s.userFirstName.ifBlank { appContext.getString(R.string.workout_vm_first_name_fallback) }
+        val firstName = s.userFirstName.ifBlank { localized.getString(R.string.workout_vm_first_name_fallback) }
         val exoName = s.currentExercise?.name ?: ""
 
         // UN SEUL state update atomique : complétion + reset prompt/rest + transition → pas de flash
@@ -1146,7 +1158,7 @@ class WorkoutSessionViewModel @Inject constructor(
                 transitionFromName = s.currentExercise?.name ?: "",
                 // En freestyle, on passe toujours par l'overview → afficher "Vue d'ensemble"
                 // au lieu du nom du prochain exo (sinon "PROCHAIN EXERCICE: Y" est trompeur).
-                transitionToName = if (s.isFreestyle) appContext.getString(R.string.workout_cd_overview) else (nextExercise?.name ?: ""),
+                transitionToName = if (s.isFreestyle) localized.getString(R.string.workout_cd_overview) else (nextExercise?.name ?: ""),
                 transitionExercisesDone = doneCount,
                 transitionTotalExercises = it.totalExercises,
                 transitionExerciseSets = doneSets.size,
@@ -1231,7 +1243,7 @@ class WorkoutSessionViewModel @Inject constructor(
         val doneCount = effectiveCompletedSets.filter { !it.skipped }.map { it.exerciseId }.toSet().size
         val totalReps = doneSets.sumOf { set -> set.reps }
         val totalVol = doneSets.sumOf { set -> set.weight * set.reps }
-        val firstName = s.userFirstName.ifBlank { appContext.getString(R.string.workout_vm_first_name_fallback) }
+        val firstName = s.userFirstName.ifBlank { localized.getString(R.string.workout_vm_first_name_fallback) }
         val exoName = s.currentExercise?.name ?: ""
 
         // UN SEUL state update atomique : complétion + reset prompt/rest + transition
@@ -1254,7 +1266,7 @@ class WorkoutSessionViewModel @Inject constructor(
                 isShreddyThinking = true,
                 shreddyCoachMessage = "",
                 transitionFromName = exoName,
-                transitionToName = appContext.getString(R.string.workout_cd_overview),
+                transitionToName = localized.getString(R.string.workout_cd_overview),
                 transitionExercisesDone = doneCount,
                 transitionTotalExercises = it.totalExercises,
                 transitionExerciseSets = doneSets.size,
@@ -1472,7 +1484,7 @@ class WorkoutSessionViewModel @Inject constructor(
                 com.shredcoach.app.notification.NotificationScheduler
                     .scheduleWorkoutDebrief(appContext, workoutLogId, debriefDelay)
 
-                val firstName = s.userFirstName.ifBlank { appContext.getString(R.string.workout_vm_first_name_fallback) }
+                val firstName = s.userFirstName.ifBlank { localized.getString(R.string.workout_vm_first_name_fallback) }
                 val fallbackMsg = ShreddyCoachMessages.sessionComplete(
                     firstName = firstName,
                     totalSets = s.totalSetsCompleted, totalReps = s.totalRepsCompleted,
@@ -1512,12 +1524,61 @@ class WorkoutSessionViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                _state.update { it.copy(error = appContext.getString(R.string.workout_vm_save_error, e.message ?: "")) }
+                _state.update { it.copy(error = localized.getString(R.string.workout_vm_save_error, e.message ?: "")) }
             }
         }
     }
 
-    fun stopSessionEarly() { stopExerciseChrono(); completeWorkout() }
+    fun stopSessionEarly() {
+        stopExerciseChrono()
+        viewModelScope.launch {
+            // Séance freestyle vide (jamais démarrée) → on supprime au lieu de
+            // marquer "completed" : sinon l'historique se remplit de fantômes
+            // de séances jamais commencées. Une séance "n'existe" qu'à partir
+            // du moment où elle a au moins un exo OU un set logué.
+            if (deleteFreestyleIfEmpty()) {
+                _state.update { it.copy(shouldExit = true) }
+            } else {
+                completeWorkout()
+            }
+        }
+    }
+
+    /**
+     * Sortie idiomatique du screen (back button, swipe, etc.). Si la séance
+     * est freestyle ET vide (aucun exo, aucune série), elle est purgée de la
+     * DB AVANT de pop le screen — l'utilisateur ne se retrouve pas avec une
+     * fausse séance fantôme dans l'historique. Sinon, la séance reste vivante
+     * et accessible via la bannière "session active".
+     */
+    fun exitSession(onExited: () -> Unit) {
+        viewModelScope.launch {
+            deleteFreestyleIfEmpty()
+            onExited()
+        }
+    }
+
+    /**
+     * Supprime workout + log si la séance est freestyle, vide d'exercices,
+     * sans série loguée et non terminée. Idempotent.
+     *
+     * @return true si une suppression a eu lieu.
+     */
+    private suspend fun deleteFreestyleIfEmpty(): Boolean {
+        val s = _state.value
+        if (!s.isFreestyle) return false
+        val logId = s.workoutLogId ?: return false
+        if (workoutRepository.getWorkoutSets(logId).isNotEmpty()) return false
+        val log = workoutRepository.getWorkoutLogById(logId) ?: return false
+        if (log.completed) return false
+        val workoutId = log.workoutId ?: return false
+        if (workoutRepository.getWorkoutExercises(workoutId).isNotEmpty()) return false
+        val workout = workoutRepository.getWorkoutById(workoutId) ?: return false
+        workoutRepository.deleteWorkoutLog(log)
+        workoutRepository.deleteWorkout(workout)
+        sessionManager.stopSession()
+        return true
+    }
 
     // ══════════════════════════════════════════
     // SHREDDY COACHING LLM (async)

@@ -60,6 +60,16 @@ data class NutritionState(
     val quantity: String = "",
     // Insights nutrition (30 derniers jours, agrégés depuis les scans)
     val insights: NutritionInsights? = null,
+    /**
+     * État affichable du jeûne nocturne (J-1 dernier repas → J premier repas
+     * ou maintenant si aucun repas pris). La composable
+     * [NightFastingCard] gère le ticker live à partir des timestamps fournis
+     * — le ViewModel n'a donc pas à pousser un Flow périodique.
+     */
+    val nightFasting: com.shredcoach.app.presentation.home.components.NightFastingDisplay =
+        com.shredcoach.app.presentation.home.components.NightFastingDisplay(
+            lastMealAt = null, firstMealAt = null, isToday = true,
+        ),
     val isLoading: Boolean = true
 )
 
@@ -155,25 +165,40 @@ class NutritionViewModel @Inject constructor(
     // ── Chargement données du jour ──
     private fun loadDay(date: LocalDate) {
         viewModelScope.launch {
-            repo.getMealsForDate(date).collect { meals ->
-                val mealsWithFood = meals.mapNotNull { meal ->
-                    repo.getFoodById(meal.foodId)?.let { food ->
-                        val photo = meal.scanId?.let { sid -> mealScanDao.getScanById(sid)?.photoPath }
-                        MealWithFood(meal, food, photoPath = photo)
+            // Combine flows J-1 + J : un nouveau repas logué hier soir OU plus
+            // tôt aujourd'hui doit recalculer la fenêtre de jeûne nocturne.
+            val yesterday = date.minusDays(1)
+            kotlinx.coroutines.flow.combine(
+                repo.getMealsForDate(date),
+                repo.getMealsForDate(yesterday)
+            ) { todayMeals, yesterdayMeals -> todayMeals to yesterdayMeals }
+                .collect { (meals, yesterdayMeals) ->
+                    val mealsWithFood = meals.mapNotNull { meal ->
+                        repo.getFoodById(meal.foodId)?.let { food ->
+                            val photo = meal.scanId?.let { sid -> mealScanDao.getScanById(sid)?.photoPath }
+                            MealWithFood(meal, food, photoPath = photo)
+                        }
+                    }
+                    val totals = repo.getDayTotals(date)
+                    val firstToday = meals.mapNotNull { it.time }.minOrNull()
+                    val lastYesterday = yesterdayMeals.mapNotNull { it.time }.maxOrNull()
+                    val fasting = com.shredcoach.app.presentation.home.components.NightFastingDisplay(
+                        lastMealAt = lastYesterday?.let { java.time.LocalDateTime.of(yesterday, it) },
+                        firstMealAt = firstToday?.let { java.time.LocalDateTime.of(date, it) },
+                        isToday = date == LocalDate.now(),
+                    )
+                    _state.update {
+                        it.copy(
+                            meals = mealsWithFood,
+                            totalCalories = totals.totalCalories,
+                            totalProteins = totals.totalProteins,
+                            totalCarbs = totals.totalCarbs,
+                            totalFats = totals.totalFats,
+                            nightFasting = fasting,
+                            isLoading = false
+                        )
                     }
                 }
-                val totals = repo.getDayTotals(date)
-                _state.update {
-                    it.copy(
-                        meals = mealsWithFood,
-                        totalCalories = totals.totalCalories,
-                        totalProteins = totals.totalProteins,
-                        totalCarbs = totals.totalCarbs,
-                        totalFats = totals.totalFats,
-                        isLoading = false
-                    )
-                }
-            }
         }
     }
 
