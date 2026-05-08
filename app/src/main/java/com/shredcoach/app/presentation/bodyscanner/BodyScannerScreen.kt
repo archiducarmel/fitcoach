@@ -95,6 +95,23 @@ fun BodyScannerScreen(
         if (has) cameraLauncher.launch(null) else permissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
+    // ── Auto-navigation post-génération mesh ──
+    // Quand l'user déclenche `generateMeshAndNavigate`, on attend que la
+    // génération aboutisse (`!isGeneratingMesh && meshFeaturesPath != null`)
+    // puis on navigue. Le flag pendingNavigateToMesh distingue ce flow d'une
+    // navigation utilisateur classique (bouton "Voir le mesh").
+    LaunchedEffect(state.pendingNavigateToMesh, state.meshFeaturesPath, state.isGeneratingMesh) {
+        if (state.pendingNavigateToMesh
+            && !state.isGeneratingMesh
+            && state.meshFeaturesPath != null
+        ) {
+            // Reset AVANT navigation pour éviter qu'au retour sur l'écran le
+            // LaunchedEffect re-fire (les conditions seraient encore vraies).
+            viewModel.consumeMeshNavigation()
+            navController.navigate(Screen.BodyMesh.route)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -115,11 +132,30 @@ fun BodyScannerScreen(
                     }
                 },
                 actions = {
-                    if (state.meshImagePath != null || state.result != null) {
-                        IconButton(onClick = {
-                            navController.navigate(Screen.BodyMesh.route)
-                        }) {
-                            Icon(Icons.Default.GridOn, stringResource(R.string.bodyscan_action_mesh_cd), tint = NeonGreen)
+                    // Affiché dès qu'une photo OU un mesh existant est dispo.
+                    // Click :
+                    //  - mesh déjà généré → navigation directe
+                    //  - photo dispo, mesh pas encore → trigger génération + nav auto
+                    //  - sinon : invisible (rien à montrer)
+                    if (state.imageBitmap != null || state.meshFeaturesPath != null || state.result != null) {
+                        val hasMesh = state.meshFeaturesPath != null
+                        IconButton(
+                            enabled = !state.isGeneratingMesh,
+                            onClick = { viewModel.generateMeshAndNavigate() },
+                        ) {
+                            if (state.isGeneratingMesh) {
+                                CircularProgressIndicator(
+                                    color = NeonGreen,
+                                    strokeWidth = 2.dp,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Default.GridOn,
+                                    stringResource(R.string.bodyscan_action_mesh_cd),
+                                    tint = if (hasMesh) NeonGreen else NeonGreen.copy(alpha = 0.65f),
+                                )
+                            }
                         }
                     }
                 }
@@ -266,20 +302,35 @@ private fun BodyCaptureZone(onCamera: () -> Unit, onGallery: () -> Unit) {
                     onClick = onCamera,
                     modifier = Modifier.weight(1f).height(52.dp),
                     shape = RoundedCornerShape(14.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp),
                     colors = ButtonDefaults.filledTonalButtonColors(containerColor = OrangeVibrant.copy(alpha = 0.2f))
                 ) {
                     Icon(Icons.Default.CameraAlt, null, Modifier.size(20.dp), tint = OrangeVibrant)
                     Spacer(Modifier.width(6.dp))
-                    Text(stringResource(R.string.bodyscan_btn_camera), fontWeight = FontWeight.Bold, color = OrangeVibrant)
+                    Text(
+                        text = stringResource(R.string.bodyscan_btn_camera),
+                        fontWeight = FontWeight.Bold,
+                        color = OrangeVibrant,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    )
                 }
                 FilledTonalButton(
                     onClick = onGallery,
                     modifier = Modifier.weight(1f).height(52.dp),
-                    shape = RoundedCornerShape(14.dp)
+                    shape = RoundedCornerShape(14.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp),
                 ) {
                     Icon(Icons.Default.Image, null, Modifier.size(20.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text(stringResource(R.string.bodyscan_btn_gallery), fontWeight = FontWeight.Bold)
+                    Text(
+                        text = stringResource(R.string.bodyscan_btn_gallery),
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    )
                 }
             }
             // Note de confidentialité
@@ -528,7 +579,7 @@ private fun GenerateMeshCard(
                 Text(error, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
             }
 
-            if (state.meshImagePath != null && !state.isGeneratingMesh) {
+            if (state.meshFeaturesPath != null && !state.isGeneratingMesh) {
                 // Déjà généré : bouton voir
                 Button(
                     onClick = onViewMesh,
@@ -541,7 +592,7 @@ private fun GenerateMeshCard(
                     Text(stringResource(R.string.bodyscan_btn_view_mesh), fontWeight = FontWeight.Bold, color = Color.Black)
                 }
                 OutlinedButton(
-                    onClick = { viewModel.generateMesh() },
+                    onClick = { viewModel.generateMeshAndNavigate() },
                     modifier = Modifier.fillMaxWidth().height(44.dp),
                     shape = RoundedCornerShape(12.dp),
                     border = BorderStroke(1.dp, Color(0xFF00E5FF).copy(alpha = 0.5f))
@@ -562,7 +613,7 @@ private fun GenerateMeshCard(
                 }
             } else {
                 Button(
-                    onClick = { viewModel.generateMesh() },
+                    onClick = { viewModel.generateMeshAndNavigate() },
                     modifier = Modifier.fillMaxWidth().height(48.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF))

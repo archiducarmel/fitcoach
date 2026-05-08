@@ -1755,21 +1755,42 @@
     <string name="bodyscan_bodyfat_label">Gordura</string>
     <string name="bodyscan_bodyfat_caption">Estimativa visual</string>
     <string name="bodyscan_mesh_title">Visualização Mesh 3D</string>
-    <string name="bodyscan_mesh_subtitle">Holograma sci-fi gerado por IA</string>
+    <string name="bodyscan_mesh_subtitle">Wireframe anatômico on-device</string>
     <string name="bodyscan_btn_view_mesh">Ver a visualização</string>
     <string name="bodyscan_btn_regenerate">Regenerar</string>
-    <string name="bodyscan_mesh_generating">Gerando o mesh…</string>
-    <string name="bodyscan_btn_generate_mesh">Gerar o mesh IA</string>
-    <string name="bodyscan_mesh_caption">⚡ Requer chave API Gemini · modelo gemini-2.5-flash-image</string>
+    <string name="bodyscan_mesh_generating">Analisando a pose…</string>
+    <string name="bodyscan_btn_generate_mesh">Gerar o mesh</string>
+    <string name="bodyscan_mesh_caption">⚡ 100% on-device · detecção de pose + segmentação</string>
 
     <!-- ─── BodyMesh screen (cyberpunk HUD — same in EN, intentional aesthetic) ─── -->
     <string name="bodymesh_image_cd">Body mesh</string>
     <string name="bodymesh_title">BODY MESH SCAN</string>
-    <string name="bodymesh_subtitle">Powered by Shreddy AI</string>
+    <string name="bodymesh_subtitle">Pose + segmentação on-device</string>
     <string name="bodymesh_empty_title">MESH NÃO GERADO</string>
     <string name="bodymesh_empty_desc">Volte ao Body Scanner para gerar o mesh</string>
     <string name="bodymesh_panel_title">BIOMETRIC READOUT</string>
     <string name="bodymesh_panel_status">SYSTEM ONLINE</string>
+    <string name="bodymesh_error_no_photo">Recarregue sua foto para gerar um novo mesh</string>
+    <string name="bodymesh_error_no_pose">Pose não detectada. Refaça uma foto de corpo inteiro, bem iluminado, de frente para a câmera.</string>
+    <string name="bodymesh_error_save">Não foi possível salvar o mesh. Verifique o espaço em disco.</string>
+    <string name="bodymesh_error_generic">Erro na análise. Tente novamente com uma foto mais clara.</string>
+    <string name="bodymesh_analytics_title">SCAN ANALYSIS</string>
+    <string name="bodymesh_analytics_vtaper">V-TAPER</string>
+    <string name="bodymesh_analytics_posture">POSTURA</string>
+    <string name="bodymesh_analytics_asym_shoulders">ASSIM. OMBROS</string>
+    <string name="bodymesh_analytics_asym_hips">ASSIM. QUADRIS</string>
+    <string name="bodymesh_analytics_tilt_shoulders">INCL. OMBROS</string>
+    <string name="bodymesh_analytics_tilt_hips">INCL. QUADRIS</string>
+    <string name="bodymesh_chip_bmi">IMC</string>
+    <string name="bodymesh_chip_body_fat">GORDURA</string>
+    <string name="bodymesh_chip_height">ALTURA</string>
+    <string name="bodymesh_chip_weight">PESO</string>
+    <string name="bodymesh_chip_waist">CINTURA</string>
+    <string name="bodymesh_chip_chest">PEITO</string>
+    <string name="bodymesh_chip_hip">QUADRIS</string>
+    <string name="bodymesh_chip_arm">BRAÇO</string>
+    <string name="bodymesh_chip_thigh">COXA</string>
+    <string name="bodymesh_chip_calf">PANTURRILHA</string>
 
     <!-- ─── GymScan screen ─── -->
     <string name="gymscan_title">GymScan</string>

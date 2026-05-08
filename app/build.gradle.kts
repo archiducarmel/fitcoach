@@ -272,6 +272,21 @@ dependencies {
     implementation("androidx.profileinstaller:profileinstaller:1.3.1")
     "baselineProfile"(project(":baselineprofile"))
 
+    // ───────────────────────────────────────────────
+    // ML Kit — Body mesh on-device (pose + segmentation)
+    // ───────────────────────────────────────────────
+    // Pose Detection (accurate variant) — extrait 33 keypoints anatomiques
+    // depuis une photo. ~70ms sur mid-range, déterministe, 100% on-device,
+    // pas de clé API. Utilisé par BodyMeshExtractor pour construire le
+    // wireframe néon. Variant "accurate" (vs base) : keypoints plus fiables
+    // sur les angles extrêmes, meilleure inFrameLikelihood.
+    implementation("com.google.mlkit:pose-detection-accurate:18.0.0-beta5")
+    // Selfie Segmentation — masque binaire de la silhouette du corps. ~100ms
+    // on-device, retourne ConfidenceMask FloatBuffer (256x256 par défaut,
+    // upscalé à la résolution input). Sert à dessiner le contour silhouette
+    // et délimiter le masque mesh polygonal.
+    implementation("com.google.mlkit:segmentation-selfie:16.0.0-beta6")
+
     // LeakCanary — detection automatique de fuites mémoire en debug.
     // S'auto-installe via ContentProvider (rien à appeler dans Application).
     // Quand un leak est détecté (Activity/ViewModel non-GC après pop nav),

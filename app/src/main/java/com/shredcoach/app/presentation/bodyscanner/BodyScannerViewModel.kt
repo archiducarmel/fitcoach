@@ -6,16 +6,21 @@ import android.content.Context
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
+import com.shredcoach.app.R
 import com.shredcoach.app.data.local.secure.SecureKeyStore
 import com.shredcoach.app.data.remote.BodyAnalysisResult
 import com.shredcoach.app.data.remote.BodyAnalysisService
-import com.shredcoach.app.data.remote.BodyMeshService
 import com.shredcoach.app.data.repository.UserRepository
+import com.shredcoach.app.domain.bodymesh.BodyMeshExtractor
+import com.shredcoach.app.domain.bodymesh.MeshFeatures
+import com.shredcoach.app.domain.locale.withCurrentLocale
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.time.LocalDateTime
 import javax.inject.Inject
 
@@ -49,8 +54,32 @@ data class BodyScannerState(
     val applied: Boolean = false, // true quand les mesures ont été sauvegardées au profil
     // Mesh generation
     val isGeneratingMesh: Boolean = false,
-    val meshImagePath: String? = null,
+    /**
+     * Path JSON du fichier `MeshFeatures` persisté. Null = pas encore généré
+     * pour la photo courante. Lecture côté UI via [meshFeatures] (chargé
+     * paresseusement par le ViewModel).
+     */
+    val meshFeaturesPath: String? = null,
+    /**
+     * Snapshot des features chargées en mémoire pour le rendu Canvas. Null
+     * tant que pas chargé / mesh non généré. On évite de re-décoder le JSON
+     * à chaque recomposition Compose en gardant l'instance ici.
+     */
+    val meshFeatures: MeshFeatures? = null,
     val meshError: String? = null,
+    /**
+     * Quand `true`, la génération courante du mesh DOIT être suivie d'une
+     * navigation vers BodyMeshScreen dès que les features sont prêtes. Set
+     * par [generateMeshAndNavigate] / handler d'icône grille. Reset par
+     * [consumeMeshNavigation] après navigation effective.
+     *
+     * **Pourquoi un flag plutôt qu'un Channel/SharedFlow** : moins de
+     * complexité pour 1 seul event simple. Le LaunchedEffect côté Screen
+     * observe le triple (pendingNavigateToMesh, meshFeaturesPath, isGeneratingMesh)
+     * et tire la nav quand toutes les conditions sont remplies. Deterministe
+     * et debugable.
+     */
+    val pendingNavigateToMesh: Boolean = false,
     // Photos
     val originalImagePath: String? = null,
     val bodyScanTimestamp: LocalDateTime? = null
@@ -81,10 +110,12 @@ data class BodyScannerState(
 @HiltViewModel
 class BodyScannerViewModel @Inject constructor(
     private val bodyAnalysisService: BodyAnalysisService,
-    private val bodyMeshService: BodyMeshService,
+    private val meshExtractor: BodyMeshExtractor,
     private val userRepository: UserRepository,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
+
+    private val gson = Gson()
 
     private val _state = MutableStateFlow(BodyScannerState())
     val state: StateFlow<BodyScannerState> = _state.asStateFlow()
@@ -96,6 +127,15 @@ class BodyScannerViewModel @Inject constructor(
             val hasKey = userRepository.hasApiKey(SecureKeyStore.Provider.GEMINI)
                 || userRepository.hasApiKey(SecureKeyStore.Provider.GROQ_MEAL)
                 || userRepository.hasApiKey(SecureKeyStore.Provider.MISTRAL)
+
+            // Charger les features mesh persistées si le fichier existe encore
+            // sur disque. Anti-zombie : un path en DB sans fichier (cleanup
+            // système, restore depuis un backup où la photo n'a pas été
+            // incluse) → on remet null pour ne pas afficher un mesh fantôme.
+            val featuresPath = profile?.bodyMeshFeaturesPath
+            val features = featuresPath?.let { loadFeaturesFromDisk(it) }
+            val effectivePath = if (features != null) featuresPath else null
+
             _state.update {
                 it.copy(
                     isConfigured = hasKey,
@@ -109,7 +149,8 @@ class BodyScannerViewModel @Inject constructor(
                     editThighCm = profile?.thighCm?.takeIf { it > 0 }?.toInt()?.toString() ?: "",
                     editCalfCm = profile?.calfCm?.takeIf { it > 0 }?.toInt()?.toString() ?: "",
                     editBodyFatPercent = profile?.bodyFatPercent?.takeIf { it > 0 }?.toInt()?.toString() ?: "",
-                    meshImagePath = profile?.bodyMeshImagePath,
+                    meshFeaturesPath = effectivePath,
+                    meshFeatures = features,
                     originalImagePath = profile?.bodyScanImagePath,
                     bodyScanTimestamp = profile?.bodyScanTimestamp
                 )
@@ -118,11 +159,35 @@ class BodyScannerViewModel @Inject constructor(
     }
 
     fun setImage(bitmap: Bitmap) {
-        _state.update { it.copy(imageBitmap = bitmap, result = null, error = null, applied = false) }
+        // Une nouvelle photo invalide le mesh précédent (qui correspondait à
+        // l'ancienne photo). On reset le path en mémoire mais on ne touche
+        // pas au DB ni au fichier disque ici — `applyMeshToProfile` (appelé
+        // au succès de `generateMesh`) écrasera proprement.
+        _state.update {
+            it.copy(
+                imageBitmap = bitmap,
+                result = null,
+                error = null,
+                applied = false,
+                meshFeatures = null,
+                meshFeaturesPath = null,
+                meshError = null,
+            )
+        }
     }
 
     fun clear() {
-        _state.update { it.copy(imageBitmap = null, result = null, error = null, applied = false) }
+        _state.update {
+            it.copy(
+                imageBitmap = null,
+                result = null,
+                error = null,
+                applied = false,
+                meshFeatures = null,
+                meshFeaturesPath = null,
+                meshError = null,
+            )
+        }
     }
 
     fun analyze() {
@@ -226,47 +291,150 @@ class BodyScannerViewModel @Inject constructor(
         }
     }
 
-    /** Génère l'image mesh futuriste via Gemini Image Generation. */
+    /**
+     * Extrait les features mesh on-device (ML Kit Pose + Selfie Segmentation),
+     * persiste le JSON sur disque, met à jour le profil. Pas d'appel réseau,
+     * pas de clé API requise.
+     *
+     * **Idempotent** : appelable plusieurs fois → écrase proprement la version
+     * précédente (delete old file).
+     *
+     * **Erreurs métiers possibles** :
+     *  - `NO_POSE_DETECTED` : la photo ne contient pas de pose détectable
+     *    (corps incomplet, occlusion forte, photo non-humaine)
+     *  - JSON write failed : disque plein → on remonte un message générique.
+     */
     fun generateMesh() {
         val bitmap = _state.value.imageBitmap
         if (bitmap == null) {
-            _state.update { it.copy(meshError = "Recharge ta photo pour générer un nouveau mesh") }
+            _state.update {
+                it.copy(meshError = appContext.withCurrentLocale().getString(R.string.bodymesh_error_no_photo))
+            }
             return
         }
         _state.update { it.copy(isGeneratingMesh = true, meshError = null) }
 
         viewModelScope.launch {
-            val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.GEMINI)
-            if (apiKey.isBlank()) {
-                _state.update { it.copy(isGeneratingMesh = false, meshError = "Clé API Gemini requise pour générer le mesh") }
-                return@launch
-            }
-
-            val stream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream)
-
-            val result = bodyMeshService.generateMesh(stream.toByteArray(), "image/jpeg", apiKey)
-
-            result.fold(
-                onSuccess = { pngBytes ->
-                    // Supprimer l'ancien mesh file pour éviter les orphelins sur regénération
-                    val oldMesh = _state.value.meshImagePath
-                    if (!oldMesh.isNullOrBlank()) {
-                        try { java.io.File(oldMesh).delete() } catch (_: Exception) {}
+            val extracted = meshExtractor.extract(bitmap)
+            extracted.fold(
+                onSuccess = { features ->
+                    val path = saveFeaturesToDisk(features)
+                    if (path == null) {
+                        _state.update {
+                            it.copy(
+                                isGeneratingMesh = false,
+                                meshError = appContext.withCurrentLocale().getString(R.string.bodymesh_error_save),
+                            )
+                        }
+                        return@fold
                     }
-                    val path = saveImageToFile(pngBytes, "mesh", "png")
-                    // Sauver le chemin dans le profil
+
+                    // Cleanup ancien mesh file (orphelin) — best-effort.
+                    val oldPath = _state.value.meshFeaturesPath
+                    if (!oldPath.isNullOrBlank() && oldPath != path) {
+                        runCatching { File(oldPath).delete() }
+                    }
+
+                    // Persiste sur le profil. Wipe le legacy `bodyMeshImagePath`
+                    // pour ne pas garder un PNG Gemini orphelin qui ne reflète
+                    // plus la photo courante.
                     val current = userRepository.getUserProfileOnce()
                     if (current != null) {
-                        userRepository.updateUserProfile(current.copy(bodyMeshImagePath = path))
+                        userRepository.updateUserProfile(
+                            current.copy(
+                                bodyMeshFeaturesPath = path,
+                                bodyMeshImagePath = null,
+                            )
+                        )
                     }
-                    _state.update { it.copy(isGeneratingMesh = false, meshImagePath = path, meshError = null) }
+
+                    _state.update {
+                        it.copy(
+                            isGeneratingMesh = false,
+                            meshFeaturesPath = path,
+                            meshFeatures = features,
+                            meshError = null,
+                        )
+                    }
                 },
                 onFailure = { error ->
-                    _state.update { it.copy(isGeneratingMesh = false, meshError = error.message ?: "Erreur génération mesh") }
+                    val msg = when {
+                        error.message?.contains("NO_POSE_DETECTED") == true ->
+                            appContext.withCurrentLocale().getString(R.string.bodymesh_error_no_pose)
+                        else ->
+                            appContext.withCurrentLocale().getString(R.string.bodymesh_error_generic)
+                    }
+                    // Reset le flag de nav pending : pas de raison de naviguer
+                    // vers un mesh qui n'existe pas. Sinon un click ultérieur
+                    // qui produirait un mesh nav-iguerait sans intention.
+                    _state.update {
+                        it.copy(
+                            isGeneratingMesh = false,
+                            meshError = msg,
+                            pendingNavigateToMesh = false,
+                        )
+                    }
                 }
             )
         }
+    }
+
+    /**
+     * Variante de [generateMesh] qui flag l'intent de naviguer vers
+     * BodyMeshScreen dès que les features sont prêtes. Utilisée par les CTAs
+     * "Générer le mesh" et l'icône grille du top app bar — l'utilisateur ne
+     * veut pas avoir à cliquer une 2e fois sur "Voir" après la génération.
+     *
+     * Si un mesh existe déjà (`meshFeaturesPath != null`), set juste le flag
+     * pour que le LaunchedEffect navigue immédiatement sans regénérer.
+     */
+    fun generateMeshAndNavigate() {
+        if (_state.value.meshFeaturesPath != null && _state.value.meshFeatures != null) {
+            // Déjà disponible : pas de regénération, juste flag pour nav.
+            _state.update { it.copy(pendingNavigateToMesh = true) }
+            return
+        }
+        _state.update { it.copy(pendingNavigateToMesh = true) }
+        generateMesh()
+    }
+
+    /**
+     * À appeler depuis le Composable APRÈS une navigation déclenchée par
+     * [pendingNavigateToMesh]. Évite que le flag reste "true" et re-trigger
+     * une nouvelle nav au retour sur l'écran.
+     */
+    fun consumeMeshNavigation() {
+        _state.update { it.copy(pendingNavigateToMesh = false) }
+    }
+
+    /**
+     * Sérialise [features] en JSON et l'écrit dans `filesDir/body_scans/`.
+     * Chemin retourné absolu, ou null en cas d'échec disque.
+     */
+    private fun saveFeaturesToDisk(features: MeshFeatures): String? {
+        return try {
+            val dir = File(appContext.filesDir, "body_scans")
+            if (!dir.exists()) dir.mkdirs()
+            val file = File(dir, "mesh_${features.capturedAtMs}.json")
+            file.writeText(gson.toJson(features))
+            file.absolutePath
+        } catch (_: Exception) { null }
+    }
+
+    /**
+     * Lecture des features depuis le JSON. Robuste aux fichiers manquants/
+     * corrompus → null silencieux (l'UI tombe sur l'empty state).
+     */
+    private fun loadFeaturesFromDisk(path: String): MeshFeatures? {
+        return try {
+            val file = File(path)
+            if (!file.exists() || !file.canRead()) return null
+            val features = gson.fromJson(file.readText(), MeshFeatures::class.java)
+            // Garde-fou versionning : on ignore les features anciennes
+            // qui ne matchent pas le schéma courant.
+            if (features.version != MeshFeatures.CURRENT_VERSION) null
+            else features
+        } catch (_: Exception) { null }
     }
 
     /** Sauvegarde l'image dans `filesDir/body_scans/`. */

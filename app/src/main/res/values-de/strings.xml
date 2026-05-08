@@ -1542,21 +1542,42 @@
     <string name="bodyscan_bodyfat_label">Fett</string>
     <string name="bodyscan_bodyfat_caption">Visuell geschätzt</string>
     <string name="bodyscan_mesh_title">3D-Mesh-Visualisierung</string>
-    <string name="bodyscan_mesh_subtitle">Sci-Fi-Hologramm KI-generiert</string>
+    <string name="bodyscan_mesh_subtitle">Anatomisches Wireframe on-device</string>
     <string name="bodyscan_btn_view_mesh">Visualisierung ansehen</string>
     <string name="bodyscan_btn_regenerate">Neu generieren</string>
-    <string name="bodyscan_mesh_generating">Mesh wird generiert…</string>
-    <string name="bodyscan_btn_generate_mesh">KI-Mesh generieren</string>
-    <string name="bodyscan_mesh_caption">⚡ Erfordert Gemini API-Schlüssel · Modell gemini-2.5-flash-image</string>
+    <string name="bodyscan_mesh_generating">Pose wird analysiert…</string>
+    <string name="bodyscan_btn_generate_mesh">Mesh generieren</string>
+    <string name="bodyscan_mesh_caption">⚡ 100 % on-device · Posenerkennung + Segmentierung</string>
 
     <!-- BodyMesh -->
     <string name="bodymesh_image_cd">Body mesh</string>
     <string name="bodymesh_title">BODY MESH SCAN</string>
-    <string name="bodymesh_subtitle">Powered by Shreddy AI</string>
+    <string name="bodymesh_subtitle">Pose + Segmentierung on-device</string>
     <string name="bodymesh_empty_title">MESH NICHT GENERIERT</string>
     <string name="bodymesh_empty_desc">Geh zurück zum Body Scanner, um das Mesh zu generieren</string>
     <string name="bodymesh_panel_title">BIOMETRIC READOUT</string>
     <string name="bodymesh_panel_status">SYSTEM ONLINE</string>
+    <string name="bodymesh_error_no_photo">Lade dein Foto neu, um ein neues Mesh zu generieren</string>
+    <string name="bodymesh_error_no_pose">Pose nicht erkannt. Mach ein neues Ganzkörperfoto, gut beleuchtet, frontal zur Kamera.</string>
+    <string name="bodymesh_error_save">Mesh konnte nicht gespeichert werden. Speicherplatz prüfen.</string>
+    <string name="bodymesh_error_generic">Analyse-Fehler. Versuch es mit einem helleren Foto.</string>
+    <string name="bodymesh_analytics_title">SCAN ANALYSIS</string>
+    <string name="bodymesh_analytics_vtaper">V-TAPER</string>
+    <string name="bodymesh_analytics_posture">HALTUNG</string>
+    <string name="bodymesh_analytics_asym_shoulders">ASYM. SCHULTERN</string>
+    <string name="bodymesh_analytics_asym_hips">ASYM. HÜFTEN</string>
+    <string name="bodymesh_analytics_tilt_shoulders">NEIG. SCHULTERN</string>
+    <string name="bodymesh_analytics_tilt_hips">NEIG. HÜFTEN</string>
+    <string name="bodymesh_chip_bmi">BMI</string>
+    <string name="bodymesh_chip_body_fat">FETT</string>
+    <string name="bodymesh_chip_height">GRÖSSE</string>
+    <string name="bodymesh_chip_weight">GEWICHT</string>
+    <string name="bodymesh_chip_waist">TAILLE</string>
+    <string name="bodymesh_chip_chest">BRUST</string>
+    <string name="bodymesh_chip_hip">HÜFTE</string>
+    <string name="bodymesh_chip_arm">ARM</string>
+    <string name="bodymesh_chip_thigh">OBERSCHENKEL</string>
+    <string name="bodymesh_chip_calf">WADE</string>
 
     <!-- GymScan -->
     <string name="gymscan_title">GymScan</string>

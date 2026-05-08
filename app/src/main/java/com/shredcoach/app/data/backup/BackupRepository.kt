@@ -116,10 +116,22 @@ class BackupRepository @Inject constructor(
             // 1. Snapshot DB
             val tables = exporter.export()
 
-            // 2. Énumérer les photos sur disque (filePath des entités).
+            // 2. Énumérer les fichiers sur disque (paths référencés par les
+            //    entités). Le système d'archive gère n'importe quel binaire
+            //    via SHA-256 dedupe — pas seulement des "photos" malgré le
+            //    naming. On inclut donc :
+            //      - progress_photos.filePath (JPG)
+            //      - meal_scans.photoPath (JPG)
+            //      - user_profile.bodyScanImagePath (JPG photo originale)
+            //      - user_profile.bodyMeshFeaturesPath (JSON features ML Kit)
+            //    Note pré-existante : le restore ne remap PAS les paths après
+            //    extraction → les fichiers sont dans le ZIP mais l'entité
+            //    pointe vers l'ancien filesDir. Ticket séparé hors scope.
             val photoPaths = buildList {
                 tables.progressPhotos.forEach { add(it.filePath) }
                 tables.mealScans.mapNotNull { it.photoPath }.forEach { add(it) }
+                tables.userProfile?.bodyScanImagePath?.let { add(it) }
+                tables.userProfile?.bodyMeshFeaturesPath?.let { add(it) }
             }
             val scanned = archive.scanPhotos(photoPaths)
 

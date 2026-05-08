@@ -34,7 +34,21 @@ data class UserProfileEntity(
     val bodyFatPercent: Double = 0.0, // Taux de gras corporel estimé (0 = non mesuré)
     // ── Body Scanner ──
     val bodyScanImagePath: String? = null,   // Chemin de la photo originale uploadée
-    val bodyMeshImagePath: String? = null,   // Chemin de l'image mesh IA générée
+    /**
+     * @deprecated Legacy path d'un PNG mesh généré via Gemini Image Gen
+     * (avant migration v40). Plus jamais écrit par le nouveau code. Reste
+     * lisible pour ne pas casser un user qui aurait encore un mesh Gemini
+     * stocké, mais l'UI de mesh est désormais 100% rendue depuis
+     * [bodyMeshFeaturesPath]. À supprimer dans une future migration.
+     */
+    val bodyMeshImagePath: String? = null,
+    /**
+     * Chemin du fichier JSON contenant les `MeshFeatures` extraites
+     * on-device (ML Kit Pose + Selfie Segmentation). Le mesh wireframe
+     * néon est rendu en Compose Canvas depuis ce JSON, animé en temps
+     * réel (scan-line, glow, pulse keypoints).
+     */
+    val bodyMeshFeaturesPath: String? = null,
     val bodyScanTimestamp: java.time.LocalDateTime? = null,
     val bodyScanConfidence: String = "",     // "low", "medium", "high"
     val bodyScanNotes: String = "",          // Note IA sur la qualité de l'estimation

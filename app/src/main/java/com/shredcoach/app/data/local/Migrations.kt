@@ -192,6 +192,28 @@ object Migrations {
         }
     }
 
+    /**
+     * v39 → v40 : ajoute `user_profile.bodyMeshFeaturesPath` pour stocker le
+     * chemin du JSON contenant les features du mesh on-device (keypoints
+     * pose + contour silhouette + analytics).
+     *
+     * **Pourquoi un nouveau field plutôt que réutiliser `bodyMeshImagePath`** :
+     * - Sémantique différente (PNG snapshot Gemini vs JSON features ML Kit)
+     * - Permet de garder l'ancien PNG accessible (legacy) si on veut
+     *   afficher un avant/après ou laisser l'user décider
+     * - Évite une migration table-rebuild lourde
+     *
+     * `bodyMeshImagePath` n'est PLUS écrit par le nouveau code (cf.
+     * BodyScannerViewModel.generateMesh) et sera silencieusement ignoré
+     * côté UI. Une future migration v40+ pourra le drop quand on sera sûr
+     * que toutes les features ont été regénérées.
+     */
+    fun migration39to40(): Migration = object : Migration(39, 40) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `user_profile` ADD COLUMN `bodyMeshFeaturesPath` TEXT")
+        }
+    }
+
     private fun copyApiKeysToSecureStore(context: Context, db: SupportSQLiteDatabase) {
         try {
             val masterKey = MasterKey.Builder(context)
