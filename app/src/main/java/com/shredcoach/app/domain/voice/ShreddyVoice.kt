@@ -38,7 +38,7 @@ class ShreddyVoice @Inject constructor(
     private val androidEngine: AndroidTtsEngine,
     private val googleEngine: GoogleCloudTtsEngine,
 ) {
-    private val restEndPhrases = listOf(
+    private val restEndPhrasesFr = listOf(
         "C'est reparti !",
         "On enchaîne !",
         "Série suivante !",
@@ -47,8 +47,17 @@ class ShreddyVoice @Inject constructor(
         "Repos terminé, on repart !",
         "C'est le moment, donne tout !",
     )
+    private val restEndPhrasesEn = listOf(
+        "Let's go!",
+        "Next set!",
+        "Time to roll!",
+        "Come on, back at it!",
+        "Go, you got this!",
+        "Rest's over, let's roll!",
+        "This is your moment, give it all!",
+    )
 
-    private val countdownPhrases = mapOf(
+    private val countdownPhrasesFr = mapOf(
         10 to "10 secondes",
         5 to "5",
         4 to "4",
@@ -56,6 +65,22 @@ class ShreddyVoice @Inject constructor(
         2 to "2",
         1 to "1",
     )
+    private val countdownPhrasesEn = mapOf(
+        10 to "10 seconds",
+        5 to "5",
+        4 to "4",
+        3 to "3",
+        2 to "2",
+        1 to "1",
+    )
+
+    /** Bascule FR/EN selon la locale courante. ES/IT/PT/DE → EN véhiculaire,
+     *  cohérent avec [WorkoutVoicePhrasebook.providerForCurrentLocale]. */
+    private val restEndPhrases: List<String>
+        get() = if (com.shredcoach.app.domain.i18n.PromptLocale.isFr()) restEndPhrasesFr else restEndPhrasesEn
+
+    private val countdownPhrases: Map<Int, String>
+        get() = if (com.shredcoach.app.domain.i18n.PromptLocale.isFr()) countdownPhrasesFr else countdownPhrasesEn
 
     private var phraseIndex = 0
 

@@ -95,7 +95,8 @@ class VoiceSettingsViewModel @Inject constructor(
      * AVANT de quitter Settings et de tomber sur sa première séance.
      */
     fun playPreview() {
-        shreddyVoice.speak(SAMPLE_PHRASES.random())
+        val phrases = if (com.shredcoach.app.domain.i18n.PromptLocale.isFr()) SAMPLE_PHRASES_FR else SAMPLE_PHRASES_EN
+        shreddyVoice.speak(phrases.random())
     }
 
     data class UiState(
@@ -108,14 +109,22 @@ class VoiceSettingsViewModel @Inject constructor(
     private companion object {
         /**
          * Phrases démo : doivent illustrer le ton coach + sonner naturel
-         * en français. On évite les chiffres seuls (countdown) pour mieux
-         * juger de la prosodie.
+         * dans la langue cible. On évite les chiffres seuls (countdown) pour
+         * mieux juger de la prosodie. Cascade FR ↔ EN selon la locale courante
+         * (cohérent avec [WorkoutVoicePhrasebook] qui utilise EN comme fallback
+         * pour ES/IT/PT/DE).
          */
-        val SAMPLE_PHRASES = listOf(
-            "Allez Sitou, dernière série, on lâche rien !",
+        val SAMPLE_PHRASES_FR = listOf(
+            "Allez champion, dernière série, on lâche rien !",
             "Tu progresses bien, garde ce rythme.",
             "Repos terminé, on enchaîne avec puissance.",
             "Top exécution, on continue sur cette dynamique.",
+        )
+        val SAMPLE_PHRASES_EN = listOf(
+            "Come on champ, last set, don't give up!",
+            "You're making great progress, keep this rhythm.",
+            "Rest's over, let's go with power.",
+            "Top execution, keep this momentum going.",
         )
     }
 }

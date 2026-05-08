@@ -646,13 +646,13 @@ private fun ExerciseHeader(exercise: ExerciseEntity, chronoSec: Long, onSkip: ()
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     TagBadge(
-                        text = exercise.muscleGroup.displayName,
+                        text = stringResource(exercise.muscleGroup.displayNameRes),
                         bgColor = MaterialTheme.colorScheme.primaryContainer,
                         textColor = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.weight(1f, fill = false),
                     )
                     TagBadge(
-                        text = exercise.variant.displayName,
+                        text = stringResource(exercise.variant.displayNameRes),
                         bgColor = Color(exercise.variant.color).copy(alpha = 0.2f),
                         textColor = Color(exercise.variant.color),
                         modifier = Modifier.weight(1f, fill = false),
@@ -798,7 +798,7 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
                 Column {
                     Text(
                         if (state.addExerciseStep == 0) stringResource(R.string.workout_add_exo_dialog_title)
-                        else state.addExerciseMuscleGroup?.displayName ?: "",
+                        else state.addExerciseMuscleGroup?.displayNameRes?.let { stringResource(it) } ?: "",
                         fontWeight = FontWeight.Bold
                     )
                     Text(
@@ -869,7 +869,7 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
                                 Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 14.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(mg.displayName, style = MaterialTheme.typography.bodyLarge,
+                                Text(stringResource(mg.displayNameRes), style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
                                 Icon(Icons.Default.ChevronRight, null, Modifier.size(20.dp),
                                     tint = OrangeVibrant.copy(alpha = 0.6f))
@@ -945,11 +945,12 @@ private fun AddExerciseMidSessionDialog(state: WorkoutSessionState, viewModel: W
                                         }
                                     }
                                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                        Text(exercise.name, style = MaterialTheme.typography.bodyMedium,
+                                        Text(com.shredcoach.app.domain.exercise.ExerciseI18n.resolveName(LocalContext.current, exercise),
+                                            style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Bold, maxLines = 2,
                                             overflow = TextOverflow.Ellipsis, lineHeight = 18.sp)
                                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                            TagBadge(exercise.variant.displayName,
+                                            TagBadge(stringResource(exercise.variant.displayNameRes),
                                                 Color(exercise.variant.color).copy(alpha = 0.2f),
                                                 Color(exercise.variant.color))
                                             Text(stringResource(R.string.workout_add_exo_summary_compact,
@@ -2501,7 +2502,8 @@ private fun SessionStepper(
         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
     ) {
         Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+            maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
         // Bouton +
         Surface(
             onClick = { onIncrement() },
