@@ -2146,6 +2146,37 @@
     <string name="home_weekly_trend_estimated">Tendenza stimata</string>
     <string name="home_daily_checkin_question">Come ti senti stamattina?</string>
     <string name="home_daily_checkin_mood_cd">Mood %1$s</string>
+    <!-- Home AI tools section (Phase 9 — i18n résiduel V2) -->
+    <string name="home_assistants_title">I tuoi assistenti</string>
+    <string name="home_assistants_subtitle">Quattro coach esperti dedicati ad accompagnarti ogni giorno</string>
+    <string name="home_assistants_badge_premium">PREMIUM</string>
+    <string name="home_assistant_shreddy_subtitle">Coach personale 24/7</string>
+    <string name="home_assistant_mealscan_subtitle">Foto → macro</string>
+    <string name="home_assistant_bodyscan_subtitle">Misure per foto</string>
+    <string name="home_assistant_gymscan_subtitle">Riconosce le macchine</string>
+    <string name="home_nutrition_remaining">Restano %1$d kcal</string>
+    <string name="home_nutrition_overshoot">%1$d kcal di troppo</string>
+    <string name="home_nutrition_btn_scan">Scansiona</string>
+    <string name="home_nutrition_btn_manual">Manuale</string>
+    <string name="home_nutrition_next_meal">Prossimo: %1$s %2$s</string>
+    <string name="home_nutrition_a11y_over_target">%1$d kcal sopra l\'obiettivo</string>
+    <string name="home_nutrition_a11y_remaining">%1$d kcal rimanenti</string>
+    <string name="home_nutrition_a11y_summary">Oggi %1$d kcal su %2$d, %3$s, %4$d grammi di proteine su %5$d%6$s</string>
+    <string name="home_nutrition_a11y_next_meal_suffix">, prossimo %1$s alle %2$s</string>
+    <string name="home_weekly_insight_title_pr">🏆 Nuovo record su %1$s</string>
+    <string name="home_weekly_insight_title_progress">📈 Stai progredendo su %1$s</string>
+    <string name="home_weekly_insight_title_plateau">🎯 %1$s è fermo</string>
+    <string name="home_weekly_insight_sub_pr_with_prev">Hai appena battuto il tuo record (%1$s kg). Bel progresso!</string>
+    <string name="home_weekly_insight_sub_pr_no_prev">Hai appena stabilito il tuo record personale. Continua così!</string>
+    <string name="home_weekly_insight_sub_progress">Guadagni in media +%1$s kg a settimana nelle tue ultime %2$d sessioni</string>
+    <string name="home_weekly_insight_sub_plateau">%1$d settimane senza progressi. Prova a variare ripetizioni, tempo o recupero per rilanciare la progressione.</string>
+    <string name="home_weekly_insight_trend_stable">stabile</string>
+    <string name="home_weekly_insight_trend_per_month">%1$s kg/mese</string>
+    <string name="home_weekly_insight_a11y">%1$s, 1RM stimato %2$s chilogrammi, record %3$s chilogrammi. %4$s</string>
+    <string name="home_resume_a11y_exos_freestyle">%1$d esercizi completati</string>
+    <string name="home_resume_a11y_exos_planned">%1$d esercizi su %2$d completati</string>
+    <string name="home_resume_a11y_full">Riprendi la tua sessione %1$s, %2$d minuti trascorsi, %3$s</string>
+    <string name="stats_trend_kg_per_week">%1$s kg/sett</string>
     <!-- Mood labels -->
     <string name="mood_tired">Stanco</string>
     <string name="mood_meh">Così così</string>

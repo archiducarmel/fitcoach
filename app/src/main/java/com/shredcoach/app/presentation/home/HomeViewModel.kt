@@ -1,8 +1,10 @@
 package com.shredcoach.app.presentation.home
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.NutritionGoalEntity
 import com.shredcoach.app.data.local.entity.NutritionScheduleEntity
 import com.shredcoach.app.data.local.entity.UserProfileEntity
@@ -19,6 +21,7 @@ import com.shredcoach.app.domain.training.ProgressStatus
 import com.shredcoach.app.domain.workout.RoutineCatalog
 import com.shredcoach.app.domain.wellness.WellnessStore
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -67,6 +70,7 @@ data class GreetingInfo(
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
+    @ApplicationContext private val appContext: Context,
     private val userRepository: UserRepository,
     private val exerciseRepository: ExerciseRepository,
     private val workoutRepository: WorkoutRepository,
@@ -292,7 +296,7 @@ class HomeViewModel @Inject constructor(
             val resolved = RoutineCatalog.byId(effectiveRoutineId).id
 
             val workout = WorkoutEntity(
-                name = "Séance libre",
+                name = appContext.getString(R.string.history_freestyle_session_name),
                 durationMinutes = 0,
                 exerciseCount = 0,
                 createdAt = LocalDateTime.now(),
@@ -473,7 +477,8 @@ class HomeViewModel @Inject constructor(
 
             val candidates = topExerciseIds.mapNotNull { exerciseId ->
                 val progression = plateauDetector.analyze(exerciseId) ?: return@mapNotNull null
-                val name = exerciseRepository.getExerciseById(exerciseId)?.name ?: return@mapNotNull null
+                val exercise = exerciseRepository.getExerciseById(exerciseId) ?: return@mapNotNull null
+                val name = com.shredcoach.app.domain.exercise.ExerciseI18n.resolveName(appContext, exercise)
                 val tone = when {
                     progression.hasFreshPr -> InsightTone.PR
                     progression.status is ProgressStatus.Progressing -> InsightTone.PROGRESS

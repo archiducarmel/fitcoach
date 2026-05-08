@@ -42,6 +42,7 @@ fun WorkoutHistoryDetailScreen(
     viewModel: WorkoutHistoryDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showShare by remember { mutableStateOf(false) }
 
@@ -64,7 +65,7 @@ fun WorkoutHistoryDetailScreen(
                 }
                 val metric = if (maxWeight > 0) "$repsPart · ${maxWeight.toInt()} kg" else repsPart
                 com.shredcoach.app.presentation.share.ShareCardData.ExerciseProgressItem(
-                    name = perf.exercise.name,
+                    name = com.shredcoach.app.domain.exercise.ExerciseI18n.resolveName(context, perf.exercise),
                     status = if (perf.sets.isEmpty())
                         com.shredcoach.app.presentation.share.ShareCardData.ExerciseStatus.SKIPPED
                     else
@@ -362,6 +363,10 @@ private fun NotesCard(notes: String) {
 @Composable
 private fun ExercisePerformanceCard(perf: ExercisePerformance) {
     var expanded by remember { mutableStateOf(false) }
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val localizedName = remember(perf.exercise.id, perf.exercise.exerciseKey, ctx) {
+        com.shredcoach.app.domain.exercise.ExerciseI18n.resolveName(ctx, perf.exercise)
+    }
 
     Card(
         onClick = { expanded = !expanded },
@@ -383,7 +388,7 @@ private fun ExercisePerformanceCard(perf: ExercisePerformance) {
                 }
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(perf.exercise.name, style = MaterialTheme.typography.titleMedium,
+                    Text(localizedName, style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold, maxLines = 1,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                     Text(stringResource(perf.exercise.muscleGroup.displayNameRes), style = MaterialTheme.typography.labelSmall,

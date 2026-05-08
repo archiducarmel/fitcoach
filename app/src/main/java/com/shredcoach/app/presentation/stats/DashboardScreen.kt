@@ -865,7 +865,7 @@ private fun TrendSection(trend: TrendData) {
             // Indicateurs
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(String.format(java.util.Locale.US, "%.1f kg/sem",trend.slope), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                    Text(stringResource(R.string.stats_trend_kg_per_week, "%.1f".format(trend.slope)), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
                         color = if (trend.slope > 0) NeonGreen else if (trend.slope < -0.5) Color(0xFFEF4444) else OrangeVibrant)
                     Text(stringResource(R.string.dashboard_trend_progression), style = MaterialTheme.typography.labelSmall)
                 }

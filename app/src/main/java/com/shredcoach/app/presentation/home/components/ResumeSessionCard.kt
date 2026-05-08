@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -57,14 +58,14 @@ fun ResumeSessionCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val a11y = remember(session) {
+    val context = LocalContext.current
+    val a11y = remember(session, context) {
         val exoLabel = if (session.isFreestyle) {
-            "${session.completedExercises} exercices terminés"
+            context.getString(R.string.home_resume_a11y_exos_freestyle, session.completedExercises)
         } else {
-            "${session.completedExercises} exercices sur ${session.totalExercises} terminés"
+            context.getString(R.string.home_resume_a11y_exos_planned, session.completedExercises, session.totalExercises)
         }
-        "Reprendre ta séance ${session.workoutName}, " +
-            "${session.elapsedMinutes} minutes écoulées, $exoLabel"
+        context.getString(R.string.home_resume_a11y_full, session.workoutName, session.elapsedMinutes, exoLabel)
     }
     val animatedProgress by animateFloatAsState(
         targetValue = session.progress,

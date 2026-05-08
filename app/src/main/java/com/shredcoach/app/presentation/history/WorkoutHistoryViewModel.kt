@@ -78,9 +78,14 @@ class WorkoutHistoryViewModel @Inject constructor(
         viewModelScope.launch {
             workoutRepository.getAllWorkoutLogs().collect { logs ->
                 val items = logs.map { log ->
-                    val workoutName = log.workoutId?.let {
-                        workoutRepository.getWorkoutById(it)?.name
-                    } ?: appContext.getString(R.string.history_freestyle_session_name)
+                    val workout = log.workoutId?.let { workoutRepository.getWorkoutById(it) }
+                    // Pour les freestyles (incluant ceux créés avant l'i18n V2 avec name="Séance libre"
+                    // figé en DB), on remplace toujours par la string localisée → cohérence cross-locale.
+                    val workoutName = if (workout == null || workout.isFreestyle) {
+                        appContext.getString(R.string.history_freestyle_session_name)
+                    } else {
+                        workout.name
+                    }
                     val sets = workoutRepository.getWorkoutSets(log.id)
                     HistoryListItem(
                         log = log,

@@ -1,15 +1,18 @@
 ﻿package com.shredcoach.app.presentation.history
 
 
+import android.content.Context
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.ExerciseEntity
 import com.shredcoach.app.data.local.entity.WorkoutLogEntity
 import com.shredcoach.app.data.local.entity.WorkoutSetEntity
 import com.shredcoach.app.data.repository.WorkoutRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
@@ -34,6 +37,7 @@ data class HistoryDetailState(
 
 @HiltViewModel
 class WorkoutHistoryDetailViewModel @Inject constructor(
+    @ApplicationContext private val appContext: Context,
     private val workoutRepository: WorkoutRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -48,7 +52,12 @@ class WorkoutHistoryDetailViewModel @Inject constructor(
     private fun load() {
         viewModelScope.launch {
             val log = workoutRepository.getWorkoutLogById(logId) ?: return@launch
-            val workoutName = log.workoutId?.let { workoutRepository.getWorkoutById(it)?.name } ?: "Séance libre"
+            val workout = log.workoutId?.let { workoutRepository.getWorkoutById(it) }
+            val workoutName = if (workout == null || workout.isFreestyle) {
+                appContext.getString(R.string.history_freestyle_session_name)
+            } else {
+                workout.name
+            }
 
             // Charger tous les sets de la séance
             val allSets = workoutRepository.getWorkoutSets(log.id)

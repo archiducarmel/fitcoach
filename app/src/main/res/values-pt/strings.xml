@@ -985,7 +985,7 @@
 
     <!-- Card metrics -->
     <string name="history_metric_duration">Duração</string>
-    <string name="history_metric_exos">Exos</string>
+    <string name="history_metric_exos">Exerc.</string>
     <string name="history_metric_sets">Séries</string>
     <string name="history_metric_volume">Volume</string>
     <string name="history_status_completed">Concluído</string>
@@ -2197,6 +2197,37 @@
     <string name="home_weekly_trend_estimated">Tendência estimada</string>
     <string name="home_daily_checkin_question">Como você se sente hoje?</string>
     <string name="home_daily_checkin_mood_cd">Humor %1$s</string>
+    <!-- Home AI tools section (Phase 9 — i18n résiduel V2) -->
+    <string name="home_assistants_title">Seus assistentes</string>
+    <string name="home_assistants_subtitle">Quatro coaches especialistas dedicados para te acompanhar todos os dias</string>
+    <string name="home_assistants_badge_premium">PREMIUM</string>
+    <string name="home_assistant_shreddy_subtitle">Coach pessoal 24/7</string>
+    <string name="home_assistant_mealscan_subtitle">Foto → macros</string>
+    <string name="home_assistant_bodyscan_subtitle">Medições por foto</string>
+    <string name="home_assistant_gymscan_subtitle">Reconhece as máquinas</string>
+    <string name="home_nutrition_remaining">Restam %1$d kcal</string>
+    <string name="home_nutrition_overshoot">%1$d kcal a mais</string>
+    <string name="home_nutrition_btn_scan">Escanear</string>
+    <string name="home_nutrition_btn_manual">Manual</string>
+    <string name="home_nutrition_next_meal">Próximo: %1$s %2$s</string>
+    <string name="home_nutrition_a11y_over_target">%1$d kcal acima da meta</string>
+    <string name="home_nutrition_a11y_remaining">%1$d kcal restantes</string>
+    <string name="home_nutrition_a11y_summary">Hoje %1$d kcal de %2$d, %3$s, %4$d gramas de proteína de %5$d%6$s</string>
+    <string name="home_nutrition_a11y_next_meal_suffix">, próximo %1$s às %2$s</string>
+    <string name="home_weekly_insight_title_pr">🏆 Novo recorde em %1$s</string>
+    <string name="home_weekly_insight_title_progress">📈 Você progride em %1$s</string>
+    <string name="home_weekly_insight_title_plateau">🎯 %1$s estagnou</string>
+    <string name="home_weekly_insight_sub_pr_with_prev">Você acabou de bater seu recorde (%1$s kg). Mandou bem!</string>
+    <string name="home_weekly_insight_sub_pr_no_prev">Você acabou de estabelecer seu recorde pessoal. Continue nesse ritmo!</string>
+    <string name="home_weekly_insight_sub_progress">Você ganha em média +%1$s kg por semana nos seus últimos %2$d treinos</string>
+    <string name="home_weekly_insight_sub_plateau">%1$d semanas sem progredir. Tente variar reps, tempo ou descanso para reativar a progressão.</string>
+    <string name="home_weekly_insight_trend_stable">estável</string>
+    <string name="home_weekly_insight_trend_per_month">%1$s kg/mês</string>
+    <string name="home_weekly_insight_a11y">%1$s, 1RM estimado %2$s quilogramas, recorde %3$s quilogramas. %4$s</string>
+    <string name="home_resume_a11y_exos_freestyle">%1$d exercícios concluídos</string>
+    <string name="home_resume_a11y_exos_planned">%1$d exercícios de %2$d concluídos</string>
+    <string name="home_resume_a11y_full">Retomar seu treino %1$s, %2$d minutos decorridos, %3$s</string>
+    <string name="stats_trend_kg_per_week">%1$s kg/sem</string>
     <!-- Mood labels -->
     <string name="mood_tired">Cansado</string>
     <string name="mood_meh">Mais ou menos</string>

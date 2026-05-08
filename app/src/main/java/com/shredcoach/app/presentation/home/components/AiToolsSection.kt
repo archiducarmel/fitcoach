@@ -32,10 +32,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.shredcoach.app.R
 import com.shredcoach.app.presentation.navigation.Screen
 import com.shredcoach.app.presentation.theme.NeonGreen
 import com.shredcoach.app.presentation.theme.OrangeVibrant
@@ -90,14 +92,14 @@ fun AiToolsSection(
                 },
                 tint = OrangeVibrant
             )
-            Text("Tes assistants", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.home_assistants_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             // Badge "Premium" — accent valorisant qui dédramatise vs "AI"
             Surface(
                 shape = RoundedCornerShape(6.dp),
                 color = OrangeVibrant.copy(alpha = 0.15f)
             ) {
                 Text(
-                    "PREMIUM",
+                    stringResource(R.string.home_assistants_badge_premium),
                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.ExtraBold,
@@ -108,7 +110,7 @@ fun AiToolsSection(
         }
 
         Text(
-            "Quatre coachs experts dédiés pour t'accompagner au quotidien",
+            stringResource(R.string.home_assistants_subtitle),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             maxLines = 2,
@@ -123,7 +125,7 @@ fun AiToolsSection(
             AiToolCard(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
                 title = "Shreddy",
-                subtitle = "Coach perso 24/7",
+                subtitle = stringResource(R.string.home_assistant_shreddy_subtitle),
                 icon = Icons.AutoMirrored.Filled.Chat,
                 gradient = listOf(Color(0xFF8B5CF6), Color(0xFFEC4899)), // violet → rose
                 onClick = onShreddyClick
@@ -131,7 +133,7 @@ fun AiToolsSection(
             AiToolCard(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
                 title = "Meal Scan",
-                subtitle = "Photo → macros",
+                subtitle = stringResource(R.string.home_assistant_mealscan_subtitle),
                 icon = Icons.Default.PhotoCamera,
                 gradient = listOf(OrangeVibrant, Color(0xFFEF4444)), // orange → rouge
                 onClick = onMealScanClick
@@ -144,7 +146,7 @@ fun AiToolsSection(
             AiToolCard(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
                 title = "Body Scan",
-                subtitle = "Mesures par photo",
+                subtitle = stringResource(R.string.home_assistant_bodyscan_subtitle),
                 icon = Icons.Default.Accessibility,
                 gradient = listOf(Color(0xFF06B6D4), Color(0xFF3B82F6)), // cyan → blue
                 onClick = onBodyScanClick
@@ -152,7 +154,7 @@ fun AiToolsSection(
             AiToolCard(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
                 title = "Gym Scan",
-                subtitle = "Reconnaît les machines",
+                subtitle = stringResource(R.string.home_assistant_gymscan_subtitle),
                 icon = Icons.Default.QrCodeScanner,
                 gradient = listOf(NeonGreen, Color(0xFF14B8A6)), // green → teal
                 onClick = onGymScanClick

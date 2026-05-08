@@ -2201,6 +2201,41 @@
     <string name="home_weekly_trend_estimated">Tendance estimée</string>
     <string name="home_daily_checkin_question">Comment tu te sens ce matin ?</string>
     <string name="home_daily_checkin_mood_cd">Mood %1$s</string>
+    <!-- Home AI tools section (Phase 9 — i18n résiduel V2) -->
+    <string name="home_assistants_title">Tes assistants</string>
+    <string name="home_assistants_subtitle">Quatre coachs experts dédiés pour t\'accompagner au quotidien</string>
+    <string name="home_assistants_badge_premium">PREMIUM</string>
+    <string name="home_assistant_shreddy_subtitle">Coach perso 24/7</string>
+    <string name="home_assistant_mealscan_subtitle">Photo → macros</string>
+    <string name="home_assistant_bodyscan_subtitle">Mesures par photo</string>
+    <string name="home_assistant_gymscan_subtitle">Reconnaît les machines</string>
+    <!-- Today nutrition card -->
+    <string name="home_nutrition_remaining">Reste %1$d kcal</string>
+    <string name="home_nutrition_overshoot">Dépassement de %1$d kcal</string>
+    <string name="home_nutrition_btn_scan">Scanner</string>
+    <string name="home_nutrition_btn_manual">Manuel</string>
+    <string name="home_nutrition_next_meal">Prochain : %1$s %2$s</string>
+    <string name="home_nutrition_a11y_over_target">%1$d kcal au-dessus de la cible</string>
+    <string name="home_nutrition_a11y_remaining">%1$d kcal restantes</string>
+    <string name="home_nutrition_a11y_summary">Aujourd\'hui %1$d kcal sur %2$d, %3$s, %4$d grammes de protéines sur %5$d%6$s</string>
+    <string name="home_nutrition_a11y_next_meal_suffix">, prochain %1$s à %2$s</string>
+    <!-- Weekly insight card -->
+    <string name="home_weekly_insight_title_pr">🏆 Nouveau record sur %1$s</string>
+    <string name="home_weekly_insight_title_progress">📈 Tu progresses sur %1$s</string>
+    <string name="home_weekly_insight_title_plateau">🎯 %1$s stagne</string>
+    <string name="home_weekly_insight_sub_pr_with_prev">Tu viens de battre ton record (%1$s kg). Belle progression !</string>
+    <string name="home_weekly_insight_sub_pr_no_prev">Tu viens d\'établir ton record personnel. Continue sur cette lancée !</string>
+    <string name="home_weekly_insight_sub_progress">Tu gagnes en moyenne +%1$s kg par semaine sur tes %2$d dernières séances</string>
+    <string name="home_weekly_insight_sub_plateau">%1$d semaines sans progresser. Essaie de varier les reps, le tempo ou le temps de repos pour relancer la progression.</string>
+    <string name="home_weekly_insight_trend_stable">stable</string>
+    <string name="home_weekly_insight_trend_per_month">%1$s kg/mois</string>
+    <string name="home_weekly_insight_a11y">%1$s, 1RM estimé %2$s kilogrammes, record %3$s kilogrammes. %4$s</string>
+    <!-- Resume session card -->
+    <string name="home_resume_a11y_exos_freestyle">%1$d exercices terminés</string>
+    <string name="home_resume_a11y_exos_planned">%1$d exercices sur %2$d terminés</string>
+    <string name="home_resume_a11y_full">Reprendre ta séance %1$s, %2$d minutes écoulées, %3$s</string>
+    <!-- Stats trend formats (Phase 9 — i18n résiduel V2) -->
+    <string name="stats_trend_kg_per_week">%1$s kg/sem</string>
     <!-- Mood labels -->
     <string name="mood_tired">Fatigué</string>
     <string name="mood_meh">Bof</string>

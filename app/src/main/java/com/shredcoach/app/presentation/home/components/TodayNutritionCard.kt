@@ -26,6 +26,7 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -36,6 +37,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.res.stringResource
@@ -73,7 +75,8 @@ fun TodayNutritionCard(
     onAddManual: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val a11y = remember(nutrition) { buildA11yLabel(nutrition) }
+    val context = LocalContext.current
+    val a11y = remember(nutrition, context) { buildA11yLabel(context, nutrition) }
 
     // Pas de mergeDescendants : la card contient des boutons (Scanner/Manuel)
     // qui doivent rester focusables individuellement par TalkBack. Le résumé
@@ -138,9 +141,9 @@ fun TodayNutritionCard(
                     }
                     Text(
                         text = if (nutrition.isCaloriesOver) {
-                            "Dépassement de ${nutrition.caloriesConsumed - nutrition.caloriesTarget} kcal"
+                            stringResource(R.string.home_nutrition_overshoot, nutrition.caloriesConsumed - nutrition.caloriesTarget)
                         } else {
-                            "Reste ${nutrition.caloriesRemaining} kcal"
+                            stringResource(R.string.home_nutrition_remaining, nutrition.caloriesRemaining)
                         },
                         style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
                         fontWeight = FontWeight.Medium,
@@ -197,7 +200,7 @@ fun TodayNutritionCard(
                 ) {
                     Icon(Icons.Default.CameraAlt, null, Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Scanner", style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.home_nutrition_btn_scan), style = MaterialTheme.typography.labelLarge)
                 }
                 FilledTonalButton(
                     onClick = onAddManual,
@@ -206,7 +209,7 @@ fun TodayNutritionCard(
                 ) {
                     Icon(Icons.Default.Add, null, Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Manuel", style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.home_nutrition_btn_manual), style = MaterialTheme.typography.labelLarge)
                 }
             }
         }
@@ -374,7 +377,7 @@ private fun NextMealHint(item: NextScheduleItem) {
             modifier = Modifier.size(16.dp),
         )
         Text(
-            text = "Prochain : $emoji ${item.name}",
+            text = stringResource(R.string.home_nutrition_next_meal, emoji, item.name),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
             modifier = Modifier.weight(1f),
@@ -395,13 +398,18 @@ private val ProteinGreen = Color(0xFF10B981)
 private val CarbsAmber = Color(0xFFF59E0B)
 private val FatsPurple = Color(0xFF8B5CF6)
 
-private fun buildA11yLabel(n: TodayNutrition): String {
+private fun buildA11yLabel(context: Context, n: TodayNutrition): String {
     val calStatus = if (n.isCaloriesOver) {
-        "${n.caloriesConsumed - n.caloriesTarget} kcal au-dessus de la cible"
+        context.getString(R.string.home_nutrition_a11y_over_target, n.caloriesConsumed - n.caloriesTarget)
     } else {
-        "${n.caloriesRemaining} kcal restantes"
+        context.getString(R.string.home_nutrition_a11y_remaining, n.caloriesRemaining)
     }
-    val nextStr = n.next?.let { ", prochain ${it.name} à ${it.time.format(TIME_FORMAT)}" } ?: ""
-    return "Aujourd'hui ${n.caloriesConsumed} kcal sur ${n.caloriesTarget}, " +
-        "$calStatus, ${n.proteinsConsumedGrams} grammes de protéines sur ${n.proteinsTargetGrams}$nextStr"
+    val nextStr = n.next?.let {
+        context.getString(R.string.home_nutrition_a11y_next_meal_suffix, it.name, it.time.format(TIME_FORMAT))
+    } ?: ""
+    return context.getString(
+        R.string.home_nutrition_a11y_summary,
+        n.caloriesConsumed, n.caloriesTarget, calStatus,
+        n.proteinsConsumedGrams, n.proteinsTargetGrams, nextStr,
+    )
 }

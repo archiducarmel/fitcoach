@@ -22,6 +22,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -34,6 +35,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
@@ -64,8 +66,11 @@ fun WeeklyInsightCard(
     modifier: Modifier = Modifier,
 ) {
     val palette = remember(insight.tone) { tonePalette(insight.tone) }
-    val a11y = remember(insight) { buildA11y(insight) }
-    val toneTitle = remember(insight) { toneTitle(insight) }
+    val context = LocalContext.current
+    val a11y = remember(insight, context) { buildA11y(context, insight) }
+    val toneTitle = remember(insight, context) { toneTitle(context, insight) }
+    val subLabelText = remember(insight, context) { subLabel(context, insight) }
+    val trendText = remember(insight, context) { formatMonthlyTrend(context, insight.progression.weeklySlopeKg) }
 
     Card(
         onClick = onClick,
@@ -184,7 +189,7 @@ fun WeeklyInsightCard(
 
             // ─── Sub-line contextuelle ───
             Text(
-                text = subLabel(insight),
+                text = subLabelText,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 3,
@@ -218,7 +223,7 @@ fun WeeklyInsightCard(
                 )
                 FooterStat(
                     label = stringResource(R.string.home_weekly_trend_estimated),
-                    value = formatMonthlyTrend(insight.progression.weeklySlopeKg),
+                    value = trendText,
                     color = trendColor(insight.progression.weeklySlopeKg, palette.color),
                 )
             }
@@ -251,12 +256,12 @@ private fun FooterStat(label: String, value: String, color: Color) {
 }
 
 /** "+1.5 kg/mois", "−0.5 kg/mois", "stable" — slope hebdo × 4 ≈ progression mensuelle. */
-private fun formatMonthlyTrend(weeklySlopeKg: Double): String {
+private fun formatMonthlyTrend(context: Context, weeklySlopeKg: Double): String {
     val monthly = weeklySlopeKg * 4
     return when {
-        kotlin.math.abs(monthly) < 0.3 -> "stable"
-        monthly > 0 -> "+${"%.1f".format(monthly)} kg/mois"
-        else -> "${"%.1f".format(monthly)} kg/mois"
+        kotlin.math.abs(monthly) < 0.3 -> context.getString(R.string.home_weekly_insight_trend_stable)
+        monthly > 0 -> context.getString(R.string.home_weekly_insight_trend_per_month, "+${"%.1f".format(monthly)}")
+        else -> context.getString(R.string.home_weekly_insight_trend_per_month, "%.1f".format(monthly))
     }
 }
 
@@ -330,36 +335,39 @@ private fun tonePalette(tone: InsightTone): TonePalette = when (tone) {
     InsightTone.PLATEAU -> TonePalette(Color(0xFFEF4444), Icons.Filled.SouthEast)
 }
 
-private fun toneTitle(insight: WeeklyInsight): String = when (insight.tone) {
-    InsightTone.PR -> "🏆 Nouveau record sur ${insight.exerciseName}"
-    InsightTone.PROGRESS -> "📈 Tu progresses sur ${insight.exerciseName}"
-    InsightTone.PLATEAU -> "🎯 ${insight.exerciseName} stagne"
+private fun toneTitle(context: Context, insight: WeeklyInsight): String = when (insight.tone) {
+    InsightTone.PR -> context.getString(R.string.home_weekly_insight_title_pr, insight.exerciseName)
+    InsightTone.PROGRESS -> context.getString(R.string.home_weekly_insight_title_progress, insight.exerciseName)
+    InsightTone.PLATEAU -> context.getString(R.string.home_weekly_insight_title_plateau, insight.exerciseName)
 }
 
-private fun subLabel(insight: WeeklyInsight): String = when (insight.tone) {
+private fun subLabel(context: Context, insight: WeeklyInsight): String = when (insight.tone) {
     InsightTone.PR -> {
         val prev = insight.progression.previousBestKg
-        if (prev != null) "Tu viens de battre ton record (${formatKg(prev)} kg). Belle progression !"
-        else "Tu viens d'établir ton record personnel. Continue sur cette lancée !"
+        if (prev != null) context.getString(R.string.home_weekly_insight_sub_pr_with_prev, formatKg(prev))
+        else context.getString(R.string.home_weekly_insight_sub_pr_no_prev)
     }
     InsightTone.PROGRESS -> {
         val slope = insight.progression.weeklySlopeKg
         val sessions = insight.progression.sessionsCount
-        "Tu gagnes en moyenne +${"%.1f".format(slope)} kg par semaine sur tes $sessions dernières séances"
+        context.getString(R.string.home_weekly_insight_sub_progress, "%.1f".format(slope), sessions)
     }
     InsightTone.PLATEAU -> {
         val weeks = (insight.progression.status as? ProgressStatus.Plateau)?.weeksFlat ?: 3
-        "$weeks semaines sans progresser. Essaie de varier les reps, le tempo ou le temps de repos pour relancer la progression."
+        context.getString(R.string.home_weekly_insight_sub_plateau, weeks)
     }
 }
 
 private fun formatKg(value: Double): String =
     if (value % 1.0 == 0.0) value.toInt().toString() else "%.1f".format(value)
 
-private fun buildA11y(insight: WeeklyInsight): String {
-    val title = toneTitle(insight).replace(Regex("[^\\p{L}\\p{N} ]"), "").trim()
-    return "$title, " +
-        "1RM estimé ${formatKg(insight.progression.estimatedOneRmKg)} kilogrammes, " +
-        "record ${formatKg(insight.progression.bestOneRmKg)} kilogrammes. " +
-        subLabel(insight)
+private fun buildA11y(context: Context, insight: WeeklyInsight): String {
+    val title = toneTitle(context, insight).replace(Regex("[^\\p{L}\\p{N} ]"), "").trim()
+    return context.getString(
+        R.string.home_weekly_insight_a11y,
+        title,
+        formatKg(insight.progression.estimatedOneRmKg),
+        formatKg(insight.progression.bestOneRmKg),
+        subLabel(context, insight),
+    )
 }

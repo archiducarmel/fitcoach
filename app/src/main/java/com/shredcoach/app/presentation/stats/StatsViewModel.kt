@@ -362,7 +362,8 @@ class StatsViewModel @Inject constructor(
                 val totalSets = muscleData.sumOf { it.setCount }.coerceAtLeast(1)
                 val muscleDistribution = muscleData.map { data ->
                     val mg = try { MuscleGroup.valueOf(data.muscleGroup) } catch (_: Exception) { null }
-                    MuscleSlice(data.muscleGroup, mg?.displayName ?: data.muscleGroup, data.setCount, data.setCount.toFloat() / totalSets)
+                    val displayName = mg?.displayNameRes?.let { appContext.getString(it) } ?: data.muscleGroup
+                    MuscleSlice(data.muscleGroup, displayName, data.setCount, data.setCount.toFloat() / totalSets)
                 }
                 val mostTrainedMuscle = muscleDistribution.maxByOrNull { it.count }?.displayName ?: ""
 
@@ -581,7 +582,8 @@ class StatsViewModel @Inject constructor(
 
             exerciseSetCounts.mapNotNull { (exerciseId, _) ->
                 val progression = plateauDetector.analyze(exerciseId) ?: return@mapNotNull null
-                val name = exercisesById[exerciseId]?.name ?: return@mapNotNull null
+                val exercise = exercisesById[exerciseId] ?: return@mapNotNull null
+                val name = com.shredcoach.app.domain.exercise.ExerciseI18n.resolveName(appContext, exercise)
                 ExerciseProgressionEntry(exerciseName = name, progression = progression)
             }.sortedByDescending { it.progression.sessionsCount }
         } catch (_: Exception) {
@@ -609,7 +611,7 @@ class StatsViewModel @Inject constructor(
                 ExerciseKind.WEIGHTED -> weightedById[exId]?.let { pr ->
                     if (pr.maxWeight <= 0) return@let null
                     PRDisplay(
-                        exerciseName = exercise.name,
+                        exerciseName = com.shredcoach.app.domain.exercise.ExerciseI18n.resolveName(appContext, exercise),
                         kind = ExerciseKind.WEIGHTED,
                         weight = pr.maxWeight,
                         reps = pr.reps,
@@ -619,7 +621,7 @@ class StatsViewModel @Inject constructor(
                 ExerciseKind.BODYWEIGHT_REPS -> maxRepsById[exId]?.let { rec ->
                     if (rec.maxReps <= 0) return@let null
                     PRDisplay(
-                        exerciseName = exercise.name,
+                        exerciseName = com.shredcoach.app.domain.exercise.ExerciseI18n.resolveName(appContext, exercise),
                         kind = ExerciseKind.BODYWEIGHT_REPS,
                         weight = rec.weightKg,  // > 0 pour bodyweight lesté
                         reps = rec.maxReps,
@@ -629,7 +631,7 @@ class StatsViewModel @Inject constructor(
                 ExerciseKind.TIMED -> maxRepsById[exId]?.let { rec ->
                     if (rec.maxReps <= 0) return@let null
                     PRDisplay(
-                        exerciseName = exercise.name,
+                        exerciseName = com.shredcoach.app.domain.exercise.ExerciseI18n.resolveName(appContext, exercise),
                         kind = ExerciseKind.TIMED,
                         weight = 0.0,
                         reps = rec.maxReps,  // = secondes pour TIMED
