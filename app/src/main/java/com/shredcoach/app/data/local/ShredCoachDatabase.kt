@@ -6,6 +6,7 @@ import androidx.room.TypeConverters
 import com.shredcoach.app.data.local.converter.Converters
 import com.shredcoach.app.data.local.dao.*
 import com.shredcoach.app.data.local.entity.*
+import com.shredcoach.app.data.local.entity.BodyScanLogEntity
 
 @Database(
     entities = [
@@ -25,9 +26,10 @@ import com.shredcoach.app.data.local.entity.*
         ProgressPhotoEntity::class,
         ChatMessageEntity::class,
         AppNotificationEntity::class,
-        ScheduledWorkoutEntity::class
+        ScheduledWorkoutEntity::class,
+        BodyScanLogEntity::class
     ],
-    version = 40,
+    version = 41,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -42,6 +44,7 @@ abstract class ShredCoachDatabase : RoomDatabase() {
     abstract fun mealScanDao(): com.shredcoach.app.data.local.dao.MealScanDao
     abstract fun appNotificationDao(): com.shredcoach.app.data.local.dao.AppNotificationDao
     abstract fun scheduledWorkoutDao(): com.shredcoach.app.data.local.dao.ScheduledWorkoutDao
+    abstract fun bodyScanLogDao(): com.shredcoach.app.data.local.dao.BodyScanLogDao
 
     companion object {
         const val DATABASE_NAME = "shredcoach_db"
@@ -61,6 +64,7 @@ abstract class ShredCoachDatabase : RoomDatabase() {
             "scheduled_workouts",     // FK → workouts, workout_logs
             "app_notifications",
             "chat_messages",
+            "body_scan_logs",          // pas de FK, history-only
             "progress_photos",
             "weight_logs",
             "daily_checks",            // FK → nutrition_schedule

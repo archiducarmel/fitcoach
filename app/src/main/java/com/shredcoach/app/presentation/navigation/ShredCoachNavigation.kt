@@ -450,6 +450,15 @@ fun ShredCoachNavigation(
                         viewModel = hiltViewModel(parentEntry)
                     )
                 }
+                composable(Screen.BodyComposition.route) { backStackEntry ->
+                    val parentEntry = remember(backStackEntry) {
+                        navController.getBackStackEntry("body_scanner_graph")
+                    }
+                    com.shredcoach.app.presentation.bodyscanner.BodyCompositionScreen(
+                        navController = navController,
+                        viewModel = hiltViewModel(parentEntry)
+                    )
+                }
             }
 
             composable(Screen.MealScanner.route) {

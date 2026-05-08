@@ -1792,6 +1792,26 @@
     <string name="bodymesh_chip_thigh">COXA</string>
     <string name="bodymesh_chip_calf">PANTURRILHA</string>
     <string name="bodymesh_insight_loading">Análise anatômica em andamento…</string>
+    <string name="dashboard_body_scan_timeline_title">Evolução corporal</string>
+    <string name="dashboard_body_scan_timeline_subtitle">%1$d scans registrados</string>
+    <string name="dashboard_body_scan_timeline_need_more">Faça outro scan para ver seu progresso ao longo do tempo.</string>
+    <string name="bodycomp_title">Composição corporal</string>
+    <string name="bodycomp_subtitle">Análise morfológica 6 eixos</string>
+    <string name="bodycomp_axis_shoulders">OMBROS</string>
+    <string name="bodycomp_axis_chest">PEITO</string>
+    <string name="bodycomp_axis_arm">BRAÇO</string>
+    <string name="bodycomp_axis_waist">CINTURA</string>
+    <string name="bodycomp_axis_hip">QUADRIS</string>
+    <string name="bodycomp_axis_thigh">COXA</string>
+    <string name="bodycomp_legend_reference">Referência ideal</string>
+    <string name="bodycomp_legend_you">Você</string>
+    <string name="bodycomp_detail_title">Detalhe por zona</string>
+    <string name="bodycomp_target_short">meta %1$d cm</string>
+    <string name="bodycomp_empty_title">Sem medições ainda</string>
+    <string name="bodycomp_empty_desc">Escaneie seu corpo ou insira suas medidas no Body Scanner para ver seu perfil morfológico.</string>
+    <string name="bodymesh_action_composition_cd">Ver composição corporal</string>
+    <string name="bodymesh_action_view_3d_cd">Visão 3D rotacionável</string>
+    <string name="bodymesh_action_view_2d_cd">Voltar à visão 2D</string>
 
     <!-- ─── GymScan screen ─── -->
     <string name="gymscan_title">GymScan</string>

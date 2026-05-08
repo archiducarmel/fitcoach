@@ -1,6 +1,7 @@
 package com.shredcoach.app.data.backup
 
 import com.shredcoach.app.data.local.entity.AppNotificationEntity
+import com.shredcoach.app.data.local.entity.BodyScanLogEntity
 import com.shredcoach.app.data.local.entity.ChatMessageEntity
 import com.shredcoach.app.data.local.entity.DailyCheckEntity
 import com.shredcoach.app.data.local.entity.ExerciseEntity
@@ -85,6 +86,13 @@ data class TableSnapshot(
     val chatMessages: List<ChatMessageEntity>,
     val appNotifications: List<AppNotificationEntity>,
     val scheduledWorkouts: List<ScheduledWorkoutEntity>,
+    /**
+     * Historique des scans corporels (#16). Liste vide si l'utilisateur n'a
+     * jamais scanné. Lenient parsing : si un backup ancien (pré-v41) est
+     * restauré, ce champ sera absent du JSON et Gson l'initialisera à
+     * emptyList par defaultValue.
+     */
+    val bodyScanLogs: List<BodyScanLogEntity> = emptyList(),
 )
 
 /**

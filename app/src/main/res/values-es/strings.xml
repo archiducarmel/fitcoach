@@ -1796,6 +1796,26 @@
     <string name="bodymesh_chip_thigh">MUSLO</string>
     <string name="bodymesh_chip_calf">PANTORRILLA</string>
     <string name="bodymesh_insight_loading">Análisis anatómico en curso…</string>
+    <string name="dashboard_body_scan_timeline_title">Evolución corporal</string>
+    <string name="dashboard_body_scan_timeline_subtitle">%1$d escaneos registrados</string>
+    <string name="dashboard_body_scan_timeline_need_more">Realiza otro escaneo para ver tu progreso en el tiempo.</string>
+    <string name="bodycomp_title">Composición corporal</string>
+    <string name="bodycomp_subtitle">Análisis morfológico 6 ejes</string>
+    <string name="bodycomp_axis_shoulders">HOMBROS</string>
+    <string name="bodycomp_axis_chest">PECHO</string>
+    <string name="bodycomp_axis_arm">BRAZO</string>
+    <string name="bodycomp_axis_waist">CINTURA</string>
+    <string name="bodycomp_axis_hip">CADERAS</string>
+    <string name="bodycomp_axis_thigh">MUSLO</string>
+    <string name="bodycomp_legend_reference">Referencia ideal</string>
+    <string name="bodycomp_legend_you">Tú</string>
+    <string name="bodycomp_detail_title">Detalle por zona</string>
+    <string name="bodycomp_target_short">objetivo %1$d cm</string>
+    <string name="bodycomp_empty_title">Aún no hay mediciones</string>
+    <string name="bodycomp_empty_desc">Escanea tu cuerpo o introduce tus medidas en Body Scanner para ver tu perfil morfológico.</string>
+    <string name="bodymesh_action_composition_cd">Ver composición corporal</string>
+    <string name="bodymesh_action_view_3d_cd">Vista 3D rotable</string>
+    <string name="bodymesh_action_view_2d_cd">Volver a la vista 2D</string>
 
     <!-- ─── GymScan screen ─── -->
     <string name="gymscan_title">GymScan</string>

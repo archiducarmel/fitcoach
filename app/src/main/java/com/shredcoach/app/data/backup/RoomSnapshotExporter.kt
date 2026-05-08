@@ -41,6 +41,7 @@ class RoomSnapshotExporter @Inject constructor(
     private val mealScanDao: MealScanDao,
     private val appNotificationDao: AppNotificationDao,
     private val scheduledWorkoutDao: ScheduledWorkoutDao,
+    private val bodyScanLogDao: com.shredcoach.app.data.local.dao.BodyScanLogDao,
 ) {
     /**
      * Lit toutes les tables et retourne un snapshot immuable. Les Flow-based
@@ -66,6 +67,7 @@ class RoomSnapshotExporter @Inject constructor(
             chatMessages = chatDao.getAllMessagesOnce(),
             appNotifications = appNotificationDao.getAll().first(),
             scheduledWorkouts = scheduledWorkoutDao.getAll().first(),
+            bodyScanLogs = bodyScanLogDao.getAllOnce(),
         )
     }
 }

@@ -31,6 +31,7 @@ sealed class Screen(val route: String) {
     object Notifications : Screen("notifications")
     object BodyScanner : Screen("body_scanner")
     object BodyMesh : Screen("body_mesh")
+    object BodyComposition : Screen("body_composition")
     object Calendar : Screen("calendar")
     object WorkoutHistory : Screen("workout_history")
     object WorkoutHistoryDetail : Screen("workout_history_detail/{logId}") {

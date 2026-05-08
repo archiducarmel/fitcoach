@@ -214,6 +214,48 @@ object Migrations {
         }
     }
 
+    /**
+     * v40 → v41 : crée la table `body_scan_logs` qui historise CHAQUE
+     * génération de mesh corporel. Permet de tracer l'évolution dans le
+     * temps (V-Taper, Posture, Body Fat) sur le Dashboard.
+     *
+     * **Schéma** : doit matcher exactement ce que Room dérive de
+     * [BodyScanLogEntity], cf. schemas/41.json après build pour vérification.
+     *
+     * **Pourquoi pas de FK** : on garde l'historique même si l'utilisateur
+     * supprime sa photo originale du profil ou wipe les fichiers (cleanup
+     * système). Les paths sont nullable — on dégrade gracieusement vers les
+     * analytics chiffrées seules.
+     *
+     * **Idempotent** : `IF NOT EXISTS` garde-fou si la migration est rejouée
+     * (ne devrait pas mais c'est ceinture+bretelles).
+     */
+    fun migration40to41(): Migration = object : Migration(40, 41) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS `body_scan_logs` (
+                    `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    `capturedAtMs` INTEGER NOT NULL,
+                    `featuresPath` TEXT,
+                    `photoPath` TEXT,
+                    `postureScore` INTEGER NOT NULL,
+                    `vTaperRatio` REAL NOT NULL,
+                    `shoulderTiltDeg` REAL NOT NULL,
+                    `hipTiltDeg` REAL NOT NULL,
+                    `shoulderAsymmetryPct` REAL NOT NULL,
+                    `hipAsymmetryPct` REAL NOT NULL,
+                    `heightCm` INTEGER NOT NULL,
+                    `weightKg` REAL NOT NULL,
+                    `bodyFatPercent` REAL NOT NULL
+                )
+            """.trimIndent())
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_body_scan_logs_capturedAtMs` " +
+                "ON `body_scan_logs` (`capturedAtMs`)"
+            )
+        }
+    }
+
     private fun copyApiKeysToSecureStore(context: Context, db: SupportSQLiteDatabase) {
         try {
             val masterKey = MasterKey.Builder(context)

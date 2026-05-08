@@ -90,6 +90,13 @@ class BodyMeshExtractor @Inject constructor() {
             // ─── 3. Analytics ───
             val analytics = MeshAnalytics.compute(landmarks)
 
+            // V2 (#17) — `is3D` = vrai si au moins un landmark non-trivial a
+            // une z-coord. ML Kit retourne 0 pour les landmarks non détectés ;
+            // on prend `nose` ou `mid-shoulders` comme proxy de validité.
+            // En pratique, `position3D.z` n'est jamais exactement 0 quand la
+            // détection a abouti — le check non-zero suffit.
+            val anyNonZeroZ = landmarks.any { kotlin.math.abs(it.z) > 0.5f }
+
             MeshFeatures(
                 version = MeshFeatures.CURRENT_VERSION,
                 sourceImageWidth = bitmap.width,
@@ -98,6 +105,7 @@ class BodyMeshExtractor @Inject constructor() {
                 silhouetteContour = contour,
                 analytics = analytics,
                 capturedAtMs = System.currentTimeMillis(),
+                is3D = anyNonZeroZ,
             )
         }.onFailure { Log.e(TAG, "extract() failed", it) }
     }
@@ -125,6 +133,10 @@ class BodyMeshExtractor @Inject constructor() {
         x = position.x,
         y = position.y,
         inFrameLikelihood = inFrameLikelihood,
+        // V2 (#17) — position3D.z : profondeur relative en pixels image, `0`
+        // ≈ plan hanches. Si le PoseDetector ne renvoie pas de 3D (ancien
+        // device / fail), `position3D` ferait crash → on garde un fallback 0f.
+        z = runCatching { position3D.z }.getOrDefault(0f),
     )
 
     /**

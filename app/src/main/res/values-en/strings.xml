@@ -1614,6 +1614,26 @@
     <string name="bodymesh_chip_thigh">THIGH</string>
     <string name="bodymesh_chip_calf">CALF</string>
     <string name="bodymesh_insight_loading">Anatomical analysis in progress…</string>
+    <string name="dashboard_body_scan_timeline_title">Body progression</string>
+    <string name="dashboard_body_scan_timeline_subtitle">%1$d scans recorded</string>
+    <string name="dashboard_body_scan_timeline_need_more">Run another scan to see your progress over time.</string>
+    <string name="bodycomp_title">Body composition</string>
+    <string name="bodycomp_subtitle">6-axis morphological analysis</string>
+    <string name="bodycomp_axis_shoulders">SHOULDERS</string>
+    <string name="bodycomp_axis_chest">CHEST</string>
+    <string name="bodycomp_axis_arm">ARM</string>
+    <string name="bodycomp_axis_waist">WAIST</string>
+    <string name="bodycomp_axis_hip">HIP</string>
+    <string name="bodycomp_axis_thigh">THIGH</string>
+    <string name="bodycomp_legend_reference">Ideal reference</string>
+    <string name="bodycomp_legend_you">You</string>
+    <string name="bodycomp_detail_title">Zone breakdown</string>
+    <string name="bodycomp_target_short">target %1$d cm</string>
+    <string name="bodycomp_empty_title">No measurements yet</string>
+    <string name="bodycomp_empty_desc">Scan your body or enter measurements in Body Scanner to see your morphological profile.</string>
+    <string name="bodymesh_action_composition_cd">View body composition</string>
+    <string name="bodymesh_action_view_3d_cd">Rotatable 3D view</string>
+    <string name="bodymesh_action_view_2d_cd">Back to 2D view</string>
 
     <!-- ─── GymScan screen ─── -->
     <string name="gymscan_title">GymScan</string>

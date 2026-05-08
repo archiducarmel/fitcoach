@@ -50,6 +50,7 @@ class RoomSnapshotImporter @Inject constructor(
     private val mealScanDao: MealScanDao,
     private val appNotificationDao: AppNotificationDao,
     private val scheduledWorkoutDao: ScheduledWorkoutDao,
+    private val bodyScanLogDao: com.shredcoach.app.data.local.dao.BodyScanLogDao,
 ) {
     suspend fun import(snapshot: TableSnapshot) {
         db.withTransaction {
@@ -83,6 +84,7 @@ class RoomSnapshotImporter @Inject constructor(
             snapshot.chatMessages.forEach { chatDao.insertMessage(it) }
             snapshot.appNotifications.forEach { appNotificationDao.insert(it) }
             snapshot.scheduledWorkouts.forEach { scheduledWorkoutDao.insert(it) }
+            snapshot.bodyScanLogs.forEach { bodyScanLogDao.insert(it) }
 
             // 3) Le commit (implicite à la sortie de withTransaction) déclenche
             //    la vérification globale des FK. Si une référence est cassée,

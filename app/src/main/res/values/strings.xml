@@ -1802,6 +1802,28 @@
     <string name="bodymesh_chip_calf">MOLLET</string>
     <!-- LLM insight chip -->
     <string name="bodymesh_insight_loading">Analyse anatomique en cours…</string>
+    <!-- Dashboard body scan timeline -->
+    <string name="dashboard_body_scan_timeline_title">Évolution corporelle</string>
+    <string name="dashboard_body_scan_timeline_subtitle">%1$d scans enregistrés</string>
+    <string name="dashboard_body_scan_timeline_need_more">Effectue un autre scan pour voir ta progression dans le temps.</string>
+    <!-- Body composition radar screen -->
+    <string name="bodycomp_title">Composition corporelle</string>
+    <string name="bodycomp_subtitle">Analyse morphologique 6 axes</string>
+    <string name="bodycomp_axis_shoulders">ÉPAULES</string>
+    <string name="bodycomp_axis_chest">POITRINE</string>
+    <string name="bodycomp_axis_arm">BRAS</string>
+    <string name="bodycomp_axis_waist">TAILLE</string>
+    <string name="bodycomp_axis_hip">HANCHES</string>
+    <string name="bodycomp_axis_thigh">CUISSE</string>
+    <string name="bodycomp_legend_reference">Référence idéale</string>
+    <string name="bodycomp_legend_you">Toi</string>
+    <string name="bodycomp_detail_title">Détail par zone</string>
+    <string name="bodycomp_target_short">cible %1$d cm</string>
+    <string name="bodycomp_empty_title">Pas encore de mesures</string>
+    <string name="bodycomp_empty_desc">Scanne ton corps ou saisis tes mesures dans Body Scanner pour voir ton profil morphologique.</string>
+    <string name="bodymesh_action_composition_cd">Voir la composition corporelle</string>
+    <string name="bodymesh_action_view_3d_cd">Vue 3D rotatable</string>
+    <string name="bodymesh_action_view_2d_cd">Revenir à la vue 2D</string>
 
     <!-- ─── GymScan screen ─── -->
     <string name="gymscan_title">GymScan</string>

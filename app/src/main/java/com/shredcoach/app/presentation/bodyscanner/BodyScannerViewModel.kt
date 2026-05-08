@@ -12,6 +12,8 @@ import com.shredcoach.app.data.local.secure.SecureKeyStore
 import com.shredcoach.app.data.remote.BodyAnalysisResult
 import com.shredcoach.app.data.remote.BodyAnalysisService
 import com.shredcoach.app.data.repository.UserRepository
+import com.shredcoach.app.data.local.dao.BodyScanLogDao
+import com.shredcoach.app.data.local.entity.BodyScanLogEntity
 import com.shredcoach.app.domain.bodymesh.BodyInsightGenerator
 import com.shredcoach.app.domain.bodymesh.BodyMeshExtractor
 import com.shredcoach.app.domain.bodymesh.MeshFeatures
@@ -118,6 +120,7 @@ class BodyScannerViewModel @Inject constructor(
     private val bodyAnalysisService: BodyAnalysisService,
     private val meshExtractor: BodyMeshExtractor,
     private val insightGenerator: BodyInsightGenerator,
+    private val bodyScanLogDao: BodyScanLogDao,
     private val userRepository: UserRepository,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
@@ -376,6 +379,28 @@ class BodyScannerViewModel @Inject constructor(
                             current.copy(
                                 bodyMeshFeaturesPath = path,
                                 bodyMeshImagePath = null,
+                            )
+                        )
+                    }
+
+                    // #16 — Historise le scan dans body_scan_logs.
+                    // Snapshot des analytics + mesures profil pour pouvoir
+                    // tracer la timeline même si les fichiers JSON disparaissent.
+                    runCatching {
+                        bodyScanLogDao.insert(
+                            BodyScanLogEntity(
+                                capturedAtMs = features.capturedAtMs,
+                                featuresPath = path,
+                                photoPath = _state.value.originalImagePath,
+                                postureScore = features.analytics.postureScore,
+                                vTaperRatio = features.analytics.vTaperRatio,
+                                shoulderTiltDeg = features.analytics.shoulderTiltDeg,
+                                hipTiltDeg = features.analytics.hipTiltDeg,
+                                shoulderAsymmetryPct = features.analytics.shoulderAsymmetryPct,
+                                hipAsymmetryPct = features.analytics.hipAsymmetryPct,
+                                heightCm = current?.heightCm ?: 0,
+                                weightKg = current?.currentWeightKg ?: 0.0,
+                                bodyFatPercent = current?.bodyFatPercent ?: 0.0,
                             )
                         )
                     }

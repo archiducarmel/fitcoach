@@ -1742,6 +1742,26 @@
     <string name="bodymesh_chip_thigh">COSCIA</string>
     <string name="bodymesh_chip_calf">POLPACCIO</string>
     <string name="bodymesh_insight_loading">Analisi anatomica in corso…</string>
+    <string name="dashboard_body_scan_timeline_title">Evoluzione corporea</string>
+    <string name="dashboard_body_scan_timeline_subtitle">%1$d scansioni registrate</string>
+    <string name="dashboard_body_scan_timeline_need_more">Effettua un altro scan per vedere i tuoi progressi nel tempo.</string>
+    <string name="bodycomp_title">Composizione corporea</string>
+    <string name="bodycomp_subtitle">Analisi morfologica 6 assi</string>
+    <string name="bodycomp_axis_shoulders">SPALLE</string>
+    <string name="bodycomp_axis_chest">PETTO</string>
+    <string name="bodycomp_axis_arm">BRACCIO</string>
+    <string name="bodycomp_axis_waist">VITA</string>
+    <string name="bodycomp_axis_hip">FIANCHI</string>
+    <string name="bodycomp_axis_thigh">COSCIA</string>
+    <string name="bodycomp_legend_reference">Riferimento ideale</string>
+    <string name="bodycomp_legend_you">Tu</string>
+    <string name="bodycomp_detail_title">Dettaglio per zona</string>
+    <string name="bodycomp_target_short">obiettivo %1$d cm</string>
+    <string name="bodycomp_empty_title">Ancora nessuna misura</string>
+    <string name="bodycomp_empty_desc">Scansiona il tuo corpo o inserisci le misure in Body Scanner per vedere il tuo profilo morfologico.</string>
+    <string name="bodymesh_action_composition_cd">Vedi composizione corporea</string>
+    <string name="bodymesh_action_view_3d_cd">Vista 3D ruotabile</string>
+    <string name="bodymesh_action_view_2d_cd">Torna alla vista 2D</string>
 
     <!-- ─── GymScan screen ─── -->
     <string name="gymscan_title">GymScan</string>

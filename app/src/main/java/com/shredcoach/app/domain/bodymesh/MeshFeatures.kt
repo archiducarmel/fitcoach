@@ -47,9 +47,21 @@ data class MeshFeatures(
     val analytics: MeshAnalyticsSnapshot,
     /** Timestamp epoch ms — sert au tri/dedup côté historique. */
     val capturedAtMs: Long,
+    /**
+     * V2 (#17) — `true` si les landmarks portent une coordonnée z fiable
+     * (`Landmark.z != 0f` sur ≥1 landmark critique). Permet le rendu 3D
+     * rotatable via [Mesh3DViewer]. À `false` pour les anciens scans v1
+     * (stockés JSON sans z) → fallback rendu 2D classique.
+     */
+    val is3D: Boolean = false,
 ) {
     companion object {
-        /** Bumper si on change la sémantique d'un field. Lecture old → empty. */
+        /**
+         * Version courante des features. La lecture JSON tolère des features
+         * v1 (champs manquants `is3D`/`Landmark.z` absents → defaults). Pas
+         * besoin de bumper ici à v2 : les nouveaux champs ont des defaults
+         * sûrs, donc anciens scans = downgrade transparent vers vue 2D.
+         */
         const val CURRENT_VERSION = 1
     }
 }
@@ -66,6 +78,17 @@ data class Point(val x: Float, val y: Float)
  * Landmark ML Kit Pose : position + confiance.
  * [type] correspond à [PoseLandmarkType.ordinal] pour compatibilité Gson sans
  * mapping enum custom.
+ *
+ * **z-coord (V2 #17)** : ML Kit BlazePose retourne une profondeur relative en
+ * pixels (mêmes unités que x/y), avec `z=0` ≈ plan des hanches. Valeurs
+ * négatives = devant, positives = derrière. Sur les anciens scans v1 (sans
+ * z), Gson initialise à 0f par défaut → tous les landmarks coplanaires →
+ * Mesh3DViewer dégrade gracieusement vers une vue 2D plate.
+ *
+ * **Précision** : la profondeur ML Kit pose est imprécise (~10-20% d'erreur
+ * sur les distances). Suffisant pour un effet visuel rotatable, pas pour
+ * de la mesure anatomique (les distances cm restent calculées en 2D pour
+ * cohérence avec le profil).
  */
 @Immutable
 data class Landmark(
@@ -74,6 +97,11 @@ data class Landmark(
     val y: Float,
     /** [0..1] — confiance ML Kit que ce keypoint est visible et bien détecté. */
     val inFrameLikelihood: Float,
+    /**
+     * Profondeur estimée en pixels (z-axis), `0f` au plan des hanches.
+     * Default 0f = pose 2D plate (rétro-compatibilité v1).
+     */
+    val z: Float = 0f,
 )
 
 /**

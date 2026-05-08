@@ -40,6 +40,10 @@ fun BodyMeshScreen(
     viewModel: BodyScannerViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    // V2 #17 — toggle 2D/3D. Default = 2D (vue principale, labels anatomiques).
+    // Activé par bouton dans le header. Persisté uniquement en mémoire (pas de
+    // valeur sticky en DataStore — la préférence est session-bound).
+    var view3D by remember { mutableStateOf(false) }
 
     // Palette futuriste
     val voidBg = Color(0xFF000814)
@@ -86,20 +90,40 @@ fun BodyMeshScreen(
             // taille saisie/déduite par le user. À 0, MeshRenderer masque
             // les labels — pas de chiffre fiable affichable.
             val heightCmInt = state.editHeightCm.toIntOrNull() ?: 0
-            MeshRenderer(
-                features = features,
-                heightCm = heightCmInt,
-                symmetryColors = true,
-                showPostureGuides = true,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(
-                        top = meshTopReserve,
-                        bottom = meshBottomReserve,
-                        start = meshSidePad,
-                        end = meshSidePad,
-                    )
-            )
+            // V2 (#17) — bascule entre vue 2D classique et vue 3D rotatable.
+            // Le 3D requiert `is3D = true` (ML Kit a renvoyé des z-coords) ;
+            // sinon le toggle est masqué côté UI et on reste en 2D.
+            val canShow3D = features.is3D
+            if (view3D && canShow3D) {
+                Mesh3DViewer(
+                    features = features,
+                    primaryColor = neonCyan,
+                    accentColor = neonGreen,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(
+                            top = meshTopReserve,
+                            bottom = meshBottomReserve,
+                            start = meshSidePad,
+                            end = meshSidePad,
+                        )
+                )
+            } else {
+                MeshRenderer(
+                    features = features,
+                    heightCm = heightCmInt,
+                    symmetryColors = true,
+                    showPostureGuides = true,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(
+                            top = meshTopReserve,
+                            bottom = meshBottomReserve,
+                            start = meshSidePad,
+                            end = meshSidePad,
+                        )
+                )
+            }
             Box(
                 Modifier
                     .fillMaxSize()
@@ -171,7 +195,45 @@ fun BodyMeshScreen(
                 )
             }
             LiveIndicator(neonGreen)
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(8.dp))
+            // V2 (#17) — toggle 2D/3D. Affiché uniquement si features.is3D.
+            // Sinon, l'icône 3D serait inopérante (rotation sur des keypoints
+            // tous à z=0 = pas de 3D).
+            if (features?.is3D == true) {
+                IconButton(
+                    onClick = { view3D = !view3D },
+                    modifier = Modifier.size(36.dp),
+                ) {
+                    Icon(
+                        if (view3D) Icons.Default.ViewInAr else Icons.Default.GridOn,
+                        contentDescription = stringResource(
+                            if (view3D) R.string.bodymesh_action_view_2d_cd
+                            else R.string.bodymesh_action_view_3d_cd
+                        ),
+                        tint = if (view3D) neonGreen else neonCyan,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+                Spacer(Modifier.width(4.dp))
+            }
+            // Bouton "Composition corporelle" — accessible depuis le header
+            // pour ne pas rajouter de boutons dans le bottom strip déjà chargé.
+            IconButton(
+                onClick = {
+                    navController.navigate(
+                        com.shredcoach.app.presentation.navigation.Screen.BodyComposition.route
+                    )
+                },
+                modifier = Modifier.size(36.dp),
+            ) {
+                Icon(
+                    Icons.Default.Hexagon,
+                    contentDescription = stringResource(R.string.bodymesh_action_composition_cd),
+                    tint = neonCyan,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Spacer(Modifier.width(4.dp))
         }
 
         // ─── HUD KPI corner anchors (haut-gauche + haut-droite, sous header) ───

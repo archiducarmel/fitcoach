@@ -224,6 +224,17 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
                     item { ExerciseProgressionsSection(state.exerciseProgressions) }
                 }
 
+                // ── #16 Body scan timeline (auto-masquée si <2 scans) ──
+                item {
+                    com.shredcoach.app.presentation.stats.components.BodyScanTimelineCard(
+                        onClick = {
+                            navController.navigate(
+                                com.shredcoach.app.presentation.navigation.Screen.BodyScanner.route
+                            )
+                        },
+                    )
+                }
+
                 // ── Graphiques ──
                 if (state.weightProgression.isNotEmpty() || state.exercises.isNotEmpty() || state.weeklyVolume.isNotEmpty() || state.muscleDistribution.isNotEmpty()) {
                     stickyHeader { StickyTitle(stringResource(R.string.dashboard_section_charts)) }

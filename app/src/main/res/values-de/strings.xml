@@ -1579,6 +1579,26 @@
     <string name="bodymesh_chip_thigh">OBERSCHENKEL</string>
     <string name="bodymesh_chip_calf">WADE</string>
     <string name="bodymesh_insight_loading">Anatomische Analyse läuft…</string>
+    <string name="dashboard_body_scan_timeline_title">Körperentwicklung</string>
+    <string name="dashboard_body_scan_timeline_subtitle">%1$d Scans aufgezeichnet</string>
+    <string name="dashboard_body_scan_timeline_need_more">Führe einen weiteren Scan durch, um deinen Fortschritt zu sehen.</string>
+    <string name="bodycomp_title">Körperzusammensetzung</string>
+    <string name="bodycomp_subtitle">6-Achsen-Morphologieanalyse</string>
+    <string name="bodycomp_axis_shoulders">SCHULTERN</string>
+    <string name="bodycomp_axis_chest">BRUST</string>
+    <string name="bodycomp_axis_arm">ARM</string>
+    <string name="bodycomp_axis_waist">TAILLE</string>
+    <string name="bodycomp_axis_hip">HÜFTEN</string>
+    <string name="bodycomp_axis_thigh">OBERSCHENKEL</string>
+    <string name="bodycomp_legend_reference">Ideal-Referenz</string>
+    <string name="bodycomp_legend_you">Du</string>
+    <string name="bodycomp_detail_title">Detail pro Zone</string>
+    <string name="bodycomp_target_short">Ziel %1$d cm</string>
+    <string name="bodycomp_empty_title">Noch keine Messungen</string>
+    <string name="bodycomp_empty_desc">Scanne deinen Körper oder gib Messungen im Body Scanner ein, um dein morphologisches Profil zu sehen.</string>
+    <string name="bodymesh_action_composition_cd">Körperzusammensetzung ansehen</string>
+    <string name="bodymesh_action_view_3d_cd">Rotierbare 3D-Ansicht</string>
+    <string name="bodymesh_action_view_2d_cd">Zurück zur 2D-Ansicht</string>
 
     <!-- GymScan -->
     <string name="gymscan_title">GymScan</string>
