@@ -49,31 +49,35 @@ class MainActivity : ComponentActivity() {
     @Volatile private var splashKeptForProfile: Boolean = true
 
     /**
-     * Applique la locale stockée par AppCompatDelegate au Context de base de
-     * l'Activity. Appliqué INCONDITIONNELLEMENT (tous niveaux API) :
+     * Wrappe le Context de base avec la locale courante (`Locale.getDefault()`).
      *
-     *  - **API <33** (Android 12-) : indispensable, AppCompatDelegate ne propage
-     *    pas la locale aux ComponentActivity (seulement aux AppCompatActivity).
-     *  - **API 33+** : le système applique déjà la locale via le per-app locale
-     *    framework. Notre re-application est idempotente (même locale = no-op
-     *    visuel) mais sert de ceinture-bretelles si le système a un retard de
-     *    propagation entre `setApplicationLocales()` et la création du Context
-     *    de la nouvelle Activity post-recreate.
+     * **Pourquoi pas AppCompatDelegate** : sur Android 16 (API 36), validé via
+     * logcat user, `AppCompatDelegate.setApplicationLocales()` ne persiste pas
+     * la locale → `getApplicationLocales()` retourne vide juste après l'appel,
+     * et la nouvelle Activity post-recreate hérite du locale système (souvent
+     * différent de celui choisi par l'user).
+     *
+     * **Stratégie** : `LocaleManager.applyToFramework` appelle
+     * `Locale.setDefault(...)` qui MARCHE (validé : `default='en'` dans le log
+     * onCreate). On utilise donc `Locale.getDefault()` comme source de vérité
+     * runtime, et on force la Configuration du Context de base à refléter cette
+     * locale. Compose lit `stringResource()` depuis ce Configuration → strings
+     * dans la bonne langue.
      */
     override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(applyAppLocaleToContext(newBase))
+        super.attachBaseContext(wrapContextWithDefaultLocale(newBase))
     }
 
-    private fun applyAppLocaleToContext(base: Context): Context {
-        val locales = AppCompatDelegate.getApplicationLocales()
-        if (locales.isEmpty) {
-            android.util.Log.i("MainActivity", "attachBaseContext: appLocales empty, base unchanged")
+    private fun wrapContextWithDefaultLocale(base: Context): Context {
+        val defaultLocale = java.util.Locale.getDefault()
+        val baseLocale = base.resources.configuration.locales.takeIf { !it.isEmpty }?.get(0)
+        if (baseLocale != null && baseLocale.toLanguageTag() == defaultLocale.toLanguageTag()) {
+            android.util.Log.i("MainActivity", "attachBaseContext: locale already matches (${defaultLocale.toLanguageTag()}), base unchanged")
             return base
         }
-        val locale = locales[0] ?: return base
         val config = Configuration(base.resources.configuration)
-        config.setLocale(locale)
-        android.util.Log.i("MainActivity", "attachBaseContext: applying locale=${locale.toLanguageTag()}")
+        config.setLocale(defaultLocale)
+        android.util.Log.i("MainActivity", "attachBaseContext: wrapping with locale=${defaultLocale.toLanguageTag()} (was=${baseLocale?.toLanguageTag()})")
         return base.createConfigurationContext(config)
     }
 

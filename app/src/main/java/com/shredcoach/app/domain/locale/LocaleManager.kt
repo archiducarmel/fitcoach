@@ -71,6 +71,28 @@ class LocaleManager @Inject constructor(
             AppLocale.fromTag(tag)
         }
         applyToFramework(resolved)
+        cacheLocaleTagSync(resolved.tag)
+    }
+
+    /**
+     * Lecture synchrone du tag de locale persisté en SharedPreferences. Utilisé
+     * par [ShredCoachApplication.onCreate] pour appliquer la locale AVANT que
+     * MainActivity ne soit créée, sans attendre la coroutine DB IO.
+     *
+     * Source de vérité reste DB (`UserProfileEntity.languageTag`) ; ce cache
+     * SharedPreferences est rafraîchi à chaque [setLocale] et au boot via
+     * [applyPersistedOrDetect]. Permet une lecture 0-latence au cold-start.
+     */
+    fun readCachedLocaleTagSync(): String? {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(PREFS_KEY_LOCALE_TAG, null)
+    }
+
+    private fun cacheLocaleTagSync(tag: String) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putString(PREFS_KEY_LOCALE_TAG, tag)
+            .apply()
     }
 
     /**
@@ -90,7 +112,8 @@ class LocaleManager @Inject constructor(
             return
         }
         userRepository.updateLanguageTag(appLocale.tag)
-        android.util.Log.i(TAG, "DB updated → calling applyToFramework")
+        cacheLocaleTagSync(appLocale.tag)
+        android.util.Log.i(TAG, "DB+SharedPrefs updated → calling applyToFramework")
         applyToFramework(appLocale)
         android.util.Log.i(TAG, "applyToFramework done → scheduling recreate")
         scheduleRecreateCurrentActivity()
@@ -116,6 +139,8 @@ class LocaleManager @Inject constructor(
 
     companion object {
         private const val TAG = "LocaleManager"
+        private const val PREFS_NAME = "shredcoach_locale_cache"
+        private const val PREFS_KEY_LOCALE_TAG = "locale_tag"
     }
 
     /**

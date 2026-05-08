@@ -67,6 +67,20 @@ class ShredCoachApplication : Application(), Configuration.Provider, ImageLoader
             enableStrictMode()
         }
         super.onCreate()
+        // **Cold-start locale fix** : applique la locale persistée en
+        // SharedPreferences SYNCHRONEMENT, AVANT que MainActivity ne soit créée.
+        // Sans ce sync, l'IO bootstrap (applyPersistedOrDetect) tournerait en
+        // parallèle de Activity.onCreate qui hériterait de la locale système au
+        // lieu de celle stockée. Read SharedPreferences = ~1ms, négligeable.
+        runCatching {
+            val cachedTag = localeManager.readCachedLocaleTagSync()
+            if (!cachedTag.isNullOrBlank()) {
+                java.util.Locale.setDefault(java.util.Locale.forLanguageTag(cachedTag))
+                android.util.Log.i("ShredCoachApp", "boot: applied cached locale tag=$cachedTag")
+            } else {
+                android.util.Log.i("ShredCoachApp", "boot: no cached locale (first launch)")
+            }
+        }
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityResumed(activity: Activity) {
                 currentActivityRef = WeakReference(activity)
