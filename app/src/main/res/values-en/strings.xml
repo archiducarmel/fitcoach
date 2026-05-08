@@ -1613,6 +1613,7 @@
     <string name="bodymesh_chip_arm">ARM</string>
     <string name="bodymesh_chip_thigh">THIGH</string>
     <string name="bodymesh_chip_calf">CALF</string>
+    <string name="bodymesh_insight_loading">Anatomical analysis in progress…</string>
 
     <!-- ─── GymScan screen ─── -->
     <string name="gymscan_title">GymScan</string>

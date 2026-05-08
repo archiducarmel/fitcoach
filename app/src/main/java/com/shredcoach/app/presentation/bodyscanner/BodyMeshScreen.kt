@@ -82,8 +82,15 @@ fun BodyMeshScreen(
         val meshSidePad = 12.dp
 
         if (features != null) {
+            // Calibration cm pour les anatomical labels (#11) : on parse la
+            // taille saisie/déduite par le user. À 0, MeshRenderer masque
+            // les labels — pas de chiffre fiable affichable.
+            val heightCmInt = state.editHeightCm.toIntOrNull() ?: 0
             MeshRenderer(
                 features = features,
+                heightCm = heightCmInt,
+                symmetryColors = true,
+                showPostureGuides = true,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(
@@ -193,16 +200,96 @@ fun BodyMeshScreen(
         }
 
         // ─── Compact biometric strip (bottom horizontal scroll) ───
-        BiometricStrip(
-            state = state,
-            analytics = analytics,
-            neonCyan = neonCyan,
-            neonGreen = neonGreen,
-            neonPink = neonPink,
+        // Le strip + l'insight chip sont dans une Column alignée bottom.
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter),
-        )
+        ) {
+            // ─── #15 LLM insight chip (au-dessus du strip) ───
+            // Visible si :
+            //  - insight cached/généré → affichage texte
+            //  - en train de générer → affichage shimmer subtil
+            // Sinon : chip masqué (pas d'espace gaspillé).
+            if (state.meshInsight != null || state.isGeneratingInsight) {
+                MeshInsightChip(
+                    insight = state.meshInsight,
+                    isLoading = state.isGeneratingInsight,
+                    neonCyan = neonCyan,
+                    neonGreen = neonGreen,
+                )
+            }
+            BiometricStrip(
+                state = state,
+                analytics = analytics,
+                neonCyan = neonCyan,
+                neonGreen = neonGreen,
+                neonPink = neonPink,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+// ═══════════════════════════════════════
+// MESH INSIGHT CHIP — LLM-generated 1-liner above the biometric strip
+// ═══════════════════════════════════════
+
+@Composable
+private fun MeshInsightChip(
+    insight: String?,
+    isLoading: Boolean,
+    neonCyan: Color,
+    neonGreen: Color,
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = Color(0xFF000814).copy(alpha = 0.85f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, neonGreen.copy(alpha = 0.4f)),
+    ) {
+        Row(
+            Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            // Icône AI : luminescente, marque le côté "généré par IA"
+            Icon(
+                Icons.Default.AutoAwesome,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+                tint = neonGreen,
+            )
+            if (isLoading) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.weight(1f),
+                ) {
+                    CircularProgressIndicator(
+                        color = neonGreen,
+                        strokeWidth = 1.5.dp,
+                        modifier = Modifier.size(14.dp),
+                    )
+                    Text(
+                        text = stringResource(R.string.bodymesh_insight_loading),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = neonCyan.copy(alpha = 0.7f),
+                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                    )
+                }
+            } else if (insight != null) {
+                Text(
+                    text = insight,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.92f),
+                    modifier = Modifier.weight(1f),
+                    lineHeight = 17.sp,
+                )
+            }
+        }
     }
 }
 

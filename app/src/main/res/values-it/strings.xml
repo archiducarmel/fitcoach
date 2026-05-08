@@ -1741,6 +1741,7 @@
     <string name="bodymesh_chip_arm">BRACCIO</string>
     <string name="bodymesh_chip_thigh">COSCIA</string>
     <string name="bodymesh_chip_calf">POLPACCIO</string>
+    <string name="bodymesh_insight_loading">Analisi anatomica in corso…</string>
 
     <!-- ─── GymScan screen ─── -->
     <string name="gymscan_title">GymScan</string>

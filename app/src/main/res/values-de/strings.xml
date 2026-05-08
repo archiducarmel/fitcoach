@@ -1578,6 +1578,7 @@
     <string name="bodymesh_chip_arm">ARM</string>
     <string name="bodymesh_chip_thigh">OBERSCHENKEL</string>
     <string name="bodymesh_chip_calf">WADE</string>
+    <string name="bodymesh_insight_loading">Anatomische Analyse läuft…</string>
 
     <!-- GymScan -->
     <string name="gymscan_title">GymScan</string>

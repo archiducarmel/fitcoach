@@ -1795,6 +1795,7 @@
     <string name="bodymesh_chip_arm">BRAZO</string>
     <string name="bodymesh_chip_thigh">MUSLO</string>
     <string name="bodymesh_chip_calf">PANTORRILLA</string>
+    <string name="bodymesh_insight_loading">Análisis anatómico en curso…</string>
 
     <!-- ─── GymScan screen ─── -->
     <string name="gymscan_title">GymScan</string>

@@ -12,6 +12,7 @@ import com.shredcoach.app.data.local.secure.SecureKeyStore
 import com.shredcoach.app.data.remote.BodyAnalysisResult
 import com.shredcoach.app.data.remote.BodyAnalysisService
 import com.shredcoach.app.data.repository.UserRepository
+import com.shredcoach.app.domain.bodymesh.BodyInsightGenerator
 import com.shredcoach.app.domain.bodymesh.BodyMeshExtractor
 import com.shredcoach.app.domain.bodymesh.MeshFeatures
 import com.shredcoach.app.domain.locale.withCurrentLocale
@@ -80,6 +81,11 @@ data class BodyScannerState(
      * et debugable.
      */
     val pendingNavigateToMesh: Boolean = false,
+    // #15 — LLM insight 1-liner (cache hit ou freshly generated). Null tant
+    // que pas calculé / consentement manquant / clé absente. Chargement async,
+    // affichage avec un loader pendant `isGeneratingInsight=true`.
+    val meshInsight: String? = null,
+    val isGeneratingInsight: Boolean = false,
     // Photos
     val originalImagePath: String? = null,
     val bodyScanTimestamp: LocalDateTime? = null
@@ -111,6 +117,7 @@ data class BodyScannerState(
 class BodyScannerViewModel @Inject constructor(
     private val bodyAnalysisService: BodyAnalysisService,
     private val meshExtractor: BodyMeshExtractor,
+    private val insightGenerator: BodyInsightGenerator,
     private val userRepository: UserRepository,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
@@ -155,6 +162,27 @@ class BodyScannerViewModel @Inject constructor(
                     bodyScanTimestamp = profile?.bodyScanTimestamp
                 )
             }
+            // Si on a déjà un mesh + un profil, tenter de récupérer l'insight
+            // (cache hit DataStore, sinon fallback null silencieux). Pas de
+            // re-generate au boot pour ne pas spammer le LLM.
+            if (features != null && profile != null) {
+                tryLoadInsight(features, profile)
+            }
+        }
+    }
+
+    /**
+     * Lance la résolution insight pour le scan courant. Idempotent : si déjà
+     * cached pour ce capturedAtMs, retour immédiat sans appel LLM.
+     */
+    private fun tryLoadInsight(
+        features: MeshFeatures,
+        profile: com.shredcoach.app.data.local.entity.UserProfileEntity,
+    ) {
+        viewModelScope.launch {
+            _state.update { it.copy(isGeneratingInsight = true) }
+            val insight = insightGenerator.getOrGenerate(features, profile)
+            _state.update { it.copy(isGeneratingInsight = false, meshInsight = insight) }
         }
     }
 
@@ -172,6 +200,8 @@ class BodyScannerViewModel @Inject constructor(
                 meshFeatures = null,
                 meshFeaturesPath = null,
                 meshError = null,
+                meshInsight = null,
+                isGeneratingInsight = false,
             )
         }
     }
@@ -186,6 +216,8 @@ class BodyScannerViewModel @Inject constructor(
                 meshFeatures = null,
                 meshFeaturesPath = null,
                 meshError = null,
+                meshInsight = null,
+                isGeneratingInsight = false,
             )
         }
     }
@@ -354,7 +386,14 @@ class BodyScannerViewModel @Inject constructor(
                             meshFeaturesPath = path,
                             meshFeatures = features,
                             meshError = null,
+                            // Reset l'insight précédent (correspondait à un autre
+                            // scan), on relance la génération pour le nouveau.
+                            meshInsight = null,
                         )
+                    }
+                    // Trigger insight pour ce nouveau scan (async, non-bloquant).
+                    if (current != null) {
+                        tryLoadInsight(features, current)
                     }
                 },
                 onFailure = { error ->

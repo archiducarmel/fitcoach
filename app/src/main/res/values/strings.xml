@@ -1800,6 +1800,8 @@
     <string name="bodymesh_chip_arm">BRAS</string>
     <string name="bodymesh_chip_thigh">CUISSE</string>
     <string name="bodymesh_chip_calf">MOLLET</string>
+    <!-- LLM insight chip -->
+    <string name="bodymesh_insight_loading">Analyse anatomique en cours…</string>
 
     <!-- ─── GymScan screen ─── -->
     <string name="gymscan_title">GymScan</string>
