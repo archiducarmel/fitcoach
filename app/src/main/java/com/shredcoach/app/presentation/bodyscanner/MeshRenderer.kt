@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.shredcoach.app.domain.bodymesh.BodyMeshTriangles
 import com.shredcoach.app.domain.bodymesh.HAND_CONNECTIONS
 import com.shredcoach.app.domain.bodymesh.Landmark
 import com.shredcoach.app.domain.bodymesh.MeshAnalytics
@@ -152,6 +153,14 @@ fun MeshRenderer(
         }
     }
 
+    // ─── Mesh polygonal triangulé (forme humaine) ───
+    // Calculé UNE fois par features (Bowyer-Watson Delaunay = ~5-30ms pour
+    // 250-450 points). Mémoïsé pour pas recalculer à chaque recomposition.
+    // Voir [BodyMeshTriangles] pour la stratégie d'échantillonnage.
+    val bodyTriangles = remember(features) {
+        BodyMeshTriangles.build(features)
+    }
+
     // BoxWithConstraints donne la taille exacte du viewport, ce qui permet
     // de calculer le scale letterbox UNE fois et de le partager entre :
     //  - le Canvas (rendu skeleton/silhouette)
@@ -177,23 +186,53 @@ fun MeshRenderer(
         val toCanvasX = { x: Float -> offsetX + x * scale }
         val toCanvasY = { y: Float -> offsetY + y * scale }
 
+        // ─── Pré-construit les Path pour le rendu polygonal ───
+        // 2 paths : un pour les fills (triangles fermés) et un pour les edges
+        // (3 segments par triangle). Permet de drawPath en 2 calls au lieu de
+        // 500-900 drawLine individuels.
+        // Coords sont en image-source-scaled (post `* scale`), prêtes à être
+        // dessinées dans le `translate(offsetX, offsetY)` block.
+        val (bodyFillPath, bodyEdgePath) = remember(bodyTriangles, scale) {
+            val fp = Path()
+            val ep = Path()
+            for (t in bodyTriangles) {
+                val ax = t.ax * scale; val ay = t.ay * scale
+                val bx = t.bx * scale; val by = t.by * scale
+                val cx = t.cx * scale; val cy = t.cy * scale
+                // Triangle fermé pour le fill
+                fp.moveTo(ax, ay)
+                fp.lineTo(bx, by)
+                fp.lineTo(cx, cy)
+                fp.close()
+                // 3 segments d'edges (open subpaths)
+                ep.moveTo(ax, ay); ep.lineTo(bx, by)
+                ep.moveTo(bx, by); ep.lineTo(cx, cy)
+                ep.moveTo(cx, cy); ep.lineTo(ax, ay)
+            }
+            fp to ep
+        }
+
+        // ─── BBox du squelette pour gradient body fill + scan-line ───
+        val bbox = remember(features, scale) { computeBBox(features.landmarks, scale) }
+
         Canvas(modifier = Modifier.fillMaxSize()) {
 
             translate(left = offsetX, top = offsetY) {
             // ═════════════════════════════════════════════
             // ARCHITECTURE VISUELLE (back → front) :
             //   1. Halo radial ambient (depth)
-            //   2. Silhouette = INNER FILL semi-transparent (corps qui glow)
-            //   3. Silhouette = OUTER GLOW halo (pas de stroke solide)
+            //   2. Silhouette = OUTER GLOW halo (corona)
+            //   3. POLYGONAL BODY = triangles fill (gradient vertical) + edges
+            //      → c'est ce qui donne la FORME HUMAINE au mesh
+            //   3b. Silhouette = thin outline (defining edge)
             //   4. Skeleton = 3-layer depth (haze 24px / glow 9px / core 2.5px)
             //   5. Keypoints = halo + inner dot pulsant
             //   6. Scan-line horizontale
             //   7. Orbital corners
             //
-            // Pourquoi ce layering : la silhouette ne doit PAS être un stroke
-            // solide qui rentre en conflit visuel avec le skeleton. Elle agit
-            // comme une AURA qui définit le corps, par-dessus laquelle le
-            // skeleton est le sujet visuel principal.
+            // Pourquoi ce layering : le mesh polygonal donne la "forme humaine"
+            // (Iron Man HUD feel), le skeleton néon est le sujet principal
+            // par-dessus, la silhouette définit l'edge externe sans dominer.
             // ═════════════════════════════════════════════
 
             // ─── 1. Halo radial ambient ───
@@ -213,7 +252,7 @@ fun MeshRenderer(
                 center = Offset(centerX, centerY),
             )
 
-            // ─── 2-3. Silhouette = pure aura (FILL + halo, pas de stroke solide) ───
+            // ─── 2. Silhouette outer glow (corona autour du corps) ───
             val scaledSilhouette = Path().apply {
                 features.silhouetteContour.forEachIndexed { i, p ->
                     val sx = p.x * scale
@@ -222,26 +261,48 @@ fun MeshRenderer(
                 }
                 close()
             }
-            // Inner fill : le corps "glow" légèrement de l'intérieur. Pas
-            // de stroke solide qui collisionnerait avec le skeleton.
-            drawPath(
-                scaledSilhouette,
-                color = primaryColor.copy(alpha = 0.06f),
-                style = androidx.compose.ui.graphics.drawscope.Fill,
-            )
-            // Outer glow : halo flou émulé par 3 strokes très transparents,
-            // largeurs croissantes. Donne une "aura" autour du corps sans
-            // ligne dure.
+            // Halo flou émulé par 3 strokes très transparents, largeurs
+            // croissantes. Donne une "aura" autour du corps.
             drawPath(scaledSilhouette, primaryColor.copy(alpha = 0.05f),
                 style = Stroke(width = 22f, cap = StrokeCap.Round))
             drawPath(scaledSilhouette, primaryColor.copy(alpha = 0.10f),
                 style = Stroke(width = 12f, cap = StrokeCap.Round))
             drawPath(scaledSilhouette, primaryColor.copy(alpha = 0.18f),
                 style = Stroke(width = 5f, cap = StrokeCap.Round))
-            // Outline tènue pour bien définir le contour, mais alpha bas
-            // pour ne pas rivaliser avec le skeleton.
-            drawPath(scaledSilhouette, primaryColor.copy(alpha = 0.45f),
-                style = Stroke(width = 1f, cap = StrokeCap.Round))
+
+            // ─── 3. Polygonal body : triangles Delaunay → forme humaine ───
+            // Fill : gradient vertical (haut clair → bas plus dense) qui donne
+            // un effet de volume + profondeur. Brush computé avec la bbox du
+            // squelette (pas de la silhouette) pour rester cohérent même si la
+            // silhouette s'étend au-delà (cheveux, vêtements).
+            if (bbox != null && bodyTriangles.isNotEmpty()) {
+                drawPath(
+                    bodyFillPath,
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            primaryColor.copy(alpha = 0.22f),
+                            primaryColor.copy(alpha = 0.10f),
+                            primaryColor.copy(alpha = 0.16f),
+                        ),
+                        startY = bbox.top,
+                        endY = bbox.bottom,
+                    ),
+                )
+                // Edges : maillage néon hairline. Alpha bas pour ne pas
+                // rivaliser avec le skeleton, mais visible pour donner le
+                // feel "polygonal mesh" (Iron Man HUD).
+                drawPath(
+                    bodyEdgePath,
+                    color = primaryColor.copy(alpha = 0.35f),
+                    style = Stroke(width = 0.7f),
+                )
+            }
+
+            // ─── 3b. Silhouette outline (defining edge) ───
+            // Tènue pour bien définir le contour externe, mais alpha bas pour
+            // ne pas rivaliser avec le skeleton ni les edges du mesh.
+            drawPath(scaledSilhouette, primaryColor.copy(alpha = 0.55f),
+                style = Stroke(width = 1.2f, cap = StrokeCap.Round))
 
             // ─── 4. Skeleton (squelette) — 3-layer depth + symmetry coloring ───
             // Le skeleton est le SUJET principal : il doit dominer visuellement
@@ -320,7 +381,8 @@ fun MeshRenderer(
             }
 
             // ─── 7. Scan-line horizontale dans la bbox du corps ───
-            val bbox = computeBBox(features.landmarks, scale)
+            // (bbox calculée plus haut, en BoxWithConstraints scope, partagée
+            // entre le rendu du polygonal mesh et la scan-line)
             if (bbox != null) {
                 val (top, bot, left, right) = bbox
                 val y = top + (bot - top) * scanProgress

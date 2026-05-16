@@ -117,6 +117,55 @@
     <string name="notif_motivation_title">💪 Nicht aufgeben!</string>
     <string name="notif_motivation_body">3 Tage ohne Workout. Heute ne kleine Session?</string>
 
+    <!-- Context-aware notif templates (V2) -->
+    <string name="notif_breakfast_pre_training">Pre-Training-Frühstück: Haferflocken + Eier + Banane für dein Training in %1$dh.</string>
+    <string name="notif_breakfast_rest_day">Pausentag: Eiweißfrühstück + Obst, weniger Kohlenhydrate.</string>
+    <string name="notif_breakfast_decrochage">Wieder im Game. Reset: 30g Protein + komplexe Kohlenhydrate.</string>
+    <string name="notif_breakfast_consistent">Tägliches Frühstück. %1$d/30 Tage im Ziel — solide Routine.</string>
+
+    <string name="notif_lunch_light_overdelta">Leichtes Mittagessen: schon +%1$d kcal heute. Ziele auf %2$d kcal für die Spur.</string>
+    <string name="notif_lunch_recovery">Recovery-Lunch: 200g Fleisch + langsame Kohlenhydrate nach dem Training.</string>
+    <string name="notif_lunch_recadrage">Reset-Lunch: 200g mageres Fleisch + Dampfgemüse. Du kennst\'s.</string>
+    <string name="notif_lunch_keepcap">Lunch wie immer: %1$d Tage im Ziel. Weiter so.</string>
+
+    <string name="notif_snack_pre_training">Pre-Training-Snack: Banane + Erdnussbutter. Training in %1$dh.</string>
+
+    <string name="notif_dinner_light_overdelta">Ultra-leichtes Dinner: +%1$d kcal heute. Gemüse + Eier heute Abend.</string>
+    <string name="notif_dinner_recovery">Recovery-Dinner: 40g Protein + langsame Kohlenhydrate zur Regeneration.</string>
+    <string name="notif_dinner_recadrage">Reset-Dinner: 200g mageres Fleisch + Dampfgemüse. Reset.</string>
+    <string name="notif_dinner_keepcap">%1$d kcal übrig für heute Abend. %2$d Tage im Ziel — halt durch.</string>
+    <string name="notif_dinner_decrochage">Comeback-Dinner: kein Selbstmitleid. 200g mageres Protein + Gemüse.</string>
+
+    <string name="notif_shaker_pre_workout_today">Pre-Training-Shake: 25g Whey + Banane. Training in %1$dh.</string>
+    <string name="notif_shaker_evening_post_workout">Casein-Zeit. Du hast heute Gas gegeben — Regeneration über Nacht.</string>
+
+    <string name="notif_bedtime_post_workout">Früh ins Bett: 7-8 Std für die Regeneration. Heute hast du es krachen lassen.</string>
+    <string name="notif_bedtime_slipping">Schlaf reguliert den Appetit. Früh ins Bett, um das Snack-Muster zu brechen.</string>
+
+    <string name="notif_motivation_decrochage">Gestern Ausrutscher. Mini-Session heute = Stoffwechsel wieder an.</string>
+    <string name="notif_motivation_plateau">Stagnation erkannt. Idee: +2 Sets bei den Compounds oder Pause auf 60s.</string>
+    <string name="notif_motivation_ghost">%1$d Tage ohne Training. Eine 30-Min-Mini-Session zum Neustart?</string>
+    <string name="notif_motivation_too_fast">Gewichtsverlust zu schnell (%1$.1f kg/Wo). Muskelverlust-Risiko — kcal leicht erhöhen.</string>
+
+    <string name="notif_morning_brief_title">☀️ Tages-Brief</string>
+    <string name="notif_morning_brief_momentum">%1$d Tage im Ziel. Trend %2$+.1f kg/Wo. Heute: %3$d kcal. Weiter so.</string>
+    <string name="notif_morning_brief_consistent">Top-Monat: %1$d/30 Tage im Ziel. Heute: %2$d kcal.</string>
+    <string name="notif_morning_brief_slipping">Diese Woche: +%1$d kcal/Tag im Schnitt. Heute: %2$d kcal zum Rekalibrieren.</string>
+    <string name="notif_morning_brief_plateau">Zwei Wochen Gas geben, Gewicht stabil. Vorschlag: Pattern ändern. Heute: %1$d kcal.</string>
+    <string name="notif_morning_brief_cycle">Restriktion/Binge-Muster erkannt. Idee: Refeed wöchentlich einplanen statt den Absturz aushalten.</string>
+    <string name="notif_morning_brief_ghost">Sport: nur %1$d Sessions diesen Monat. Heute Neustart?</string>
+    <string name="notif_morning_brief_too_fast">Gewichtsverlust %1$+.1f kg/Wo: zu schnell für Muskelerhalt. kcal hochfahren.</string>
+    <string name="notif_morning_brief_decrochage">Gestern %1$+d kcal vs Ziel. Ein Tag bricht den Cut nicht — heute neu starten.</string>
+    <string name="notif_morning_brief_normal">Heutiges Ziel: %1$d kcal. %2$s</string>
+    <string name="notif_morning_brief_normal_with_workout">Training eingeplant.</string>
+    <string name="notif_morning_brief_normal_no_workout">Pausentag.</string>
+
+    <!-- Banner kcal recalibration -->
+    <string name="recalib_banner_title">Kalorienberechnung rekalibriert</string>
+    <string name="recalib_banner_body">Wir haben die Schätzung der beim Training verbrannten Kalorien angepasst, um klassisches Krafttraining besser abzubilden. Dein Tagesziel an Trainingstagen ist jetzt ~300 kcal niedriger — näher an der physiologischen Realität.</string>
+    <string name="recalib_banner_dismiss">Verstanden</string>
+    <string name="recalib_banner_dismiss_cd">Banner schließen</string>
+
     <string name="notif_session_default_title">Workout</string>
     <string name="notif_session_fallback_default">Workout</string>
     <string name="notif_shaker_pretraining_title">🥤 Pre-Workout-Shake</string>
@@ -1599,6 +1648,8 @@
     <string name="bodymesh_action_composition_cd">Körperzusammensetzung ansehen</string>
     <string name="bodymesh_action_view_3d_cd">Rotierbare 3D-Ansicht</string>
     <string name="bodymesh_action_view_2d_cd">Zurück zur 2D-Ansicht</string>
+    <string name="bodymesh_action_view_skeleton_cd">Skelett anzeigen</string>
+    <string name="bodymesh_action_view_silhouette_cd">Silhouette anzeigen</string>
 
     <!-- GymScan -->
     <string name="gymscan_title">GymScan</string>

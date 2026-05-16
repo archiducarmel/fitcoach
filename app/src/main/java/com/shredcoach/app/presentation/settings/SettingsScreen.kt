@@ -538,6 +538,17 @@ fun SettingsScreen(
                     }
                 }
 
+                // ═══ DEBUG TOOLS (compilé uniquement en build debug) ═══
+                // Permet de déclencher chaque type de notif on-demand pour
+                // tester les builders context-aware sans attendre l'heure de
+                // l'alarme. Compile-time guard via BuildConfig.DEBUG —
+                // disparaît du build release (R8 dead-code elimination).
+                if (com.shredcoach.app.BuildConfig.DEBUG) {
+                    SettingsSection("🛠 Debug : test notifications", Icons.Default.BugReport) {
+                        NotifDebugSection(context = context)
+                    }
+                }
+
                 Spacer(Modifier.height(32.dp))
             }
         }
@@ -971,4 +982,81 @@ private fun PaletteCard(
             }
         }
     }
+}
+
+// ═══════════════════════════════════════════════════════════
+// DEBUG : test notifications (compilé uniquement en BuildConfig.DEBUG)
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Boutons pour déclencher chaque type de notif on-demand. Bypass l'AlarmManager
+ * et enqueue directement [ShredCoachNotificationWorker]. Permet de tester :
+ *  - Skip rules : ex. tap "breakfast" après avoir loggé le petit-déj → silencieux
+ *  - Body dynamique : ex. forcer DECROCHAGE pattern via mock DB
+ *  - Context engine : voir que les valeurs lues correspondent
+ *
+ * **Non-localisé** : c'est du debug, jamais visible en release. Inutile de
+ * traduire les labels.
+ */
+@Composable
+private fun NotifDebugSection(context: android.content.Context) {
+    val scope = rememberCoroutineScope()
+    val notifTypes = listOf(
+        "Breakfast" to com.shredcoach.app.notification.ShredCoachNotificationWorker.TYPE_BREAKFAST,
+        "Lunch" to com.shredcoach.app.notification.ShredCoachNotificationWorker.TYPE_LUNCH,
+        "Snack" to com.shredcoach.app.notification.ShredCoachNotificationWorker.TYPE_SNACK,
+        "Dinner" to com.shredcoach.app.notification.ShredCoachNotificationWorker.TYPE_DINNER,
+        "Shaker AM" to com.shredcoach.app.notification.ShredCoachNotificationWorker.TYPE_SHAKER_MORNING,
+        "Shaker PM" to com.shredcoach.app.notification.ShredCoachNotificationWorker.TYPE_SHAKER_EVENING,
+        "Bedtime" to com.shredcoach.app.notification.ShredCoachNotificationWorker.TYPE_BEDTIME,
+        "Motivation" to com.shredcoach.app.notification.ShredCoachNotificationWorker.TYPE_MOTIVATION,
+        "Morning brief" to com.shredcoach.app.notification.ShredCoachNotificationWorker.TYPE_MORNING_BRIEF,
+    )
+    Column(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            "Déclenche la notif en bypassant l'alarme. Skip rules s'appliquent (ex: déjà loggé → silencieux).",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+        )
+        // 3 cols × N rows pour rester compact
+        notifTypes.chunked(3).forEach { row ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                row.forEach { (label, type) ->
+                    OutlinedButton(
+                        onClick = { fireNotifDebug(context, type) },
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp),
+                    ) {
+                        Text(label, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                    }
+                }
+                // Padding cells si row incomplète
+                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+        OutlinedButton(
+            onClick = { scope.launch { resetRecalibBannerDebug(context) } },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Reset banner kcal", style = MaterialTheme.typography.labelMedium)
+        }
+    }
+}
+
+/** Enqueue le worker pour [notifType] immédiatement. Bypass AlarmManager. */
+private fun fireNotifDebug(context: android.content.Context, notifType: String) {
+    val data = androidx.work.Data.Builder().putString("type", notifType).build()
+    val request = androidx.work.OneTimeWorkRequestBuilder<com.shredcoach.app.notification.ShredCoachNotificationWorker>()
+        .setInputData(data)
+        .build()
+    androidx.work.WorkManager.getInstance(context).enqueue(request)
+}
+
+/**
+ * Reset le banner kcal recalibration (réaffiche au prochain ouvrage de
+ * NutritionScreen). Helper debug uniquement.
+ */
+private suspend fun resetRecalibBannerDebug(context: android.content.Context) {
+    com.shredcoach.app.domain.nutrition.RecalibrationBannerStore(context).reset()
 }

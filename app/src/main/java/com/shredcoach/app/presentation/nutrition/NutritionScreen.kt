@@ -84,6 +84,16 @@ fun NutritionScreen(navController: NavController, viewModel: NutritionViewModel 
             // ── Sélecteur de date ──
             item { DateSelector(state, viewModel) }
 
+            // ── Banner one-shot : recalibration kcal (V2 MET 3.8) ──
+            // Affiché TANT QUE l'user n'a pas dismiss. Placé en haut juste
+            // après la date pour être vu (mais sous le sélecteur pour ne pas
+            // gêner la navigation). Dismiss persiste en DataStore.
+            if (state.showRecalibrationBanner) {
+                item {
+                    RecalibrationBanner(onDismiss = { viewModel.dismissRecalibrationBanner() })
+                }
+            }
+
             // ── Résumé macros ──
             item { MacrosSummaryCard(state) }
 
@@ -200,6 +210,66 @@ private fun DateSelector(state: NutritionState, viewModel: NutritionViewModel) {
             }
         }
         IconButton(onClick = { viewModel.nextDay() }) { Icon(Icons.Default.ChevronRight, stringResource(R.string.nutrition_date_next_cd)) }
+    }
+}
+
+// ═══════════════════════════════════════
+// BANNER RECALIBRATION KCAL (one-shot, dismissible)
+// ═══════════════════════════════════════
+/**
+ * Affiché tant que l'utilisateur n'a pas tapé "Compris". Explique pourquoi la
+ * cible kcal des jours d'entraînement a baissé suite au passage MET 5.5 → 3.8.
+ *
+ * **Style** : Card outlined avec tinte info (bleu) — pas alert rouge, c'est
+ * une info pas une erreur. Bouton text-only à droite pour rester sobre.
+ */
+@Composable
+private fun RecalibrationBanner(onDismiss: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        ),
+        shape = RoundedCornerShape(12.dp),
+    ) {
+        Row(
+            Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(
+                Icons.Default.Tune,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                modifier = Modifier.size(20.dp),
+            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    stringResource(R.string.recalib_banner_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    stringResource(R.string.recalib_banner_body),
+                    style = MaterialTheme.typography.bodySmall,
+                    lineHeight = 18.sp,
+                )
+                TextButton(
+                    onClick = onDismiss,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                    modifier = Modifier.align(Alignment.End),
+                ) {
+                    Text(
+                        stringResource(R.string.recalib_banner_dismiss),
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+        }
     }
 }
 

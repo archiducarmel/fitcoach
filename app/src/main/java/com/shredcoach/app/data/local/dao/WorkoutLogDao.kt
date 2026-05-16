@@ -86,6 +86,17 @@ interface WorkoutLogDao {
     @Query("SELECT * FROM workout_logs WHERE completed = 0 ORDER BY date DESC LIMIT 1")
     fun observeLatestUncompletedLog(): Flow<WorkoutLogEntity?>
 
+    /**
+     * Dernière séance COMPLÉTÉE (one-shot snapshot). Utilisé par
+     * [com.shredcoach.app.domain.notification.NotificationContextEngine] pour
+     * calculer `daysSinceLastWorkout`. Indispensable d'avoir une query dédiée
+     * vs trier `getAllWorkoutLogsOnce` côté Kotlin : sur 200+ séances, le full
+     * load explose la mémoire et l'ordre par `id ASC` du snapshot global rend
+     * `firstOrNull` faux (retourne la PLUS ANCIENNE complétée, pas la plus récente).
+     */
+    @Query("SELECT * FROM workout_logs WHERE completed = 1 ORDER BY date DESC LIMIT 1")
+    suspend fun getLastCompletedLogOnce(): WorkoutLogEntity?
+
     /** Nombre d'exercices distincts loggés dans une séance (= progression %). */
     @Query("SELECT COUNT(DISTINCT exerciseId) FROM workout_sets WHERE workoutLogId = :logId AND completed = 1")
     suspend fun getCompletedExerciseCount(logId: Long): Int

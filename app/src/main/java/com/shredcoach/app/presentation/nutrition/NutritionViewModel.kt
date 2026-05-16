@@ -70,7 +70,12 @@ data class NutritionState(
         com.shredcoach.app.presentation.home.components.NightFastingDisplay(
             lastMealAt = null, firstMealAt = null, isToday = true,
         ),
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    /**
+     * Banner one-shot expliquant que le calcul kcal des séances a été recalibré
+     * (MET 5.5 → 3.8 + facteur durée 0.7, 2026-05-16). Affiché jusqu'à dismiss.
+     */
+    val showRecalibrationBanner: Boolean = false,
 )
 
 /**
@@ -102,7 +107,8 @@ class NutritionViewModel @Inject constructor(
     private val mealScanDao: MealScanDao,
     @Suppress("unused") private val scheduledRepo: ScheduledWorkoutRepository,
     private val workoutLogDao: WorkoutLogDao,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val recalibrationBannerStore: com.shredcoach.app.domain.nutrition.RecalibrationBannerStore,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(NutritionState())
@@ -125,6 +131,24 @@ class NutritionViewModel @Inject constructor(
         loadDay(LocalDate.now())
         loadInsights()
         observeWorkoutsForActiveDate()
+        observeRecalibrationBanner()
+    }
+
+    /**
+     * Observe le flag DataStore du banner recalibration kcal. Pousse l'état
+     * dans [NutritionState.showRecalibrationBanner] pour que la UI consomme.
+     */
+    private fun observeRecalibrationBanner() {
+        viewModelScope.launch {
+            recalibrationBannerStore.shouldShow.collect { show ->
+                _state.update { it.copy(showRecalibrationBanner = show) }
+            }
+        }
+    }
+
+    /** Appelé par le bouton dismiss du banner. Persiste en DataStore. */
+    fun dismissRecalibrationBanner() {
+        viewModelScope.launch { recalibrationBannerStore.dismiss() }
     }
 
     /**

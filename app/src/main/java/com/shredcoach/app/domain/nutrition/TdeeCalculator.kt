@@ -39,11 +39,35 @@ object TdeeCalculator {
     private const val SEDENTARY_MULTIPLIER = 1.20
 
     /**
-     * MET (Metabolic Equivalent of Task) de référence pour la musculation.
-     * 5.5 = milieu de fourchette entre "modérée" (5.0) et "vigoureuse" (6.0)
-     * — adapté à un programme full-body intense ShredCoach.
+     * MET (Metabolic Equivalent of Task) de référence pour la musculation
+     * **traditionnelle** (hypertrophie/force avec 60-120s de repos entre séries).
+     *
+     * **Référence** : Compendium of Physical Activities 2011 (Ainsworth et al.),
+     * code 02050 "weight lifting, free weight, multiple types" :
+     *  - Light/moderate effort : 3.5 MET
+     *  - Vigorous effort (bodybuilder, circuit) : 6.0 MET
+     *
+     * **3.8 MET** = baseline modérée+ adaptée au programme ShredCoach (poly-
+     * articulaires, charges intermédiaires). Avant on utilisait 5.5 = "vigoureux"
+     * → sur-estimait de 35-45 % la dépense réelle. Pour 90kg × 1h30 ça donnait
+     * ~740 kcal là où une session muscu réelle = 350-450 kcal.
+     *
+     * **Pour du circuit/CrossFit/HIIT** : utiliser explicitement 6.0+ via
+     * surcharge du paramètre `met` de [estimateWorkoutKcal].
      */
-    const val WORKOUT_MET_DEFAULT = 5.5
+    const val WORKOUT_MET_DEFAULT = 3.8
+
+    /**
+     * Fraction de temps RÉELLEMENT actif sur la durée wall-clock d'une séance.
+     * Une séance de muscu = ~30 % de repos (entre séries + setup matériel) +
+     * ~70 % de travail réel sous tension. La formule MET suppose une activité
+     * continue, donc on corrige la durée par ce ratio pour rester réaliste.
+     *
+     * **Trade-off** : on n'a pas de mesure exacte du temps sous tension dans
+     * l'app (faudrait du timing par série). 0.7 est une approximation calibrée
+     * sur des programmes 4-6 exos × 4 séries × 90s repos.
+     */
+    const val ACTIVE_TIME_RATIO = 0.7
 
     /** Ajustements caloriques par objectif (déficit / surplus). */
     private const val SHRED_DEFICIT = 400
@@ -106,16 +130,15 @@ object TdeeCalculator {
     /**
      * Estime les kcal brûlées sur une séance via formule MET.
      *
-     *      kcal = MET × poidsKg × dureeHeures
+     *      kcal = MET × poidsKg × (dureeHeures × ACTIVE_TIME_RATIO)
      *
-     * La durée prise en compte est la durée RÉELLE mesurée par le chrono
-     * (`actualDurationSeconds`) si > 0, sinon la durée prévue (`durationMinutes`).
-     * Cela reflète la dépense effective : si la séance a été plus courte que
-     * prévu (l'user a quitté tôt), on n'attribue pas de kcal fantômes.
+     * Durée prise en compte : `actualDurationSeconds` (chrono temps réel) si > 0,
+     * sinon `durationMinutes` (estimé). On applique [ACTIVE_TIME_RATIO]=0.7
+     * pour ne facturer que le temps réellement sous tension (le reste = repos).
      *
-     * MET par défaut [WORKOUT_MET_DEFAULT] = 5.5 (full-body intense). Pour
-     * affiner, on pourrait moduler selon `totalVolume` ou intensité ressentie,
-     * mais 5.5 reste une baseline solide non sur-estimée.
+     * **Exemple** : user 90 kg, séance 1h30 wall-clock, MET 3.8
+     *   = 3.8 × 90 × (1.5 × 0.7) = 359 kcal — réaliste pour de l'hypertrophie.
+     *   Avant (MET 5.5, sans facteur) : 743 kcal — sur-estimé.
      */
     fun estimateWorkoutKcal(
         log: WorkoutLogEntity,
@@ -128,8 +151,8 @@ object TdeeCalculator {
             log.durationMinutes.toDouble()
         }
         if (durationMinutes <= 0) return 0
-        val hours = durationMinutes / 60.0
-        return (met * userWeightKg * hours).toInt().coerceAtLeast(0)
+        val activeHours = (durationMinutes / 60.0) * ACTIVE_TIME_RATIO
+        return (met * userWeightKg * activeHours).toInt().coerceAtLeast(0)
     }
 
     /**

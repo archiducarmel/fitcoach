@@ -67,6 +67,10 @@ object NotificationAlarmScheduler {
         }
         if (profile.notifMotivation) {
             schedule(context, am, AlarmType.MOTIVATION, LocalTime.of(10, 0))
+            // Brief du jour à 07:00 — synthèse contextuelle (P5). Gated par le
+            // même toggle que MOTIVATION car c'est conceptuellement une notif
+            // "coach proactif". Pourra avoir son propre toggle plus tard.
+            schedule(context, am, AlarmType.MORNING_BRIEF, LocalTime.of(7, 0))
         }
     }
 
@@ -160,7 +164,8 @@ object NotificationAlarmScheduler {
         SHAKER_MORNING("shaker_morning", 1005, ShredCoachNotificationWorker.TYPE_SHAKER_MORNING),
         SHAKER_EVENING("shaker_evening", 1006, ShredCoachNotificationWorker.TYPE_SHAKER_EVENING),
         BEDTIME("bedtime", 1007, ShredCoachNotificationWorker.TYPE_BEDTIME),
-        MOTIVATION("motivation", 1008, ShredCoachNotificationWorker.TYPE_MOTIVATION);
+        MOTIVATION("motivation", 1008, ShredCoachNotificationWorker.TYPE_MOTIVATION),
+        MORNING_BRIEF("morning_brief", 1009, ShredCoachNotificationWorker.TYPE_MORNING_BRIEF);
 
         fun timeFromProfile(profile: UserProfileEntity): LocalTime? = when (this) {
             BREAKFAST -> profile.breakfastTime
@@ -171,6 +176,7 @@ object NotificationAlarmScheduler {
             SHAKER_EVENING -> profile.shakerEveningTime
             BEDTIME -> profile.bedTime?.minusMinutes(30)
             MOTIVATION -> LocalTime.of(10, 0)
+            MORNING_BRIEF -> LocalTime.of(7, 0)
         }
 
         companion object {

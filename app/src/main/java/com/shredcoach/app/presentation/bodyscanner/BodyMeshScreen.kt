@@ -44,6 +44,10 @@ fun BodyMeshScreen(
     // Activé par bouton dans le header. Persisté uniquement en mémoire (pas de
     // valeur sticky en DataStore — la préférence est session-bound).
     var view3D by remember { mutableStateOf(false) }
+    // V2.1 — sous-mode du 3D : silhouette (volumetric body) vs skeleton
+    // (wireframe bones). Default = SILHOUETTE car c'est le sujet principal
+    // ("body shape") attendu par l'utilisateur quand il toggle vers la 3D.
+    var mesh3DMode by remember { mutableStateOf(Mesh3DMode.SILHOUETTE) }
 
     // Palette futuriste
     val voidBg = Color(0xFF000814)
@@ -82,7 +86,10 @@ fun BodyMeshScreen(
 
         val features = state.meshFeatures
         val meshTopReserve = 88.dp     // header + status
-        val meshBottomReserve = 120.dp // biometric strip
+        // Bottom reserve réduit : strip rendu plus compact (suppression du
+        // title row, padding réduit) + Surface alpha 0.45 pour laisser
+        // respirer le mesh derrière. 88dp = chips ~52dp + padding 36dp.
+        val meshBottomReserve = 88.dp
         val meshSidePad = 12.dp
 
         if (features != null) {
@@ -99,6 +106,7 @@ fun BodyMeshScreen(
                     features = features,
                     primaryColor = neonCyan,
                     accentColor = neonGreen,
+                    mode = mesh3DMode,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(
@@ -200,6 +208,37 @@ fun BodyMeshScreen(
             // Sinon, l'icône 3D serait inopérante (rotation sur des keypoints
             // tous à z=0 = pas de 3D).
             if (features?.is3D == true) {
+                // Sous-toggle skeleton/silhouette — visible uniquement quand
+                // on est en mode 3D. Permet à l'user de switcher entre le
+                // volume polygonal (sujet visuel "body shape") et le wireframe
+                // squelette (structure interne, motion-capture feel).
+                if (view3D) {
+                    IconButton(
+                        onClick = {
+                            mesh3DMode = if (mesh3DMode == Mesh3DMode.SILHOUETTE)
+                                Mesh3DMode.SKELETON else Mesh3DMode.SILHOUETTE
+                        },
+                        modifier = Modifier.size(36.dp),
+                    ) {
+                        Icon(
+                            // AccessibilityNew = silhouette humaine pleine
+                            // Polyline = wireframe filaire
+                            if (mesh3DMode == Mesh3DMode.SILHOUETTE)
+                                Icons.Default.AccessibilityNew
+                            else
+                                Icons.Default.Polyline,
+                            contentDescription = stringResource(
+                                if (mesh3DMode == Mesh3DMode.SILHOUETTE)
+                                    R.string.bodymesh_action_view_skeleton_cd
+                                else
+                                    R.string.bodymesh_action_view_silhouette_cd
+                            ),
+                            tint = neonPink,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    Spacer(Modifier.width(4.dp))
+                }
                 IconButton(
                     onClick = { view3D = !view3D },
                     modifier = Modifier.size(36.dp),
@@ -309,7 +348,10 @@ private fun MeshInsightChip(
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 4.dp),
         shape = RoundedCornerShape(12.dp),
-        color = Color(0xFF000814).copy(alpha = 0.85f),
+        // alpha bas (0.55) pour ne pas masquer le mesh — l'utilisateur peut
+        // voir la silhouette qui glow à travers la card insight. Le border
+        // neon green suffit à délimiter la card visuellement.
+        color = Color(0xFF000814).copy(alpha = 0.55f),
         border = androidx.compose.foundation.BorderStroke(1.dp, neonGreen.copy(alpha = 0.4f)),
     ) {
         Row(
@@ -515,57 +557,31 @@ private fun BiometricStrip(
         }
     }
 
-    // Conteneur surface semi-transparente. Le mesh continue de glow derrière
-    // (alpha 0.65) — le HUD ne masque pas le sujet.
-    Surface(
-        modifier = modifier,
-        color = Color(0xFF000814).copy(alpha = 0.72f),
-        shadowElevation = 0.dp,
+    // Conteneur transparent — chaque chip a son propre fond/border. Le mesh
+    // continue de glow à travers. On enveloppe juste avec un gradient haut
+    // (transparent → semi-opaque) qui agit comme un "fade" lisible sans
+    // masquer le mesh derrière. Top fade = 24dp, fond = alpha 0.45 max.
+    Box(
+        modifier = modifier
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color.Transparent,
+                        Color(0xFF000814).copy(alpha = 0.55f),
+                    ),
+                ),
+            ),
     ) {
-        Column(
-            Modifier.padding(top = 8.dp, bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+        // Strip horizontal scrollable — pas de title row, les chips sont
+        // self-explanatory (label + value + unit).
+        val listState = rememberLazyListState()
+        LazyRow(
+            state = listState,
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            // Label de section (subtil)
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Icon(
-                    Icons.Default.Insights, null,
-                    Modifier.size(12.dp),
-                    tint = neonCyan.copy(alpha = 0.7f),
-                )
-                Text(
-                    stringResource(R.string.bodymesh_panel_title),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = neonCyan.copy(alpha = 0.8f),
-                    letterSpacing = 2.sp,
-                    fontSize = 10.sp,
-                )
-                Spacer(Modifier.weight(1f))
-                Text(
-                    stringResource(R.string.bodymesh_panel_status),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = neonGreen.copy(alpha = 0.7f),
-                    letterSpacing = 1.sp,
-                    fontSize = 9.sp,
-                )
-            }
-            // Strip horizontal scrollable
-            val listState = rememberLazyListState()
-            LazyRow(
-                state = listState,
-                contentPadding = PaddingValues(horizontal = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                items(chips) { chip ->
-                    BiometricChip(chip = chip)
-                }
+            items(chips) { chip ->
+                BiometricChip(chip = chip)
             }
         }
     }

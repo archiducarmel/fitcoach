@@ -22,9 +22,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import com.shredcoach.app.domain.bodymesh.BodyMeshTriangles
 import com.shredcoach.app.domain.bodymesh.HAND_CONNECTIONS
 import com.shredcoach.app.domain.bodymesh.Landmark
 import com.shredcoach.app.domain.bodymesh.MeshFeatures
@@ -63,12 +66,26 @@ import kotlin.math.sin
  * Auto-rotation lente quand l'utilisateur ne touche pas — feel "scanner" 3D
  * sans intervention.
  */
+/**
+ * Modes d'affichage du body 3D. L'utilisateur toggle entre les deux pour
+ * voir soit la structure (skeleton néon) soit la forme (volume polygonal).
+ *
+ * - [SILHOUETTE] : volumetric body (front + back surfaces inflatées par
+ *   distance-transform sur la silhouette). Pas de bones. Donne le feel
+ *   "scan 3D du corps" — on voit la forme rotater avec un VRAI volume.
+ *
+ * - [SKELETON] : wireframe néon des bones + keypoints. Pas de body. Donne
+ *   le feel "rayons X / motion capture" — on voit la structure interne.
+ */
+enum class Mesh3DMode { SILHOUETTE, SKELETON }
+
 @Composable
 fun Mesh3DViewer(
     features: MeshFeatures,
     modifier: Modifier = Modifier,
     primaryColor: Color = NEON_CYAN,
     accentColor: Color = NEON_GREEN,
+    mode: Mesh3DMode = Mesh3DMode.SILHOUETTE,
 ) {
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
@@ -102,6 +119,20 @@ fun Mesh3DViewer(
 
     // ─── Indexed map ───
     val byType = remember(features) { features.landmarks.associateBy { it.type } }
+
+    // ─── Volumetric body (front + back surfaces inflatées) ───
+    // Construit UNE FOIS par features (pas par mode), cached à travers les
+    // toggles SKELETON↔SILHOUETTE. Coût : ~30ms à la première entrée 3D ;
+    // le toggle de sous-mode est ensuite instantané.
+    // Distance-transform sur silhouette → chaque point intérieur a une
+    // épaisseur Z proportionnelle à sa distance au contour. Donne du VRAI
+    // volume rotatable (pas un disque plat).
+    val volumetric = remember(features) {
+        BodyMeshTriangles.buildVolumetric(features)
+    }
+
+    // Path mutable réutilisé pour chaque triangle — évite N allocations/frame.
+    val triPath = remember { Path() }
 
     BoxWithConstraints(
         modifier = modifier
@@ -154,36 +185,39 @@ fun Mesh3DViewer(
 
             data class Projected(val x: Float, val y: Float, val z: Float, val depthAlpha: Float)
 
-            val projected = features.landmarks.map { lm ->
-                // 1. Centre les coords
-                val cx = lm.x - center3D.x
-                val cy = lm.y - center3D.y
-                val cz = lm.z - center3D.z
+            // Closure de projection — factorisée pour réutilisation entre
+            // landmarks (bones/keypoints) et sommets de triangles polygonaux.
+            // Pourquoi pas une fonction top-level : capture cosY/sinY/cosX/sinX/
+            // center3D/centerX/centerY/baseScale du scope englobant. Une fonction
+            // top-level forcerait à passer 8 params à chaque appel = bruit.
+            val project = { x: Float, y: Float, z: Float ->
+                val cx = x - center3D.x
+                val cy = y - center3D.y
+                val cz = z - center3D.z
 
-                // 2. Rotation Y : (x, z) → (x*cos + z*sin, y, -x*sin + z*cos)
+                // Rotation Y : (x, z) → (x*cos + z*sin, y, -x*sin + z*cos)
                 val xRotY = cx * cosY + cz * sinY
                 val zRotY = -cx * sinY + cz * cosY
 
-                // 3. Rotation X : (y, z) → (y*cos - z*sin, y*sin + z*cos)
+                // Rotation X : (y, z) → (y*cos - z*sin, y*sin + z*cos)
                 val yRotX = cy * cosX - zRotY * sinX
                 val zRotX = cy * sinX + zRotY * cosX
 
-                // 4. Projection perspective. Distance focale arbitraire.
-                // Plus z est positif (loin), plus le point se rapetisse.
+                // Projection perspective (distance focale arbitraire).
                 val focal = 800f
                 val perspective = focal / (focal + zRotX)
 
-                // 5. Map vers screen (scaling baseScale pour fit dans canvas).
                 val screenX = centerX + xRotY * baseScale * perspective
                 val screenY = centerY + yRotX * baseScale * perspective
 
-                // 6. Depth alpha : closer (z négatif) = full, further = fade
-                // Normalisation grossière : z varie typiquement entre -300 et +300.
+                // Depth alpha : closer (z négatif) = full, further = fade.
                 val normalizedDepth = (zRotX / 300f).coerceIn(-1f, 1f)
                 val depthAlpha = (0.55f - normalizedDepth * 0.45f).coerceIn(0.15f, 1f)
 
                 Projected(screenX, screenY, zRotX, depthAlpha)
             }
+
+            val projected = features.landmarks.map { lm -> project(lm.x, lm.y, lm.z) }
 
             // ─── Halo radial ambient ───
             drawCircle(
@@ -200,50 +234,133 @@ fun Mesh3DViewer(
                 center = Offset(centerX, centerY),
             )
 
-            // ─── Bones — z-sort then draw back-to-front ───
-            val bones = (POSE_CONNECTIONS + HAND_CONNECTIONS).mapNotNull { (from, to) ->
-                val a = byType[from.ordinal] ?: return@mapNotNull null
-                val b = byType[to.ordinal] ?: return@mapNotNull null
-                if (a.inFrameLikelihood < 0.4f && b.inFrameLikelihood < 0.4f) return@mapNotNull null
-                val pa = projected[features.landmarks.indexOf(a)]
-                val pb = projected[features.landmarks.indexOf(b)]
-                Triple(pa, pb, (pa.z + pb.z) / 2f)
-            }.sortedByDescending { it.third } // z grand = loin → drawn first (back)
+            // ─── Branche par mode : SILHOUETTE (volumetric) vs SKELETON ───
+            when (mode) {
+                Mesh3DMode.SILHOUETTE -> {
+                    // ─── Volumetric body : front + back triangles z-sorted ───
+                    // On combine les 2 surfaces dans un seul z-sort. À yaw=0,
+                    // les triangles "front" passent devant ; à yaw=180, les
+                    // "back" prennent leur place. À yaw=90, on voit les deux
+                    // surfaces simultanément → le corps apparaît comme un
+                    // "lens" 3D (lentille verticale courbée).
+                    //
+                    // ⚠️ Sur scans v1 (is3D=false), buildVolumetric utilise
+                    // quand même la distance-transform donc on a du volume
+                    // même sans z natif ML Kit. Le `is3D` de MeshFeatures ne
+                    // contrôle plus que les anatomical labels.
+                    val v = volumetric
+                    if (v.all.isNotEmpty()) {
+                        data class ProjectedTriangle(
+                            val pa: Projected, val pb: Projected, val pc: Projected,
+                            val avgZ: Float,
+                            // isFront : utilisé pour shader différemment front
+                            // (sujet) vs back (atténué) au-delà de la depth-fade
+                            val isFront: Boolean,
+                        )
+                        val projectedTris = ArrayList<ProjectedTriangle>(v.all.size)
+                        for ((idx, t) in v.frontTriangles.withIndex()) {
+                            val pa = project(t.ax, t.ay, t.az)
+                            val pb = project(t.bx, t.by, t.bz)
+                            val pc = project(t.cx, t.cy, t.cz)
+                            projectedTris += ProjectedTriangle(
+                                pa, pb, pc,
+                                (pa.z + pb.z + pc.z) / 3f,
+                                isFront = true,
+                            )
+                            // Eviter unused warning
+                            @Suppress("UNUSED_VARIABLE") val _idx = idx
+                        }
+                        for (t in v.backTriangles) {
+                            val pa = project(t.ax, t.ay, t.az)
+                            val pb = project(t.bx, t.by, t.bz)
+                            val pc = project(t.cx, t.cy, t.cz)
+                            projectedTris += ProjectedTriangle(
+                                pa, pb, pc,
+                                (pa.z + pb.z + pc.z) / 3f,
+                                isFront = false,
+                            )
+                        }
+                        projectedTris.sortByDescending { it.avgZ }
 
-            for ((pa, pb, _) in bones) {
-                val avgAlpha = (pa.depthAlpha + pb.depthAlpha) / 2f
-                val thickness = 1.5f + avgAlpha * 1.5f
-                // Halo
-                drawLine(
-                    color = primaryColor.copy(alpha = avgAlpha * 0.30f),
-                    start = Offset(pa.x, pa.y), end = Offset(pb.x, pb.y),
-                    strokeWidth = thickness * 4f, cap = StrokeCap.Round,
-                )
-                // Core
-                drawLine(
-                    color = primaryColor.copy(alpha = avgAlpha),
-                    start = Offset(pa.x, pa.y), end = Offset(pb.x, pb.y),
-                    strokeWidth = thickness, cap = StrokeCap.Round,
-                )
-            }
+                        for (pt in projectedTris) {
+                            triPath.reset()
+                            triPath.moveTo(pt.pa.x, pt.pa.y)
+                            triPath.lineTo(pt.pb.x, pt.pb.y)
+                            triPath.lineTo(pt.pc.x, pt.pc.y)
+                            triPath.close()
+                            val avgAlpha = (pt.pa.depthAlpha + pt.pb.depthAlpha + pt.pc.depthAlpha) / 3f
+                            // Fill : front = brillant (sujet), back = atténué
+                            // (vu à travers la "peau"). Avec depth-fade, ça
+                            // crée une vraie sensation de volume.
+                            val fillAlpha = if (pt.isFront)
+                                0.16f + avgAlpha * 0.18f
+                            else
+                                0.06f + avgAlpha * 0.08f
+                            drawPath(
+                                triPath,
+                                color = primaryColor.copy(alpha = fillAlpha),
+                            )
+                            // Edge : hairline néon, plus visible sur front.
+                            val edgeAlpha = if (pt.isFront)
+                                avgAlpha * 0.45f
+                            else
+                                avgAlpha * 0.20f
+                            drawPath(
+                                triPath,
+                                color = primaryColor.copy(alpha = edgeAlpha),
+                                style = Stroke(width = 0.7f),
+                            )
+                        }
+                    }
+                }
 
-            // ─── Keypoints (z-sorted) ───
-            val keypoints = KEY_POINTS_3D.mapNotNull { type ->
-                val lm = byType[type.ordinal] ?: return@mapNotNull null
-                if (lm.inFrameLikelihood < 0.4f) return@mapNotNull null
-                projected[features.landmarks.indexOf(lm)]
-            }.sortedByDescending { it.z }
+                Mesh3DMode.SKELETON -> {
+                    // ─── Bones — z-sort then draw back-to-front ───
+                    val bones = (POSE_CONNECTIONS + HAND_CONNECTIONS).mapNotNull { (from, to) ->
+                        val a = byType[from.ordinal] ?: return@mapNotNull null
+                        val b = byType[to.ordinal] ?: return@mapNotNull null
+                        if (a.inFrameLikelihood < 0.4f && b.inFrameLikelihood < 0.4f) return@mapNotNull null
+                        val pa = projected[features.landmarks.indexOf(a)]
+                        val pb = projected[features.landmarks.indexOf(b)]
+                        Triple(pa, pb, (pa.z + pb.z) / 2f)
+                    }.sortedByDescending { it.third }
 
-            for (p in keypoints) {
-                val a = p.depthAlpha
-                drawCircle(
-                    color = accentColor.copy(alpha = a * 0.30f),
-                    radius = 8f * a + 3f, center = Offset(p.x, p.y),
-                )
-                drawCircle(
-                    color = Color.White.copy(alpha = a),
-                    radius = 2.2f * a + 1f, center = Offset(p.x, p.y),
-                )
+                    for ((pa, pb, _) in bones) {
+                        val avgAlpha = (pa.depthAlpha + pb.depthAlpha) / 2f
+                        val thickness = 1.5f + avgAlpha * 1.5f
+                        // Halo
+                        drawLine(
+                            color = primaryColor.copy(alpha = avgAlpha * 0.30f),
+                            start = Offset(pa.x, pa.y), end = Offset(pb.x, pb.y),
+                            strokeWidth = thickness * 4f, cap = StrokeCap.Round,
+                        )
+                        // Core
+                        drawLine(
+                            color = primaryColor.copy(alpha = avgAlpha),
+                            start = Offset(pa.x, pa.y), end = Offset(pb.x, pb.y),
+                            strokeWidth = thickness, cap = StrokeCap.Round,
+                        )
+                    }
+
+                    // ─── Keypoints (z-sorted) ───
+                    val keypoints = KEY_POINTS_3D.mapNotNull { type ->
+                        val lm = byType[type.ordinal] ?: return@mapNotNull null
+                        if (lm.inFrameLikelihood < 0.4f) return@mapNotNull null
+                        projected[features.landmarks.indexOf(lm)]
+                    }.sortedByDescending { it.z }
+
+                    for (p in keypoints) {
+                        val a = p.depthAlpha
+                        drawCircle(
+                            color = accentColor.copy(alpha = a * 0.30f),
+                            radius = 8f * a + 3f, center = Offset(p.x, p.y),
+                        )
+                        drawCircle(
+                            color = Color.White.copy(alpha = a),
+                            radius = 2.2f * a + 1f, center = Offset(p.x, p.y),
+                        )
+                    }
+                }
             }
         }
     }

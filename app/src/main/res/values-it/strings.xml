@@ -121,6 +121,55 @@
     <string name="notif_motivation_title">💪 Non molliamo!</string>
     <string name="notif_motivation_body">Sono 3 giorni senza sessione. Una piccola sessione oggi?</string>
 
+    <!-- Context-aware notif templates (V2) -->
+    <string name="notif_breakfast_pre_training">Colazione pre-allenamento: avena + uova + banana per la sessione tra %1$dh.</string>
+    <string name="notif_breakfast_rest_day">Giorno di riposo: colazione proteica + frutta, meno carboidrati.</string>
+    <string name="notif_breakfast_decrochage">Si ricomincia. Reset: 30g proteine + carboidrati complessi.</string>
+    <string name="notif_breakfast_consistent">Colazione quotidiana. %1$d/30 giorni in target — routine solida.</string>
+
+    <string name="notif_lunch_light_overdelta">Pranzo leggero: già +%1$d kcal oggi. Punta a %2$d kcal per restare in carreggiata.</string>
+    <string name="notif_lunch_recovery">Pranzo recupero: 200g carne + carboidrati lenti dopo la sessione.</string>
+    <string name="notif_lunch_recadrage">Pranzo reset: 200g carne magra + verdure al vapore. Si riparte.</string>
+    <string name="notif_lunch_keepcap">Pranzo abituale: %1$d giorni in target. Continua.</string>
+
+    <string name="notif_snack_pre_training">Snack pre-allenamento: banana + burro d\'arachidi. Sessione tra %1$dh.</string>
+
+    <string name="notif_dinner_light_overdelta">Cena ultra-leggera: +%1$d kcal oggi. Verdure + uova stasera.</string>
+    <string name="notif_dinner_recovery">Cena recupero: 40g proteine + carboidrati lenti per ricostruire dopo la sessione.</string>
+    <string name="notif_dinner_recadrage">Cena reset: 200g carne magra + verdure al vapore. Reset.</string>
+    <string name="notif_dinner_keepcap">Restano %1$d kcal per stasera. %2$d giorni in target — mantieni la rotta.</string>
+    <string name="notif_dinner_decrochage">Cena del ritorno: non punirti. 200g proteine magre + verdure.</string>
+
+    <string name="notif_shaker_pre_workout_today">Shake pre-allenamento: 25g whey + banana. Sessione tra %1$dh.</string>
+    <string name="notif_shaker_evening_post_workout">Caseina adesso. Hai dato tutto oggi — ricostruzione notturna.</string>
+
+    <string name="notif_bedtime_post_workout">A letto presto: 7-8h per ricostruire. Hai spaccato oggi.</string>
+    <string name="notif_bedtime_slipping">Il sonno regola l\'appetito. Vai a letto presto per spezzare il pattern di sgarri.</string>
+
+    <string name="notif_motivation_decrochage">Ieri sgarro alimentare. Una mini-sessione oggi = metabolismo riattivato.</string>
+    <string name="notif_motivation_plateau">Stagnazione rilevata. Idea: +2 serie sui compound o riposo a 60s.</string>
+    <string name="notif_motivation_ghost">%1$d giorni senza sessione. Una mini-sessione da 30min per ripartire?</string>
+    <string name="notif_motivation_too_fast">Perdita troppo rapida (%1$.1f kg/sett). Rischio perdita muscolare — alza leggermente le kcal.</string>
+
+    <string name="notif_morning_brief_title">☀️ Brief del giorno</string>
+    <string name="notif_morning_brief_momentum">%1$d giorni in target. Trend %2$+.1f kg/sett. Oggi: %3$d kcal. Continua.</string>
+    <string name="notif_morning_brief_consistent">Mese eccezionale: %1$d/30 giorni in target. Oggi: %2$d kcal.</string>
+    <string name="notif_morning_brief_slipping">Questa settimana: +%1$d kcal/giorno in media. Oggi: %2$d kcal per ricalibrare.</string>
+    <string name="notif_morning_brief_plateau">Due settimane a spingere, peso stabile. Suggerimento: cambia il pattern. Oggi: %1$d kcal.</string>
+    <string name="notif_morning_brief_cycle">Pattern restrizione/abbuffata rilevato. Idea: programma un refeed settimanale invece di subire il crollo.</string>
+    <string name="notif_morning_brief_ghost">Lato sport: solo %1$d sessioni questo mese. Ripartiamo oggi?</string>
+    <string name="notif_morning_brief_too_fast">Perdita peso %1$+.1f kg/sett: troppo rapida per preservare il muscolo. Alza le kcal.</string>
+    <string name="notif_morning_brief_decrochage">Ieri %1$+d kcal vs target. Un giorno non rompe il taglio — riparti oggi.</string>
+    <string name="notif_morning_brief_normal">Target di oggi: %1$d kcal. %2$s</string>
+    <string name="notif_morning_brief_normal_with_workout">Sessione programmata.</string>
+    <string name="notif_morning_brief_normal_no_workout">Giorno di riposo.</string>
+
+    <!-- Banner kcal recalibration -->
+    <string name="recalib_banner_title">Calcolo kcal ricalibrato</string>
+    <string name="recalib_banner_body">Abbiamo aggiustato il calcolo delle kcal bruciate in allenamento per riflettere meglio la muscolazione tradizionale. I tuoi obiettivi nei giorni di allenamento sono ora ~300 kcal più bassi — più fedeli alla realtà fisiologica.</string>
+    <string name="recalib_banner_dismiss">Capito</string>
+    <string name="recalib_banner_dismiss_cd">Chiudi banner</string>
+
     <!-- Scheduled workout reminder fallback (LLM-failed) -->
     <string name="notif_session_default_title">Sessione</string>
     <string name="notif_session_fallback_default">Sessione</string>
@@ -1762,6 +1811,8 @@
     <string name="bodymesh_action_composition_cd">Vedi composizione corporea</string>
     <string name="bodymesh_action_view_3d_cd">Vista 3D ruotabile</string>
     <string name="bodymesh_action_view_2d_cd">Torna alla vista 2D</string>
+    <string name="bodymesh_action_view_skeleton_cd">Mostra scheletro</string>
+    <string name="bodymesh_action_view_silhouette_cd">Mostra silhouette</string>
 
     <!-- ─── GymScan screen ─── -->
     <string name="gymscan_title">GymScan</string>
