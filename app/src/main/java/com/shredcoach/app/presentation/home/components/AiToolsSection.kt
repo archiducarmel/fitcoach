@@ -14,6 +14,7 @@ import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Accessibility
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.Card
@@ -69,6 +70,7 @@ fun AiToolsSection(
     onMealScanClick: () -> Unit,
     onBodyScanClick: () -> Unit,
     onGymScanClick: () -> Unit,
+    onDrGlykosClick: () -> Unit = {},
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         // ─── Header ───
@@ -160,6 +162,16 @@ fun AiToolsSection(
                 onClick = onGymScanClick
             )
         }
+        // 3e rang : Dr. Glykos (full-width, mis en avant — c'est la persona
+        // premium endocrino, on lui donne une card pleine largeur).
+        AiToolCard(
+            modifier = Modifier.fillMaxWidth().heightIn(min = 92.dp),
+            title = stringResource(R.string.ai_tools_dr_glykos),
+            subtitle = stringResource(R.string.chat_dr_glykos_subtitle, "CGM"),
+            icon = Icons.Default.MedicalServices,
+            gradient = listOf(Color(0xFF0F4C75), Color(0xFF3B82F6)), // bleu médical → blue
+            onClick = onDrGlykosClick,
+        )
     }
 }
 

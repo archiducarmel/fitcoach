@@ -17,8 +17,10 @@ import com.shredcoach.app.data.remote.BowlType
 import com.shredcoach.app.data.remote.GeminiMealService
 import com.shredcoach.app.data.remote.MealAnalysisResult
 import com.shredcoach.app.data.remote.PlateType
+import com.shredcoach.app.data.remote.buildGlucoseHintBlock
 import com.shredcoach.app.data.remote.buildMealHintBlock
 import com.shredcoach.app.data.remote.buildMealHintBlockForText
+import com.shredcoach.app.data.repository.GlucoseRepository
 import com.shredcoach.app.data.repository.NutritionRepository
 import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.domain.nutrition.NutriScoreCalculator
@@ -97,6 +99,7 @@ class MealScannerViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val mealScanDao: MealScanDao,
     private val nutritionRepository: NutritionRepository,
+    private val glucoseRepository: GlucoseRepository,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
@@ -252,10 +255,16 @@ class MealScannerViewModel @Inject constructor(
             // au cas sans photo). hintDescription du HintsPanel n'est
             // PAS injectée ici car en mode TEXT la description principale
             // joue déjà ce rôle (le HintsPanel cache cette section).
-            val hintBlock = buildMealHintBlockForText(
+            val mealHints = buildMealHintBlockForText(
                 plate = s.hintPlate,
                 bowl = s.hintBowl
             )
+            // Contexte glycémique 30j — calibre les recommandations LLM
+            // (charge glycémique, timing carbs) selon le pattern CGM du user.
+            val glucoseHints = try {
+                buildGlucoseHintBlock(glucoseRepository.getWindowSummary(java.time.LocalDate.now(), 30))
+            } catch (_: Exception) { "" }
+            val hintBlock = (mealHints + "\n" + glucoseHints).trim()
 
             val result = geminiService.analyzeMealFromText(
                 description = s.textDescription,
@@ -335,11 +344,15 @@ class MealScannerViewModel @Inject constructor(
 
             // Construire le bloc d'indices (vide si rien n'est renseigné → qualité préservée)
             val s = _state.value
-            val hintBlock = buildMealHintBlock(
+            val mealHints = buildMealHintBlock(
                 plate = s.hintPlate,
                 bowl = s.hintBowl,
                 userDescription = s.hintDescription
             )
+            val glucoseHints = try {
+                buildGlucoseHintBlock(glucoseRepository.getWindowSummary(java.time.LocalDate.now(), 30))
+            } catch (_: Exception) { "" }
+            val hintBlock = (mealHints + "\n" + glucoseHints).trim()
 
             val result = geminiService.analyzeMeal(stream.toByteArray(), "image/jpeg", apiKey, model, provider, hintBlock)
 

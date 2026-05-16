@@ -2,6 +2,7 @@
 
 
 import androidx.compose.runtime.Immutable
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shredcoach.app.data.local.dao.ConversationSummary
@@ -11,6 +12,7 @@ import com.shredcoach.app.data.remote.LlmProvider
 import com.shredcoach.app.data.repository.ChatRepository
 import com.shredcoach.app.data.repository.UserContextBuilder
 import com.shredcoach.app.data.repository.UserRepository
+import com.shredcoach.app.domain.chat.ChatPersona
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
@@ -28,7 +30,9 @@ data class ChatState(
     val streamingText: String = "",
     val isConfigured: Boolean = false,
     val providerName: String = "Groq",
-    val showConversationList: Boolean = false
+    val showConversationList: Boolean = false,
+    /** Persona du chat (Shreddy par défaut, Dr. Glykos pour /chat/dr_glykos). */
+    val persona: ChatPersona = ChatPersona.SHREDDY,
 )
 
 @HiltViewModel
@@ -38,9 +42,18 @@ class ChatViewModel @Inject constructor(
     private val userContextBuilder: UserContextBuilder,
     @dagger.hilt.android.qualifiers.ApplicationContext
     private val applicationContext: android.content.Context,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(ChatState())
+    /**
+     * Persona lue depuis l'argument de nav (clé `"persona"`). Permet à la
+     * MÊME ChatScreen / ViewModel d'être utilisée pour Shreddy ET Dr. Glykos
+     * sans duplication d'infrastructure.
+     */
+    private val persona: ChatPersona =
+        ChatPersona.fromTag(savedStateHandle.get<String>("persona"))
+
+    private val _state = MutableStateFlow(ChatState(persona = persona))
     val state: StateFlow<ChatState> = _state.asStateFlow()
 
     private var messagesJob: Job? = null
@@ -61,7 +74,8 @@ class ChatViewModel @Inject constructor(
 
     private fun loadConversations() {
         viewModelScope.launch {
-            chatRepository.getAllConversations().collect { convos ->
+            // Filtre par persona pour ne pas mélanger Shreddy et Dr. Glykos
+            chatRepository.getAllConversationsForPersona(persona).collect { convos ->
                 _state.update { it.copy(conversations = convos) }
             }
         }
@@ -127,9 +141,10 @@ class ChatViewModel @Inject constructor(
             // Charger l'historique AVANT d'insérer le nouveau message (sinon il serait en double)
             val recent = chatRepository.getRecentMessages(conversationId, 10).reversed()
 
-            // Sauver le message utilisateur
+            // Sauver le message utilisateur (avec persona pour isoler Shreddy vs Dr. Glykos)
             chatRepository.insertMessage(ChatMessageEntity(
-                conversationId = conversationId, role = "user", content = text
+                conversationId = conversationId, role = "user", content = text,
+                persona = persona.tag,
             ))
 
             val profile = userRepository.getUserProfileOnce()
@@ -142,7 +157,8 @@ class ChatViewModel @Inject constructor(
                 chatRepository.insertMessage(ChatMessageEntity(
                     conversationId = conversationId, role = "assistant",
                     content = "Configure ta clé API dans Réglages → Assistant Shreddy pour commencer.",
-                    isError = true
+                    isError = true,
+                    persona = persona.tag,
                 ))
                 _state.update { it.copy(isLoading = false) }
                 return@launch
@@ -199,7 +215,14 @@ class ChatViewModel @Inject constructor(
                     .shouldUseTools(text)
 
                 if (useTools) {
-                    val fullSystemPrompt = com.shredcoach.app.data.remote.LlmApiService.SYSTEM_PROMPT +
+                    // Le system prompt utilisé par les tools est persona-aware.
+                    val basePrompt = when (persona) {
+                        ChatPersona.DR_GLYKOS ->
+                            com.shredcoach.app.domain.chat.DrGlykosSystemPrompt.SYSTEM_PROMPT
+                        ChatPersona.SHREDDY ->
+                            com.shredcoach.app.data.remote.LlmApiService.SYSTEM_PROMPT
+                    }
+                    val fullSystemPrompt = basePrompt +
                         if (userContext.isNotBlank()) "\n\n$userContext" else ""
                     chatRepository.streamFromLlmWithTools(
                         userMessage = text,
@@ -208,6 +231,7 @@ class ChatViewModel @Inject constructor(
                         model = model,
                         recentMessages = recent,
                         systemPrompt = fullSystemPrompt,
+                        persona = persona,
                     ).collect { token ->
                         buffer.append(token)
                         _state.update { it.copy(streamingText = buffer.toString()) }
@@ -222,6 +246,7 @@ class ChatViewModel @Inject constructor(
                         model = model,
                         recentMessages = recent,
                         userContext = userContext,
+                        persona = persona,
                     ).collect { token ->
                         buffer.append(token)
                         _state.update { it.copy(streamingText = buffer.toString()) }
@@ -233,19 +258,22 @@ class ChatViewModel @Inject constructor(
                     chatRepository.insertMessage(ChatMessageEntity(
                         conversationId = conversationId, role = "assistant", content = fullResponse,
                         latencyMs = System.currentTimeMillis() - turnStartMs,
+                        persona = persona.tag,
                     ))
                 }
             } catch (e: Exception) {
                 val partial = _state.value.streamingText
                 if (partial.isNotBlank()) {
                     chatRepository.insertMessage(ChatMessageEntity(
-                        conversationId = conversationId, role = "assistant", content = partial
+                        conversationId = conversationId, role = "assistant", content = partial,
+                        persona = persona.tag,
                     ))
                 }
                 chatRepository.insertMessage(ChatMessageEntity(
                     conversationId = conversationId, role = "assistant",
                     content = "Erreur : ${e.message ?: "Connexion impossible"}",
-                    isError = true
+                    isError = true,
+                    persona = persona.tag,
                 ))
             }
 

@@ -132,6 +132,8 @@ class BackupRepository @Inject constructor(
                 tables.mealScans.mapNotNull { it.photoPath }.forEach { add(it) }
                 tables.userProfile?.bodyScanImagePath?.let { add(it) }
                 tables.userProfile?.bodyMeshFeaturesPath?.let { add(it) }
+                // CGM screenshots (v44+) — archive le fichier comme les autres photos
+                tables.glucoseLogs.mapNotNull { it.imagePath }.forEach { add(it) }
             }
             val scanned = archive.scanPhotos(photoPaths)
 
@@ -263,6 +265,11 @@ class BackupRepository @Inject constructor(
                     val originalPath = row.photoPath ?: return@map row
                     val newPath = originalToNew[originalPath] ?: originalPath
                     if (newPath == originalPath) row else row.copy(photoPath = newPath)
+                },
+                glucoseLogs = manifest.tables.glucoseLogs.map { row ->
+                    val originalPath = row.imagePath ?: return@map row
+                    val newPath = originalToNew[originalPath] ?: originalPath
+                    if (newPath == originalPath) row else row.copy(imagePath = newPath)
                 },
             )
 

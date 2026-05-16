@@ -2,10 +2,12 @@ package com.shredcoach.app.domain.coach
 
 import com.shredcoach.app.data.local.dao.ChatDao
 import com.shredcoach.app.data.local.dao.ExerciseDao
+import com.shredcoach.app.data.local.dao.GlucoseDao
 import com.shredcoach.app.data.local.dao.MealScanDao
 import com.shredcoach.app.data.local.dao.UserProfileDao
 import com.shredcoach.app.data.local.dao.WorkoutLogDao
 import com.shredcoach.app.data.local.entity.UserProfileEntity
+import com.shredcoach.app.domain.glucose.GlucoseAnalyzer
 import kotlinx.coroutines.flow.first
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -26,9 +28,17 @@ class CoachContextBuilder @Inject constructor(
     private val exerciseDao: ExerciseDao,
     private val chatDao: ChatDao,
     private val mealScanDao: MealScanDao,
+    private val glucoseDao: GlucoseDao,
 ) {
     suspend fun build(today: LocalDate = LocalDate.now()): CoachUserContext? {
         val profile = userProfileDao.getUserProfileOnce() ?: return null
+
+        // Glycémie CGM (optionnel — null si l'user n'a jamais uploadé).
+        val glucose7d = runCatching { glucoseDao.getRangeOnce(today.minusDays(6), today) }.getOrNull() ?: emptyList()
+        val glucose30d = runCatching { glucoseDao.getRangeOnce(today.minusDays(29), today) }.getOrNull() ?: emptyList()
+        val gAvg7d = GlucoseAnalyzer.avgMgdl(glucose7d)
+        val gTir30d = GlucoseAnalyzer.avgTir(glucose30d)
+        val gPattern = if (glucose30d.isNotEmpty()) GlucoseAnalyzer.detectPattern(glucose30d).name else null
 
         return CoachUserContext(
             firstName = profile.firstName.ifBlank { "" },
@@ -53,6 +63,10 @@ class CoachContextBuilder @Inject constructor(
             workoutsThisWeek = countWorkoutsThisWeek(today),
             targetWorkoutsPerWeek = profile.workoutDays.size,
             weeklyVolumeKg = computeWeeklyVolumeKg(today),
+
+            glucose7dAvgMgdl = gAvg7d,
+            glucose30dAvgTir = gTir30d,
+            glucosePatternName = gPattern,
         )
     }
 

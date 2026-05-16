@@ -20,7 +20,23 @@ sealed class Screen(val route: String) {
     object CustomWorkout : Screen("custom_workout")
     object FavoriteWorkouts : Screen("favorite_workouts")
     object Onboarding : Screen("onboarding")
-    object Chat : Screen("chat")
+    /**
+     * Chat avec persona query-arg. Pattern : `chat?persona={persona}`.
+     * - `Screen.Chat.route` = pattern (utilisé par `composable(...)`).
+     * - `Screen.Chat.createRoute(persona)` = URL concrète à passer à `navigate(...)`.
+     * Sans param explicite, persona = shreddy par défaut.
+     */
+    object Chat : Screen("chat?persona={persona}") {
+        fun createRoute(persona: String = "shreddy") = "chat?persona=$persona"
+    }
+    /** Helper d'entrée Dr. Glykos (passe persona=dr_glykos à la même Chat composable). */
+    object DrGlykosChat {
+        val route: String = Chat.createRoute("dr_glykos")
+    }
+    /** Entrée upload screenshot CGM journalier. */
+    object GlucoseEntry : Screen("glucose_entry")
+    /** Historique CGM (graphes, KPIs, patterns). */
+    object GlucoseHistory : Screen("glucose_history")
     object MealScanner : Screen("meal_scanner")
     object MealScanDetail : Screen("meal_scan_detail/{scanId}") {
         fun createRoute(scanId: Long) = "meal_scan_detail/$scanId"

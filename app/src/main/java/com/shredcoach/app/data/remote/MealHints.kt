@@ -2,6 +2,8 @@ package com.shredcoach.app.data.remote
 
 import androidx.annotation.StringRes
 import com.shredcoach.app.R
+import com.shredcoach.app.domain.glucose.GlucosePattern
+import com.shredcoach.app.domain.glucose.GlucoseWindowSummary
 
 /** Types d'assiettes standard (diamètre en cm) — indice optionnel pour l'estimation du poids. */
 enum class PlateType(
@@ -119,5 +121,42 @@ ${parts.joinToString("\n")}
 1. Les quantités EXPLICITES de la description (g, unités, "2 œufs") priment toujours sur ces indices.
 2. Quand la description est vague ("1 portion", "1 assiette"), utilise ces indices pour dimensionner.
 3. Recalcule les macros en cohérence (weight_g/100 × valeur pour 100g).
+""".trimIndent()
+}
+
+/**
+ * Bloc de contexte glycémique injecté dans le prompt MealScanner pour
+ * calibrer les recommandations nutrition selon le pattern CGM du user.
+ *
+ * Retourne une chaîne vide si insuffisamment de data (pas de bruit dans le
+ * prompt). Sinon ~3-5 lignes minimalistes — on n'envahit pas le prompt
+ * d'analyse de repas avec de l'endocrino lourd.
+ *
+ * **Comportement attendu** : le LLM ajustera le verdict / les recommandations
+ * en cohérence ("ce repas pourrait pic ta glycémie — alterne avec basmati").
+ */
+fun buildGlucoseHintBlock(summary: GlucoseWindowSummary): String {
+    if (summary.daysCovered < 3 || summary.pattern == GlucosePattern.INSUFFICIENT_DATA) return ""
+    val patternHint = when (summary.pattern) {
+        GlucosePattern.HYPO_RISK -> "⚠ Risque hypoglycémique récent — privilégier les apports glucidiques réguliers et complexes."
+        GlucosePattern.HIGH_VARIABILITY -> "⚠ Variabilité glycémique élevée — favoriser charge glycémique modérée et fibres."
+        GlucosePattern.POSTPRANDIAL_SPIKES -> "⚠ Pics postprandiaux répétés — recommander aliments à index glycémique bas et ordre des bouchées (légumes/protéines d'abord)."
+        GlucosePattern.DAWN_PHENOMENON -> "Élévation matinale chronique — réduire les glucides au petit-déjeuner."
+        GlucosePattern.RISING_TREND -> "Tendance glycémique haussière sur 30j — vigilance carbs."
+        GlucosePattern.STABLE_OPTIMAL -> "Glycémie stable optimale — pas d'ajustement spécifique."
+        GlucosePattern.FALLING_TREND -> "Tendance glycémique baissière favorable."
+        else -> "Régulation glycémique correcte."
+    }
+    val parts = mutableListOf<String>()
+    summary.avgMgdl?.let { parts += "moy mg/dL : ${"%.0f".format(it)}" }
+    summary.avgTirPct?.let { parts += "TIR : ${"%.0f".format(it)}%" }
+    summary.avgCv?.let { parts += "CV : ${"%.1f".format(it)}%" }
+    return """
+
+═══ CONTEXTE GLYCÉMIQUE 30j (Dr. Glykos) ═══
+${parts.joinToString(" · ")}
+Pattern : ${summary.pattern.name}. $patternHint
+→ Intègre cette dimension dans tes recommandations nutrition (charge glycémique,
+  timing carbs, ordre des bouchées) sans diagnostic médical.
 """.trimIndent()
 }

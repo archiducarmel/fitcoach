@@ -27,6 +27,7 @@ class UserContextBuilder @Inject constructor(
     private val workoutRepository: WorkoutRepository,
     private val nutritionRepository: NutritionRepository,
     private val contextEngine: com.shredcoach.app.domain.notification.NotificationContextEngine,
+    private val glucoseRepository: GlucoseRepository,
 ) {
     private val fmt = DateTimeFormatter.ofPattern("dd/MM", Locale.FRANCE)
     private fun fmtD(d: Double) = String.format(Locale.US, "%.0f", d)
@@ -92,6 +93,11 @@ class UserContextBuilder @Inject constructor(
         // c'est ce qui permet au bot de répondre avec une vraie awareness
         // psychologique ("tu es en momentum, pas étonnant que tu te sentes bien").
         sb.appendLine(buildBehaviorSnapshotBlock())
+        // Glycémie CGM : injection du bloc CGM en fin de contexte. Bloc vide
+        // ("aucune donnée") si l'user n'a pas encore uploadé de screenshot, pour
+        // ne pas inonder le contexte. Le LLM principal redirige sur Dr. Glykos
+        // pour les questions endocrino spécialisées.
+        sb.appendLine(buildGlucoseBlock(now))
 
         return sb.toString()
     }
@@ -441,6 +447,69 @@ Mensurations: taille ${p.waistCm}cm, poitrine ${p.chestCm}cm, bras ${p.armCm}cm,
             }
         } catch (_: Exception) { sb.appendLine("Non disponible.") }
         return sb.toString().trimEnd()
+    }
+
+    // ═══════════════════════════════════════
+    // 13. GLYCÉMIE (CGM) — Dr. Glykos pipeline
+    // ═══════════════════════════════════════
+    /**
+     * Injecte les métriques glycémiques disponibles dans le contexte Shreddy.
+     * Reste volontairement compact : ~6-8 lignes max. Le détail/raisonnement
+     * approfondi est réservé à Dr. Glykos qui a son propre system prompt + tools.
+     *
+     * **Pourquoi dans Shreddy aussi** : permet au coach généraliste de croiser
+     * la nutrition avec la glycémie ("ton pic à 195 hier après les pâtes — on
+     * passe sur du basmati en remplacement ?"), sans perdre l'expertise dédiée.
+     */
+    private suspend fun buildGlucoseBlock(now: java.time.LocalDate): String {
+        val today = try { glucoseRepository.getDaySummary(now) } catch (_: Exception) { null }
+        val w7 = try { glucoseRepository.getWindowSummary(now, 7) } catch (_: Exception) { null }
+        val w30 = try { glucoseRepository.getWindowSummary(now, 30) } catch (_: Exception) { null }
+        if (today == null && (w7?.daysCovered ?: 0) == 0) {
+            return "[GLUCOSE — CGM] Aucune donnée CGM encore enregistrée. Le user peut uploader son screenshot quotidien dans l'écran Glucose."
+        }
+        val sb = StringBuilder("[GLUCOSE — CGM]\n")
+        if (today != null) {
+            val parts = mutableListOf<String>()
+            today.avgMgdl?.let { parts += "moy ${fmtD(it)} mg/dL" }
+            today.timeInRangePct?.let { parts += "TIR $it%" }
+            today.peakMgdl?.let { peak ->
+                val timeStr = today.peakTime?.let { " (${it})" } ?: ""
+                parts += "pic ${fmtD(peak)}$timeStr"
+            }
+            today.hypoCount?.takeIf { it > 0 }?.let { parts += "$it hypo" }
+            if (parts.isNotEmpty()) sb.appendLine("Aujourd'hui (${today.date.format(fmt)}) : ${parts.joinToString(" · ")}")
+        }
+        w7?.takeIf { (it.daysCovered) > 0 }?.let { w ->
+            val parts = mutableListOf<String>()
+            w.avgMgdl?.let { parts += "avg ${fmtD(it)}" }
+            w.avgTirPct?.let { parts += "TIR ${fmtD(it)}%" }
+            w.trendMgdlPerWeek?.let { parts += "trend ${if (it >= 0) "+" else ""}${fmtD1(it)}/sem" }
+            if (parts.isNotEmpty()) sb.appendLine("7j (${w.daysCovered} jours) : ${parts.joinToString(" · ")}")
+        }
+        w30?.takeIf { (it.daysCovered) > 0 }?.let { w ->
+            val parts = mutableListOf<String>()
+            w.avgMgdl?.let { parts += "avg ${fmtD(it)}" }
+            w.avgTirPct?.let { parts += "TIR ${fmtD(it)}%" }
+            w.avgCv?.let { parts += "CV ${fmtD1(it)}%" }
+            if (w.totalHypo > 0) parts += "${w.totalHypo} hypos cumulées"
+            if (parts.isNotEmpty()) sb.appendLine("30j (${w.daysCovered} jours) : ${parts.joinToString(" · ")}")
+            sb.appendLine("Pattern dominant: ${describeGlucosePattern(w.pattern)}")
+        }
+        sb.appendLine("→ Pour analyse endocrino approfondie, l'user peut consulter Dr. Glykos (chat dédié).")
+        return sb.toString().trimEnd()
+    }
+
+    private fun describeGlucosePattern(p: com.shredcoach.app.domain.glucose.GlucosePattern): String = when (p) {
+        com.shredcoach.app.domain.glucose.GlucosePattern.INSUFFICIENT_DATA -> "Données insuffisantes (<7j)"
+        com.shredcoach.app.domain.glucose.GlucosePattern.HYPO_RISK -> "⚠ Risque hypoglycémique (3+ épisodes/30j)"
+        com.shredcoach.app.domain.glucose.GlucosePattern.HIGH_VARIABILITY -> "⚠ Variabilité élevée (CV ≥36%)"
+        com.shredcoach.app.domain.glucose.GlucosePattern.POSTPRANDIAL_SPIKES -> "⚠ Pics postprandiaux répétés"
+        com.shredcoach.app.domain.glucose.GlucosePattern.DAWN_PHENOMENON -> "Phénomène de l'aube (élévation matinale)"
+        com.shredcoach.app.domain.glucose.GlucosePattern.RISING_TREND -> "Tendance haussière sur 30j"
+        com.shredcoach.app.domain.glucose.GlucosePattern.FALLING_TREND -> "Tendance baissière favorable"
+        com.shredcoach.app.domain.glucose.GlucosePattern.STABLE_OPTIMAL -> "Stable optimal (TIR ≥80%, CV <30%)"
+        com.shredcoach.app.domain.glucose.GlucosePattern.NORMAL -> "Régulation correcte sans pattern remarquable"
     }
 
     // ═══════════════════════════════════════

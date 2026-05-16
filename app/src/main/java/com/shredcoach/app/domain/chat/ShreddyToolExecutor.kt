@@ -7,6 +7,7 @@ import com.shredcoach.app.data.local.entity.FoodEntity
 import com.shredcoach.app.data.local.entity.MealLogEntity
 import com.shredcoach.app.data.local.entity.MealType
 import com.shredcoach.app.data.local.entity.WeightLogEntity
+import com.shredcoach.app.data.repository.GlucoseRepository
 import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.data.repository.WorkoutRepository
 import com.shredcoach.app.domain.notification.NotificationContextEngine
@@ -38,6 +39,7 @@ class ShreddyToolExecutor @Inject constructor(
     private val userRepository: UserRepository,
     private val workoutRepository: WorkoutRepository,
     private val contextEngine: NotificationContextEngine,
+    private val glucoseRepository: GlucoseRepository,
 ) {
 
     /**
@@ -53,6 +55,9 @@ class ShreddyToolExecutor @Inject constructor(
                 ShreddyTools.SET_WEIGHT -> setWeight(call.id, args)
                 ShreddyTools.GET_TODAY_STATS -> getTodayStats(call.id)
                 ShreddyTools.GET_RECENT_WORKOUTS -> getRecentWorkouts(call.id)
+                ShreddyTools.GET_GLUCOSE_TODAY -> getGlucoseToday(call.id)
+                ShreddyTools.GET_GLUCOSE_RANGE_SUMMARY -> getGlucoseRangeSummary(call.id, args)
+                ShreddyTools.GET_GLUCOSE_CORRELATIONS -> getGlucoseCorrelations(call.id, args)
                 else -> ToolResult(call.id, call.name, "Erreur : outil inconnu '${call.name}'")
             }
         } catch (t: Throwable) {
@@ -208,5 +213,119 @@ class ShreddyToolExecutor @Inject constructor(
             addProperty("total_volume_kg", volume.toInt())
         }
         return ToolResult(callId, ShreddyTools.GET_RECENT_WORKOUTS, json.toString())
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // GLUCOSE (Dr. Glykos)
+    // ═══════════════════════════════════════════════════════════
+
+    private suspend fun getGlucoseToday(callId: String): ToolResult {
+        val today = LocalDate.now()
+        val summary = glucoseRepository.getDaySummary(today)
+            ?: return ToolResult(callId, ShreddyTools.GET_GLUCOSE_TODAY,
+                """{"glucose_logged":false,"message":"Aucun log CGM pour aujourd'hui."}""")
+        val json = JsonObject().apply {
+            addProperty("date", today.toString())
+            addProperty("glucose_logged", true)
+            summary.avgMgdl?.let { addProperty("avg_mgdl", it) }
+            summary.peakMgdl?.let { addProperty("peak_mgdl", it) }
+            summary.peakTime?.let { addProperty("peak_time", it.toString()) }
+            summary.minMgdl?.let { addProperty("min_mgdl", it) }
+            summary.minTime?.let { addProperty("min_time", it.toString()) }
+            summary.timeInRangePct?.let { addProperty("time_in_range_pct", it) }
+            summary.hypoCount?.let { addProperty("hypo_count", it) }
+            summary.cv?.let { addProperty("cv", it) }
+            summary.parseConfidence?.let { addProperty("parse_confidence", it.toDouble()) }
+            summary.manualOverride.let { addProperty("manual_override", it) }
+        }
+        return ToolResult(callId, ShreddyTools.GET_GLUCOSE_TODAY, json.toString())
+    }
+
+    private suspend fun getGlucoseRangeSummary(callId: String, args: JsonObject): ToolResult {
+        val days = args.get("days")?.takeIf { !it.isJsonNull }?.asInt?.coerceIn(2, 90) ?: 7
+        val today = LocalDate.now()
+        val s = glucoseRepository.getWindowSummary(today, days)
+        if (s.daysCovered == 0) {
+            return ToolResult(callId, ShreddyTools.GET_GLUCOSE_RANGE_SUMMARY,
+                """{"days_requested":$days,"days_covered":0,"message":"Pas de data CGM sur cette fenêtre."}""")
+        }
+        val json = JsonObject().apply {
+            addProperty("days_requested", days)
+            addProperty("days_covered", s.daysCovered)
+            s.avgMgdl?.let { addProperty("avg_mgdl", it) }
+            s.avgTirPct?.let { addProperty("avg_tir_pct", it) }
+            s.avgCv?.let { addProperty("avg_cv", it) }
+            s.trendMgdlPerWeek?.let { addProperty("trend_mgdl_per_week", it) }
+            addProperty("total_hypo", s.totalHypo)
+            addProperty("pattern", s.pattern.name)
+        }
+        return ToolResult(callId, ShreddyTools.GET_GLUCOSE_RANGE_SUMMARY, json.toString())
+    }
+
+    /**
+     * Croise pics glycémiques d'un jour avec meals et workouts loggés à
+     * proximité (±120 min). Détaille la mécanique :
+     *  - Lit la courbe 24h JSON si présente, sinon utilise peak_time du log.
+     *  - Cherche meals dans une fenêtre [pic-90min, pic+30min] (pic = ~30-60min post-meal).
+     *  - Cherche workouts qui chevauchent le pic (impact metabolic).
+     *  - Retourne fact-pack JSON exploitable par le LLM Dr. Glykos.
+     */
+    private suspend fun getGlucoseCorrelations(callId: String, args: JsonObject): ToolResult {
+        val dateStr = args.get("date")?.takeIf { !it.isJsonNull }?.asString?.takeIf { it.isNotBlank() }
+        val date = try { dateStr?.let { LocalDate.parse(it) } ?: LocalDate.now() } catch (_: Exception) { LocalDate.now() }
+        val log = glucoseRepository.getForDate(date)
+            ?: return ToolResult(callId, ShreddyTools.GET_GLUCOSE_CORRELATIONS,
+                """{"date":"$date","correlations":[],"message":"Pas de log CGM pour cette date."}""")
+        val meals = try { nutritionDao.getMealsForDateOnce(date) } catch (_: Exception) { emptyList() }
+        val workouts = try { workoutRepository.getCompletedWorkoutsOnDate(date) } catch (_: Exception) { emptyList() }
+
+        val correlations = JsonObject().apply {
+            addProperty("date", date.toString())
+            val arr = com.google.gson.JsonArray()
+            // Pic principal
+            log.peakMgdl?.let { peak ->
+                val peakObj = JsonObject().apply {
+                    addProperty("type", "peak")
+                    addProperty("mgdl", peak)
+                    log.peakTime?.let { addProperty("time", it.toString()) }
+                    // Repas associés (dans la fenêtre -90min → +30min vs pic)
+                    val nearMeals = log.peakTime?.let { pt ->
+                        meals.filter { m ->
+                            val mt = m.time ?: return@filter false
+                            val diff = java.time.Duration.between(mt, pt).toMinutes()
+                            diff in 30..90
+                        }
+                    } ?: emptyList()
+                    if (nearMeals.isNotEmpty()) {
+                        val mealsArr = com.google.gson.JsonArray()
+                        nearMeals.take(3).forEach { m ->
+                            mealsArr.add(JsonObject().apply {
+                                addProperty("food_id", m.foodId)
+                                addProperty("time", m.time?.toString() ?: "")
+                                addProperty("calories", m.calories)
+                                addProperty("carbs_g", m.carbs)
+                            })
+                        }
+                        add("associated_meals", mealsArr)
+                    }
+                }
+                arr.add(peakObj)
+            }
+            // Workouts intersectant le jour
+            if (workouts.isNotEmpty()) {
+                val woArr = com.google.gson.JsonArray()
+                workouts.take(3).forEach { w ->
+                    woArr.add(JsonObject().apply {
+                        addProperty("date", w.date.toString())
+                        addProperty("duration_min", w.actualDurationSeconds / 60)
+                        addProperty("volume_kg", w.totalVolume)
+                        addProperty("completed", w.completed)
+                    })
+                }
+                add("workouts_same_day", woArr)
+            }
+            add("correlations", arr)
+        }
+        return ToolResult(callId, ShreddyTools.GET_GLUCOSE_CORRELATIONS, correlations.toString())
     }
 }

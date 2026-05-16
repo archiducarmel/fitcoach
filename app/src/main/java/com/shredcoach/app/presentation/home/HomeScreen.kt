@@ -170,7 +170,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             )
         },
         floatingActionButton = {
-            ShreddyFab(onClick = { navController.navigate(Screen.Chat.route) })
+            ShreddyFab(onClick = { navController.navigate(Screen.Chat.createRoute()) })
         }
     ) { pad ->
         Column(
@@ -263,10 +263,11 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             // dans la section "Plus" collapsible.
             StaggeredAppear(index = 1) {
                 com.shredcoach.app.presentation.home.components.AiToolsSection(
-                    onShreddyClick = { navController.navigate(Screen.Chat.route) },
+                    onShreddyClick = { navController.navigate(Screen.Chat.createRoute()) },
                     onMealScanClick = { navController.navigate(Screen.MealScanner.route) },
                     onBodyScanClick = { navController.navigate(Screen.BodyScanner.route) },
                     onGymScanClick = { navController.navigate(Screen.GymScan.route) },
+                    onDrGlykosClick = { navController.navigate(Screen.DrGlykosChat.route) },
                 )
             }
 
@@ -450,6 +451,18 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                         onAddManual = { navController.switchTo(Screen.Nutrition.route) },
                     )
                 }
+            }
+
+            // ═══════════════════════════════════════
+            // GLUCOSE DU JOUR (H2b) — Dr. Glykos CGM
+            // Card juste sous nutrition pour lier sémantiquement
+            // glycémie ↔ alimentation. Empty state : CTA upload screenshot.
+            // ═══════════════════════════════════════
+            StaggeredAppear(index = 7) {
+                com.shredcoach.app.presentation.glucose.TodayGlucoseCard(
+                    onUploadClick = { navController.navigate(Screen.GlucoseEntry.route) },
+                    onAnalyzeClick = { navController.navigate(Screen.DrGlykosChat.route) },
+                )
             }
 
             // ═══════════════════════════════════════

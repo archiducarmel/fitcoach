@@ -125,14 +125,18 @@ class DataPurger @Inject constructor(
         val paths = mutableListOf<String>()
         val userProfileDao = db.userProfileDao()
         val mealScanDao = db.mealScanDao()
+        val glucoseDao = db.glucoseDao()
         userProfileDao.getAllPhotos().first().forEach { paths += it.filePath }
         mealScanDao.getAllScans().first().mapNotNull { it.photoPath }.forEach { paths += it }
         userProfileDao.getUserProfileOnce()?.profilePhotoPath?.let { paths += it }
+        // CGM screenshots (v44+) — contiennent données de santé sensibles,
+        // doivent être purgés au même titre que les autres photos.
+        glucoseDao.getAllOnce().mapNotNull { it.imagePath }.forEach { paths += it }
         return paths
     }
 
     private companion object {
         const val TAG = "DataPurger"
-        val PHOTO_DIRS = listOf("body_scans", "meal_scans", "photos", "restored_photos")
+        val PHOTO_DIRS = listOf("body_scans", "meal_scans", "photos", "restored_photos", "glucose")
     }
 }

@@ -7,7 +7,10 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 
-@Entity(tableName = "chat_messages", indices = [Index("conversationId")])
+@Entity(
+    tableName = "chat_messages",
+    indices = [Index("conversationId"), Index("persona")],
+)
 @Immutable
 data class ChatMessageEntity(
     @PrimaryKey(autoGenerate = true)
@@ -17,6 +20,12 @@ data class ChatMessageEntity(
     val content: String,
     val timestamp: LocalDateTime = LocalDateTime.now(),
     val isError: Boolean = false,
+    /**
+     * Tag persona ([com.shredcoach.app.domain.chat.ChatPersona.tag]). Permet
+     * de séparer les conversations Shreddy vs Dr. Glykos dans le même DAO.
+     * Migration v43→v44, default `"shreddy"` (back-compat).
+     */
+    val persona: String = "shreddy",
     /**
      * Note user pour la réponse assistant : null = pas noté, +1 = thumb up,
      * -1 = thumb down. Toujours null pour les messages role="user" (on ne

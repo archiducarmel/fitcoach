@@ -72,6 +72,13 @@ object NotificationAlarmScheduler {
             // "coach proactif". Pourra avoir son propre toggle plus tard.
             schedule(context, am, AlarmType.MORNING_BRIEF, LocalTime.of(7, 0))
         }
+        // Glucose recap J+1 à 12h17 — analyse de la glycémie de la veille par
+        // Dr. Glykos. Le builder skip s'il n'y a pas de data J-1, donc on
+        // peut programmer sans coût utile : l'alarme se déclenche, le builder
+        // décide. Toggle dédié pour permettre opt-out propre.
+        if (profile.notifGlucoseRecap) {
+            schedule(context, am, AlarmType.GLUCOSE_RECAP, LocalTime.of(12, 17))
+        }
     }
 
     /** Programme une alarme unique pour le prochain `targetTime` (aujourd'hui ou demain). */
@@ -165,7 +172,8 @@ object NotificationAlarmScheduler {
         SHAKER_EVENING("shaker_evening", 1006, ShredCoachNotificationWorker.TYPE_SHAKER_EVENING),
         BEDTIME("bedtime", 1007, ShredCoachNotificationWorker.TYPE_BEDTIME),
         MOTIVATION("motivation", 1008, ShredCoachNotificationWorker.TYPE_MOTIVATION),
-        MORNING_BRIEF("morning_brief", 1009, ShredCoachNotificationWorker.TYPE_MORNING_BRIEF);
+        MORNING_BRIEF("morning_brief", 1009, ShredCoachNotificationWorker.TYPE_MORNING_BRIEF),
+        GLUCOSE_RECAP("glucose_recap", 1010, ShredCoachNotificationWorker.TYPE_GLUCOSE_RECAP);
 
         fun timeFromProfile(profile: UserProfileEntity): LocalTime? = when (this) {
             BREAKFAST -> profile.breakfastTime
@@ -177,6 +185,7 @@ object NotificationAlarmScheduler {
             BEDTIME -> profile.bedTime?.minusMinutes(30)
             MOTIVATION -> LocalTime.of(10, 0)
             MORNING_BRIEF -> LocalTime.of(7, 0)
+            GLUCOSE_RECAP -> LocalTime.of(12, 17)
         }
 
         companion object {

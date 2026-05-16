@@ -120,7 +120,9 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
         ) {
             listOf(
                 Triple(0, stringResource(R.string.dashboard_tab_workouts), Icons.Default.FitnessCenter),
-                Triple(1, stringResource(R.string.dashboard_tab_nutrition), Icons.Default.Restaurant)
+                Triple(1, stringResource(R.string.dashboard_tab_nutrition), Icons.Default.Restaurant),
+                Triple(2, stringResource(R.string.dashboard_tab_glucose),
+                    androidx.compose.material.icons.Icons.Default.MedicalServices)
             ).forEach { (idx, label, icon) ->
                 val sel = selectedTab == idx
                 Surface(
@@ -140,7 +142,21 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
             }
         }
 
-        if (selectedTab == 1) {
+        if (selectedTab == 2) {
+            // ═══ GLUCOSE STATS — Dr. Glykos pipeline ═══
+            com.shredcoach.app.presentation.stats.GlucoseDashboard(
+                onOpenDrGlykos = {
+                    navController.navigate(
+                        com.shredcoach.app.presentation.navigation.Screen.DrGlykosChat.route
+                    )
+                },
+                onUploadCgm = {
+                    navController.navigate(
+                        com.shredcoach.app.presentation.navigation.Screen.GlucoseEntry.route
+                    )
+                },
+            )
+        } else if (selectedTab == 1) {
             // ═══ NUTRITION STATS ═══
             NutritionDashboard(nutritionStats, viewModel)
         } else {

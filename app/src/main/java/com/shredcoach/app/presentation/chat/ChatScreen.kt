@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -58,21 +59,36 @@ fun ChatScreen(
         if (itemCount > 0) listState.animateScrollToItem((itemCount - 1).coerceAtLeast(0))
     }
 
+    // Persona-aware cosmétique : Dr. Glykos = bleu médical / icône stéthoscope.
+    val isDrGlykos = state.persona == com.shredcoach.app.domain.chat.ChatPersona.DR_GLYKOS
+    val accentColor = if (isDrGlykos) Color(0xFF0F4C75) else OrangeVibrant
+    val personaTitleRes = if (isDrGlykos) R.string.chat_dr_glykos_name else R.string.chat_assistant_name
+    val personaSubtitleRes = if (isDrGlykos) R.string.chat_dr_glykos_subtitle else R.string.chat_assistant_subtitle
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Surface(shape = CircleShape, color = OrangeVibrant.copy(alpha = 0.15f), modifier = Modifier.size(36.dp)) {
+                        Surface(shape = CircleShape, color = accentColor.copy(alpha = 0.15f), modifier = Modifier.size(36.dp)) {
                             Box(contentAlignment = Alignment.Center) {
-                                com.shredcoach.app.presentation.common.ShredCoachLogo(size = 22.dp)
+                                if (isDrGlykos) {
+                                    Icon(
+                                        imageVector = Icons.Default.MedicalServices,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp),
+                                        tint = accentColor,
+                                    )
+                                } else {
+                                    com.shredcoach.app.presentation.common.ShredCoachLogo(size = 22.dp)
+                                }
                             }
                         }
                         Column {
-                            Text(stringResource(R.string.chat_assistant_name), fontWeight = FontWeight.Bold)
+                            Text(stringResource(personaTitleRes), fontWeight = FontWeight.Bold)
                             Text(
                                 if (state.isLoading) stringResource(R.string.chat_assistant_writing)
-                                    else stringResource(R.string.chat_assistant_subtitle, state.providerName),
+                                    else stringResource(personaSubtitleRes, state.providerName),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = if (state.isLoading) NeonGreen else MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -88,7 +104,7 @@ fun ChatScreen(
                     // Bouton nouvelle conversation
                     IconButton(onClick = { viewModel.startNewConversation() }) {
                         Icon(Icons.Default.NoteAdd, stringResource(R.string.chat_new_conversation_cd),
-                            tint = OrangeVibrant)
+                            tint = accentColor)
                     }
                     // Bouton historique des conversations
                     IconButton(onClick = { viewModel.toggleConversationList() }) {

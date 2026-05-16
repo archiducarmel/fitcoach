@@ -27,9 +27,10 @@ import com.shredcoach.app.data.local.entity.BodyScanLogEntity
         ChatMessageEntity::class,
         AppNotificationEntity::class,
         ScheduledWorkoutEntity::class,
-        BodyScanLogEntity::class
+        BodyScanLogEntity::class,
+        GlucoseLogEntity::class
     ],
-    version = 42,
+    version = 44,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -45,6 +46,7 @@ abstract class ShredCoachDatabase : RoomDatabase() {
     abstract fun appNotificationDao(): com.shredcoach.app.data.local.dao.AppNotificationDao
     abstract fun scheduledWorkoutDao(): com.shredcoach.app.data.local.dao.ScheduledWorkoutDao
     abstract fun bodyScanLogDao(): com.shredcoach.app.data.local.dao.BodyScanLogDao
+    abstract fun glucoseDao(): com.shredcoach.app.data.local.dao.GlucoseDao
 
     companion object {
         const val DATABASE_NAME = "shredcoach_db"
@@ -64,6 +66,7 @@ abstract class ShredCoachDatabase : RoomDatabase() {
             "scheduled_workouts",     // FK → workouts, workout_logs
             "app_notifications",
             "chat_messages",
+            "glucose_logs",            // pas de FK, 1 row par date
             "body_scan_logs",          // pas de FK, history-only
             "progress_photos",
             "weight_logs",

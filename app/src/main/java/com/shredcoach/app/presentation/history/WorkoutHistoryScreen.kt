@@ -216,11 +216,24 @@ fun WorkoutHistoryScreen(
                     // ═══ Liste groupée ═══
                     grouped.forEach { (bucket, entries) ->
                         item {
-                            Text(
-                                bucket, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 4.dp)
-                            )
+                            // Header bucket + chip glycémique (la plus récente date du bucket).
+                            // Si l'user n'a pas de log CGM pour cette date, le chip ne s'affiche pas.
+                            val bucketDate = entries
+                                .maxByOrNull { it.log.date }
+                                ?.log?.date?.toLocalDate()
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 4.dp),
+                            ) {
+                                Text(
+                                    bucket, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                )
+                                if (bucketDate != null) {
+                                    com.shredcoach.app.presentation.glucose.BucketGlucoseChip(date = bucketDate)
+                                }
+                            }
                         }
                         items(entries, key = { it.log.id }) { entry ->
                             HistoryCard(

@@ -51,6 +51,7 @@ class RoomSnapshotImporter @Inject constructor(
     private val appNotificationDao: AppNotificationDao,
     private val scheduledWorkoutDao: ScheduledWorkoutDao,
     private val bodyScanLogDao: com.shredcoach.app.data.local.dao.BodyScanLogDao,
+    private val glucoseDao: com.shredcoach.app.data.local.dao.GlucoseDao,
 ) {
     suspend fun import(snapshot: TableSnapshot) {
         db.withTransaction {
@@ -85,6 +86,8 @@ class RoomSnapshotImporter @Inject constructor(
             snapshot.appNotifications.forEach { appNotificationDao.insert(it) }
             snapshot.scheduledWorkouts.forEach { scheduledWorkoutDao.insert(it) }
             snapshot.bodyScanLogs.forEach { bodyScanLogDao.insert(it) }
+            // CGM (v44+) — pas de FK, restauration directe.
+            snapshot.glucoseLogs.forEach { glucoseDao.upsert(it) }
 
             // 3) Le commit (implicite à la sortie de withTransaction) déclenche
             //    la vérification globale des FK. Si une référence est cassée,

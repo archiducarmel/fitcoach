@@ -75,6 +75,12 @@ data class UserProfileEntity(
     val notifShaker: Boolean = true,
     val notifBedtime: Boolean = true,
     val notifMotivation: Boolean = true,
+    /**
+     * Récap glycémique J+1 à 12h17 (analyse de la glycémie de la veille par
+     * Dr. Glykos). Default `true` — opt-out plutôt qu'opt-in car la feature
+     * CGM est cœur du suivi premium. Migration v42→v43.
+     */
+    val notifGlucoseRecap: Boolean = true,
     // ── Débriefs IA ──
     val notifMealDebrief: Boolean = true,       // Activation débrief après repas
     val notifWorkoutDebrief: Boolean = true,    // Activation débrief après séance

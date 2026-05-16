@@ -55,6 +55,10 @@ class WorkoutRepository @Inject constructor(
     fun getWorkoutLogsBetween(startDate: LocalDate, endDate: LocalDate): Flow<List<WorkoutLogEntity>> =
         workoutLogDao.getWorkoutLogsBetween(startDate, endDate)
 
+    /** Snapshot one-shot des séances complétées d'une date donnée. */
+    suspend fun getCompletedWorkoutsOnDate(date: LocalDate): List<WorkoutLogEntity> =
+        workoutLogDao.getCompletedLogsOnDateOnce(date)
+
     fun getRecentWorkoutLogs(limit: Int): Flow<List<WorkoutLogEntity>> =
         workoutLogDao.getRecentWorkoutLogs(limit)
 

@@ -93,6 +93,12 @@ data class TableSnapshot(
      * emptyList par defaultValue.
      */
     val bodyScanLogs: List<BodyScanLogEntity> = emptyList(),
+    /**
+     * Historique CGM (v44+). Liste vide si l'utilisateur n'a jamais uploadé.
+     * Backups pré-v44 ne contiennent pas ce champ → Gson l'initialise à
+     * emptyList. La restoration ne créera pas de logs glucose si absents.
+     */
+    val glucoseLogs: List<com.shredcoach.app.data.local.entity.GlucoseLogEntity> = emptyList(),
 )
 
 /**

@@ -244,6 +244,69 @@ object Migrations {
         }
     }
 
+    /**
+     * v42 → v43 : ajoute le suivi glycémique CGM.
+     *
+     * - Nouvelle table `glucose_logs` : 1 entrée par date (UNIQUE index),
+     *   métriques optionnelles parsées par OCR Gemini Vision (avg, peak, min,
+     *   TIR%, hypo count, CV, courbe 24h JSON).
+     * - `user_profile.notifGlucoseRecap` : toggle pour la notif J+1 12h17
+     *   (analyse de la glycémie de la veille). Default 1 (activé) — opt-out
+     *   plutôt qu'opt-in car la feature est cœur du suivi premium.
+     *
+     * Idempotent via `IF NOT EXISTS`. ALTER TABLE ADD COLUMN simple sur
+     * user_profile (pas de table-rebuild).
+     */
+    /**
+     * v43 → v44 : ajoute `persona` à `chat_messages` pour cohabiter Shreddy +
+     * Dr. Glykos dans le même DAO sans mélanger les conversations.
+     *
+     * **Valeur stockée** : tag enum [com.shredcoach.app.domain.chat.ChatPersona]
+     * (ex: `"shreddy"`, `"dr_glykos"`). Default `'shreddy'` pour préserver les
+     * conversations existantes — elles restent toutes attribuées à Shreddy.
+     *
+     * Index sur (persona, conversationId) pour les listes de conversations
+     * filtrées par persona (O(log N) avec index).
+     */
+    fun migration43to44(): Migration = object : Migration(43, 44) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `chat_messages` ADD COLUMN `persona` TEXT NOT NULL DEFAULT 'shreddy'")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_chat_messages_persona` ON `chat_messages` (`persona`)")
+        }
+    }
+
+    fun migration42to43(): Migration = object : Migration(42, 43) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS `glucose_logs` (
+                    `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    `date` TEXT NOT NULL,
+                    `imagePath` TEXT,
+                    `avgMgdl` REAL,
+                    `peakMgdl` REAL,
+                    `peakTime` TEXT,
+                    `minMgdl` REAL,
+                    `minTime` TEXT,
+                    `timeInRangePct` INTEGER,
+                    `timeAboveRangePct` INTEGER,
+                    `timeBelowRangePct` INTEGER,
+                    `hypoCount` INTEGER,
+                    `cv` REAL,
+                    `glucoseMgdlCurveJson` TEXT,
+                    `parseConfidence` REAL,
+                    `parsedAt` TEXT,
+                    `manualOverride` INTEGER NOT NULL DEFAULT 0,
+                    `notes` TEXT
+                )
+            """.trimIndent())
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS `index_glucose_logs_date` " +
+                "ON `glucose_logs` (`date`)"
+            )
+            db.execSQL("ALTER TABLE `user_profile` ADD COLUMN `notifGlucoseRecap` INTEGER NOT NULL DEFAULT 1")
+        }
+    }
+
     fun migration40to41(): Migration = object : Migration(40, 41) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("""

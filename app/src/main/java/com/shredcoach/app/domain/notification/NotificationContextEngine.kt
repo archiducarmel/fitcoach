@@ -1,9 +1,11 @@
 package com.shredcoach.app.domain.notification
 
+import com.shredcoach.app.data.local.dao.GlucoseDao
 import com.shredcoach.app.data.local.dao.NutritionDao
 import com.shredcoach.app.data.local.dao.ScheduledWorkoutDao
 import com.shredcoach.app.data.local.dao.UserProfileDao
 import com.shredcoach.app.data.local.dao.WorkoutLogDao
+import com.shredcoach.app.domain.glucose.GlucoseAnalyzer
 import com.shredcoach.app.domain.nutrition.DailyCalorieTargetCalculator
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -33,6 +35,7 @@ class NotificationContextEngine @Inject constructor(
     private val nutritionDao: NutritionDao,
     private val workoutLogDao: WorkoutLogDao,
     private val scheduledWorkoutDao: ScheduledWorkoutDao,
+    private val glucoseDao: GlucoseDao,
 ) {
 
     /**
@@ -64,6 +67,11 @@ class NotificationContextEngine @Inject constructor(
                     .firstOrNull { it.status == "PLANNED" }
             }
             val lastCompletedLogAsync = async { workoutLogDao.getLastCompletedLogOnce() }
+            // ─── CGM async ───
+            val glucoseTodayAsync = async { glucoseDao.getForDateOnce(today) }
+            val glucoseYesterdayAsync = async { glucoseDao.getForDateOnce(yesterday) }
+            val glucose7dAsync = async { glucoseDao.getRangeOnce(sevenDaysAgo, today) }
+            val glucose30dAsync = async { glucoseDao.getRangeOnce(thirtyDaysAgo, today) }
 
             val todayTotals = todayTotalsAsync.await()
             val yesterdayTotals = yesterdayTotalsAsync.await()
@@ -77,6 +85,10 @@ class NotificationContextEngine @Inject constructor(
             val workoutCount30d = workoutCount30dAsync.await()
             val plannedToday = plannedTodayAsync.await()
             val lastCompletedLog = lastCompletedLogAsync.await()
+            val glucoseToday = glucoseTodayAsync.await()
+            val glucoseYesterday = glucoseYesterdayAsync.await()
+            val glucose7d = glucose7dAsync.await()
+            val glucose30d = glucose30dAsync.await()
 
             // ─── TODAY ───
             val todayCaloriesIn = todayTotals.totalCalories.toInt()
@@ -193,6 +205,25 @@ class NotificationContextEngine @Inject constructor(
                 weightDistanceToGoal = weightDistanceToGoal,
 
                 daysSinceLastWorkout = daysSinceLastWorkout,
+
+                // ─── Glycémie CGM ───
+                todayGlucoseAvgMgdl = glucoseToday?.avgMgdl,
+                todayTirPct = glucoseToday?.timeInRangePct,
+                todayPeakMgdl = glucoseToday?.peakMgdl,
+                todayHypoCount = glucoseToday?.hypoCount,
+                todayGlucoseLogged = glucoseToday != null,
+                yesterdayGlucoseAvgMgdl = glucoseYesterday?.avgMgdl,
+                yesterdayTirPct = glucoseYesterday?.timeInRangePct,
+                yesterdayPeakMgdl = glucoseYesterday?.peakMgdl,
+                yesterdayHypoCount = glucoseYesterday?.hypoCount,
+                yesterdayGlucoseLogged = glucoseYesterday != null,
+                glucose7dAvgMgdl = GlucoseAnalyzer.avgMgdl(glucose7d),
+                glucose7dAvgTir = GlucoseAnalyzer.avgTir(glucose7d),
+                glucose30dTrendPerWeek = GlucoseAnalyzer.trendMgdlPerWeek(glucose30d),
+                glucose30dCv = GlucoseAnalyzer.avgCv(glucose30d),
+                glucose30dTotalHypo = GlucoseAnalyzer.totalHypo(glucose30d),
+                glucosePattern = GlucoseAnalyzer.detectPattern(glucose30d),
+                glucoseDaysCovered30d = GlucoseAnalyzer.countWithData(glucose30d),
 
                 historyDays = historyDays,
                 behaviorPattern = BehaviorPattern.NORMAL, // placeholder

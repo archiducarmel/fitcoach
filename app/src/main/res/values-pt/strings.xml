@@ -1576,6 +1576,91 @@
     <string name="chat_send_cd">Enviar</string>
     <string name="chat_rate_up_cd">Resposta útil</string>
     <string name="chat_rate_down_cd">Resposta a melhorar</string>
+    <string name="chat_dr_glykos_name">Dr. Glykos</string>
+    <string name="chat_dr_glykos_subtitle">Endocrinologista IA · %1$s</string>
+
+    <!-- Glucose / CGM -->
+    <string name="glucose_entry_title">Glicose · CGM</string>
+    <string name="glucose_entry_upload_title">Monitoramento glicêmico do dia</string>
+    <string name="glucose_entry_upload_desc">Carregue seu screenshot CGM (FreeStyle Libre, Dexcom, Diabox…) e Dr. Glykos analisa automaticamente.</string>
+    <string name="glucose_entry_upload_cta">Escolher screenshot</string>
+    <string name="glucose_entry_preview_title">Pré-visualização</string>
+    <string name="glucose_entry_analyze_cta">Analisar com Dr. Glykos</string>
+    <string name="glucose_entry_parsing">OCR em andamento…</string>
+    <string name="glucose_entry_parsing_hint">Dr. Glykos extrai os valores do seu screenshot.</string>
+    <string name="glucose_entry_kpi_title">Métricas do dia</string>
+    <string name="glucose_entry_kpi_avg">Média</string>
+    <string name="glucose_entry_kpi_peak">Pico</string>
+    <string name="glucose_entry_kpi_min">Mín</string>
+    <string name="glucose_entry_kpi_tir">Time-in-Range</string>
+    <string name="glucose_entry_kpi_hypo">Hipoglicemias</string>
+    <string name="glucose_entry_kpi_cv">Variabilidade (CV)</string>
+    <string name="glucose_entry_kpi_na">N/D</string>
+    <string name="glucose_entry_low_confidence">Confiança OCR baixa (%1$d%%). Verifique os valores.</string>
+    <string name="glucose_entry_manual_pill">Manual</string>
+    <string name="glucose_entry_manual_title">Correção manual</string>
+    <string name="glucose_entry_manual_cta">Corrigir</string>
+    <string name="glucose_entry_replace_cta">Re-enviar</string>
+    <string name="glucose_entry_delete_cta">Excluir este registro</string>
+    <string name="glucose_entry_open_dr_glykos">Ver análise Dr. Glykos →</string>
+    <string name="home_glucose_card_title">Glicose do dia</string>
+    <string name="home_glucose_card_empty_desc">Carregue seu screenshot CGM para Dr. Glykos analisar sua glicemia.</string>
+    <string name="home_glucose_card_cta_upload">Enviar meu CGM</string>
+    <string name="home_glucose_card_cta_analyze">Ver análise Dr. Glykos</string>
+    <string name="home_glucose_card_kpi_avg">Méd</string>
+    <string name="home_glucose_card_kpi_tir">TIR</string>
+    <string name="home_glucose_card_kpi_peak">Pico</string>
+    <string name="ai_tools_dr_glykos">Dr. Glykos</string>
+    <string name="glucose_history_title">Histórico CGM</string>
+    <string name="glucose_history_empty">Nenhuma entrada CGM ainda.</string>
+    <string name="glucose_history_window_7d">7 dias</string>
+    <string name="glucose_history_window_30d">30 dias</string>
+    <string name="glucose_history_kpi_avg">Média mg/dL</string>
+    <string name="glucose_history_kpi_tir">TIR médio</string>
+    <string name="glucose_history_kpi_cv">Variabilidade</string>
+    <string name="glucose_history_kpi_pattern">Padrão dominante</string>
+    <string name="glucose_history_days_covered">%1$d dias com dados</string>
+
+    <!-- Notif J+1 12:17 — Glucose recap (Dr. Glykos) -->
+    <string name="notif_glucose_recap_title">📊 Resumo glicêmico</string>
+    <string name="notif_glucose_recap_default">Ontem: média estável, TIR %2$d%%. Dr. Glykos tem uma leitura para você.</string>
+    <string name="notif_glucose_recap_stable">Ontem: TIR %1$d%%, glicemia excelente. Continue assim.</string>
+    <string name="notif_glucose_recap_spike">Pico ontem %1$d mg/dL. Dr. Glykos analisa a causa.</string>
+    <string name="notif_glucose_recap_hypo">%1$d hipoglicemia(s) ontem. Dr. Glykos pode ajudar a entender.</string>
+    <string name="notif_glucose_recap_variability">Variabilidade alta (CV %1$d%%). Vejamos com Dr. Glykos.</string>
+    <string name="notif_glucose_recap_dawn">Elevação matinal detectada. Dr. Glykos tem 3 pistas para você.</string>
+    <string name="notif_glucose_recap_rising">Tendência de alta em 30d. Dr. Glykos te espera para ajustar.</string>
+    <string name="notif_glucose_recap_falling">Tendência de queda favorável. Bom trabalho — Dr. Glykos compartilha a estratégia.</string>
+
+    <string name="dashboard_tab_glucose">Glicose</string>
+    <string name="glucose_dashboard_hero_title">Monitoramento glicêmico</string>
+    <string name="glucose_dashboard_hypo_total">%1$d hipoglicemia(s) na janela — atenção.</string>
+    <string name="glucose_dashboard_recent_header">DIAS RECENTES</string>
+    <string name="glucose_trend_favorable">tendência favorável</string>
+    <string name="glucose_trend_unfavorable">a vigiar</string>
+    <string name="glucose_pattern_hypo_risk">Risco hipoglicêmico</string>
+    <string name="glucose_pattern_hypo_risk_hint">3+ episódios &lt;70 mg/dL. Consulte Dr. Glykos.</string>
+    <string name="glucose_pattern_variability">Variabilidade alta</string>
+    <string name="glucose_pattern_variability_hint">CV ≥36%. Regulação instável — Dr. Glykos tem 3 alavancas.</string>
+    <string name="glucose_pattern_spikes">Picos pós-prandiais repetidos</string>
+    <string name="glucose_pattern_spikes_hint">Pico ≥180 mg/dL ≥3 dias/7. Vejamos a ordem dos alimentos.</string>
+    <string name="glucose_pattern_dawn">Fenômeno do amanhecer</string>
+    <string name="glucose_pattern_dawn_hint">Elevação matinal crônica. 3 pistas em nutrição + sono.</string>
+    <string name="glucose_pattern_rising">Tendência de alta 30d</string>
+    <string name="glucose_pattern_rising_hint">Inclinação +5 mg/dL/sem. Hora de rever carbs com Dr. Glykos.</string>
+    <string name="glucose_pattern_falling">Tendência de queda 30d</string>
+    <string name="glucose_pattern_falling_hint">Melhoria progressiva. Continue com o que funciona.</string>
+    <string name="glucose_pattern_stable">Estável ótimo</string>
+    <string name="glucose_pattern_stable_hint">TIR ≥80%, CV &lt;30%. Regulação excelente.</string>
+    <string name="glucose_pattern_normal">Regulação correta</string>
+    <string name="glucose_pattern_normal_hint">Sem padrão notável. Continue o monitoramento.</string>
+    <string name="nutrition_glucose_timeline_title">Glicemia do dia</string>
+    <string name="nutrition_glucose_timeline_empty">Nenhuma curva CGM enviada para hoje.</string>
+    <string name="nutrition_glucose_timeline_cta">Enviar CGM</string>
+    <string name="nutrition_glucose_timeline_axis_unit">mg/dL</string>
+    <string name="nutrition_meal_glucose_delta">Δ %1$+d mg/dL após esta refeição</string>
+    <string name="history_glucose_chip">Glu %1$d mg/dL · TIR %2$d%%</string>
+    <string name="history_glucose_chip_avg_only">Glu %1$d mg/dL</string>
 
     <!-- ════════════════════════════════════════════════════════════ -->
     <!-- Legal: Privacy policy + purge data -->

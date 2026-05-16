@@ -97,6 +97,25 @@ fun NutritionScreen(navController: NavController, viewModel: NutritionViewModel 
             // ── Résumé macros ──
             item { MacrosSummaryCard(state) }
 
+            // ── Glycémie du jour (CGM) : courbe 24h + marqueurs repas ──
+            // Placée juste sous les macros pour lier sémantiquement
+            // glycémie ↔ alimentation. Empty state propre si pas de CGM uploadée.
+            item {
+                com.shredcoach.app.presentation.glucose.MealGlucoseTimelineCard(
+                    date = state.selectedDate,
+                    onUploadCgm = {
+                        navController.navigate(
+                            com.shredcoach.app.presentation.navigation.Screen.GlucoseEntry.route
+                        )
+                    },
+                    onOpenDrGlykos = {
+                        navController.navigate(
+                            com.shredcoach.app.presentation.navigation.Screen.DrGlykosChat.route
+                        )
+                    },
+                )
+            }
+
             // ── Jeûne nocturne (J-1 dernier repas → J premier repas) ──
             // Placé HAUT car c'est l'info la plus dynamique de la journée :
             // dès le 1er repas logué, la fenêtre se fixe ; un repas plus tôt

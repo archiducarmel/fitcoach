@@ -8,6 +8,8 @@ import com.shredcoach.app.data.remote.LlmApiService
 import com.shredcoach.app.data.remote.LlmProvider
 import com.shredcoach.app.data.remote.LlmStreamEvent
 import com.shredcoach.app.domain.chat.ChatHistorySummarizer
+import com.shredcoach.app.domain.chat.ChatPersona
+import com.shredcoach.app.domain.chat.DrGlykosSystemPrompt
 import com.shredcoach.app.domain.chat.ShreddyToolExecutor
 import com.shredcoach.app.domain.chat.ShreddyTools
 import kotlinx.coroutines.flow.Flow
@@ -26,6 +28,10 @@ class ChatRepository @Inject constructor(
 
     fun getAllConversations(): Flow<List<ConversationSummary>> =
         chatDao.getAllConversations()
+
+    /** Variante persona-filtrée — affiche uniquement les conversations d'une persona. */
+    fun getAllConversationsForPersona(persona: ChatPersona): Flow<List<ConversationSummary>> =
+        chatDao.getAllConversationsForPersona(persona.tag)
 
     suspend fun getRecentMessages(conversationId: String, limit: Int = 20): List<ChatMessageEntity> =
         chatDao.getRecentMessages(conversationId, limit)
@@ -86,13 +92,29 @@ class ChatRepository @Inject constructor(
         apiKey: String,
         model: String? = null,
         recentMessages: List<ChatMessageEntity>,
-        userContext: String = ""
+        userContext: String = "",
+        persona: ChatPersona = ChatPersona.SHREDDY,
     ): Flow<String> {
         val history = recentMessages.filter { !it.isError }.map {
             ChatMessage(role = it.role, content = it.content)
         }
         val messages = history + ChatMessage(role = "user", content = userMessage)
-        return llmApiService.streamMessage(messages, provider, apiKey, model, userContext)
+        return when (persona) {
+            ChatPersona.DR_GLYKOS -> {
+                // Dr. Glykos a son propre system prompt → on override entièrement.
+                // Le userContext est concaténé à la fin du prompt persona.
+                val composed = if (userContext.isBlank())
+                    DrGlykosSystemPrompt.SYSTEM_PROMPT
+                else
+                    DrGlykosSystemPrompt.SYSTEM_PROMPT + "\n\n" + userContext
+                llmApiService.streamMessage(
+                    messages = messages, provider = provider, apiKey = apiKey, model = model,
+                    overrideSystemPrompt = composed,
+                )
+            }
+            ChatPersona.SHREDDY ->
+                llmApiService.streamMessage(messages, provider, apiKey, model, userContext)
+        }
     }
 
     /**
@@ -117,10 +139,19 @@ class ChatRepository @Inject constructor(
         model: String? = null,
         recentMessages: List<ChatMessageEntity>,
         systemPrompt: String,
+        persona: ChatPersona = ChatPersona.SHREDDY,
     ): Flow<String> = flow {
-        val tools = when (provider) {
-            LlmProvider.CLAUDE -> ShreddyTools.ALL_CLAUDE
-            else -> ShreddyTools.ALL_OPENAI
+        // Set d'outils par persona. Shreddy peut logger meals/poids; Dr. Glykos
+        // ne fait QUE de la lecture glucose (pas de log médical sans encadrement).
+        val tools = when (persona) {
+            ChatPersona.DR_GLYKOS -> when (provider) {
+                LlmProvider.CLAUDE -> ShreddyTools.DR_GLYKOS_CLAUDE
+                else -> ShreddyTools.DR_GLYKOS_OPENAI
+            }
+            ChatPersona.SHREDDY -> when (provider) {
+                LlmProvider.CLAUDE -> ShreddyTools.ALL_CLAUDE
+                else -> ShreddyTools.ALL_OPENAI
+            }
         }
 
         val history = recentMessages.filter { !it.isError }.map {

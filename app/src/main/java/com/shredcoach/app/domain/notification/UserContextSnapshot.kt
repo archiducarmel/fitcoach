@@ -104,6 +104,32 @@ data class UserContextSnapshot(
     val daysSinceLastWorkout: Int,
 
     // ═══════════════════════════════════════════
+    // GLYCÉMIE — CGM (v43+)
+    // ═══════════════════════════════════════════
+    /** Moyenne mg/dL du jour. Null si pas de log CGM. */
+    val todayGlucoseAvgMgdl: Double? = null,
+    val todayTirPct: Int? = null,
+    val todayPeakMgdl: Double? = null,
+    val todayHypoCount: Int? = null,
+    /** Vrai si l'user a uploadé un screenshot CGM aujourd'hui. */
+    val todayGlucoseLogged: Boolean = false,
+    val yesterdayGlucoseAvgMgdl: Double? = null,
+    val yesterdayTirPct: Int? = null,
+    val yesterdayPeakMgdl: Double? = null,
+    val yesterdayHypoCount: Int? = null,
+    val yesterdayGlucoseLogged: Boolean = false,
+    val glucose7dAvgMgdl: Double? = null,
+    val glucose7dAvgTir: Double? = null,
+    val glucose30dTrendPerWeek: Double? = null,
+    val glucose30dCv: Double? = null,
+    val glucose30dTotalHypo: Int = 0,
+    /** Pattern dominant 30j (Dr. Glykos analyzer). */
+    val glucosePattern: com.shredcoach.app.domain.glucose.GlucosePattern =
+        com.shredcoach.app.domain.glucose.GlucosePattern.INSUFFICIENT_DATA,
+    /** Nb de jours avec data CGM sur la fenêtre 30j. */
+    val glucoseDaysCovered30d: Int = 0,
+
+    // ═══════════════════════════════════════════
     // META
     // ═══════════════════════════════════════════
     /** Nb de jours d'historique nutrition disponibles (saturation à 30). */

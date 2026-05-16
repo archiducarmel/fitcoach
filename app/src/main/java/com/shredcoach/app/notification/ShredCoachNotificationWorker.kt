@@ -9,6 +9,7 @@ import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.domain.notification.BedtimeBuilder
 import com.shredcoach.app.domain.notification.BreakfastBuilder
 import com.shredcoach.app.domain.notification.DinnerBuilder
+import com.shredcoach.app.domain.notification.GlucoseRecapBuilder
 import com.shredcoach.app.domain.notification.LunchBuilder
 import com.shredcoach.app.domain.notification.MorningBriefBuilder
 import com.shredcoach.app.domain.notification.MotivationBuilder
@@ -62,6 +63,7 @@ class ShredCoachNotificationWorker @AssistedInject constructor(
             TYPE_BEDTIME -> profile.notifBedtime
             TYPE_MOTIVATION -> profile.notifMotivation
             TYPE_MORNING_BRIEF -> profile.notifMotivation // réutilise le toggle motivation pour V1
+            TYPE_GLUCOSE_RECAP -> profile.notifGlucoseRecap
             else -> false
         }
         if (!enabled) return Result.success()
@@ -75,6 +77,7 @@ class ShredCoachNotificationWorker @AssistedInject constructor(
             TYPE_SHAKER_MORNING, TYPE_SHAKER_EVENING -> NotifType.SHAKER_REMINDER
             TYPE_BEDTIME -> NotifType.BEDTIME_REMINDER
             TYPE_MOTIVATION, TYPE_MORNING_BRIEF -> NotifType.MOTIVATION
+            TYPE_GLUCOSE_RECAP -> NotifType.MOTIVATION // pas de NotifType dédié, réutilise MOTIVATION (catégorie "coach proactif")
             else -> return Result.success()
         }
 
@@ -88,6 +91,7 @@ class ShredCoachNotificationWorker @AssistedInject constructor(
             TYPE_BEDTIME -> BedtimeBuilder.build(context, snapshot)
             TYPE_MOTIVATION -> MotivationBuilder.build(context, snapshot)
             TYPE_MORNING_BRIEF -> MorningBriefBuilder.build(context, snapshot)
+            TYPE_GLUCOSE_RECAP -> GlucoseRecapBuilder.build(context, snapshot)
             else -> return Result.success()
         }
 
@@ -120,5 +124,6 @@ class ShredCoachNotificationWorker @AssistedInject constructor(
         const val TYPE_BEDTIME = "bedtime"
         const val TYPE_MOTIVATION = "motivation"
         const val TYPE_MORNING_BRIEF = "morning_brief"
+        const val TYPE_GLUCOSE_RECAP = "glucose_recap"
     }
 }

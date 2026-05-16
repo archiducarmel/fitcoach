@@ -6,6 +6,7 @@ import com.shredcoach.app.data.local.entity.FoodEntity
 import com.shredcoach.app.data.local.entity.MealLogEntity
 import com.shredcoach.app.data.local.entity.MealType
 import com.shredcoach.app.data.local.entity.WeightLogEntity
+import com.shredcoach.app.data.repository.GlucoseRepository
 import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.data.repository.WorkoutRepository
 import com.shredcoach.app.domain.notification.BehaviorPattern
@@ -34,6 +35,7 @@ class ShreddyToolExecutorTest {
     private lateinit var userRepository: UserRepository
     private lateinit var workoutRepository: WorkoutRepository
     private lateinit var contextEngine: NotificationContextEngine
+    private lateinit var glucoseRepository: GlucoseRepository
     private lateinit var executor: ShreddyToolExecutor
 
     @Before
@@ -42,11 +44,13 @@ class ShreddyToolExecutorTest {
         userRepository = mockk(relaxed = true)
         workoutRepository = mockk(relaxed = true)
         contextEngine = mockk(relaxed = true)
+        glucoseRepository = mockk(relaxed = true)
         executor = ShreddyToolExecutor(
             nutritionDao = nutritionDao,
             userRepository = userRepository,
             workoutRepository = workoutRepository,
             contextEngine = contextEngine,
+            glucoseRepository = glucoseRepository,
         )
     }
 

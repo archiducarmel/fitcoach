@@ -50,4 +50,12 @@ data class CoachUserContext(
     val workoutsThisWeek: Int,
     val targetWorkoutsPerWeek: Int,
     val weeklyVolumeKg: Int,
+
+    // Glycémie CGM (v43+) — optional
+    /** Moyenne mg/dL sur 7j. null si pas de data CGM. */
+    val glucose7dAvgMgdl: Double? = null,
+    /** TIR % moyen 30j. */
+    val glucose30dAvgTir: Double? = null,
+    /** Pattern dominant 30j (nom enum). */
+    val glucosePatternName: String? = null,
 )

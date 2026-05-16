@@ -34,6 +34,11 @@ object ShreddyTools {
     const val GET_TODAY_STATS = "get_today_stats"
     const val GET_RECENT_WORKOUTS = "get_recent_workouts"
 
+    // ─── Tools Dr. Glykos (lecture glucose uniquement, V44+) ───
+    const val GET_GLUCOSE_TODAY = "get_glucose_today"
+    const val GET_GLUCOSE_RANGE_SUMMARY = "get_glucose_range_summary"
+    const val GET_GLUCOSE_CORRELATIONS = "get_glucose_correlations"
+
     /**
      * Schémas JSON (format OpenAI tools) que l'on envoie au LLM dans la
      * requête. Le LLM s'en sert pour décider quand/comment appeler.
@@ -46,6 +51,22 @@ object ShreddyTools {
 
     /** Variante Claude : même semantics, schema wrapping différent. */
     val ALL_CLAUDE: List<JsonObject> by lazy { ALL_OPENAI.map { toAnthropicSchema(it) } }
+
+    /**
+     * Sous-ensemble Dr. Glykos : pas de log_meal / set_weight (Shreddy gère
+     * ces actions). Uniquement de la lecture pour analyse endocrino.
+     * Contient aussi `get_today_stats` car Dr. Glykos a besoin du contexte
+     * nutrition pour corréler glucose ↔ repas.
+     */
+    val DR_GLYKOS_OPENAI: List<JsonObject> by lazy {
+        buildList {
+            add(getGlucoseTodaySchema())
+            add(getGlucoseRangeSummarySchema())
+            add(getGlucoseCorrelationsSchema())
+            add(getTodayStatsSchema())
+        }
+    }
+    val DR_GLYKOS_CLAUDE: List<JsonObject> by lazy { DR_GLYKOS_OPENAI.map { toAnthropicSchema(it) } }
 
     // ═══════════════════════════════════════════════════════════
     // Schémas individuels — format OpenAI
@@ -129,6 +150,56 @@ object ShreddyTools {
             "name": "$GET_RECENT_WORKOUTS",
             "description": "Récupère les 5 dernières séances complétées (nom, date, volume, durée, top exos). À utiliser pour répondre à 'qu'est-ce que j'ai fait cette semaine ?', 'rappelle-moi ma dernière séance', 'quels muscles j'ai bossé récemment ?'.",
             "parameters": { "type": "object", "properties": {} }
+          }
+        }
+    """.trimIndent()).asJsonObject
+
+    private fun getGlucoseTodaySchema(): JsonObject = JsonParser.parseString("""
+        {
+          "type": "function",
+          "function": {
+            "name": "$GET_GLUCOSE_TODAY",
+            "description": "Récupère les métriques glycémiques (CGM) du JOUR : moyenne mg/dL, pic + heure, min + heure, time-in-range %, nb hypoglycémies. À utiliser dès que l'user demande son état glycémique du jour ou pour analyser un repas/séance récente.",
+            "parameters": { "type": "object", "properties": {} }
+          }
+        }
+    """.trimIndent()).asJsonObject
+
+    private fun getGlucoseRangeSummarySchema(): JsonObject = JsonParser.parseString("""
+        {
+          "type": "function",
+          "function": {
+            "name": "$GET_GLUCOSE_RANGE_SUMMARY",
+            "description": "Récupère un agrégat glycémique sur une fenêtre temporelle (typiquement 7 ou 30 jours) : avg mg/dL, TIR%, CV%, slope tendance, pattern dominant (POSTPRANDIAL_SPIKES / DAWN_PHENOMENON / HIGH_VARIABILITY / STABLE_OPTIMAL / etc.). À utiliser pour interpréter des tendances long terme.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "days": {
+                  "type": "integer",
+                  "description": "Largeur de la fenêtre en jours (typiquement 7 ou 30)"
+                }
+              },
+              "required": ["days"]
+            }
+          }
+        }
+    """.trimIndent()).asJsonObject
+
+    private fun getGlucoseCorrelationsSchema(): JsonObject = JsonParser.parseString("""
+        {
+          "type": "function",
+          "function": {
+            "name": "$GET_GLUCOSE_CORRELATIONS",
+            "description": "Croise les pics glycémiques d'un jour donné avec les repas et séances loggés à proximité (±120 min). Retourne une liste structurée des associations détectées (ex: 'pic 195 mg/dL à 13h32 ↔ repas pâtes/sauce à 12h45'). À utiliser pour analyser ce qui a causé un pic ou une baisse.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "description": "Date au format ISO YYYY-MM-DD. Si vide, utilise aujourd'hui."
+                }
+              }
+            }
           }
         }
     """.trimIndent()).asJsonObject

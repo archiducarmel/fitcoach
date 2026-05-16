@@ -30,6 +30,11 @@ interface ChatDao {
     @Query("SELECT * FROM chat_messages WHERE conversationId = :conversationId ORDER BY timestamp ASC")
     suspend fun getMessagesForConversationOnce(conversationId: String): List<ChatMessageEntity>
 
+    // ─── Variantes filtrées par PERSONA (Shreddy vs Dr. Glykos) ──────
+
+    @Query("DELETE FROM chat_messages WHERE conversationId = :conversationId AND persona = :persona")
+    suspend fun deleteConversationForPersona(conversationId: String, persona: String)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMessage(message: ChatMessageEntity): Long
 
@@ -60,4 +65,20 @@ interface ChatDao {
         ORDER BY MAX(cm.timestamp) DESC
     """)
     fun getAllConversations(): Flow<List<ConversationSummary>>
+
+    /** Variante filtrée par persona (Shreddy vs Dr. Glykos). */
+    @Query("""
+        SELECT
+            cm.conversationId,
+            (SELECT content FROM chat_messages sub
+             WHERE sub.conversationId = cm.conversationId AND sub.role = 'user' AND sub.persona = :persona
+             ORDER BY sub.timestamp ASC LIMIT 1) as firstUserMessage,
+            MAX(cm.timestamp) as lastTimestamp,
+            COUNT(*) as messageCount
+        FROM chat_messages cm
+        WHERE cm.persona = :persona
+        GROUP BY cm.conversationId
+        ORDER BY MAX(cm.timestamp) DESC
+    """)
+    fun getAllConversationsForPersona(persona: String): Flow<List<ConversationSummary>>
 }

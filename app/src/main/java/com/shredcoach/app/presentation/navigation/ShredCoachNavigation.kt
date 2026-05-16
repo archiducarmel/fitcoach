@@ -415,8 +415,22 @@ fun ShredCoachNavigation(
                 NutritionScreen(navController = navController)
             }
 
-            composable(Screen.Chat.route) {
+            composable(
+                route = Screen.Chat.route,
+                arguments = listOf(navArgument("persona") {
+                    type = androidx.navigation.NavType.StringType
+                    defaultValue = "shreddy"
+                    nullable = false
+                })
+            ) {
                 ChatScreen(navController = navController)
+            }
+
+            composable(Screen.GlucoseEntry.route) {
+                com.shredcoach.app.presentation.glucose.GlucoseEntryScreen(navController = navController)
+            }
+            composable(Screen.GlucoseHistory.route) {
+                com.shredcoach.app.presentation.glucose.GlucoseHistoryScreen(navController = navController)
             }
 
             composable(Screen.Notifications.route) {
