@@ -1457,6 +1457,7 @@
     <!-- Meal date/time card -->
     <string name="scanner_dt_title">Data e ora del pasto</string>
     <string name="scanner_dt_late_warning">Hai scansionato in ritardo. Indica l\'ora reale del pasto per una buona classificazione (colazione, pranzo, cena...).</string>
+    <string name="scanner_dt_exif_detected">📷 Data rilevata dalla foto. Modificabile se necessario.</string>
     <string name="scanner_dt_classified_as">Classificato: %1$s</string>
     <string name="scanner_dt_picker_time_title">Ora del pasto</string>
     <string name="scanner_dt_picker_ok">OK</string>

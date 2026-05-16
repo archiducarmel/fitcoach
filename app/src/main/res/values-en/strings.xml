@@ -1340,6 +1340,7 @@
 
     <string name="scanner_dt_title">Meal date and time</string>
     <string name="scanner_dt_late_warning">You scanned late. Set the actual meal time for proper classification (breakfast, lunch, dinner...).</string>
+    <string name="scanner_dt_exif_detected">📷 Date detected from the photo. Edit if needed.</string>
     <string name="scanner_dt_classified_as">Classified: %1$s</string>
     <string name="scanner_dt_picker_time_title">Meal time</string>
     <string name="scanner_dt_picker_ok">OK</string>

@@ -1306,6 +1306,7 @@
 
     <string name="scanner_dt_title">Datum und Uhrzeit der Mahlzeit</string>
     <string name="scanner_dt_late_warning">Du hast nachträglich gescannt. Gib die echte Uhrzeit der Mahlzeit an für korrekte Klassifizierung (Frühstück, Mittag, Abendessen...).</string>
+    <string name="scanner_dt_exif_detected">📷 Datum aus dem Foto erkannt. Falls nötig bearbeiten.</string>
     <string name="scanner_dt_classified_as">Klassifiziert: %1$s</string>
     <string name="scanner_dt_picker_time_title">Mahlzeit-Uhrzeit</string>
     <string name="scanner_dt_picker_ok">OK</string>

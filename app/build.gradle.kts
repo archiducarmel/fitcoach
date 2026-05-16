@@ -176,6 +176,10 @@ dependencies {
     // restart d'app explicite.
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.core:core-splashscreen:1.0.1")
+    // EXIF reader (date/heure de prise de vue) — utilisé par PhotoExifReader
+    // pour auto-remplir la date d'un repas uploadé depuis la galerie. La lib
+    // AndroidX est ~70KB, supporte JPEG/HEIF/PNG/WebP, lecture seule = sûr.
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     // ProcessLifecycleOwner — détecte foreground/background du process pour
     // que le WorkoutSessionService ne double-fire pas la voix/vibration

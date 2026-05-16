@@ -62,6 +62,14 @@ data class MealScannerState(
     val showHintsPanel: Boolean = false,
     // ── Override date/heure du repas (si scan tardif) ──
     val mealDateTime: java.time.LocalDateTime = java.time.LocalDateTime.now(),
+    /**
+     * Date/heure de prise de vue extraite des EXIF (galerie uniquement).
+     * `null` si caméra live OU EXIF illisible. Quand non-null, on l'utilise
+     * comme `mealDateTime` à l'analyse au lieu de LocalDateTime.now().
+     * Mémorisé séparément pour pouvoir afficher un info "📷 prise le ..."
+     * dans l'UI et permettre à l'user de la voir/modifier avant analyse.
+     */
+    val exifCaptureDateTime: java.time.LocalDateTime? = null,
     val showDatePicker: Boolean = false,
     val showTimePicker: Boolean = false,
     val mealCategory: com.shredcoach.app.domain.nutrition.MealTypeClassifier.Category? = null,
@@ -122,8 +130,44 @@ class MealScannerViewModel @Inject constructor(
             // était en mode texte puis change d'avis).
             inputMode = MealInputMode.PHOTO, textDescription = "",
             // Reset les indices quand on charge une nouvelle image
-            hintPlate = PlateType.NONE, hintBowl = BowlType.NONE, hintDescription = "", showHintsPanel = false
+            hintPlate = PlateType.NONE, hintBowl = BowlType.NONE, hintDescription = "", showHintsPanel = false,
+            // Reset EXIF : camera live OU nouvelle image sans contexte galerie
+            exifCaptureDateTime = null,
         ) }
+    }
+
+    /**
+     * Variante de [setImage] pour les photos uploadées depuis la galerie : lit
+     * les EXIF de [uri] pour récupérer la date/heure de prise de vue réelle.
+     *
+     * **Pourquoi une méthode séparée** : pour les photos prises live via la
+     * caméra de l'app, l'URI n'existe pas (le `TakePicturePreview` retourne
+     * un Bitmap direct) ET la date est forcément "maintenant" → pas besoin
+     * d'EXIF. Séparer les 2 chemins évite de polluer le flow camera avec une
+     * lecture I/O inutile et un état EXIF=now redondant.
+     *
+     * Si l'EXIF n'est pas lisible (image générée, screenshot, format
+     * exotique) → `exifCaptureDateTime` reste null → comportement identique
+     * à [setImage] (LocalDateTime.now() à l'analyse).
+     */
+    fun setImageFromGallery(bitmap: Bitmap, uri: android.net.Uri) {
+        // 1. Setup du bitmap comme d'habitude
+        setImage(bitmap)
+        // 2. Lecture EXIF en background (I/O), update du state quand dispo
+        viewModelScope.launch {
+            val captureAt = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                com.shredcoach.app.domain.nutrition.PhotoExifReader.readCaptureDateTime(appContext, uri)
+            }
+            if (captureAt != null) {
+                _state.update { it.copy(
+                    exifCaptureDateTime = captureAt,
+                    // Pré-remplit aussi mealDateTime pour que le DateTime picker
+                    // de la UI affiche déjà la bonne valeur (l'user peut toujours
+                    // override manuellement avant analyze).
+                    mealDateTime = captureAt,
+                ) }
+            }
+        }
     }
 
     // ── Mode texte ──
@@ -301,9 +345,15 @@ class MealScannerViewModel @Inject constructor(
 
             result.fold(
                 onSuccess = { analysis ->
-                    // Classifier le type de repas par HEURE DE SCAN (pas le LLM)
-                    // avec override whey (12h-20h) → pretraining
-                    val scanDateTime = java.time.LocalDateTime.now()
+                    // Classifier le type de repas par HEURE DE PRISE DE VUE
+                    // (EXIF) si disponible — sinon par heure d'analyse.
+                    // C'est critique : un user qui upload à 21h une photo de
+                    // son déj prise à 12h45 doit voir le repas classé LUNCH,
+                    // pas DINNER. L'EXIF est la source de vérité ; on fallback
+                    // sur now() uniquement si EXIF absent (camera live, EXIF
+                    // illisible).
+                    val scanDateTime = _state.value.exifCaptureDateTime
+                        ?: java.time.LocalDateTime.now()
                     val dishKeywords = analysis.dishes.flatMap { d ->
                         listOf(d.name) + d.ingredients.map { it.name }
                     }

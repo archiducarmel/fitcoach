@@ -1507,6 +1507,7 @@
     <!-- Meal date/time card -->
     <string name="scanner_dt_title">Data e horário da refeição</string>
     <string name="scanner_dt_late_warning">Você escaneou com atraso. Indique o horário real da refeição para uma boa classificação (café da manhã, almoço, jantar...).</string>
+    <string name="scanner_dt_exif_detected">📷 Data detectada da foto. Editável se necessário.</string>
     <string name="scanner_dt_classified_as">Classificado: %1$s</string>
     <string name="scanner_dt_picker_time_title">Horário da refeição</string>
     <string name="scanner_dt_picker_ok">OK</string>

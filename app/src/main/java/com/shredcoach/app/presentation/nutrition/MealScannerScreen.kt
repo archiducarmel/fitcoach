@@ -87,7 +87,10 @@ fun MealScannerScreen(
                 val bmp = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
                     ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, it)).copy(Bitmap.Config.ARGB_8888, false)
                 else @Suppress("DEPRECATION") MediaStore.Images.Media.getBitmap(context.contentResolver, it)
-                viewModel.setImage(bmp)
+                // setImageFromGallery (vs setImage) déclenche en plus la lecture
+                // EXIF DateTimeOriginal → la date du repas est auto-remplie avec
+                // l'heure de prise de vue de la photo, pas l'heure d'upload.
+                viewModel.setImageFromGallery(bmp, it)
             } catch (_: Exception) {}
         }
     }
@@ -1404,10 +1407,26 @@ private fun MealDateTimeCard(state: MealScannerState, viewModel: MealScannerView
                     tint = if (isLate) OrangeVibrant else MaterialTheme.colorScheme.primary)
                 Text(stringResource(R.string.scanner_dt_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             }
-            if (isLate) {
-                Text(stringResource(R.string.scanner_dt_late_warning),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f))
+            // Info contextuelle :
+            //  - Si EXIF détecté (photo galerie) → message rassurant "détecté
+            //    depuis la photo", l'user comprend que c'est auto.
+            //  - Sinon, si tardif (>15min après now) → warning classique invitant
+            //    à régler manuellement.
+            //  - Sinon, rien (scan vient juste d'être pris, RAS).
+            when {
+                state.exifCaptureDateTime != null -> {
+                    Text(
+                        stringResource(R.string.scanner_dt_exif_detected),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = OrangeVibrant,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+                isLate -> {
+                    Text(stringResource(R.string.scanner_dt_late_warning),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f))
+                }
             }
             // Boutons date + heure côte à côte
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

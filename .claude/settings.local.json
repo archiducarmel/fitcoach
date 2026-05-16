@@ -232,7 +232,9 @@
       "PowerShell($env:JAVA_HOME = 'C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr'; $r = .\\\\gradlew.bat :app:compileDebugKotlin --rerun-tasks 2>&1; $r | Select-String -Pattern \"domain/notification|BUILD SUCCESS|FAILED\" | Select-Object -First 30)",
       "PowerShell($env:JAVA_HOME = 'C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr'; $r = .\\\\gradlew.bat :app:compileDebugKotlin 2>&1; $r | Select-String -Pattern \"^e: |error:|FAILED|BUILD SUCCESSFUL\")",
       "PowerShell($env:JAVA_HOME = 'C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr'; $r = .\\\\gradlew.bat :app:testDebugUnitTest --tests \"com.shredcoach.app.domain.notification.BehaviorAnalyzerTest\" 2>&1; $r | Select-String -Pattern \"BUILD|FAILED|Tests:|tests completed|^e: |error:\" | Select-Object -First 30)",
-      "PowerShell($env:JAVA_HOME = 'C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr'; $r = .\\\\gradlew.bat :app:assembleDebug :app:testDebugUnitTest 2>&1; $r | Select-String -Pattern \"^e: |error:|FAILED|BUILD SUCCESSFUL|tests completed\" | Select-Object -First 30)"
+      "PowerShell($env:JAVA_HOME = 'C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr'; $r = .\\\\gradlew.bat :app:assembleDebug :app:testDebugUnitTest 2>&1; $r | Select-String -Pattern \"^e: |error:|FAILED|BUILD SUCCESSFUL|tests completed\" | Select-Object -First 30)",
+      "Bash(git push *)",
+      "PowerShell($env:JAVA_HOME = 'C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr'; $r = .\\\\gradlew.bat :app:assembleDebug 2>&1; $r | Select-String -Pattern \"^e: |error:|FAILED|BUILD SUCCESSFUL\" | Select-Object -First 20)"
     ]
   }
 }

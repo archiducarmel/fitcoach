@@ -1511,6 +1511,7 @@
     <!-- Meal date/time card -->
     <string name="scanner_dt_title">Fecha y hora de la comida</string>
     <string name="scanner_dt_late_warning">Has escaneado en diferido. Indica la hora real de la comida para una buena clasificación (desayuno, almuerzo, cena...).</string>
+    <string name="scanner_dt_exif_detected">📷 Fecha detectada desde la foto. Editable si lo necesitas.</string>
     <string name="scanner_dt_classified_as">Clasificada: %1$s</string>
     <string name="scanner_dt_picker_time_title">Hora de la comida</string>
     <string name="scanner_dt_picker_ok">OK</string>
