@@ -173,6 +173,9 @@
     <string name="recalib_banner_dismiss">Entendido</string>
     <string name="recalib_banner_dismiss_cd">Cerrar banner</string>
 
+    <!-- Chat medical safety banner -->
+    <string name="chat_medical_safety_banner">⚠ **Si presentas un síntoma grave (dolor torácico, dificultad para respirar, pérdida de consciencia…), llama a emergencias o consulta un médico inmediatamente.** No puedo dar consejos médicos.\n\n</string>
+
     <!-- Scheduled workout reminder fallback (LLM-failed) -->
     <string name="notif_session_default_title">Sesión</string>
     <string name="notif_session_fallback_default">Sesión</string>
@@ -1575,6 +1578,8 @@
     <!-- Input bar -->
     <string name="chat_input_placeholder">Pregunta a Shreddy...</string>
     <string name="chat_send_cd">Enviar</string>
+    <string name="chat_rate_up_cd">Respuesta útil</string>
+    <string name="chat_rate_down_cd">Respuesta a mejorar</string>
 
     <!-- ════════════════════════════════════════════════════════════ -->
     <!-- Legal: Privacy policy + purge data -->

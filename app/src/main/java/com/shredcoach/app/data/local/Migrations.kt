@@ -230,6 +230,20 @@ object Migrations {
      * **Idempotent** : `IF NOT EXISTS` garde-fou si la migration est rejouée
      * (ne devrait pas mais c'est ceinture+bretelles).
      */
+    /**
+     * v41 → v42 : ajoute `userRating` (Int?, -1/0/+1) et `latencyMs` (Long?) à
+     * `chat_messages` pour la télémétrie de qualité des réponses Shreddy.
+     * - `userRating` null = pas encore noté, -1 = thumb down, +1 = thumb up
+     * - `latencyMs` = durée total du tour LLM (envoi → dernier token), pour
+     *   tracking coût/latence empirique par turn et par provider.
+     */
+    fun migration41to42(): Migration = object : Migration(41, 42) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE chat_messages ADD COLUMN userRating INTEGER")
+            db.execSQL("ALTER TABLE chat_messages ADD COLUMN latencyMs INTEGER")
+        }
+    }
+
     fun migration40to41(): Migration = object : Migration(40, 41) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("""

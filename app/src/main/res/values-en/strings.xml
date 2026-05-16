@@ -167,6 +167,9 @@
     <string name="recalib_banner_dismiss">Got it</string>
     <string name="recalib_banner_dismiss_cd">Dismiss banner</string>
 
+    <!-- Chat medical safety banner -->
+    <string name="chat_medical_safety_banner">⚠ **If you experience a serious symptom (chest pain, shortness of breath, loss of consciousness…), call emergency services or see a doctor immediately.** I cannot provide medical advice.\n\n</string>
+
     <!-- Scheduled workout reminder fallback -->
     <string name="notif_session_default_title">Session</string>
     <string name="notif_session_fallback_default">Session</string>
@@ -1397,6 +1400,8 @@
 
     <string name="chat_input_placeholder">Ask Shreddy...</string>
     <string name="chat_send_cd">Send</string>
+    <string name="chat_rate_up_cd">Helpful reply</string>
+    <string name="chat_rate_down_cd">Reply needs improvement</string>
 
     <!-- Legal: Privacy policy + purge data -->
     <string name="legal_purge_ok_snackbar">All your data has been deleted. Restart the app.</string>

@@ -29,7 +29,7 @@ import com.shredcoach.app.data.local.entity.BodyScanLogEntity
         ScheduledWorkoutEntity::class,
         BodyScanLogEntity::class
     ],
-    version = 41,
+    version = 42,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

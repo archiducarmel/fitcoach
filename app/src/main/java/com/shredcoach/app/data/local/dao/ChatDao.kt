@@ -26,6 +26,10 @@ interface ChatDao {
     @Query("SELECT * FROM chat_messages WHERE conversationId = :conversationId ORDER BY timestamp DESC LIMIT :limit")
     suspend fun getRecentMessages(conversationId: String, limit: Int): List<ChatMessageEntity>
 
+    /** Snapshot une-shot ASC d'une conversation (utilisé par le récap historique). */
+    @Query("SELECT * FROM chat_messages WHERE conversationId = :conversationId ORDER BY timestamp ASC")
+    suspend fun getMessagesForConversationOnce(conversationId: String): List<ChatMessageEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMessage(message: ChatMessageEntity): Long
 
@@ -34,6 +38,13 @@ interface ChatDao {
 
     @Query("DELETE FROM chat_messages")
     suspend fun clearAll()
+
+    /**
+     * Update la note utilisateur sur un message assistant. [rating] : +1 = up,
+     * -1 = down, null = unrate. Sert au feedback continu (P2a télémétrie).
+     */
+    @Query("UPDATE chat_messages SET userRating = :rating WHERE id = :messageId")
+    suspend fun updateRating(messageId: Long, rating: Int?)
 
     /** Liste des conversations triées par date (la plus récente en premier). */
     @Query("""

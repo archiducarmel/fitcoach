@@ -166,6 +166,9 @@
     <string name="recalib_banner_dismiss">Verstanden</string>
     <string name="recalib_banner_dismiss_cd">Banner schließen</string>
 
+    <!-- Chat medical safety banner -->
+    <string name="chat_medical_safety_banner">⚠ **Bei ernsthaften Symptomen (Brustschmerz, Atemnot, Bewusstlosigkeit…) sofort den Notruf wählen oder einen Arzt aufsuchen.** Ich kann keinen medizinischen Rat geben.\n\n</string>
+
     <string name="notif_session_default_title">Workout</string>
     <string name="notif_session_fallback_default">Workout</string>
     <string name="notif_shaker_pretraining_title">🥤 Pre-Workout-Shake</string>
@@ -1362,6 +1365,8 @@
 
     <string name="chat_input_placeholder">Frag Shreddy...</string>
     <string name="chat_send_cd">Senden</string>
+    <string name="chat_rate_up_cd">Hilfreiche Antwort</string>
+    <string name="chat_rate_down_cd">Verbesserungswürdige Antwort</string>
 
     <!-- Legal -->
     <string name="legal_purge_ok_snackbar">Alle deine Daten wurden gelöscht. Starte die App neu.</string>

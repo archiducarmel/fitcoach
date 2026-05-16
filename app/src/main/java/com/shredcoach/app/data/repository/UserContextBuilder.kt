@@ -25,11 +25,43 @@ import javax.inject.Singleton
 class UserContextBuilder @Inject constructor(
     private val userRepository: UserRepository,
     private val workoutRepository: WorkoutRepository,
-    private val nutritionRepository: NutritionRepository
+    private val nutritionRepository: NutritionRepository,
+    private val contextEngine: com.shredcoach.app.domain.notification.NotificationContextEngine,
 ) {
     private val fmt = DateTimeFormatter.ofPattern("dd/MM", Locale.FRANCE)
     private fun fmtD(d: Double) = String.format(Locale.US, "%.0f", d)
     private fun fmtD1(d: Double) = String.format(Locale.US, "%.1f", d)
+
+    /**
+     * **Defense prompt injection** — sanitize toute string saisie par
+     * l'utilisateur (firstName, healthNotes, notes de séance…) AVANT de
+     * l'injecter dans le contexte LLM.
+     *
+     * **Stratégie** :
+     *  1. Strip les caractères de contrôle (null, tab, ESC) et les sauts de
+     *     ligne multiples (un user mettant 50 lignes dans healthNotes peut
+     *     épuiser la context window).
+     *  2. Truncate à [maxLen] caractères — protection contre des inputs longs
+     *     pathologiques.
+     *  3. Wrap dans des balises `<user_data>...</user_data>` que le system
+     *     prompt explicitement instructs le LLM de traiter comme DONNÉE et
+     *     non comme instruction (note ajoutée dans LlmApiService.SYSTEM_PROMPT).
+     *
+     * **Ce qu'on ne fait PAS** : escape HTML/XML inside (`<`, `>`, `&`) — c'est
+     * inutile car le LLM n'est pas un parser strict, ce qui compte est qu'il
+     * ne confonde pas une instruction avec une donnée. Les balises de
+     * délimitation suffisent à cadrer le contexte.
+     */
+    private fun safeUserText(text: String, maxLen: Int = 500): String {
+        if (text.isBlank()) return ""
+        // Remove control chars (sauf newline simple)
+        val cleaned = text
+            .replace(Regex("[\\x00-\\x08\\x0B-\\x1F\\x7F]"), " ")
+            .replace(Regex("\\n{3,}"), "\n\n") // max 2 newlines consécutifs
+            .trim()
+        val truncated = if (cleaned.length > maxLen) cleaned.take(maxLen) + "…" else cleaned
+        return "<user_data>$truncated</user_data>"
+    }
 
     suspend fun buildContext(): String {
         val profile = userRepository.getUserProfileOnce() ?: return ""
@@ -53,8 +85,48 @@ class UserContextBuilder @Inject constructor(
         sb.appendLine(buildRecentHistoryBlock(allRecentLogs))
         sb.appendLine(buildPRBlock())
         sb.appendLine(buildNutritionBlock(now))
+        // Source de vérité unique pour today snapshot : on injecte le pattern
+        // comportemental + deltas du jour issus de NotificationContextEngine.
+        // Pourquoi ici en plus du buildNutritionBlock : le pattern psy
+        // (DECROCHAGE/MOMENTUM/etc) n'est pas dans buildNutritionBlock et
+        // c'est ce qui permet au bot de répondre avec une vraie awareness
+        // psychologique ("tu es en momentum, pas étonnant que tu te sentes bien").
+        sb.appendLine(buildBehaviorSnapshotBlock())
 
         return sb.toString()
+    }
+
+    /**
+     * Snapshot psy + stats fraîches du jour, dérivé de
+     * [com.shredcoach.app.domain.notification.NotificationContextEngine].
+     * Coût ~30-80ms (8 queries DAO parallélisées). Source unique de vérité
+     * partagée avec les notifs context-aware → cohérence chat/notif.
+     */
+    private suspend fun buildBehaviorSnapshotBlock(): String {
+        val s = try { contextEngine.snapshot() } catch (_: Exception) { null }
+            ?: return "[ÉTAT DU JOUR] Pas de snapshot disponible."
+        val patternFr = when (s.behaviorPattern.name) {
+            "STARTING" -> "Démarrage (peu d'historique)"
+            "NORMAL" -> "Routine normale"
+            "DECROCHAGE" -> "Décrochage post-streak détecté"
+            "MOMENTUM_HIGH" -> "En momentum (streak + perte saine)"
+            "SLIPPING" -> "Glissement progressif (3+ jours over target)"
+            "PLATEAU_REAL" -> "Plateau confirmé sur 30j"
+            "CYCLE_BREAKER" -> "Pattern restriction/binge"
+            "CONSISTENT_30D" -> "Excellent : 22+ jours on-target sur 30"
+            "WEIGHT_LOSS_TOO_FAST" -> "⚠ Perte trop rapide (risque catabolisme)"
+            "GHOST_USER" -> "Inactif côté sport (≤4 séances/30j)"
+            else -> s.behaviorPattern.name
+        }
+        return buildString {
+            appendLine("[ÉTAT DU JOUR — snapshot frais]")
+            appendLine("Pattern comportemental: $patternFr")
+            appendLine("Aujourd'hui: ${s.todayCaloriesIn} kcal mangées / ${s.todayTarget} cible (delta ${if (s.todayDelta >= 0) "+" else ""}${s.todayDelta})")
+            appendLine("Repas loggés: ${if (s.todayMealsLogged.isEmpty()) "aucun" else s.todayMealsLogged.joinToString(",") { it.name }}")
+            appendLine("Séance aujourd'hui: ${if (s.todayWorkoutDone != null) "FAITE" else if (s.todayWorkoutPlanned != null) "prévue" else "rien"}")
+            appendLine("Streak on-target: ${s.consecutiveOnTargetDays}j | Sans séance: ${if (s.daysSinceLastWorkout > 30) "30+" else s.daysSinceLastWorkout.toString()}j")
+            s.weightTrendKgPerWeek30d?.let { append("Trend poids 30j: ${fmtD1(it)} kg/sem") }
+        }
     }
 
     // ═══════════════════════════════════════
@@ -67,7 +139,7 @@ class UserContextBuilder @Inject constructor(
         val dayNames = p.workoutDays.sorted().joinToString(", ") { d ->
             DayOfWeek.of(d).getDisplayName(TextStyle.SHORT, Locale.FRANCE)
         }
-        return """[PROFIL] ${p.firstName}, ${p.age} ans, ${if (p.sex == "M") "H" else "F"}, ${p.heightCm}cm
+        return """[PROFIL] ${safeUserText(p.firstName, 60)}, ${p.age} ans, ${if (p.sex == "M") "H" else "F"}, ${p.heightCm}cm
 Poids: ${fmtD1(p.currentWeightKg)}kg → cible ${fmtD1(p.targetWeightKg)}kg (${fmtD1(p.currentWeightKg - p.targetWeightKg)}kg à ${if (p.currentWeightKg > p.targetWeightKg) "perdre" else "prendre"})
 Objectif: $goal | Niveau: $level | Équipement: $equip
 Durée préférée: ${p.preferredWorkoutDuration}min | Jours: $dayNames
@@ -79,7 +151,7 @@ Mensurations: taille ${p.waistCm}cm, poitrine ${p.chestCm}cm, bras ${p.armCm}cm,
     // ═══════════════════════════════════════
     private fun buildHealthBlock(p: UserProfileEntity): String {
         if (p.healthNotes.isBlank()) return "[SANTÉ] Aucune limitation signalée."
-        return "[SANTÉ/LIMITATIONS] ${p.healthNotes}\n⚠ Adapter les exercices en conséquence."
+        return "[SANTÉ/LIMITATIONS] ${safeUserText(p.healthNotes, 400)}\n⚠ Adapter les exercices en conséquence."
     }
 
     // ═══════════════════════════════════════

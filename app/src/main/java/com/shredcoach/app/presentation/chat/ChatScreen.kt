@@ -14,6 +14,8 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.ThumbDown
+import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -148,7 +150,10 @@ fun ChatScreen(
                     }
 
                     items(state.messages, key = { it.id }) { message ->
-                        ChatBubble(message)
+                        ChatBubble(
+                            message = message,
+                            onRate = { newRating -> viewModel.rateMessage(message.id, newRating) }
+                        )
                     }
 
                     if (state.streamingText.isNotBlank()) {
@@ -343,7 +348,7 @@ private fun SuggestionChip(text: String, onClick: (String) -> Unit) {
 // ═══════════════════════════════════════
 
 @Composable
-private fun ChatBubble(message: ChatMessageEntity) {
+private fun ChatBubble(message: ChatMessageEntity, onRate: (Int?) -> Unit = {}) {
     val isUser = message.role == "user"
     val bubbleColor = when {
         message.isError -> MaterialTheme.colorScheme.errorContainer
@@ -393,12 +398,55 @@ private fun ChatBubble(message: ChatMessageEntity) {
             }
         }
 
-        Text(
-            message.timestamp.format(DateTimeFormatter.ofPattern("HH:mm")),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f),
-            modifier = Modifier.padding(horizontal = 36.dp, vertical = 2.dp)
-        )
+        // Pour les messages assistant non-error : timestamp + thumbs up/down.
+        // Tap sur un thumb déjà actif annule (rating=null). Source de vérité
+        // pour le feedback continu offline (analyse des bad ratings).
+        Row(
+            modifier = Modifier.padding(horizontal = 36.dp).fillMaxWidth(0.88f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
+        ) {
+            Text(
+                message.timestamp.format(DateTimeFormatter.ofPattern("HH:mm")),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f),
+                modifier = Modifier.padding(vertical = 2.dp)
+            )
+            if (!isUser && !message.isError) {
+                Spacer(Modifier.width(8.dp))
+                ChatRatingRow(currentRating = message.userRating, onRate = onRate)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChatRatingRow(currentRating: Int?, onRate: (Int?) -> Unit) {
+    val isUp = currentRating == 1
+    val isDown = currentRating == -1
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(0.dp)) {
+        IconButton(
+            onClick = { onRate(if (isUp) null else 1) },
+            modifier = Modifier.size(28.dp)
+        ) {
+            Icon(
+                imageVector = if (isUp) Icons.Default.ThumbUp else Icons.Outlined.ThumbUp,
+                contentDescription = stringResource(R.string.chat_rate_up_cd),
+                modifier = Modifier.size(14.dp),
+                tint = if (isUp) NeonGreen else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
+            )
+        }
+        IconButton(
+            onClick = { onRate(if (isDown) null else -1) },
+            modifier = Modifier.size(28.dp)
+        ) {
+            Icon(
+                imageVector = if (isDown) Icons.Default.ThumbDown else Icons.Outlined.ThumbDown,
+                contentDescription = stringResource(R.string.chat_rate_down_cd),
+                modifier = Modifier.size(14.dp),
+                tint = if (isDown) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
+            )
+        }
     }
 }
 

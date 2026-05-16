@@ -35,7 +35,9 @@ data class ChatState(
 class ChatViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val userRepository: UserRepository,
-    private val userContextBuilder: UserContextBuilder
+    private val userContextBuilder: UserContextBuilder,
+    @dagger.hilt.android.qualifiers.ApplicationContext
+    private val applicationContext: android.content.Context,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ChatState())
@@ -150,24 +152,87 @@ class ChatViewModel @Inject constructor(
             val isFirstMessage = recent.isEmpty()
             val profileForName = userRepository.getUserProfileOnce()
             val firstName = profileForName?.firstName?.takeIf { it.isNotBlank() } ?: "l'utilisateur"
-            val userContext = if (isFirstMessage) {
+            val baseContext = if (isFirstMessage) {
                 try { userContextBuilder.buildContext() } catch (_: Exception) { "[PROFIL] Prénom: $firstName" }
             } else {
                 "[RAPPEL] Le prénom de l'utilisateur est $firstName. Ne te présente pas, continue la conversation."
             }
+            // Sliding window : on n'envoie que les 10 derniers messages (cf.
+            // `getRecentMessages(..., 10)`). Pour les conversations longues
+            // (>10), on prepend un récap extractif des plus anciens pour que
+            // le LLM ne perde pas le contexte du début. Coût ~1ms, déterministe.
+            val historyRecap = chatRepository.buildHistoryRecap(conversationId)
+            val userContext = if (historyRecap != null) "$historyRecap\n\n$baseContext" else baseContext
+
+            // Safety filter : si le user mentionne un symptôme critique, on
+            // pré-affiche un disclaimer "consulter un médecin" AVANT toute
+            // réponse LLM. Couvre les cas où le LLM ignorerait sa consigne
+            // "JAMAIS de conseils médicaux".
+            val needsMedicalSafety = com.shredcoach.app.domain.chat.MedicalSafetyFilter
+                .isMedicalCritical(text)
+            if (needsMedicalSafety) {
+                val banner = com.shredcoach.app.domain.chat.MedicalSafetyFilter
+                    .safetyBanner(applicationContext)
+                _state.update { it.copy(streamingText = banner) }
+            }
+
+            // Démarrer le chrono LLM (télémétrie : envoi → dernier token).
+            val turnStartMs = System.currentTimeMillis()
 
             try {
                 val buffer = StringBuilder()
-                chatRepository.streamFromLlm(text, provider, apiKey, model, recent, userContext)
-                    .collect { token ->
+                if (needsMedicalSafety) {
+                    buffer.append(
+                        com.shredcoach.app.domain.chat.MedicalSafetyFilter
+                            .safetyBanner(applicationContext)
+                    )
+                }
+                // Routage par intent (P0a fix) :
+                //  - Action verbs (log, je pèse, j'ai mangé, où j'en suis…)
+                //    → tool-aware path (non-streaming, ~2-5s avant le 1er char
+                //    mais permet log_meal / set_weight / get_today_stats).
+                //  - Sinon : streaming SSE rapide (1er token ~300-500ms),
+                //    sans tools. Le snapshot context du turn 1 + system prompt
+                //    suffisent largement pour répondre à 80% des questions
+                //    coaching/conseil sans appel d'outil.
+                val useTools = com.shredcoach.app.domain.chat.ChatIntentClassifier
+                    .shouldUseTools(text)
+
+                if (useTools) {
+                    val fullSystemPrompt = com.shredcoach.app.data.remote.LlmApiService.SYSTEM_PROMPT +
+                        if (userContext.isNotBlank()) "\n\n$userContext" else ""
+                    chatRepository.streamFromLlmWithTools(
+                        userMessage = text,
+                        provider = provider,
+                        apiKey = apiKey,
+                        model = model,
+                        recentMessages = recent,
+                        systemPrompt = fullSystemPrompt,
+                    ).collect { token ->
                         buffer.append(token)
                         _state.update { it.copy(streamingText = buffer.toString()) }
                     }
+                } else {
+                    // Streaming classique — userContext est injecté APRÈS le
+                    // system prompt par LlmApiService.streamMessage.
+                    chatRepository.streamFromLlm(
+                        userMessage = text,
+                        provider = provider,
+                        apiKey = apiKey,
+                        model = model,
+                        recentMessages = recent,
+                        userContext = userContext,
+                    ).collect { token ->
+                        buffer.append(token)
+                        _state.update { it.copy(streamingText = buffer.toString()) }
+                    }
+                }
 
                 val fullResponse = buffer.toString()
                 if (fullResponse.isNotBlank()) {
                     chatRepository.insertMessage(ChatMessageEntity(
-                        conversationId = conversationId, role = "assistant", content = fullResponse
+                        conversationId = conversationId, role = "assistant", content = fullResponse,
+                        latencyMs = System.currentTimeMillis() - turnStartMs,
                     ))
                 }
             } catch (e: Exception) {
@@ -193,5 +258,15 @@ class ChatViewModel @Inject constructor(
             chatRepository.deleteConversation(_state.value.currentConversationId)
             startNewConversation()
         }
+    }
+
+    /**
+     * Note utilisateur sur un message assistant. [rating] : +1 = thumb up,
+     * -1 = thumb down, null = un-rate. Le UI Compose appelle cette méthode
+     * sur tap d'un bouton thumb. Source de vérité pour l'amélioration empirique
+     * des prompts via analyse offline des bad ratings.
+     */
+    fun rateMessage(messageId: Long, rating: Int?) {
+        viewModelScope.launch { chatRepository.updateRating(messageId, rating) }
     }
 }
