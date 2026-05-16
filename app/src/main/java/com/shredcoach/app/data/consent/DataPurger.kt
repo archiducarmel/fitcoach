@@ -127,7 +127,11 @@ class DataPurger @Inject constructor(
         val mealScanDao = db.mealScanDao()
         val glucoseDao = db.glucoseDao()
         userProfileDao.getAllPhotos().first().forEach { paths += it.filePath }
-        mealScanDao.getAllScans().first().mapNotNull { it.photoPath }.forEach { paths += it }
+        val allScans = mealScanDao.getAllScans().first()
+        allScans.mapNotNull { it.photoPath }.forEach { paths += it }
+        // v45 : restes rescannés — données de santé sensibles au même titre que
+        // la photo principale du repas, doivent être purgés.
+        allScans.mapNotNull { it.leftoverPhotoPath }.forEach { paths += it }
         userProfileDao.getUserProfileOnce()?.profilePhotoPath?.let { paths += it }
         // CGM screenshots (v44+) — contiennent données de santé sensibles,
         // doivent être purgés au même titre que les autres photos.

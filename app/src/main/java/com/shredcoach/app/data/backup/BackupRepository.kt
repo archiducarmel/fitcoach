@@ -130,6 +130,11 @@ class BackupRepository @Inject constructor(
             val photoPaths = buildList {
                 tables.progressPhotos.forEach { add(it.filePath) }
                 tables.mealScans.mapNotNull { it.photoPath }.forEach { add(it) }
+                // v45 : photos des restes rescannés — incluses dans le backup au
+                // même titre que la photo principale du repas (cohérence sémantique
+                // + l'utilisateur s'attend à voir les déductions reproduites au
+                // restore, pas juste le repas initial).
+                tables.mealScans.mapNotNull { it.leftoverPhotoPath }.forEach { add(it) }
                 tables.userProfile?.bodyScanImagePath?.let { add(it) }
                 tables.userProfile?.bodyMeshFeaturesPath?.let { add(it) }
                 // CGM screenshots (v44+) — archive le fichier comme les autres photos
@@ -262,9 +267,13 @@ class BackupRepository @Inject constructor(
                     if (newPath == row.filePath) row else row.copy(filePath = newPath)
                 },
                 mealScans = manifest.tables.mealScans.map { row ->
-                    val originalPath = row.photoPath ?: return@map row
-                    val newPath = originalToNew[originalPath] ?: originalPath
-                    if (newPath == originalPath) row else row.copy(photoPath = newPath)
+                    // v45 : patcher photoPath ET leftoverPhotoPath. Les deux
+                    // proviennent du même répertoire `meal_scans/` mais sont
+                    // des fichiers distincts qu'il faut remapper indépendamment.
+                    val newMainPath = row.photoPath?.let { originalToNew[it] ?: it }
+                    val newLeftoverPath = row.leftoverPhotoPath?.let { originalToNew[it] ?: it }
+                    if (newMainPath == row.photoPath && newLeftoverPath == row.leftoverPhotoPath) row
+                    else row.copy(photoPath = newMainPath, leftoverPhotoPath = newLeftoverPath)
                 },
                 glucoseLogs = manifest.tables.glucoseLogs.map { row ->
                     val originalPath = row.imagePath ?: return@map row
@@ -408,8 +417,12 @@ class BackupRepository @Inject constructor(
          * Hardcodée car la version Room n'est pas exposée à runtime de manière
          * propre — `db.openHelper.readableDatabase.version` fonctionne mais
          * c'est un round-trip SQLite à chaque export, peu utile.
+         *
+         * **Historique** : v38 (i18n languageTag), v40 (bodyMeshFeaturesPath),
+         * v41 (body_scan_logs), v42 (chat ratings), v43 (glucose_logs),
+         * v44 (chat persona), v45 (meal scan modifiers — ×N portions + restes).
          */
-        const val ROOM_DB_VERSION = 38
+        const val ROOM_DB_VERSION = 45
         val ISO_FILE: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss'Z'")
     }
 }

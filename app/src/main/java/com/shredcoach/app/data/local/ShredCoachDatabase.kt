@@ -30,7 +30,7 @@ import com.shredcoach.app.data.local.entity.BodyScanLogEntity
         BodyScanLogEntity::class,
         GlucoseLogEntity::class
     ],
-    version = 44,
+    version = 45,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

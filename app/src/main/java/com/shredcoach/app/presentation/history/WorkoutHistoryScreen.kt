@@ -288,7 +288,11 @@ private fun NutritionHistoryContent(
             grouped.forEach { (date, dayScans) ->
                 val dateStr = date.format(java.time.format.DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.getDefault()))
                     .replaceFirstChar { it.uppercase() }
-                val dayCalories = dayScans.sumOf { it.totalCalories }
+                // v45 : agrégation effective (×N + déduction restes) — cohérent avec
+                // le total journalier affiché sur NutritionScreen / Home.
+                val dayCalories = dayScans.sumOf {
+                    com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveCalories(it)
+                }
 
                 item {
                     Row(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp),
@@ -350,6 +354,17 @@ private fun MealHistoryCard(scan: com.shredcoach.app.data.local.entity.MealScanE
     val scoreColor = when { scan.healthScore >= 8 -> NeonGreen; scan.healthScore >= 5 -> OrangeVibrant; else -> MaterialTheme.colorScheme.error }
     val mealLabel = com.shredcoach.app.domain.nutrition.MealTypeClassifier
         .fromId(scan.mealType).displayName
+    // v45 : valeurs effectives (×N portions − restes). Si pas de modificateur,
+    // le facteur = 1.0 et on retombe sur les valeurs raw.
+    val effectiveCalories = com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveCalories(scan)
+    val effectiveProteins = com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveProteins(scan)
+    val effectiveCarbs = com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveCarbs(scan)
+    val effectiveFats = com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveFats(scan)
+    val effectiveFibers = com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveFibers(scan)
+    val factor = com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveFactor(scan)
+    val effectiveWeight = (scan.totalWeight * factor).toInt().coerceAtLeast(0)
+    val hasMultiplier = scan.servingMultiplier != 1f
+    val hasLeftover = scan.leftoverCalories > 0
 
     Card(
         onClick = onClick,
@@ -421,20 +436,47 @@ private fun MealHistoryCard(scan: com.shredcoach.app.data.local.entity.MealScanE
             }
 
             // ─── Macros — noms complets + barres proportionnelles ───
-            val totalMacroG = (scan.totalProteins + scan.totalCarbs + scan.totalFats + scan.totalFibers).coerceAtLeast(1.0)
+            // v45 : on affiche les valeurs effectives (cohérent avec le total
+            // de la journée). Pour le calcul des proportions de la barre, on
+            // somme également les effectives.
+            val totalMacroG = (effectiveProteins + effectiveCarbs + effectiveFats + effectiveFibers).coerceAtLeast(1.0)
             Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)).padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.history_meal_calories_card, scan.totalCalories), style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.ExtraBold, color = OrangeVibrant)
-                    Text(stringResource(R.string.history_meal_weight, scan.totalWeight), style = MaterialTheme.typography.bodySmall,
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(stringResource(R.string.history_meal_calories_card, effectiveCalories), style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold, color = OrangeVibrant)
+                        if (hasMultiplier) {
+                            Surface(shape = RoundedCornerShape(6.dp), color = OrangeVibrant.copy(alpha = 0.14f)) {
+                                Text(
+                                    com.shredcoach.app.presentation.nutrition.components.formatMultiplier(scan.servingMultiplier),
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                    style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
+                                    fontWeight = FontWeight.Bold,
+                                    color = OrangeVibrant,
+                                )
+                            }
+                        }
+                        if (hasLeftover) {
+                            Surface(shape = RoundedCornerShape(6.dp), color = MaterialTheme.colorScheme.errorContainer) {
+                                Text(
+                                    stringResource(R.string.meal_modifier_leftover_badge_inline, scan.leftoverCalories),
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                    style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                )
+                            }
+                        }
+                    }
+                    Text(stringResource(R.string.history_meal_weight, effectiveWeight), style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                 }
-                // 4 barres macros noms complets
-                HistoryMacroBar(stringResource(R.string.history_meal_macro_proteins), scan.totalProteins, Color(0xFF3B82F6), totalMacroG)
-                HistoryMacroBar(stringResource(R.string.history_meal_macro_carbs), scan.totalCarbs, OrangeVibrant, totalMacroG)
-                HistoryMacroBar(stringResource(R.string.history_meal_macro_fats), scan.totalFats, Color(0xFFEF4444), totalMacroG)
-                HistoryMacroBar(stringResource(R.string.history_meal_macro_fibers), scan.totalFibers, NeonGreen, totalMacroG)
+                // 4 barres macros noms complets — valeurs effectives
+                HistoryMacroBar(stringResource(R.string.history_meal_macro_proteins), effectiveProteins, Color(0xFF3B82F6), totalMacroG)
+                HistoryMacroBar(stringResource(R.string.history_meal_macro_carbs), effectiveCarbs, OrangeVibrant, totalMacroG)
+                HistoryMacroBar(stringResource(R.string.history_meal_macro_fats), effectiveFats, Color(0xFFEF4444), totalMacroG)
+                HistoryMacroBar(stringResource(R.string.history_meal_macro_fibers), effectiveFibers, NeonGreen, totalMacroG)
             }
 
             // ─── Verdict ───
@@ -844,9 +886,15 @@ private fun buildNutritionHistoryShareData(
     scans: List<com.shredcoach.app.data.local.entity.MealScanEntity>,
     ctx: android.content.Context,
 ): com.shredcoach.app.presentation.share.ShareCardData.HistorySummary {
-    val totalCalories = scans.sumOf { it.totalCalories }
+    // v45 : on partage les valeurs effectivement consommées (×N portions − restes),
+    // cohérentes avec ce que l'user a tracké au jour le jour.
+    val totalCalories = scans.sumOf {
+        com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveCalories(it)
+    }
     val avgHealth = if (scans.isNotEmpty()) scans.map { it.healthScore }.average().toInt() else 0
-    val avgProt = if (scans.isNotEmpty()) scans.map { it.totalProteins }.average().toInt() else 0
+    val avgProt = if (scans.isNotEmpty()) scans.map {
+        com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveProteins(it)
+    }.average().toInt() else 0
     return com.shredcoach.app.presentation.share.ShareCardData.HistorySummary(
         title = ctx.getString(R.string.history_share_nutrition_title),
         subtitle = ctx.getString(R.string.history_share_nutrition_subtitle),
@@ -937,18 +985,23 @@ private fun buildNutritionHistoryExportPayload(
             ctx.getString(R.string.history_export_col_verdict),
             ctx.getString(R.string.history_export_col_added_to_tracking),
         ),
+        // v45 : export des valeurs effectives (×N portions − restes). Si un user
+        // export son CSV pour suivi externe, il s'attend aux valeurs réellement
+        // consommées (= ce qui apparaît dans le total journal), pas les
+        // estimations LLM brutes du scan initial.
         rows = scans.map { s ->
+            val factor = com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveFactor(s)
             listOf(
                 s.timestamp.format(historyDateFmt),
                 s.mealType,
                 s.dishName,
                 s.cuisine,
-                s.totalCalories.toString(),
-                "%.1f".format(s.totalProteins),
-                "%.1f".format(s.totalCarbs),
-                "%.1f".format(s.totalFats),
-                "%.1f".format(s.totalFibers),
-                s.totalWeight.toString(),
+                com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveCalories(s).toString(),
+                "%.1f".format(com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveProteins(s)),
+                "%.1f".format(com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveCarbs(s)),
+                "%.1f".format(com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveFats(s)),
+                "%.1f".format(com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveFibers(s)),
+                (s.totalWeight * factor).toInt().toString(),
                 s.healthScore.toString(),
                 s.nutriScoreGrade,
                 s.verdict,
@@ -957,7 +1010,9 @@ private fun buildNutritionHistoryExportPayload(
         },
         summary = listOf(
             ctx.getString(R.string.history_export_summary_total_scans) to scans.size.toString(),
-            ctx.getString(R.string.history_export_summary_total_kcal) to scans.sumOf { it.totalCalories }.toString(),
+            ctx.getString(R.string.history_export_summary_total_kcal) to scans.sumOf {
+                com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveCalories(it)
+            }.toString(),
             ctx.getString(R.string.history_export_summary_avg_health_score) to (if (scans.isNotEmpty()) scans.map { it.healthScore }.average().toInt() else 0).toString(),
         ),
     )

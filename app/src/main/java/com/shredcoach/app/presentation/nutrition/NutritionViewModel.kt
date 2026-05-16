@@ -25,7 +25,14 @@ import javax.inject.Inject
 data class MealWithFood(
     val meal: MealLogEntity,
     val food: FoodEntity,
-    val photoPath: String? = null // Photo du scan (si repas issu d'un scan)
+    val photoPath: String? = null, // Photo du scan (si repas issu d'un scan)
+    /**
+     * Scan parent — non-null UNIQUEMENT pour les meal_logs issus d'un scan
+     * (meal.scanId != null). Porte les modificateurs de portion v45+
+     * (servingMultiplier, leftoverCalories, etc.) pour que la UI puisse
+     * afficher les valeurs effectives + les badges (×N, restes).
+     */
+    val scan: MealScanEntity? = null,
 )
 
 @Immutable
@@ -76,7 +83,24 @@ data class NutritionState(
      * (MET 5.5 → 3.8 + facteur durée 0.7, 2026-05-16). Affiché jusqu'à dismiss.
      */
     val showRecalibrationBanner: Boolean = false,
+    /**
+     * v45 : scans en cours d'analyse OCR des restes — la UI affiche un spinner
+     * sur la card concernée. Set vide = aucune analyse en cours.
+     */
+    val leftoverAnalyzingScanIds: Set<Long> = emptySet(),
+    /**
+     * v45 : feedback éphémère après une action sur les restes (snackbar).
+     * Consommé par la UI via [NutritionViewModel.consumeLeftoverFeedback].
+     */
+    val leftoverFeedback: LeftoverScanFeedback? = null,
 )
+
+/** Snackbar feedback éphémère pour les actions "restes" depuis la page Nutrition. */
+sealed interface LeftoverScanFeedback {
+    object Analyzing : LeftoverScanFeedback
+    data class Success(val deductedKcal: Int) : LeftoverScanFeedback
+    data class Failure(val message: String) : LeftoverScanFeedback
+}
 
 /**
  * Décomposition de la cible calorique du jour, prête à afficher dans l'UI.
@@ -109,6 +133,7 @@ class NutritionViewModel @Inject constructor(
     private val workoutLogDao: WorkoutLogDao,
     private val userRepository: UserRepository,
     private val recalibrationBannerStore: com.shredcoach.app.domain.nutrition.RecalibrationBannerStore,
+    private val mealScanModifierService: com.shredcoach.app.domain.nutrition.MealScanModifierService,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(NutritionState())
@@ -186,21 +211,111 @@ class NutritionViewModel @Inject constructor(
     fun previousDay() = selectDate(_state.value.selectedDate.minusDays(1))
     fun nextDay() = selectDate(_state.value.selectedDate.plusDays(1))
 
+    // ─────────────────────────────────────────────────────────────────────
+    //  v45 : modificateurs de portion ("j'en ai repris" + "j'ai pas fini")
+    // ─────────────────────────────────────────────────────────────────────
+
+    /**
+     * Tap "+1 portion" sur la card d'un repas scanné. Incrémente le multiplicateur
+     * de 1.0 (clampé). Le repas initial reste ×1, deuxième portion = ×2, etc.
+     * La référence est TOUJOURS le scan d'origine — les portions s'additionnent.
+     */
+    fun incrementPortion(scanId: Long) {
+        viewModelScope.launch {
+            val scan = mealScanDao.getScanById(scanId) ?: return@launch
+            val next = com.shredcoach.app.domain.nutrition.MealScanModifierMath
+                .clampMultiplier(scan.servingMultiplier + 1f)
+            mealScanModifierService.setMultiplier(scanId, next)
+        }
+    }
+
+    /**
+     * Tap "+½ portion" sur la card d'un repas scanné. Incrémente de 0.5.
+     */
+    fun incrementHalfPortion(scanId: Long) {
+        viewModelScope.launch {
+            val scan = mealScanDao.getScanById(scanId) ?: return@launch
+            val next = com.shredcoach.app.domain.nutrition.MealScanModifierMath
+                .clampMultiplier(scan.servingMultiplier + 0.5f)
+            mealScanModifierService.setMultiplier(scanId, next)
+        }
+    }
+
+    /**
+     * Décrément intelligent (annule la dernière action) : −1 si multiplier entier,
+     * −0.5 sinon. Borné à 1.0 minimum (le repas initial existe forcément).
+     */
+    fun decrementPortion(scanId: Long) {
+        viewModelScope.launch {
+            val scan = mealScanDao.getScanById(scanId) ?: return@launch
+            val next = com.shredcoach.app.domain.nutrition.MealScanModifierMath
+                .smartDecrement(scan.servingMultiplier)
+            mealScanModifierService.setMultiplier(scanId, next)
+        }
+    }
+
+    /**
+     * Lance l'OCR Gemini sur la photo des restes pour ce scan. Le scanId
+     * est résolu par le caller (chaque card a son propre photo picker).
+     * Renvoie une snackbar via [LeftoverScanFeedback] state.
+     */
+    fun runLeftoverScan(scanId: Long, bitmap: android.graphics.Bitmap) {
+        if (_state.value.leftoverAnalyzingScanIds.contains(scanId)) return
+        _state.update {
+            it.copy(
+                leftoverAnalyzingScanIds = it.leftoverAnalyzingScanIds + scanId,
+                leftoverFeedback = LeftoverScanFeedback.Analyzing,
+            )
+        }
+        viewModelScope.launch {
+            val result = mealScanModifierService.scanAndApplyLeftover(scanId, bitmap)
+            _state.update {
+                it.copy(
+                    leftoverAnalyzingScanIds = it.leftoverAnalyzingScanIds - scanId,
+                    leftoverFeedback = result.fold(
+                        onSuccess = { analysis ->
+                            LeftoverScanFeedback.Success(analysis.totalCalories)
+                        },
+                        onFailure = { e ->
+                            LeftoverScanFeedback.Failure(e.message?.take(120).orEmpty())
+                        },
+                    ),
+                )
+            }
+        }
+    }
+
+    /** Reset les restes (l'user change d'avis). */
+    fun clearLeftover(scanId: Long) {
+        viewModelScope.launch { mealScanModifierService.clearLeftover(scanId) }
+    }
+
+    /** Consommé par la UI après affichage du snackbar de feedback. */
+    fun consumeLeftoverFeedback() {
+        _state.update { it.copy(leftoverFeedback = null) }
+    }
+
     // ── Chargement données du jour ──
     private fun loadDay(date: LocalDate) {
         viewModelScope.launch {
             // Combine flows J-1 + J : un nouveau repas logué hier soir OU plus
             // tôt aujourd'hui doit recalculer la fenêtre de jeûne nocturne.
+            // v45+ : on combine aussi `getAllScans()` — toute modification d'un
+            // modificateur (×N, restes) re-emit et déclenche le rebuild des
+            // MealWithFood. Sans ça, tap "+ portion" ne ferait rien visuel.
             val yesterday = date.minusDays(1)
             kotlinx.coroutines.flow.combine(
                 repo.getMealsForDate(date),
-                repo.getMealsForDate(yesterday)
-            ) { todayMeals, yesterdayMeals -> todayMeals to yesterdayMeals }
+                repo.getMealsForDate(yesterday),
+                mealScanDao.getAllScans(),
+            ) { todayMeals, yesterdayMeals, _ -> todayMeals to yesterdayMeals }
                 .collect { (meals, yesterdayMeals) ->
                     val mealsWithFood = meals.mapNotNull { meal ->
                         repo.getFoodById(meal.foodId)?.let { food ->
-                            val photo = meal.scanId?.let { sid -> mealScanDao.getScanById(sid)?.photoPath }
-                            MealWithFood(meal, food, photoPath = photo)
+                            // Charge le scan parent une seule fois — il porte la photo +
+                            // les modificateurs de portion (×N, restes). v45+.
+                            val scan = meal.scanId?.let { sid -> mealScanDao.getScanById(sid) }
+                            MealWithFood(meal, food, photoPath = scan?.photoPath, scan = scan)
                         }
                     }
                     val totals = repo.getDayTotals(date)

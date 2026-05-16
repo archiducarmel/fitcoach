@@ -25,6 +25,35 @@
     <string name="common_edit">Bearbeiten</string>
     <string name="common_continue">Weiter</string>
     <string name="common_back">Zurück</string>
+    <string name="common_apply">Übernehmen</string>
+
+    <!-- ────────── Meal modifiers (v45) ────────── -->
+    <string name="meal_modifier_seconds_title">Ich habe nachgenommen</string>
+    <string name="meal_modifier_seconds_subtitle">Tippe +1 für jede zusätzliche Portion</string>
+    <string name="meal_modifier_effective_calories">%d kcal tatsächlich</string>
+    <string name="meal_modifier_add_full">+ 1 Portion</string>
+    <string name="meal_modifier_add_half">+ ½</string>
+    <string name="meal_modifier_undo_cd">Letzte Portion rückgängig</string>
+
+    <string name="meal_modifier_leftover_title">Ich habe nicht aufgegessen</string>
+    <string name="meal_modifier_leftover_title_active">Reste abgezogen</string>
+    <string name="meal_modifier_leftover_subtitle">Scanne die Reste — wir ziehen sie automatisch ab</string>
+    <string name="meal_modifier_leftover_subtitle_active">Restkalorien vom ursprünglichen Gericht abgezogen</string>
+    <string name="meal_modifier_leftover_clear_cd">Abzug rückgängig machen</string>
+    <string name="meal_modifier_leftover_analyzing">Reste werden analysiert…</string>
+    <string name="meal_modifier_leftover_pick_gallery">Galerie</string>
+    <string name="meal_modifier_leftover_pick_camera">Foto</string>
+    <string name="meal_modifier_leftover_deducted_kcal">−%d kcal</string>
+    <string name="meal_modifier_leftover_deducted_macros">−%1$d g Prot · −%2$d g KH · −%3$d g Fett</string>
+    <string name="meal_modifier_leftover_rescan">Neu scannen</string>
+    <string name="meal_modifier_leftover_rescan_camera">Neu fotografieren</string>
+    <string name="meal_modifier_leftover_badge_overlay">🥡 −%d</string>
+    <string name="meal_modifier_leftover_badge_inline">🥡 −%d kcal</string>
+    <string name="meal_modifier_leftover_quick_action">🥡 Reste</string>
+    <string name="meal_modifier_leftover_analyzing_short">Analyse…</string>
+    <string name="meal_modifier_snackbar_analyzing">Reste werden analysiert…</string>
+    <string name="meal_modifier_snackbar_success">Reste abgezogen: −%d kcal</string>
+    <string name="meal_modifier_snackbar_failure">Analyse der Reste fehlgeschlagen: %s</string>
 
     <!-- Legacy keys -->
     <string name="start">Starten</string>

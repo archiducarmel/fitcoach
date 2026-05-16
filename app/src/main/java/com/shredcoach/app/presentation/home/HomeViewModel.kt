@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import com.shredcoach.app.data.local.entity.WorkoutEntity
@@ -82,6 +83,7 @@ class HomeViewModel @Inject constructor(
     private val plateauDetector: PlateauDetector,
     private val workoutLogDao: WorkoutLogDao,
     private val wellnessStore: WellnessStore,
+    private val mealScanDao: com.shredcoach.app.data.local.dao.MealScanDao,
 ) : ViewModel() {
 
     private val _userProfile = MutableStateFlow<UserProfileEntity?>(null)
@@ -138,25 +140,54 @@ class HomeViewModel @Inject constructor(
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     val todayNutrition: StateFlow<TodayNutrition?> = todayDateFlow.flatMapLatest { date ->
-        combine(
+        // v45 : on consomme `getDayTotals(date)` (qui applique le facteur
+        // ×N + déduction restes via JOIN SQL) plutôt que de sommer
+        // meals.calories en clair.
+        //
+        // **Triggers de re-emit** : les deux Flow ci-dessous (meals + scans)
+        // garantissent que la card Home se met à jour quand :
+        //  - L'user ajoute/supprime un repas (meal_logs change → meals Flow)
+        //  - L'user tape "+ portion" ou scanne des restes (meal_scans change
+        //    → scans Flow). Sans ça, la home resterait stale jusqu'au prochain
+        //    add/delete de repas.
+        // Le résultat des scans est ignoré (`_`) — il sert juste de trigger.
+        val mealsTrigger = combine(
             nutritionRepository.getMealsForDate(date),
+            mealScanDao.getAllScans(),
+        ) { _, _ -> date }
+        combine(
+            mealsTrigger,
             nutritionRepository.getNutritionGoal(),
             nutritionRepository.getEnabledSchedules(),
             workoutLogDao.getWorkoutLogsBetween(date, date),
             _userProfile,
-        ) { meals, goal, schedules, workouts, profile ->
-            buildTodayNutrition(
-                consumedMacros = meals.map { Triple(it.calories, it.proteins, Pair(it.carbs, it.fats)) },
-                goal = goal,
-                schedules = schedules,
-                completedWorkoutsToday = workouts.filter { it.completed },
-                profile = profile,
+        ) { d, goal, schedules, workouts, profile ->
+            TodayNutritionBundle(d, goal, schedules, workouts, profile)
+        }.transformLatest { b ->
+            val totals = nutritionRepository.getDayTotals(b.date)
+            emit(
+                buildTodayNutrition(
+                    consumedTotals = totals,
+                    goal = b.goal,
+                    schedules = b.schedules,
+                    completedWorkoutsToday = b.workouts.filter { it.completed },
+                    profile = b.profile,
+                )
             )
         }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = null,
+    )
+
+    /** Bundle interne — alternative aux Tuple/PairOfPair pour rester typed. */
+    private data class TodayNutritionBundle(
+        val date: LocalDate,
+        val goal: NutritionGoalEntity?,
+        val schedules: List<NutritionScheduleEntity>,
+        val workouts: List<WorkoutLogEntity>,
+        val profile: UserProfileEntity?,
     )
 
     /**
@@ -453,16 +484,16 @@ class HomeViewModel @Inject constructor(
      * découplage, on n'a besoin que des macros — facilite les tests futurs.
      */
     private fun buildTodayNutrition(
-        consumedMacros: List<Triple<Double, Double, Pair<Double, Double>>>,
+        consumedTotals: com.shredcoach.app.data.local.dao.DayTotals,
         goal: NutritionGoalEntity?,
         schedules: List<NutritionScheduleEntity>,
         completedWorkoutsToday: List<WorkoutLogEntity>,
         profile: UserProfileEntity?,
     ): TodayNutrition {
-        val cal = consumedMacros.sumOf { it.first }
-        val prot = consumedMacros.sumOf { it.second }
-        val carbs = consumedMacros.sumOf { it.third.first }
-        val fats = consumedMacros.sumOf { it.third.second }
+        val cal = consumedTotals.totalCalories
+        val prot = consumedTotals.totalProteins
+        val carbs = consumedTotals.totalCarbs
+        val fats = consumedTotals.totalFats
         val goalSafe = goal ?: NutritionGoalEntity()
 
         // Cible adaptative — calculée via le helper UNIQUE

@@ -46,6 +46,36 @@ private val FatColor = Color(0xFFEF4444)
 @Composable
 fun NutritionScreen(navController: NavController, viewModel: NutritionViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = com.shredcoach.app.presentation.navigation.LocalSnackbarHostState.current
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+
+    // Feedback éphémère pour l'analyse OCR des restes (action depuis la card repas).
+    // 3 états : Analyzing (court, transitoire), Success (court), Failure (long).
+    LaunchedEffect(state.leftoverFeedback) {
+        when (val fb = state.leftoverFeedback) {
+            is com.shredcoach.app.presentation.nutrition.LeftoverScanFeedback.Analyzing -> {
+                snackbarHostState.showSnackbar(
+                    ctx.getString(R.string.meal_modifier_snackbar_analyzing),
+                    duration = SnackbarDuration.Short,
+                )
+            }
+            is com.shredcoach.app.presentation.nutrition.LeftoverScanFeedback.Success -> {
+                snackbarHostState.showSnackbar(
+                    ctx.getString(R.string.meal_modifier_snackbar_success, fb.deductedKcal),
+                    duration = SnackbarDuration.Short,
+                )
+                viewModel.consumeLeftoverFeedback()
+            }
+            is com.shredcoach.app.presentation.nutrition.LeftoverScanFeedback.Failure -> {
+                snackbarHostState.showSnackbar(
+                    ctx.getString(R.string.meal_modifier_snackbar_failure, fb.message),
+                    duration = SnackbarDuration.Long,
+                )
+                viewModel.consumeLeftoverFeedback()
+            }
+            null -> Unit
+        }
+    }
 
     // BottomSheet ajout repas
     if (state.showAddMeal) {
@@ -174,10 +204,34 @@ fun NutritionScreen(navController: NavController, viewModel: NutritionViewModel 
                             )
                         }
 
-                        MealCard(mwf, onDelete = {
-                            com.shredcoach.app.presentation.util.hapticClick(context)
-                            showDeleteConfirm = true
-                        })
+                        MealCard(
+                            mwf = mwf,
+                            isLeftoverAnalyzing = mwf.meal.scanId?.let { state.leftoverAnalyzingScanIds.contains(it) } == true,
+                            onDelete = {
+                                com.shredcoach.app.presentation.util.hapticClick(context)
+                                showDeleteConfirm = true
+                            },
+                            onOpenDetail = mwf.meal.scanId?.let { sid ->
+                                {
+                                    com.shredcoach.app.presentation.util.hapticClick(context)
+                                    navController.navigate(
+                                        com.shredcoach.app.presentation.navigation.Screen.MealScanDetail.createRoute(sid)
+                                    )
+                                }
+                            },
+                            onIncrementPortion = mwf.meal.scanId?.let { sid ->
+                                {
+                                    com.shredcoach.app.presentation.util.hapticClick(context)
+                                    viewModel.incrementPortion(sid)
+                                }
+                            },
+                            onScanLeftover = mwf.meal.scanId?.let { sid ->
+                                { bmp ->
+                                    com.shredcoach.app.presentation.util.hapticClick(context)
+                                    viewModel.runLeftoverScan(sid, bmp)
+                                }
+                            },
+                        )
                     }
                 }
             }
@@ -438,7 +492,14 @@ private fun NutritionMacroRing(label: String, current: Double, target: Int, colo
 // CARD REPAS
 // ═══════════════════════════════════════
 @Composable
-private fun MealCard(mwf: MealWithFood, onDelete: () -> Unit) {
+private fun MealCard(
+    mwf: MealWithFood,
+    onDelete: () -> Unit,
+    onOpenDetail: (() -> Unit)? = null,
+    onIncrementPortion: (() -> Unit)? = null,
+    onScanLeftover: ((android.graphics.Bitmap) -> Unit)? = null,
+    isLeftoverAnalyzing: Boolean = false,
+) {
     val hasPhoto = mwf.photoPath != null
     // Nutri-Score : stocké si scan, sinon calculé à la volée depuis les macros du food
     val nutriGrade = mwf.meal.nutriScoreGrade.firstOrNull()
@@ -451,8 +512,26 @@ private fun MealCard(mwf: MealWithFood, onDelete: () -> Unit) {
             proteinsPer100g = mwf.food.proteinsPer100g
         ).grade
 
-    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
+    // ── v45 : applique le facteur effectif du scan parent (×N + restes) ──
+    //   factor = 1.0 quand pas de modificateur OU repas sans scan.
+    //   Symétrique avec NutritionDao.getDayTotals (somme côté SQL).
+    val scan = mwf.scan
+    val factor = scan?.let { com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveFactor(it) } ?: 1.0
+    val effectiveCalories = (mwf.meal.calories * factor).toInt().coerceAtLeast(0)
+    val effectiveProteins = (mwf.meal.proteins * factor).coerceAtLeast(0.0)
+    val effectiveCarbs = (mwf.meal.carbs * factor).coerceAtLeast(0.0)
+    val effectiveFats = (mwf.meal.fats * factor).coerceAtLeast(0.0)
+    val effectiveQty = (mwf.meal.quantityGrams * factor).toInt().coerceAtLeast(0)
+    val hasMultiplier = scan?.let { it.servingMultiplier != 1f } == true
+    val hasLeftover = scan?.let { it.leftoverCalories > 0 } == true
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .let { m -> if (onOpenDetail != null) m.clickable(onClick = onOpenDetail) else m },
+        shape = RoundedCornerShape(14.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
         Column(Modifier.fillMaxWidth()) {
             // ─── Photo du repas (si scan) ───
             if (hasPhoto) {
@@ -465,14 +544,24 @@ private fun MealCard(mwf: MealWithFood, onDelete: () -> Unit) {
                         modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp)),
                         contentScale = androidx.compose.ui.layout.ContentScale.Crop
                     )
-                    // Overlay kcal en haut à droite
+                    // Overlay kcal en haut à droite (valeur effective)
                     Surface(
                         shape = RoundedCornerShape(8.dp),
                         color = Color.Black.copy(alpha = 0.6f),
                         modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
                     ) {
-                        Text(stringResource(R.string.nutrition_meal_kcal, mwf.meal.calories.toInt()), modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        Text(stringResource(R.string.nutrition_meal_kcal, effectiveCalories), modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                    // Badges modificateurs (en haut à gauche)
+                    if (hasMultiplier || hasLeftover) {
+                        Row(
+                            Modifier.align(Alignment.TopStart).padding(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            if (hasMultiplier) MultiplierOverlayBadge(scan!!.servingMultiplier)
+                            if (hasLeftover) LeftoverOverlayBadge(scan!!.leftoverCalories)
+                        }
                     }
                 }
             }
@@ -485,29 +574,191 @@ private fun MealCard(mwf: MealWithFood, onDelete: () -> Unit) {
                         val timeStr = mwf.meal.time?.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
                         val mealTypeLabel = stringResource(mwf.meal.mealType.displayNameRes)
                         val details = if (timeStr != null)
-                            stringResource(R.string.nutrition_meal_details_with_time, timeStr, mwf.meal.quantityGrams, mealTypeLabel)
-                        else stringResource(R.string.nutrition_meal_details, mwf.meal.quantityGrams, mealTypeLabel)
+                            stringResource(R.string.nutrition_meal_details_with_time, timeStr, effectiveQty, mealTypeLabel)
+                        else stringResource(R.string.nutrition_meal_details, effectiveQty, mealTypeLabel)
                         Text(details,
                             style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                     }
                     Surface(shape = RoundedCornerShape(8.dp), color = OrangeVibrant.copy(alpha = 0.12f)) {
-                        Text(stringResource(R.string.nutrition_meal_kcal, mwf.meal.calories.toInt()), modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        Text(stringResource(R.string.nutrition_meal_kcal, effectiveCalories), modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = OrangeVibrant)
                     }
                     IconButton(onClick = onDelete) {
                         Icon(Icons.Default.Close, stringResource(R.string.nutrition_meal_delete_cd), Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
                     }
                 }
+                // Ligne 1bis : Badges modificateurs (visibles aussi si pas de photo)
+                if (!hasPhoto && (hasMultiplier || hasLeftover)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        if (hasMultiplier) MultiplierInlineBadge(scan!!.servingMultiplier)
+                        if (hasLeftover) LeftoverInlineBadge(scan!!.leftoverCalories)
+                    }
+                }
                 // Ligne 2 : PICTOGRAMME NUTRI-SCORE (toujours visible)
                 com.shredcoach.app.domain.nutrition.NutriScorePictogram(nutriGrade, height = 24.dp)
-                // Ligne 3 : barres macros
+                // Ligne 3 : barres macros (valeurs effectives)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    NutritionMealMacro(stringResource(R.string.nutrition_macro_proteins), mwf.meal.proteins, ProteinColor, Modifier.weight(1f))
-                    NutritionMealMacro(stringResource(R.string.nutrition_macro_carbs), mwf.meal.carbs, CarbColor, Modifier.weight(1f))
-                    NutritionMealMacro(stringResource(R.string.nutrition_macro_fats), mwf.meal.fats, FatColor, Modifier.weight(1f))
+                    NutritionMealMacro(stringResource(R.string.nutrition_macro_proteins), effectiveProteins, ProteinColor, Modifier.weight(1f))
+                    NutritionMealMacro(stringResource(R.string.nutrition_macro_carbs), effectiveCarbs, CarbColor, Modifier.weight(1f))
+                    NutritionMealMacro(stringResource(R.string.nutrition_macro_fats), effectiveFats, FatColor, Modifier.weight(1f))
+                }
+                // Ligne 4 : Quick actions (visible UNIQUEMENT pour les repas scannés)
+                // - "+ portion" : incrémente le multiplicateur de 1.0
+                // - "🥡 Restes" : ouvre la galerie pour rescanner les restes
+                if (onIncrementPortion != null || onScanLeftover != null) {
+                    QuickActionRow(
+                        onIncrementPortion = onIncrementPortion,
+                        onScanLeftover = onScanLeftover,
+                        isLeftoverAnalyzing = isLeftoverAnalyzing,
+                    )
                 }
             }
         }
+    }
+}
+
+/**
+ * Row d'actions rapides "j'en ai repris" / "rescan restes" sur la card repas.
+ * Visible uniquement pour les repas issus d'un scan (sinon les boutons sont
+ * null et la row n'est pas rendue).
+ *
+ * UX : pendant l'analyse OCR, le bouton restes affiche un spinner + est désactivé
+ * pour éviter le double-tap.
+ */
+@Composable
+private fun QuickActionRow(
+    onIncrementPortion: (() -> Unit)?,
+    onScanLeftover: ((android.graphics.Bitmap) -> Unit)?,
+    isLeftoverAnalyzing: Boolean,
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val galleryLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.GetContent(),
+    ) { uri: android.net.Uri? ->
+        if (uri != null && onScanLeftover != null) {
+            val bmp = try {
+                context.contentResolver.openInputStream(uri)?.use {
+                    android.graphics.BitmapFactory.decodeStream(it)
+                }
+            } catch (_: Throwable) { null }
+            if (bmp != null) onScanLeftover(bmp)
+        }
+    }
+    Row(
+        Modifier.fillMaxWidth().padding(top = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        if (onIncrementPortion != null) {
+            FilledTonalButton(
+                onClick = onIncrementPortion,
+                modifier = Modifier.weight(1f).height(36.dp),
+                contentPadding = PaddingValues(horizontal = 10.dp),
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = OrangeVibrant.copy(alpha = 0.14f),
+                    contentColor = OrangeVibrant,
+                ),
+            ) {
+                Icon(Icons.Default.Add, null, Modifier.size(16.dp))
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    stringResource(R.string.meal_modifier_add_full),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                )
+            }
+        }
+        if (onScanLeftover != null) {
+            FilledTonalButton(
+                onClick = { galleryLauncher.launch("image/*") },
+                enabled = !isLeftoverAnalyzing,
+                modifier = Modifier.weight(1f).height(36.dp),
+                contentPadding = PaddingValues(horizontal = 10.dp),
+            ) {
+                if (isLeftoverAnalyzing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(14.dp),
+                        strokeWidth = 2.dp,
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        stringResource(R.string.meal_modifier_leftover_analyzing_short),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                    )
+                } else {
+                    Text(
+                        stringResource(R.string.meal_modifier_leftover_quick_action),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** Badge "×2" affiché en overlay sur la photo (fond translucide foncé). */
+@Composable
+private fun MultiplierOverlayBadge(multiplier: Float) {
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = OrangeVibrant.copy(alpha = 0.92f),
+    ) {
+        Text(
+            text = com.shredcoach.app.presentation.nutrition.components.formatMultiplier(multiplier),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
+            fontWeight = FontWeight.ExtraBold,
+            color = Color.White,
+        )
+    }
+}
+
+/** Badge "🥡 −200" affiché en overlay sur la photo. */
+@Composable
+private fun LeftoverOverlayBadge(leftoverCalories: Int) {
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = Color.Black.copy(alpha = 0.6f),
+    ) {
+        Text(
+            text = stringResource(R.string.meal_modifier_leftover_badge_overlay, leftoverCalories),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+        )
+    }
+}
+
+/** Badge inline "×2" (utilisé sur les meal cards sans photo). */
+@Composable
+private fun MultiplierInlineBadge(multiplier: Float) {
+    Surface(shape = RoundedCornerShape(6.dp), color = OrangeVibrant.copy(alpha = 0.14f)) {
+        Text(
+            text = com.shredcoach.app.presentation.nutrition.components.formatMultiplier(multiplier),
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
+            fontWeight = FontWeight.Bold,
+            color = OrangeVibrant,
+        )
+    }
+}
+
+/** Badge inline "−200 kcal restés". */
+@Composable
+private fun LeftoverInlineBadge(leftoverCalories: Int) {
+    Surface(shape = RoundedCornerShape(6.dp), color = MaterialTheme.colorScheme.errorContainer) {
+        Text(
+            text = stringResource(R.string.meal_modifier_leftover_badge_inline, leftoverCalories),
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onErrorContainer,
+        )
     }
 }
 

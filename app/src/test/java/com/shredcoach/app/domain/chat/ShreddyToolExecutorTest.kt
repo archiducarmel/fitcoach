@@ -32,6 +32,7 @@ import org.junit.Test
 class ShreddyToolExecutorTest {
 
     private lateinit var nutritionDao: NutritionDao
+    private lateinit var mealScanDao: com.shredcoach.app.data.local.dao.MealScanDao
     private lateinit var userRepository: UserRepository
     private lateinit var workoutRepository: WorkoutRepository
     private lateinit var contextEngine: NotificationContextEngine
@@ -41,12 +42,14 @@ class ShreddyToolExecutorTest {
     @Before
     fun setup() {
         nutritionDao = mockk(relaxed = true)
+        mealScanDao = mockk(relaxed = true)
         userRepository = mockk(relaxed = true)
         workoutRepository = mockk(relaxed = true)
         contextEngine = mockk(relaxed = true)
         glucoseRepository = mockk(relaxed = true)
         executor = ShreddyToolExecutor(
             nutritionDao = nutritionDao,
+            mealScanDao = mealScanDao,
             userRepository = userRepository,
             workoutRepository = workoutRepository,
             contextEngine = contextEngine,

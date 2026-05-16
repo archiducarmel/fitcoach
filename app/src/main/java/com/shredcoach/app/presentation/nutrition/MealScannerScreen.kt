@@ -1109,7 +1109,10 @@ private fun ScanHistoryCard(scan: com.shredcoach.app.data.local.entity.MealScanE
                 Text(scan.dishName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold,
                     maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                 com.shredcoach.app.domain.nutrition.NutriScorePictogram(nutriGrade, height = 20.dp)
-                Text(stringResource(R.string.scanner_history_meta, dateStr, scan.totalCalories),
+                // v45 : valeur effective (×N portions − restes). Si pas de
+                // modificateur, identique à scan.totalCalories.
+                val effectiveCal = com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveCalories(scan)
+                Text(stringResource(R.string.scanner_history_meta, dateStr, effectiveCal),
                     style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
             }
             // Supprimer

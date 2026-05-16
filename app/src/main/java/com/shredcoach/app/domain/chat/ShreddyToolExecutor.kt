@@ -36,6 +36,7 @@ import javax.inject.Singleton
 @Singleton
 class ShreddyToolExecutor @Inject constructor(
     private val nutritionDao: NutritionDao,
+    private val mealScanDao: com.shredcoach.app.data.local.dao.MealScanDao,
     private val userRepository: UserRepository,
     private val workoutRepository: WorkoutRepository,
     private val contextEngine: NotificationContextEngine,
@@ -299,11 +300,19 @@ class ShreddyToolExecutor @Inject constructor(
                     if (nearMeals.isNotEmpty()) {
                         val mealsArr = com.google.gson.JsonArray()
                         nearMeals.take(3).forEach { m ->
+                            // v45 : applique le facteur effectif si le meal_log
+                            // provient d'un scan avec modificateur (×N + restes).
+                            // Sinon factor = 1.0 (manuel ou sans modifs).
+                            val factor = m.scanId?.let { sid ->
+                                mealScanDao.getScanById(sid)?.let {
+                                    com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveFactor(it)
+                                }
+                            } ?: 1.0
                             mealsArr.add(JsonObject().apply {
                                 addProperty("food_id", m.foodId)
                                 addProperty("time", m.time?.toString() ?: "")
-                                addProperty("calories", m.calories)
-                                addProperty("carbs_g", m.carbs)
+                                addProperty("calories", m.calories * factor)
+                                addProperty("carbs_g", m.carbs * factor)
                             })
                         }
                         add("associated_meals", mealsArr)

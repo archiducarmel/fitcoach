@@ -28,6 +28,35 @@
     <string name="common_edit">Modifier</string>
     <string name="common_continue">Continuer</string>
     <string name="common_back">Retour</string>
+    <string name="common_apply">Appliquer</string>
+
+    <!-- ────────── Meal modifiers (v45 : "j\'en ai repris" + "j\'ai pas fini") ────────── -->
+    <string name="meal_modifier_seconds_title">J\'en ai repris</string>
+    <string name="meal_modifier_seconds_subtitle">Tape +1 pour chaque portion supplémentaire</string>
+    <string name="meal_modifier_effective_calories">%d kcal réels</string>
+    <string name="meal_modifier_add_full">+ 1 portion</string>
+    <string name="meal_modifier_add_half">+ ½</string>
+    <string name="meal_modifier_undo_cd">Annuler la dernière portion</string>
+
+    <string name="meal_modifier_leftover_title">J\'ai pas fini mon plat</string>
+    <string name="meal_modifier_leftover_title_active">Restes déduits</string>
+    <string name="meal_modifier_leftover_subtitle">Scanne les restes — on les déduira automatiquement</string>
+    <string name="meal_modifier_leftover_subtitle_active">Calories des restes retirées du repas initial</string>
+    <string name="meal_modifier_leftover_clear_cd">Annuler la déduction</string>
+    <string name="meal_modifier_leftover_analyzing">Analyse des restes en cours…</string>
+    <string name="meal_modifier_leftover_pick_gallery">Galerie</string>
+    <string name="meal_modifier_leftover_pick_camera">Photo</string>
+    <string name="meal_modifier_leftover_deducted_kcal">−%d kcal</string>
+    <string name="meal_modifier_leftover_deducted_macros">−%1$d g prot · −%2$d g gluc · −%3$d g lip</string>
+    <string name="meal_modifier_leftover_rescan">Rescanner</string>
+    <string name="meal_modifier_leftover_rescan_camera">Reprendre</string>
+    <string name="meal_modifier_leftover_badge_overlay">🥡 −%d</string>
+    <string name="meal_modifier_leftover_badge_inline">🥡 −%d kcal</string>
+    <string name="meal_modifier_leftover_quick_action">🥡 Restes</string>
+    <string name="meal_modifier_leftover_analyzing_short">Analyse…</string>
+    <string name="meal_modifier_snackbar_analyzing">Analyse des restes en cours…</string>
+    <string name="meal_modifier_snackbar_success">Restes déduits : −%d kcal</string>
+    <string name="meal_modifier_snackbar_failure">Échec de l\'analyse des restes : %s</string>
 
     <!-- Legacy keys (compat avec usages existants — retirés en Phase 1) -->
     <string name="start">Démarrer</string>

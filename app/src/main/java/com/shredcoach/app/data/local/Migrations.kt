@@ -275,6 +275,39 @@ object Migrations {
         }
     }
 
+    /**
+     * v44 → v45 : ajoute deux modificateurs de portion à `meal_scans` :
+     *  - `servingMultiplier` : "J'en ai repris" (×1.5, ×2, ×3 ou custom).
+     *  - `leftover*` : "J'ai pas fini mon plat" — restes rescannés en photo,
+     *    déduits du repas initial.
+     *
+     * Toutes les colonnes ont DEFAULT (1.0 pour le multiplicateur, 0 pour les
+     * restes) → backfill implicite neutre : tous les scans existants pré-v45
+     * restent inchangés en valeur effective (multiplier=1, leftover=0).
+     *
+     * ALTER TABLE ADD COLUMN simple — pas de table-rebuild, pas de risque sur
+     * les données existantes. 9 colonnes ajoutées en séquence.
+     *
+     * **Pourquoi sur `meal_scans` et pas `meal_logs`** : la décision "j'en ai
+     * repris / pas fini" est sémantiquement au niveau du REPAS (le scan), pas
+     * de l'ingrédient individuel. Tous les meal_logs liés via scanId héritent
+     * du facteur via la JOIN d'agrégation (cf. NutritionDao.getDayTotals v45+).
+     */
+    fun migration44to45(): Migration = object : Migration(44, 45) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `meal_scans` ADD COLUMN `servingMultiplier` REAL NOT NULL DEFAULT 1.0")
+            db.execSQL("ALTER TABLE `meal_scans` ADD COLUMN `leftoverPhotoPath` TEXT")
+            db.execSQL("ALTER TABLE `meal_scans` ADD COLUMN `leftoverCalories` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `meal_scans` ADD COLUMN `leftoverProteins` REAL NOT NULL DEFAULT 0.0")
+            db.execSQL("ALTER TABLE `meal_scans` ADD COLUMN `leftoverCarbs` REAL NOT NULL DEFAULT 0.0")
+            db.execSQL("ALTER TABLE `meal_scans` ADD COLUMN `leftoverFats` REAL NOT NULL DEFAULT 0.0")
+            db.execSQL("ALTER TABLE `meal_scans` ADD COLUMN `leftoverFibers` REAL NOT NULL DEFAULT 0.0")
+            db.execSQL("ALTER TABLE `meal_scans` ADD COLUMN `leftoverWeight` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `meal_scans` ADD COLUMN `leftoverResultJson` TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE `meal_scans` ADD COLUMN `leftoverScannedAt` TEXT")
+        }
+    }
+
     fun migration42to43(): Migration = object : Migration(42, 43) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("""

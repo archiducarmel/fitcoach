@@ -120,20 +120,33 @@ class MealDebriefWorker @AssistedInject constructor(
         // ─── Ton + prompts ──────────────────────────────────────────────────────
         val tone = coachSettings.snapshot.first().tone
         val systemPrompt = DebriefPrompts.buildMealSystemPrompt(tone)
+        // v45 : passe les valeurs EFFECTIVES (×N portions − restes) au LLM.
+        // Si l'user a tapé "+ portion" ou scanné des restes entre le scan et le
+        // débrief (45min plus tard par défaut), le coach doit raisonner sur ce
+        // qui a été réellement consommé. Facteur = 1.0 si aucun modificateur.
+        val factor = com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveFactor(scan)
+        val effectiveCalories = com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveCalories(scan)
+        val effectiveProteins = com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveProteins(scan)
+        val effectiveCarbs = com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveCarbs(scan)
+        val effectiveFats = com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveFats(scan)
+        val effectiveFibers = com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveFibers(scan)
         val userPrompt = DebriefPrompts.buildMealDebriefPrompt(
             firstName = profile.firstName.ifBlank { "" },
             dishName = scan.dishName,
             dishCount = ctx.dishCount,
             mealTypeDisplay = MealTypeClassifier.fromId(scan.mealType).displayName,
             minutesSinceMeal = max(1L, timeSinceMeal.toMinutes()),
-            calories = scan.totalCalories,
-            proteins = scan.totalProteins,
-            carbs = scan.totalCarbs,
-            fats = scan.totalFats,
-            fibers = scan.totalFibers,
-            sugars = ctx.sugars,
-            saturatedFat = ctx.saturatedFat,
-            saltG = ctx.saltG,
+            calories = effectiveCalories,
+            proteins = effectiveProteins,
+            carbs = effectiveCarbs,
+            fats = effectiveFats,
+            fibers = effectiveFibers,
+            // Sucres / sat fat / sel : aussi scaled par le facteur (cohérence
+            // avec la composition du repas que l'utilisateur a réellement
+            // consommé). Si pas de modificateur, factor=1.0 → valeurs raw.
+            sugars = (ctx.sugars * factor).coerceAtLeast(0.0),
+            saturatedFat = (ctx.saturatedFat * factor).coerceAtLeast(0.0),
+            saltG = (ctx.saltG * factor).coerceAtLeast(0.0),
             nutriScoreGrade = scan.nutriScoreGrade,
             healthScore = scan.healthScore,
             mealsLoggedToday = ctx.mealsLoggedToday,
@@ -196,7 +209,8 @@ class MealDebriefWorker @AssistedInject constructor(
         Log.i(
             TAG,
             "Débrief émis scan=$scanId source=$source mealType=${scan.mealType} " +
-                "kcal=${scan.totalCalories} bodyLen=${body.length} title='$title'"
+                "kcal=$effectiveCalories(×${scan.servingMultiplier}, leftover=${scan.leftoverCalories}) " +
+                "bodyLen=${body.length} title='$title'"
         )
         return Result.success()
     }
@@ -237,13 +251,24 @@ class MealDebriefWorker @AssistedInject constructor(
 
         val yesterdayCalsAtSamePoint = if (mealDate == today) {
             // On ne compare qu'au cumul d'hier à la même heure (utile à midi/soir).
+            // v45 : applique le facteur effectif par meal_log via lookup du scan
+            // parent — sinon "hier à 14h tu avais consommé X" ne reflète pas les
+            // ×N portions / restes appliqués depuis.
             runCatching {
                 val yest = today.minusDays(1)
                 val mealsYest = nutritionDao.getMealsForDateOnce(yest)
                 val cutoffTime = now.toLocalTime()
+                val scanCache = mutableMapOf<Long, com.shredcoach.app.data.local.entity.MealScanEntity?>()
                 mealsYest
                     .filter { it.time?.isBefore(cutoffTime) ?: true }
-                    .sumOf { it.calories }
+                    .sumOf { m ->
+                        val factor = m.scanId?.let { sid ->
+                            scanCache.getOrPut(sid) { mealScanDao.getScanById(sid) }
+                        }?.let {
+                            com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveFactor(it)
+                        } ?: 1.0
+                        m.calories * factor
+                    }
                     .toInt()
             }.getOrDefault(0)
         } else 0

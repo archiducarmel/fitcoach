@@ -199,26 +199,111 @@ interface NutritionDao {
     )
 
     // ── Daily Macros ──
+    //
+    // v45 : les agrégations appliquent désormais le **facteur effectif** du
+    // scan parent (multiplicateur de portion + déduction des restes).
+    //
+    //   factor = MAX(0,
+    //              servingMultiplier
+    //              - leftoverCalories / totalCalories   (si totalCalories > 0)
+    //            )
+    //
+    // Le facteur est calculé UNE FOIS sur le scan (ratio calorique) et appliqué
+    // identiquement à toutes les macros : v1 privilégie la simplicité sur la
+    // précision per-macro. Quand le scan est absent (meal_log manuel, scanId
+    // NULL) ou n'a aucun modificateur, le facteur = 1.0 → comportement
+    // strictement identique à v44.
+    //
+    // Performance : `LEFT JOIN meal_scans s ON ml.scanId = s.id` est satisfait
+    // par l'index implicite sur meal_logs.scanId (déclaré au niveau de l'entité).
+
     @Query("""
-        SELECT date(date) as date,
-            COALESCE(SUM(calories), 0.0) as totalCalories,
-            COALESCE(SUM(proteins), 0.0) as totalProteins,
-            COALESCE(SUM(carbs), 0.0) as totalCarbs,
-            COALESCE(SUM(fats), 0.0) as totalFats
-        FROM meal_logs
-        WHERE date(date) >= :startDate AND date(date) <= :endDate
-        GROUP BY date(date)
+        SELECT date(ml.date) as date,
+            COALESCE(SUM(ml.calories * (
+                MAX(0.0,
+                    COALESCE(s.servingMultiplier, 1.0) -
+                    CASE WHEN COALESCE(s.totalCalories, 0) > 0
+                        THEN COALESCE(s.leftoverCalories, 0) * 1.0 / s.totalCalories
+                        ELSE 0.0
+                    END
+                )
+            )), 0.0) as totalCalories,
+            COALESCE(SUM(ml.proteins * (
+                MAX(0.0,
+                    COALESCE(s.servingMultiplier, 1.0) -
+                    CASE WHEN COALESCE(s.totalCalories, 0) > 0
+                        THEN COALESCE(s.leftoverCalories, 0) * 1.0 / s.totalCalories
+                        ELSE 0.0
+                    END
+                )
+            )), 0.0) as totalProteins,
+            COALESCE(SUM(ml.carbs * (
+                MAX(0.0,
+                    COALESCE(s.servingMultiplier, 1.0) -
+                    CASE WHEN COALESCE(s.totalCalories, 0) > 0
+                        THEN COALESCE(s.leftoverCalories, 0) * 1.0 / s.totalCalories
+                        ELSE 0.0
+                    END
+                )
+            )), 0.0) as totalCarbs,
+            COALESCE(SUM(ml.fats * (
+                MAX(0.0,
+                    COALESCE(s.servingMultiplier, 1.0) -
+                    CASE WHEN COALESCE(s.totalCalories, 0) > 0
+                        THEN COALESCE(s.leftoverCalories, 0) * 1.0 / s.totalCalories
+                        ELSE 0.0
+                    END
+                )
+            )), 0.0) as totalFats
+        FROM meal_logs ml
+        LEFT JOIN meal_scans s ON ml.scanId = s.id
+        WHERE date(ml.date) >= :startDate AND date(ml.date) <= :endDate
+        GROUP BY date(ml.date)
         ORDER BY date ASC
     """)
     suspend fun getDailyMacros(startDate: LocalDate, endDate: LocalDate): List<DailyMacros>
 
     @Query("""
-        SELECT COALESCE(SUM(calories), 0.0) as totalCalories,
-            COALESCE(SUM(proteins), 0.0) as totalProteins,
-            COALESCE(SUM(carbs), 0.0) as totalCarbs,
-            COALESCE(SUM(fats), 0.0) as totalFats
-        FROM meal_logs
-        WHERE date(date) = :date
+        SELECT
+            COALESCE(SUM(ml.calories * (
+                MAX(0.0,
+                    COALESCE(s.servingMultiplier, 1.0) -
+                    CASE WHEN COALESCE(s.totalCalories, 0) > 0
+                        THEN COALESCE(s.leftoverCalories, 0) * 1.0 / s.totalCalories
+                        ELSE 0.0
+                    END
+                )
+            )), 0.0) as totalCalories,
+            COALESCE(SUM(ml.proteins * (
+                MAX(0.0,
+                    COALESCE(s.servingMultiplier, 1.0) -
+                    CASE WHEN COALESCE(s.totalCalories, 0) > 0
+                        THEN COALESCE(s.leftoverCalories, 0) * 1.0 / s.totalCalories
+                        ELSE 0.0
+                    END
+                )
+            )), 0.0) as totalProteins,
+            COALESCE(SUM(ml.carbs * (
+                MAX(0.0,
+                    COALESCE(s.servingMultiplier, 1.0) -
+                    CASE WHEN COALESCE(s.totalCalories, 0) > 0
+                        THEN COALESCE(s.leftoverCalories, 0) * 1.0 / s.totalCalories
+                        ELSE 0.0
+                    END
+                )
+            )), 0.0) as totalCarbs,
+            COALESCE(SUM(ml.fats * (
+                MAX(0.0,
+                    COALESCE(s.servingMultiplier, 1.0) -
+                    CASE WHEN COALESCE(s.totalCalories, 0) > 0
+                        THEN COALESCE(s.leftoverCalories, 0) * 1.0 / s.totalCalories
+                        ELSE 0.0
+                    END
+                )
+            )), 0.0) as totalFats
+        FROM meal_logs ml
+        LEFT JOIN meal_scans s ON ml.scanId = s.id
+        WHERE date(ml.date) = :date
     """)
     suspend fun getDayTotals(date: LocalDate): DayTotals
 
