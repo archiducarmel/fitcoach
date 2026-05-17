@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.compose.runtime.Immutable
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shredcoach.app.data.local.entity.GlucoseLogEntity
@@ -38,15 +39,27 @@ data class GlucoseEntryState(
 class GlucoseEntryViewModel @Inject constructor(
     private val glucoseRepository: GlucoseRepository,
     @ApplicationContext private val appContext: Context,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(GlucoseEntryState())
+    /**
+     * Date cible lue depuis le query arg "date" de la nav route. Permet à
+     * l'écran d'agir sur une date arbitraire (J-1, J-2…), pas seulement today.
+     * **Fix critique v45.1** : sans ce param, tous les uploads retombaient
+     * sur LocalDate.now() → overwrite silent du log précédent du day.
+     */
+    private val initialDate: LocalDate = savedStateHandle.get<String>("date")
+        ?.takeIf { it.isNotBlank() && it != "{date}" }
+        ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+        ?: LocalDate.now()
+
+    private val _state = MutableStateFlow(GlucoseEntryState(date = initialDate))
     val state: StateFlow<GlucoseEntryState> = _state.asStateFlow()
 
     init {
-        // Charge le log éventuellement déjà uploadé pour aujourd'hui.
+        // Charge le log existant pour la date cible (peut être today OU J-N).
         viewModelScope.launch {
-            val existing = glucoseRepository.getForDate(LocalDate.now())
+            val existing = glucoseRepository.getForDate(initialDate)
             _state.update { it.copy(log = existing) }
         }
     }

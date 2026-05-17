@@ -33,8 +33,20 @@ sealed class Screen(val route: String) {
     object DrGlykosChat {
         val route: String = Chat.createRoute("dr_glykos")
     }
-    /** Entrée upload screenshot CGM journalier. */
-    object GlucoseEntry : Screen("glucose_entry")
+    /**
+     * Entrée upload screenshot CGM journalier.
+     *
+     * Pattern : `glucose_entry?date={date}` — la date cible est passée en
+     * query arg (ISO `yyyy-MM-dd`). Si absent, l'écran défaut à `LocalDate.now()`.
+     *
+     * **Crucial** : sans cet arg, l'user qui navigue depuis NutritionScreen sur
+     * une date J+1 atterrirait sur l'upload du jour courant → silently overwrite
+     * du log de today à chaque upload. Bug data majeur réglé par ce paramètre.
+     */
+    object GlucoseEntry : Screen("glucose_entry?date={date}") {
+        fun createRoute(date: java.time.LocalDate = java.time.LocalDate.now()) =
+            "glucose_entry?date=$date"
+    }
     /** Historique CGM (graphes, KPIs, patterns). */
     object GlucoseHistory : Screen("glucose_history")
     object MealScanner : Screen("meal_scanner")

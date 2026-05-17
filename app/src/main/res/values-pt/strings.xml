@@ -1078,6 +1078,18 @@
     <string name="history_export_cd">Exportar</string>
     <string name="history_tab_workouts">Treinos</string>
     <string name="history_tab_nutrition">Nutrição</string>
+    <string name="history_tab_glucose">Glicemia</string>
+    <string name="history_glucose_empty_title">Sem registros glicêmicos</string>
+    <string name="history_glucose_empty_desc">Envie sua primeira captura CGM para começar o monitoramento com o Dr. Glykos.</string>
+    <string name="history_glucose_empty_cta">Enviar CGM</string>
+    <string name="history_glucose_summary_title">Tendência — últimos %1$d dias</string>
+    <string name="history_glucose_summary_hypos">Hipoglicemias</string>
+    <string name="history_glucose_peak_at">Pico às %1$s</string>
+    <string name="history_glucose_no_peak">Sem pico registrado</string>
+    <plurals name="glucose_hypos_count">
+        <item quantity="one">%d hipo</item>
+        <item quantity="other">%d hipos</item>
+    </plurals>
     <string name="history_workouts_empty_title">Nenhum treino no histórico</string>
     <string name="history_workouts_empty_desc">Conclua seu primeiro treino e ele vai aparecer aqui com todas as métricas.</string>
     <string name="history_workouts_empty_cta">Gerar um treino</string>
@@ -1607,9 +1619,20 @@
     <string name="chat_rate_down_cd">Resposta a melhorar</string>
     <string name="chat_dr_glykos_name">Dr. Glykos</string>
     <string name="chat_dr_glykos_subtitle">Endocrinologista IA · %1$s</string>
+    <string name="chat_dr_glykos_welcome_title">Olá, eu sou o Dr. Glykos</string>
+    <string name="chat_dr_glykos_welcome_desc">Seu endocrinologista IA. Pergunte sobre sua curva CGM, os picos pós-prandiais, o Time-in-Range ou a correlação entre glicemia, alimentação e treino.</string>
+    <string name="chat_dr_glykos_welcome_suggestion_1">Como ler minha curva CGM?</string>
+    <string name="chat_dr_glykos_welcome_suggestion_2">Por que um pico após as refeições?</string>
+    <string name="chat_dr_glykos_welcome_suggestion_3">Impacto do esporte na minha glicemia?</string>
+    <string name="chat_error_no_api_key_shreddy">Configure sua chave API em Ajustes → Assistente Shreddy para começar.</string>
+    <string name="chat_error_no_api_key_dr_glykos">Configure sua chave API em Ajustes → Assistente Dr. Glykos para começar.</string>
 
     <!-- Glucose / CGM -->
     <string name="glucose_entry_title">Glicose · CGM</string>
+    <string name="glucose_entry_subtitle">Envie sua captura CGM</string>
+    <string name="glucose_entry_date_today">Hoje</string>
+    <string name="glucose_entry_date_prev_cd">Dia anterior</string>
+    <string name="glucose_entry_date_next_cd">Próximo dia</string>
     <string name="glucose_entry_upload_title">Monitoramento glicêmico do dia</string>
     <string name="glucose_entry_upload_desc">Carregue seu screenshot CGM (FreeStyle Libre, Dexcom, Diabox…) e Dr. Glykos analisa automaticamente.</string>
     <string name="glucose_entry_upload_cta">Escolher screenshot</string>
@@ -2447,7 +2470,7 @@
     <string name="home_daily_checkin_mood_cd">Humor %1$s</string>
     <!-- Home AI tools section (Phase 9 — i18n résiduel V2) -->
     <string name="home_assistants_title">Seus assistentes</string>
-    <string name="home_assistants_subtitle">Quatro coaches especialistas dedicados para te acompanhar todos os dias</string>
+    <string name="home_assistants_subtitle">Cinco coaches especialistas dedicados para te acompanhar todos os dias</string>
     <string name="home_assistants_badge_premium">PREMIUM</string>
     <string name="home_assistant_shreddy_subtitle">Coach pessoal 24/7</string>
     <string name="home_assistant_mealscan_subtitle">Foto → macros</string>

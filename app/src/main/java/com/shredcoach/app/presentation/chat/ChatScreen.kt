@@ -59,9 +59,10 @@ fun ChatScreen(
         if (itemCount > 0) listState.animateScrollToItem((itemCount - 1).coerceAtLeast(0))
     }
 
-    // Persona-aware cosmétique : Dr. Glykos = bleu médical / icône stéthoscope.
+    // Persona-aware cosmétique : Dr. Glykos = emerald médical / icône stéthoscope.
+    // Aligné sur la palette de la card AiToolsSection (Home) et TodayGlucoseCard.
     val isDrGlykos = state.persona == com.shredcoach.app.domain.chat.ChatPersona.DR_GLYKOS
-    val accentColor = if (isDrGlykos) Color(0xFF0F4C75) else OrangeVibrant
+    val accentColor = if (isDrGlykos) Color(0xFF059669) else OrangeVibrant
     val personaTitleRes = if (isDrGlykos) R.string.chat_dr_glykos_name else R.string.chat_assistant_name
     val personaSubtitleRes = if (isDrGlykos) R.string.chat_dr_glykos_subtitle else R.string.chat_assistant_subtitle
 
@@ -84,13 +85,25 @@ fun ChatScreen(
                                 }
                             }
                         }
-                        Column {
-                            Text(stringResource(personaTitleRes), fontWeight = FontWeight.Bold)
+                        // Column weight(1f) + maxLines/ellipsis : garantit que
+                        // le titre + sous-titre tiennent sur 1 ligne chacun, même
+                        // avec 3 actions à droite (NoteAdd + Forum + MoreVert).
+                        // Sans ce weight, "Dr. Glykos · Endocrinologue IA" déborde
+                        // et la 1ère ligne est tronquée → bug visuel.
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                stringResource(personaTitleRes),
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                             Text(
                                 if (state.isLoading) stringResource(R.string.chat_assistant_writing)
                                     else stringResource(personaSubtitleRes, state.providerName),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = if (state.isLoading) NeonGreen else MaterialTheme.colorScheme.onSurfaceVariant
+                                color = if (state.isLoading) NeonGreen else MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
                         }
                     }
@@ -144,7 +157,8 @@ fun ChatScreen(
                     currentId = state.currentConversationId,
                     onOpen = { viewModel.openConversation(it) },
                     onDelete = { viewModel.deleteConversation(it) },
-                    onNewConversation = { viewModel.startNewConversation() }
+                    onNewConversation = { viewModel.startNewConversation() },
+                    accentColor = accentColor,
                 )
             }
 
@@ -158,24 +172,30 @@ fun ChatScreen(
                 ) {
                     if (state.messages.isEmpty() && !state.isLoading) {
                         item {
-                            WelcomeCard(onSuggestionTap = { suggestion ->
-                                viewModel.onInputChanged(suggestion)
-                                viewModel.sendMessage()
-                            })
+                            WelcomeCard(
+                                isDrGlykos = isDrGlykos,
+                                accentColor = accentColor,
+                                onSuggestionTap = { suggestion ->
+                                    viewModel.onInputChanged(suggestion)
+                                    viewModel.sendMessage()
+                                },
+                            )
                         }
                     }
 
                     items(state.messages, key = { it.id }) { message ->
                         ChatBubble(
                             message = message,
+                            isDrGlykos = isDrGlykos,
+                            accentColor = accentColor,
                             onRate = { newRating -> viewModel.rateMessage(message.id, newRating) }
                         )
                     }
 
                     if (state.streamingText.isNotBlank()) {
-                        item { StreamingBubble(text = state.streamingText) }
+                        item { StreamingBubble(text = state.streamingText, isDrGlykos = isDrGlykos, accentColor = accentColor) }
                     } else if (state.isLoading) {
-                        item { TypingIndicator() }
+                        item { TypingIndicator(isDrGlykos = isDrGlykos, accentColor = accentColor) }
                     }
                 }
             }
@@ -186,7 +206,8 @@ fun ChatScreen(
                     value = state.inputText,
                     onValueChange = { viewModel.onInputChanged(it) },
                     onSend = { viewModel.sendMessage() },
-                    isLoading = state.isLoading
+                    isLoading = state.isLoading,
+                    accentColor = accentColor,
                 )
             }
         }
@@ -204,7 +225,8 @@ private fun ConversationListPanel(
     currentId: String,
     onOpen: (String) -> Unit,
     onDelete: (String) -> Unit,
-    onNewConversation: () -> Unit
+    onNewConversation: () -> Unit,
+    accentColor: Color = OrangeVibrant,
 ) {
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         // Header
@@ -237,7 +259,8 @@ private fun ConversationListPanel(
             ) {
                 items(conversations, key = { it.conversationId }) { convo ->
                     val isActive = convo.conversationId == currentId
-                    ConversationCard(convo, isActive, onOpen = { onOpen(convo.conversationId) },
+                    ConversationCard(convo, isActive, accentColor = accentColor,
+                        onOpen = { onOpen(convo.conversationId) },
                         onDelete = { onDelete(convo.conversationId) })
                 }
             }
@@ -251,11 +274,13 @@ private fun ConversationCard(
     convo: ConversationSummary,
     isActive: Boolean,
     onOpen: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    accentColor: Color = OrangeVibrant,
 ) {
     val title = convo.firstUserMessage?.take(60) ?: stringResource(R.string.chat_conversation_default_title)
     val dateStr = try {
-        LocalDateTime.parse(convo.lastTimestamp).format(DateTimeFormatter.ofPattern("dd/MM · HH:mm"))
+        LocalDateTime.parse(convo.lastTimestamp)
+            .format(DateTimeFormatter.ofPattern("dd/MM · HH:mm", java.util.Locale.getDefault()))
     } catch (_: Exception) { "" }
 
     Card(
@@ -263,9 +288,9 @@ private fun ConversationCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isActive) OrangeVibrant.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface
+            containerColor = if (isActive) accentColor.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface
         ),
-        border = if (isActive) androidx.compose.foundation.BorderStroke(1.5.dp, OrangeVibrant.copy(alpha = 0.4f)) else null,
+        border = if (isActive) androidx.compose.foundation.BorderStroke(1.5.dp, accentColor.copy(alpha = 0.4f)) else null,
         elevation = CardDefaults.cardElevation(defaultElevation = if (isActive) 2.dp else 0.dp)
     ) {
         Row(
@@ -276,11 +301,11 @@ private fun ConversationCard(
             // Icône
             Box(
                 Modifier.size(40.dp).clip(RoundedCornerShape(10.dp))
-                    .background(if (isActive) OrangeVibrant.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant),
+                    .background(if (isActive) accentColor.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(Icons.Default.ChatBubbleOutline, null, Modifier.size(20.dp),
-                    tint = if (isActive) OrangeVibrant else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                    tint = if (isActive) accentColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(title, style = MaterialTheme.typography.bodyMedium,
@@ -307,12 +332,31 @@ private fun ConversationCard(
 // WELCOME CARD
 // ═══════════════════════════════════════
 
+/**
+ * Card de bienvenue persona-aware :
+ *  - Shreddy : logo ShredCoach + greeting/desc/suggestions muscu+nutrition
+ *  - Dr. Glykos : icône stéthoscope + greeting/desc/suggestions endocrino+CGM
+ *
+ * Strings résolus dynamiquement via [isDrGlykos] pour éviter de dupliquer la
+ * composable. Couleur d'accent (gradient bg + icône Send) injectée pour rester
+ * cohérent avec la topbar.
+ */
 @Composable
-private fun WelcomeCard(onSuggestionTap: (String) -> Unit = {}) {
+private fun WelcomeCard(
+    isDrGlykos: Boolean,
+    accentColor: Color,
+    onSuggestionTap: (String) -> Unit = {},
+) {
+    val titleRes = if (isDrGlykos) R.string.chat_dr_glykos_welcome_title else R.string.chat_welcome_title
+    val descRes = if (isDrGlykos) R.string.chat_dr_glykos_welcome_desc else R.string.chat_welcome_desc
+    val s1Res = if (isDrGlykos) R.string.chat_dr_glykos_welcome_suggestion_1 else R.string.chat_welcome_suggestion_1
+    val s2Res = if (isDrGlykos) R.string.chat_dr_glykos_welcome_suggestion_2 else R.string.chat_welcome_suggestion_2
+    val s3Res = if (isDrGlykos) R.string.chat_dr_glykos_welcome_suggestion_3 else R.string.chat_welcome_suggestion_3
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = OrangeVibrant.copy(alpha = 0.08f)),
+        colors = CardDefaults.cardColors(containerColor = accentColor.copy(alpha = 0.08f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
@@ -320,18 +364,37 @@ private fun WelcomeCard(onSuggestionTap: (String) -> Unit = {}) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            com.shredcoach.app.presentation.common.ShredCoachLogo(size = 56.dp)
-            Text(stringResource(R.string.chat_welcome_title),
-                style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text(stringResource(R.string.chat_welcome_desc),
+            // Avatar persona-aware : stéthoscope pour Dr. Glykos, logo pour Shreddy.
+            if (isDrGlykos) {
+                Surface(
+                    shape = CircleShape,
+                    color = accentColor.copy(alpha = 0.18f),
+                    modifier = Modifier.size(64.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Default.MedicalServices,
+                            contentDescription = null,
+                            modifier = Modifier.size(34.dp),
+                            tint = accentColor,
+                        )
+                    }
+                }
+            } else {
+                com.shredcoach.app.presentation.common.ShredCoachLogo(size = 56.dp)
+            }
+            Text(stringResource(titleRes),
+                style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center)
+            Text(stringResource(descRes),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center)
 
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                SuggestionChip(stringResource(R.string.chat_welcome_suggestion_1), onSuggestionTap)
-                SuggestionChip(stringResource(R.string.chat_welcome_suggestion_2), onSuggestionTap)
-                SuggestionChip(stringResource(R.string.chat_welcome_suggestion_3), onSuggestionTap)
+                SuggestionChip(stringResource(s1Res), accentColor, onSuggestionTap)
+                SuggestionChip(stringResource(s2Res), accentColor, onSuggestionTap)
+                SuggestionChip(stringResource(s3Res), accentColor, onSuggestionTap)
             }
         }
     }
@@ -339,7 +402,7 @@ private fun WelcomeCard(onSuggestionTap: (String) -> Unit = {}) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SuggestionChip(text: String, onClick: (String) -> Unit) {
+private fun SuggestionChip(text: String, accentColor: Color, onClick: (String) -> Unit) {
     Surface(
         onClick = { onClick(text) },
         shape = RoundedCornerShape(12.dp),
@@ -354,7 +417,37 @@ private fun SuggestionChip(text: String, onClick: (String) -> Unit) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
             Icon(Icons.Default.Send, null, Modifier.size(14.dp),
-                tint = OrangeVibrant.copy(alpha = 0.5f))
+                tint = accentColor.copy(alpha = 0.5f))
+        }
+    }
+}
+
+// ═══════════════════════════════════════
+// AVATAR persona-aware (réutilisé par ChatBubble, StreamingBubble, TypingIndicator)
+// ═══════════════════════════════════════
+
+@Composable
+private fun BotAvatar(
+    isDrGlykos: Boolean,
+    accentColor: Color,
+    size: androidx.compose.ui.unit.Dp = 28.dp,
+) {
+    Surface(
+        shape = CircleShape,
+        color = accentColor.copy(alpha = 0.12f),
+        modifier = Modifier.size(size),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            if (isDrGlykos) {
+                Icon(
+                    imageVector = Icons.Default.MedicalServices,
+                    contentDescription = null,
+                    modifier = Modifier.size(size * 0.6f),
+                    tint = accentColor,
+                )
+            } else {
+                com.shredcoach.app.presentation.common.ShredCoachLogo(size = size * 0.6f)
+            }
         }
     }
 }
@@ -364,11 +457,16 @@ private fun SuggestionChip(text: String, onClick: (String) -> Unit) {
 // ═══════════════════════════════════════
 
 @Composable
-private fun ChatBubble(message: ChatMessageEntity, onRate: (Int?) -> Unit = {}) {
+private fun ChatBubble(
+    message: ChatMessageEntity,
+    isDrGlykos: Boolean = false,
+    accentColor: Color = OrangeVibrant,
+    onRate: (Int?) -> Unit = {},
+) {
     val isUser = message.role == "user"
     val bubbleColor = when {
         message.isError -> MaterialTheme.colorScheme.errorContainer
-        isUser -> OrangeVibrant
+        isUser -> accentColor
         else -> MaterialTheme.colorScheme.surfaceVariant
     }
     val textColor = when {
@@ -389,11 +487,7 @@ private fun ChatBubble(message: ChatMessageEntity, onRate: (Int?) -> Unit = {}) 
             modifier = Modifier.fillMaxWidth(0.88f)
         ) {
             if (!isUser) {
-                Surface(shape = CircleShape, color = OrangeVibrant.copy(alpha = 0.12f), modifier = Modifier.size(28.dp)) {
-                    Box(contentAlignment = Alignment.Center) {
-                        com.shredcoach.app.presentation.common.ShredCoachLogo(size = 16.dp)
-                    }
-                }
+                BotAvatar(isDrGlykos = isDrGlykos, accentColor = accentColor)
                 Spacer(Modifier.width(8.dp))
             }
 
@@ -423,7 +517,7 @@ private fun ChatBubble(message: ChatMessageEntity, onRate: (Int?) -> Unit = {}) 
             horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
         ) {
             Text(
-                message.timestamp.format(DateTimeFormatter.ofPattern("HH:mm")),
+                message.timestamp.format(DateTimeFormatter.ofPattern("HH:mm", java.util.Locale.getDefault())),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f),
                 modifier = Modifier.padding(vertical = 2.dp)
@@ -471,15 +565,15 @@ private fun ChatRatingRow(currentRating: Int?, onRate: (Int?) -> Unit) {
 // ═══════════════════════════════════════
 
 @Composable
-private fun StreamingBubble(text: String) {
+private fun StreamingBubble(
+    text: String,
+    isDrGlykos: Boolean = false,
+    accentColor: Color = OrangeVibrant,
+) {
     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.Start) {
         Row(horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.Bottom,
             modifier = Modifier.fillMaxWidth(0.88f)) {
-            Surface(shape = CircleShape, color = OrangeVibrant.copy(alpha = 0.12f), modifier = Modifier.size(28.dp)) {
-                Box(contentAlignment = Alignment.Center) {
-                    com.shredcoach.app.presentation.common.ShredCoachLogo(size = 16.dp)
-                }
-            }
+            BotAvatar(isDrGlykos = isDrGlykos, accentColor = accentColor)
             Spacer(Modifier.width(8.dp))
             Surface(
                 shape = RoundedCornerShape(18.dp, 18.dp, 18.dp, 4.dp),
@@ -492,12 +586,12 @@ private fun StreamingBubble(text: String) {
                         modifier = Modifier.weight(1f, fill = false),
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    // Curseur clignotant
+                    // Curseur clignotant — couleur d'accent persona (orange/emerald).
                     val inf = rememberInfiniteTransition(label = "cursor")
                     val alpha by inf.animateFloat(1f, 0f,
                         infiniteRepeatable(tween(500), RepeatMode.Reverse), label = "ca")
                     Box(Modifier.padding(start = 2.dp).width(2.dp).height(16.dp)
-                        .background(OrangeVibrant.copy(alpha = alpha), RoundedCornerShape(1.dp)))
+                        .background(accentColor.copy(alpha = alpha), RoundedCornerShape(1.dp)))
                 }
             }
         }
@@ -509,13 +603,12 @@ private fun StreamingBubble(text: String) {
 // ═══════════════════════════════════════
 
 @Composable
-private fun TypingIndicator() {
+private fun TypingIndicator(
+    isDrGlykos: Boolean = false,
+    accentColor: Color = OrangeVibrant,
+) {
     Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.Start) {
-        Surface(shape = CircleShape, color = OrangeVibrant.copy(alpha = 0.12f), modifier = Modifier.size(28.dp)) {
-            Box(contentAlignment = Alignment.Center) {
-                com.shredcoach.app.presentation.common.ShredCoachLogo(size = 16.dp)
-            }
-        }
+        BotAvatar(isDrGlykos = isDrGlykos, accentColor = accentColor)
         Spacer(Modifier.width(8.dp))
         Surface(
             shape = RoundedCornerShape(18.dp, 18.dp, 18.dp, 4.dp),
@@ -528,7 +621,7 @@ private fun TypingIndicator() {
                         infiniteRepeatable(tween(400, delayMillis = index * 120, easing = FastOutSlowInEasing),
                             RepeatMode.Reverse), label = "do$index")
                     Box(Modifier.size(8.dp).offset(y = offset.dp)
-                        .clip(CircleShape).background(OrangeVibrant.copy(alpha = 0.6f)))
+                        .clip(CircleShape).background(accentColor.copy(alpha = 0.6f)))
                 }
             }
         }
@@ -540,7 +633,13 @@ private fun TypingIndicator() {
 // ═══════════════════════════════════════
 
 @Composable
-private fun ChatInputBar(value: String, onValueChange: (String) -> Unit, onSend: () -> Unit, isLoading: Boolean) {
+private fun ChatInputBar(
+    value: String,
+    onValueChange: (String) -> Unit,
+    onSend: () -> Unit,
+    isLoading: Boolean,
+    accentColor: Color = OrangeVibrant,
+) {
     Surface(tonalElevation = 4.dp) {
         Row(
             modifier = Modifier.fillMaxWidth().navigationBarsPadding()
@@ -557,7 +656,7 @@ private fun ChatInputBar(value: String, onValueChange: (String) -> Unit, onSend:
                 keyboardActions = KeyboardActions(onSend = { if (!isLoading) onSend() }),
                 maxLines = 4,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = OrangeVibrant,
+                    focusedBorderColor = accentColor,
                     unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
                 )
             )
@@ -566,7 +665,7 @@ private fun ChatInputBar(value: String, onValueChange: (String) -> Unit, onSend:
                 enabled = value.isNotBlank() && !isLoading,
                 modifier = Modifier.size(48.dp),
                 colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = OrangeVibrant,
+                    containerColor = accentColor,
                     disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             ) {

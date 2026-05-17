@@ -30,6 +30,13 @@ interface GlucoseDao {
     @Query("SELECT * FROM glucose_logs WHERE date BETWEEN :from AND :to ORDER BY date ASC")
     fun observeRange(from: LocalDate, to: LocalDate): Flow<List<GlucoseLogEntity>>
 
+    /**
+     * Tous les logs CGM observables (DESC par date). Utilisé par l'onglet
+     * Glycémie du WorkoutHistoryScreen (v45.1).
+     */
+    @Query("SELECT * FROM glucose_logs ORDER BY date DESC")
+    fun observeAll(): Flow<List<GlucoseLogEntity>>
+
     @Query("SELECT * FROM glucose_logs WHERE date BETWEEN :from AND :to ORDER BY date ASC")
     suspend fun getRangeOnce(from: LocalDate, to: LocalDate): List<GlucoseLogEntity>
 

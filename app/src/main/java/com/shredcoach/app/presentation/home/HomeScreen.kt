@@ -460,7 +460,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             // ═══════════════════════════════════════
             StaggeredAppear(index = 7) {
                 com.shredcoach.app.presentation.glucose.TodayGlucoseCard(
-                    onUploadClick = { navController.navigate(Screen.GlucoseEntry.route) },
+                    onUploadClick = { navController.navigate(Screen.GlucoseEntry.createRoute()) },
                     onAnalyzeClick = { navController.navigate(Screen.DrGlykosChat.route) },
                 )
             }

@@ -30,9 +30,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.util.Locale
 import javax.inject.Inject
 
-private val GlucoseBlue = Color(0xFF0F4C75)
+/** Palette médicale Dr. Glykos. Aligné sur TodayGlucoseCard et AiToolsSection. */
+private val GlucoseEmerald = Color(0xFF059669)
+private val GlucoseEmeraldSoft = Color(0xFFD1FAE5)
 
 enum class GlucoseHistoryWindow(val days: Int) { W7(7), W30(30) }
 
@@ -126,7 +131,7 @@ private fun EmptyState() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)),
+        colors = CardDefaults.cardColors(containerColor = GlucoseEmeraldSoft),
     ) {
         Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
             Text(stringResource(R.string.glucose_history_empty),
@@ -151,9 +156,9 @@ private fun SummaryCard(s: GlucoseWindowSummary) {
                     value = s.avgCv?.let { "${"%.1f".format(it)}%" } ?: "—")
             }
             Divider()
-            Text(stringResource(R.string.glucose_history_kpi_pattern) + ": " + describePattern(s.pattern),
+            Text(stringResource(R.string.glucose_history_kpi_pattern) + ": " + patternLabel(s.pattern),
                 style = MaterialTheme.typography.bodyMedium,
-                color = GlucoseBlue,
+                color = GlucoseEmerald,
                 fontWeight = FontWeight.SemiBold)
         }
     }
@@ -165,16 +170,20 @@ private fun Stat(label: String, value: String) {
         Text(label, style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         Text(value, style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"),
-            fontWeight = FontWeight.Bold, color = GlucoseBlue, maxLines = 1)
+            fontWeight = FontWeight.Bold, color = GlucoseEmerald, maxLines = 1)
     }
 }
 
 @Composable
 private fun LogRow(log: GlucoseLogEntity) {
+    val locale = Locale.getDefault()
+    val dateFormatter = remember(locale) {
+        DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
+    }
     Card(shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(log.date.toString(),
+                Text(log.date.format(dateFormatter),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold)
                 Text(
@@ -189,9 +198,9 @@ private fun LogRow(log: GlucoseLogEntity) {
                     maxLines = 1,
                 )
             }
-            log.hypoCount?.takeIf { it > 0 }?.let {
+            log.hypoCount?.takeIf { it > 0 }?.let { n ->
                 Surface(color = MaterialTheme.colorScheme.errorContainer, shape = RoundedCornerShape(8.dp)) {
-                    Text("$it hypo",
+                    Text(androidx.compose.ui.res.pluralStringResource(R.plurals.glucose_hypos_count, n, n),
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
                 }
@@ -200,14 +209,15 @@ private fun LogRow(log: GlucoseLogEntity) {
     }
 }
 
-private fun describePattern(p: GlucosePattern): String = when (p) {
-    GlucosePattern.INSUFFICIENT_DATA -> "Données insuffisantes"
-    GlucosePattern.HYPO_RISK -> "⚠ Risque hypoglycémique"
-    GlucosePattern.HIGH_VARIABILITY -> "⚠ Variabilité élevée"
-    GlucosePattern.POSTPRANDIAL_SPIKES -> "Pics postprandiaux"
-    GlucosePattern.DAWN_PHENOMENON -> "Phénomène de l'aube"
-    GlucosePattern.RISING_TREND -> "Tendance haussière"
-    GlucosePattern.FALLING_TREND -> "Tendance baissière"
-    GlucosePattern.STABLE_OPTIMAL -> "Stable optimal"
-    GlucosePattern.NORMAL -> "Normal"
+@Composable
+private fun patternLabel(p: GlucosePattern): String = when (p) {
+    GlucosePattern.INSUFFICIENT_DATA -> stringResource(R.string.glucose_history_empty)
+    GlucosePattern.HYPO_RISK -> "⚠ " + stringResource(R.string.glucose_pattern_hypo_risk)
+    GlucosePattern.HIGH_VARIABILITY -> "⚠ " + stringResource(R.string.glucose_pattern_variability)
+    GlucosePattern.POSTPRANDIAL_SPIKES -> stringResource(R.string.glucose_pattern_spikes)
+    GlucosePattern.DAWN_PHENOMENON -> stringResource(R.string.glucose_pattern_dawn)
+    GlucosePattern.RISING_TREND -> stringResource(R.string.glucose_pattern_rising)
+    GlucosePattern.FALLING_TREND -> stringResource(R.string.glucose_pattern_falling)
+    GlucosePattern.STABLE_OPTIMAL -> stringResource(R.string.glucose_pattern_stable)
+    GlucosePattern.NORMAL -> stringResource(R.string.glucose_pattern_normal)
 }

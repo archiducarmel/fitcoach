@@ -164,12 +164,18 @@ fun AiToolsSection(
         }
         // 3e rang : Dr. Glykos (full-width, mis en avant — c'est la persona
         // premium endocrino, on lui donne une card pleine largeur).
+        //
+        // Couleurs : emerald → teal (palette médicale/wellness). Distinctif des
+        // 4 autres assistants (violet, orange, cyan, vert pomme) ET cohérent
+        // avec l'imagerie sanitaire (verts cliniques type stéthoscope).
+        // **Height fixed** à 124.dp pour garantir que le gradient couvre toute
+        // la card sans risque de rendu partiel quand le sous-titre est court.
         AiToolCard(
-            modifier = Modifier.fillMaxWidth().heightIn(min = 92.dp),
+            modifier = Modifier.fillMaxWidth().height(124.dp),
             title = stringResource(R.string.ai_tools_dr_glykos),
             subtitle = stringResource(R.string.chat_dr_glykos_subtitle, "CGM"),
             icon = Icons.Default.MedicalServices,
-            gradient = listOf(Color(0xFF0F4C75), Color(0xFF3B82F6)), // bleu médical → blue
+            gradient = listOf(Color(0xFF059669), Color(0xFF14B8A6)), // emerald 600 → teal 500
             onClick = onDrGlykosClick,
         )
     }

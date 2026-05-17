@@ -23,8 +23,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import javax.inject.Inject
 
-private val GlucoseBlue = Color(0xFF0F4C75)
-private val GlucoseBlueSoft = Color(0xFFE3F2FD)
+/** Palette médicale Dr. Glykos. Aligné sur TodayGlucoseCard et AiToolsSection. */
+private val GlucoseEmerald = Color(0xFF059669)
+private val GlucoseEmeraldSoft = Color(0xFFD1FAE5)
 
 /**
  * Chip compact à afficher à côté d'un header de date (ex: "Hier") dans
@@ -54,14 +55,14 @@ fun BucketGlucoseChip(
     }
 
     Surface(
-        color = GlucoseBlueSoft,
+        color = GlucoseEmeraldSoft,
         shape = RoundedCornerShape(8.dp),
     ) {
         Text(
             text,
             style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
             fontWeight = FontWeight.SemiBold,
-            color = GlucoseBlue,
+            color = GlucoseEmerald,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
             maxLines = 1,
         )

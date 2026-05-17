@@ -146,7 +146,7 @@ fun NightFastingCard(data: NightFastingDisplay, modifier: Modifier = Modifier) {
         label = "fastingProgress",
     )
 
-    val timeFmt = DateTimeFormatter.ofPattern("HH:mm")
+    val timeFmt = DateTimeFormatter.ofPattern("HH:mm", java.util.Locale.getDefault())
 
     Card(
         modifier = modifier.fillMaxWidth(),

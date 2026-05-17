@@ -6,7 +6,9 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shredcoach.app.R
+import com.shredcoach.app.data.local.dao.GlucoseDao
 import com.shredcoach.app.data.local.dao.MealScanDao
+import com.shredcoach.app.data.local.entity.GlucoseLogEntity
 import com.shredcoach.app.data.local.entity.MealScanEntity
 import com.shredcoach.app.data.local.entity.WorkoutLogEntity
 import com.shredcoach.app.data.repository.NutritionRepository
@@ -52,7 +54,8 @@ class WorkoutHistoryViewModel @Inject constructor(
     private val appContext: android.content.Context,
     private val workoutRepository: WorkoutRepository,
     private val mealScanDao: MealScanDao,
-    private val nutritionRepository: NutritionRepository
+    private val nutritionRepository: NutritionRepository,
+    private val glucoseDao: GlucoseDao,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(WorkoutHistoryState())
@@ -60,6 +63,10 @@ class WorkoutHistoryViewModel @Inject constructor(
 
     /** Scans nutritionnels pour l'onglet Nutrition. */
     val mealScans: StateFlow<List<MealScanEntity>> = mealScanDao.getAllScans()
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    /** Logs glycémiques pour l'onglet Glycémie (v45.1). */
+    val glucoseLogs: StateFlow<List<GlucoseLogEntity>> = glucoseDao.observeAll()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     init { load() }

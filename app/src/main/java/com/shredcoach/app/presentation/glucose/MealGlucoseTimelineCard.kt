@@ -41,8 +41,9 @@ import java.time.LocalDate
 import java.time.LocalTime
 import javax.inject.Inject
 
-private val GlucoseBlue = Color(0xFF0F4C75)
-private val GlucoseBlueSoft = Color(0xFFE3F2FD)
+/** Palette médicale Dr. Glykos. Aligné sur TodayGlucoseCard et AiToolsSection. */
+private val GlucoseEmerald = Color(0xFF059669)
+private val GlucoseEmeraldSoft = Color(0xFFD1FAE5)
 private val TargetGreen = Color(0xFF22C55E)
 private val SpikeAmber = Color(0xFFF59E0B)
 private val SpikeRed = Color(0xFFEF4444)
@@ -127,22 +128,22 @@ fun MealGlucoseTimelineCard(
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(shape = CircleShape, color = GlucoseBlueSoft, modifier = Modifier.size(28.dp)) {
+                Surface(shape = CircleShape, color = GlucoseEmeraldSoft, modifier = Modifier.size(28.dp)) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(Icons.Default.MedicalServices, null,
-                            Modifier.size(16.dp), tint = GlucoseBlue)
+                            Modifier.size(16.dp), tint = GlucoseEmerald)
                     }
                 }
                 Spacer(Modifier.width(8.dp))
                 Text(stringResource(R.string.nutrition_glucose_timeline_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = GlucoseBlue, modifier = Modifier.weight(1f))
+                    color = GlucoseEmerald, modifier = Modifier.weight(1f))
                 state.log?.avgMgdl?.let {
                     Text("${it.toInt()} ${stringResource(R.string.nutrition_glucose_timeline_axis_unit)}",
                         style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
                         fontWeight = FontWeight.Bold,
-                        color = GlucoseBlue)
+                        color = GlucoseEmerald)
                 }
             }
 
@@ -179,10 +180,10 @@ private fun EmptyTimelineBlock(onUploadCgm: () -> Unit) {
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         OutlinedButton(
             onClick = onUploadCgm,
-            border = androidx.compose.foundation.BorderStroke(1.dp, GlucoseBlue.copy(alpha = 0.5f)),
+            border = androidx.compose.foundation.BorderStroke(1.dp, GlucoseEmerald.copy(alpha = 0.5f)),
         ) {
             Text(stringResource(R.string.nutrition_glucose_timeline_cta),
-                color = GlucoseBlue, fontWeight = FontWeight.SemiBold)
+                color = GlucoseEmerald, fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -194,20 +195,23 @@ private fun KpiOnlyBlock(log: GlucoseLogEntity, onOpenDrGlykos: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         log.peakMgdl?.let { peak ->
-            MiniChip(label = "Pic", value = "${peak.toInt()}", unit = "mg/dL",
+            MiniChip(label = stringResource(R.string.glucose_entry_kpi_peak),
+                value = "${peak.toInt()}", unit = "mg/dL",
                 tint = if (peak < 140) TargetGreen else if (peak < 180) SpikeAmber else SpikeRed)
         }
         log.timeInRangePct?.let { tir ->
-            MiniChip(label = "TIR", value = "$tir", unit = "%",
+            MiniChip(label = stringResource(R.string.glucose_entry_kpi_tir),
+                value = "$tir", unit = "%",
                 tint = if (tir >= 70) TargetGreen else SpikeAmber)
         }
         log.hypoCount?.takeIf { it > 0 }?.let {
-            MiniChip(label = "Hypo", value = "$it", unit = "", tint = SpikeRed)
+            MiniChip(label = stringResource(R.string.glucose_entry_kpi_hypo),
+                value = "$it", unit = "", tint = SpikeRed)
         }
         Spacer(Modifier.weight(1f))
         TextButton(onClick = onOpenDrGlykos) {
             Text(stringResource(R.string.glucose_entry_open_dr_glykos),
-                color = GlucoseBlue, fontWeight = FontWeight.SemiBold)
+                color = GlucoseEmerald, fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -284,7 +288,7 @@ private fun GlucoseGraph(
                     }
                 }
                 drawPath(
-                    path = path, color = GlucoseBlue,
+                    path = path, color = GlucoseEmerald,
                     style = Stroke(width = with(density) { 2.5.dp.toPx() }),
                 )
             }
@@ -301,7 +305,7 @@ private fun GlucoseGraph(
                     }
                     .maxOfOrNull { it.mgdl }
                 val markerColor = when {
-                    responsePeak == null -> GlucoseBlue.copy(alpha = 0.5f)
+                    responsePeak == null -> GlucoseEmerald.copy(alpha = 0.5f)
                     responsePeak >= SPIKE_THRESHOLD -> SpikeRed
                     responsePeak >= 140.0 -> SpikeAmber
                     else -> TargetGreen

@@ -13,6 +13,7 @@ import com.shredcoach.app.data.repository.ChatRepository
 import com.shredcoach.app.data.repository.UserContextBuilder
 import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.domain.chat.ChatPersona
+import com.shredcoach.app.domain.locale.withCurrentLocale
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
@@ -154,9 +155,17 @@ class ChatViewModel @Inject constructor(
             val model = profile?.llmModel?.takeIf { it.isNotBlank() }
 
             if (apiKey.isBlank()) {
+                // Persona-aware : message renvoie vers l'écran de réglages du
+                // bon assistant (Shreddy ou Dr. Glykos) — sinon l'utilisateur
+                // est dirigé vers les réglages de l'autre persona.
+                val errMsgRes = if (persona == ChatPersona.DR_GLYKOS) {
+                    com.shredcoach.app.R.string.chat_error_no_api_key_dr_glykos
+                } else {
+                    com.shredcoach.app.R.string.chat_error_no_api_key_shreddy
+                }
                 chatRepository.insertMessage(ChatMessageEntity(
                     conversationId = conversationId, role = "assistant",
-                    content = "Configure ta clé API dans Réglages → Assistant Shreddy pour commencer.",
+                    content = applicationContext.withCurrentLocale().getString(errMsgRes),
                     isError = true,
                     persona = persona.tag,
                 ))

@@ -132,11 +132,26 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
                     color = if (sel) MaterialTheme.colorScheme.surface else Color.Transparent,
                     tonalElevation = if (sel) 2.dp else 0.dp
                 ) {
-                    Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                        Icon(icon, null, Modifier.size(18.dp), tint = if (sel) OrangeVibrant else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-                        Spacer(Modifier.width(6.dp))
-                        Text(label, fontWeight = if (sel) FontWeight.Bold else FontWeight.Medium,
-                            color = if (sel) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                    // v45 : maxLines=1 + ellipsis garantit que tab row reste sur
+                    // 1 ligne même avec 3 labels longs ("Glycémie", "Entraînements"
+                    // sur écrans <360dp). Padding horizontal réduit + spacer
+                    // 4dp économisent ~12dp / tab.
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 10.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(icon, null, Modifier.size(16.dp),
+                            tint = if (sel) OrangeVibrant else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            label,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = if (sel) FontWeight.Bold else FontWeight.Medium,
+                            color = if (sel) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        )
                     }
                 }
             }
@@ -152,7 +167,7 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
                 },
                 onUploadCgm = {
                     navController.navigate(
-                        com.shredcoach.app.presentation.navigation.Screen.GlucoseEntry.route
+                        com.shredcoach.app.presentation.navigation.Screen.GlucoseEntry.createRoute()
                     )
                 },
             )

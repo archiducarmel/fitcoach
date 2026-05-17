@@ -25,8 +25,9 @@ import com.shredcoach.app.domain.glucose.GlucoseWindowSummary
 import com.shredcoach.app.presentation.glucose.GlucoseHistoryViewModel
 import com.shredcoach.app.presentation.glucose.GlucoseHistoryWindow
 
-private val GlucoseBlue = Color(0xFF0F4C75)
-private val GlucoseBlueSoft = Color(0xFFE3F2FD)
+/** Palette médicale Dr. Glykos. Aligné sur TodayGlucoseCard et AiToolsSection. */
+private val GlucoseEmerald = Color(0xFF059669)
+private val GlucoseEmeraldSoft = Color(0xFFD1FAE5)
 
 /**
  * 3ème onglet du Dashboard, dédié au suivi glycémique CGM.
@@ -63,8 +64,8 @@ fun GlucoseDashboard(
                     onClick = { viewModel.setWindow(GlucoseHistoryWindow.W7) },
                     label = { Text(stringResource(R.string.glucose_history_window_7d)) },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = GlucoseBlue.copy(alpha = 0.18f),
-                        selectedLabelColor = GlucoseBlue,
+                        selectedContainerColor = GlucoseEmerald.copy(alpha = 0.18f),
+                        selectedLabelColor = GlucoseEmerald,
                     ),
                 )
                 FilterChip(
@@ -72,8 +73,8 @@ fun GlucoseDashboard(
                     onClick = { viewModel.setWindow(GlucoseHistoryWindow.W30) },
                     label = { Text(stringResource(R.string.glucose_history_window_30d)) },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = GlucoseBlue.copy(alpha = 0.18f),
-                        selectedLabelColor = GlucoseBlue,
+                        selectedContainerColor = GlucoseEmerald.copy(alpha = 0.18f),
+                        selectedLabelColor = GlucoseEmerald,
                     ),
                 )
             }
@@ -104,7 +105,7 @@ fun GlucoseDashboard(
 private fun EmptyState(onUploadCgm: () -> Unit) {
     Card(
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = GlucoseBlueSoft),
+        colors = CardDefaults.cardColors(containerColor = GlucoseEmeraldSoft),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
@@ -112,13 +113,13 @@ private fun EmptyState(onUploadCgm: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Icon(Icons.Default.MedicalServices, null, Modifier.size(48.dp), tint = GlucoseBlue)
+            Icon(Icons.Default.MedicalServices, null, Modifier.size(48.dp), tint = GlucoseEmerald)
             Text(stringResource(R.string.glucose_history_empty),
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
                 fontWeight = FontWeight.SemiBold)
             Button(
                 onClick = onUploadCgm,
-                colors = ButtonDefaults.buttonColors(containerColor = GlucoseBlue),
+                colors = ButtonDefaults.buttonColors(containerColor = GlucoseEmerald),
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
@@ -137,17 +138,17 @@ private fun HeroKpiCard(s: GlucoseWindowSummary, onOpenDrGlykos: () -> Unit) {
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.MedicalServices, null, Modifier.size(20.dp), tint = GlucoseBlue)
+                Icon(Icons.Default.MedicalServices, null, Modifier.size(20.dp), tint = GlucoseEmerald)
                 Spacer(Modifier.width(8.dp))
                 Text(stringResource(R.string.glucose_dashboard_hero_title),
                     style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
-                    color = GlucoseBlue, modifier = Modifier.weight(1f))
+                    color = GlucoseEmerald, modifier = Modifier.weight(1f))
                 Surface(
-                    color = GlucoseBlueSoft, shape = RoundedCornerShape(8.dp),
+                    color = GlucoseEmeraldSoft, shape = RoundedCornerShape(8.dp),
                 ) {
                     Text(stringResource(R.string.glucose_history_days_covered, s.daysCovered),
                         style = MaterialTheme.typography.labelSmall,
-                        color = GlucoseBlue,
+                        color = GlucoseEmerald,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
                 }
             }
@@ -170,7 +171,7 @@ private fun HeroKpiCard(s: GlucoseWindowSummary, onOpenDrGlykos: () -> Unit) {
             }
             Button(
                 onClick = onOpenDrGlykos,
-                colors = ButtonDefaults.buttonColors(containerColor = GlucoseBlue),
+                colors = ButtonDefaults.buttonColors(containerColor = GlucoseEmerald),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
@@ -189,7 +190,7 @@ private fun BigKpi(label: String, value: String, unit: String, modifier: Modifie
         Row(verticalAlignment = Alignment.Bottom) {
             Text(value,
                 style = MaterialTheme.typography.headlineMedium.copy(fontFeatureSettings = "tnum"),
-                fontWeight = FontWeight.Black, color = GlucoseBlue, maxLines = 1)
+                fontWeight = FontWeight.Black, color = GlucoseEmerald, maxLines = 1)
             Spacer(Modifier.width(2.dp))
             Text(unit, style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), maxLines = 1)
@@ -226,7 +227,7 @@ private fun PatternBadge(s: GlucoseWindowSummary) {
             stringResource(R.string.glucose_pattern_normal_hint), false)
         GlucosePattern.INSUFFICIENT_DATA -> return
     }
-    val tint = if (isWarn) Color(0xFFD97706) else GlucoseBlue
+    val tint = if (isWarn) Color(0xFFD97706) else GlucoseEmerald
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = tint.copy(alpha = 0.08f)),
@@ -310,11 +311,11 @@ private fun CompactLogRow(log: GlucoseLogEntity) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             // Date pill
             Surface(
-                color = GlucoseBlueSoft, shape = RoundedCornerShape(8.dp),
+                color = GlucoseEmeraldSoft, shape = RoundedCornerShape(8.dp),
             ) {
                 Text(log.date.toString().takeLast(5), // MM-DD
                     style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
-                    fontWeight = FontWeight.Bold, color = GlucoseBlue,
+                    fontWeight = FontWeight.Bold, color = GlucoseEmerald,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
             }
             Spacer(Modifier.width(10.dp))

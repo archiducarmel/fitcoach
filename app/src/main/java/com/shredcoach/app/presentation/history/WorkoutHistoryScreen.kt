@@ -133,7 +133,9 @@ fun WorkoutHistoryScreen(
             ) {
                 listOf(
                     Triple(0, stringResource(R.string.history_tab_workouts), Icons.Default.FitnessCenter),
-                    Triple(1, stringResource(R.string.history_tab_nutrition), Icons.Default.Restaurant)
+                    Triple(1, stringResource(R.string.history_tab_nutrition), Icons.Default.Restaurant),
+                    Triple(2, stringResource(R.string.history_tab_glucose),
+                        androidx.compose.material.icons.Icons.Default.MedicalServices),
                 ).forEach { (idx, label, icon) ->
                     val selected = selectedTab == idx
                     Surface(
@@ -143,23 +145,35 @@ fun WorkoutHistoryScreen(
                         color = if (selected) MaterialTheme.colorScheme.surface else Color.Transparent,
                         tonalElevation = if (selected) 2.dp else 0.dp
                     ) {
+                        // v45.1 : maxLines=1 + ellipsis + padding réduit pour
+                        // que 3 onglets tiennent sur 1 ligne sur tous écrans.
                         Row(
-                            Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                            Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 10.dp),
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(icon, null, Modifier.size(18.dp),
+                            Icon(icon, null, Modifier.size(16.dp),
                                 tint = if (selected) OrangeVibrant else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-                            Spacer(Modifier.width(6.dp))
-                            Text(label, fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                label,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                            )
                         }
                     }
                 }
             }
 
             // ─── Contenu selon tab ───
-            if (selectedTab == 1) {
+            val glucoseLogs by viewModel.glucoseLogs.collectAsState()
+            if (selectedTab == 2) {
+                // GLYCEMIA HISTORY (v45.1)
+                GlucoseHistoryContent(glucoseLogs, navController)
+            } else if (selectedTab == 1) {
                 // NUTRITION HISTORY
                 NutritionHistoryContent(mealScans, navController, viewModel)
             } else {
@@ -251,6 +265,250 @@ fun WorkoutHistoryScreen(
         }
             } // fin else (sport tab)
         } // fin Column
+    }
+}
+
+// ═══════════════════════════════════════
+// GLYCEMIA HISTORY (v45.1)
+// ═══════════════════════════════════════
+
+/** Palette emerald cohérente avec TodayGlucoseCard + GlucoseEntryScreen. */
+private val GlucoseEmeraldHistory = Color(0xFF059669)
+
+@Composable
+private fun GlucoseHistoryContent(
+    logs: List<com.shredcoach.app.data.local.entity.GlucoseLogEntity>,
+    navController: NavController,
+) {
+    if (logs.isEmpty()) {
+        Box(Modifier.fillMaxSize(), Alignment.Center) {
+            com.shredcoach.app.presentation.common.EmptyState(
+                icon = androidx.compose.material.icons.Icons.Default.MedicalServices,
+                title = stringResource(R.string.history_glucose_empty_title),
+                description = stringResource(R.string.history_glucose_empty_desc),
+                ctaLabel = stringResource(R.string.history_glucose_empty_cta),
+                ctaIcon = Icons.Default.CameraAlt,
+                onCtaClick = {
+                    navController.navigate(
+                        com.shredcoach.app.presentation.navigation.Screen.GlucoseEntry.createRoute()
+                    )
+                }
+            )
+        }
+    } else {
+        LazyColumn(
+            Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            // ── Summary hero : avg/TIR/CV/hypos sur les 7 derniers logs ──
+            item { GlucoseHistorySummary(logs) }
+
+            items(logs, key = { it.id }) { log ->
+                GlucoseHistoryCard(log = log, onClick = {
+                    navController.navigate(
+                        com.shredcoach.app.presentation.navigation.Screen.GlucoseEntry
+                            .createRoute(log.date)
+                    )
+                })
+            }
+            item { Spacer(Modifier.height(24.dp)) }
+        }
+    }
+}
+
+@Composable
+private fun GlucoseHistorySummary(logs: List<com.shredcoach.app.data.local.entity.GlucoseLogEntity>) {
+    val recent = logs.take(7)
+    val avg = recent.mapNotNull { it.avgMgdl }.average().takeIf { !it.isNaN() }
+    val avgTir = recent.mapNotNull { it.timeInRangePct }.average().takeIf { !it.isNaN() }
+    val hypos = recent.sumOf { it.hypoCount ?: 0 }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+    ) {
+        Box(
+            Modifier.fillMaxWidth().background(
+                androidx.compose.ui.graphics.Brush.linearGradient(
+                    listOf(GlucoseEmeraldHistory, Color(0xFF14B8A6))
+                )
+            ),
+        ) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        androidx.compose.material.icons.Icons.Default.MedicalServices,
+                        null,
+                        Modifier.size(20.dp),
+                        tint = Color.White,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        stringResource(R.string.history_glucose_summary_title, recent.size),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                    )
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    GlucoseSummaryKpi(
+                        label = stringResource(R.string.home_glucose_card_kpi_avg),
+                        value = avg?.let { "${it.toInt()}" } ?: "—",
+                        unit = "mg/dL",
+                        modifier = Modifier.weight(1f),
+                    )
+                    GlucoseSummaryKpi(
+                        label = stringResource(R.string.home_glucose_card_kpi_tir),
+                        value = avgTir?.let { "${it.toInt()}" } ?: "—",
+                        unit = "%",
+                        modifier = Modifier.weight(1f),
+                    )
+                    GlucoseSummaryKpi(
+                        label = stringResource(R.string.history_glucose_summary_hypos),
+                        value = hypos.toString(),
+                        unit = "",
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GlucoseSummaryKpi(label: String, value: String, unit: String, modifier: Modifier = Modifier) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = Color.White.copy(alpha = 0.16f),
+        modifier = modifier,
+    ) {
+        Column(Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+            Text(label,
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White.copy(alpha = 0.78f),
+                maxLines = 1)
+            Spacer(Modifier.height(2.dp))
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(value,
+                    style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White,
+                    maxLines = 1)
+                if (unit.isNotEmpty()) {
+                    Spacer(Modifier.width(3.dp))
+                    Text(unit,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White.copy(alpha = 0.75f),
+                        maxLines = 1)
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GlucoseHistoryCard(
+    log: com.shredcoach.app.data.local.entity.GlucoseLogEntity,
+    onClick: () -> Unit,
+) {
+    val dateStr = log.date.format(
+        java.time.format.DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.getDefault())
+    ).replaceFirstChar { it.uppercase() }
+    val tir = log.timeInRangePct
+    val tirOk = tir != null && tir >= 70
+    val peakOk = (log.peakMgdl ?: 0.0) < 180.0
+
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    shape = CircleShape,
+                    color = GlucoseEmeraldHistory.copy(alpha = 0.12f),
+                    modifier = Modifier.size(36.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            androidx.compose.material.icons.Icons.Default.MedicalServices,
+                            null,
+                            Modifier.size(18.dp),
+                            tint = GlucoseEmeraldHistory,
+                        )
+                    }
+                }
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(dateStr,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    Text(
+                        log.peakTime?.let { stringResource(R.string.history_glucose_peak_at, it.toString()) }
+                            ?: stringResource(R.string.history_glucose_no_peak),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        maxLines = 1)
+                }
+                if (log.manualOverride) {
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                    ) {
+                        Text(stringResource(R.string.glucose_entry_manual_pill),
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
+
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                MiniKpiInline(
+                    label = stringResource(R.string.home_glucose_card_kpi_avg),
+                    value = log.avgMgdl?.let { "${it.toInt()} mg/dL" } ?: "—",
+                    modifier = Modifier.weight(1f),
+                )
+                MiniKpiInline(
+                    label = stringResource(R.string.home_glucose_card_kpi_tir),
+                    value = tir?.let { "$it%" } ?: "—",
+                    accent = if (tirOk) NeonGreen else Color(0xFFF59E0B),
+                    modifier = Modifier.weight(1f),
+                )
+                MiniKpiInline(
+                    label = stringResource(R.string.home_glucose_card_kpi_peak),
+                    value = log.peakMgdl?.let { "${it.toInt()}" } ?: "—",
+                    accent = if (peakOk) NeonGreen else Color(0xFFEF4444),
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MiniKpiInline(
+    label: String,
+    value: String,
+    accent: Color = MaterialTheme.colorScheme.onSurface,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier) {
+        Text(label, style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+            maxLines = 1)
+        Text(value,
+            style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),
+            fontWeight = FontWeight.ExtraBold,
+            color = accent,
+            maxLines = 1)
     }
 }
 
@@ -350,7 +608,7 @@ private fun NutritionHistoryContent(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MealHistoryCard(scan: com.shredcoach.app.data.local.entity.MealScanEntity, onClick: () -> Unit, onDelete: () -> Unit) {
-    val timeStr = scan.timestamp.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
+    val timeStr = scan.timestamp.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault()))
     val scoreColor = when { scan.healthScore >= 8 -> NeonGreen; scan.healthScore >= 5 -> OrangeVibrant; else -> MaterialTheme.colorScheme.error }
     val mealLabel = com.shredcoach.app.domain.nutrition.MealTypeClassifier
         .fromId(scan.mealType).displayName

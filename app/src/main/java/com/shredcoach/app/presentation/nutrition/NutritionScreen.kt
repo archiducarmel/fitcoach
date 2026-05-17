@@ -134,8 +134,12 @@ fun NutritionScreen(navController: NavController, viewModel: NutritionViewModel 
                 com.shredcoach.app.presentation.glucose.MealGlucoseTimelineCard(
                     date = state.selectedDate,
                     onUploadCgm = {
+                        // v45 fix critique : on passe la date sélectionnée dans
+                        // NutritionScreen pour que GlucoseEntry l'utilise comme
+                        // cible d'upload. Sans ça, tous les uploads retombaient
+                        // sur today → overwrite silent du log précédent.
                         navController.navigate(
-                            com.shredcoach.app.presentation.navigation.Screen.GlucoseEntry.route
+                            com.shredcoach.app.presentation.navigation.Screen.GlucoseEntry.createRoute(state.selectedDate)
                         )
                     },
                     onOpenDrGlykos = {

@@ -426,7 +426,16 @@ fun ShredCoachNavigation(
                 ChatScreen(navController = navController)
             }
 
-            composable(Screen.GlucoseEntry.route) {
+            composable(
+                route = Screen.GlucoseEntry.route,
+                arguments = listOf(
+                    androidx.navigation.navArgument("date") {
+                        type = androidx.navigation.NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
+            ) {
                 com.shredcoach.app.presentation.glucose.GlucoseEntryScreen(navController = navController)
             }
             composable(Screen.GlucoseHistory.route) {
