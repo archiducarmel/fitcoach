@@ -1090,6 +1090,27 @@
         <item quantity="one">%d hipo</item>
         <item quantity="other">%d hipos</item>
     </plurals>
+    <!-- Gemini overload retry — humor leve para tranquilizar o usuário durante o retry transparente. -->
+    <string name="gemini_retry_humor_1">Gemini está tomando fôlego 🤖💨 Aguenta aí…</string>
+    <string name="gemini_retry_humor_2">A IA está na fila do refeitório 🍽️ Tentando de novo em 2s…</string>
+    <string name="gemini_retry_humor_3">Pequeno engarrafamento no Google 🚦 Tentando novamente…</string>
+    <string name="gemini_retry_recovered">Voltou ao normal ✓</string>
+    <string name="gemini_retry_failed">Gemini está realmente sobrecarregado. Tente novamente em 1 minuto 🙏</string>
+    <!-- Glucose design system — status labels + premium card -->
+    <string name="glucose_status_in_range">Ótimo</string>
+    <string name="glucose_status_warning">Atenção</string>
+    <string name="glucose_status_critical">Elevado</string>
+    <string name="glucose_status_unknown">—</string>
+    <string name="home_glucose_card_empty_subtitle">Monitoramento CGM Dr. Glykos</string>
+    <string name="home_glucose_card_avg_label">Média do dia</string>
+    <string name="home_glucose_card_kpi_hypo">Hipos</string>
+    <string name="glucose_dashboard_pattern_section">Padrão detectado</string>
+    <string name="glucose_dashboard_trend_section">Tendência semanal</string>
+    <string name="glucose_history_log_no_metrics">Apenas imagem, sem métricas OCR</string>
+    <string name="glucose_history_subtitle">Seus últimos registros CGM analisados</string>
+    <!-- Share sheet targets — visíveis ao compartilhar uma imagem -->
+    <string name="share_target_glucose">ShredCoach · Glicemia</string>
+    <string name="share_target_meal">ShredCoach · Refeição</string>
     <string name="history_workouts_empty_title">Nenhum treino no histórico</string>
     <string name="history_workouts_empty_desc">Conclua seu primeiro treino e ele vai aparecer aqui com todas as métricas.</string>
     <string name="history_workouts_empty_cta">Gerar um treino</string>

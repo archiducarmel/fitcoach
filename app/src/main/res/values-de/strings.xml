@@ -930,6 +930,27 @@
         <item quantity="one">%d Hypo</item>
         <item quantity="other">%d Hypos</item>
     </plurals>
+    <!-- Gemini overload retry — leichter Humor während des transparenten Retrys. -->
+    <string name="gemini_retry_humor_1">Gemini holt Luft 🤖💨 Bleib dran…</string>
+    <string name="gemini_retry_humor_2">Die KI steht in der Kantinenschlange 🍽️ Neuer Versuch in 2s…</string>
+    <string name="gemini_retry_humor_3">Kleiner Stau bei Google 🚦 Wir versuchen es nochmal…</string>
+    <string name="gemini_retry_recovered">Läuft wieder ✓</string>
+    <string name="gemini_retry_failed">Gemini ist wirklich überlastet. Versuch\'s in einer Minute nochmal 🙏</string>
+    <!-- Glucose design system — status labels + premium card -->
+    <string name="glucose_status_in_range">Optimal</string>
+    <string name="glucose_status_warning">Achtung</string>
+    <string name="glucose_status_critical">Hoch</string>
+    <string name="glucose_status_unknown">—</string>
+    <string name="home_glucose_card_empty_subtitle">CGM-Tracking Dr. Glykos</string>
+    <string name="home_glucose_card_avg_label">Tagesdurchschnitt</string>
+    <string name="home_glucose_card_kpi_hypo">Hypos</string>
+    <string name="glucose_dashboard_pattern_section">Erkanntes Muster</string>
+    <string name="glucose_dashboard_trend_section">Wöchentlicher Trend</string>
+    <string name="glucose_history_log_no_metrics">Nur Bild, keine OCR-Metriken</string>
+    <string name="glucose_history_subtitle">Deine letzten analysierten CGM-Logs</string>
+    <!-- Share sheet targets — sichtbar beim Teilen eines Bildes -->
+    <string name="share_target_glucose">ShredCoach · Glukose</string>
+    <string name="share_target_meal">ShredCoach · Mahlzeit</string>
     <string name="history_workouts_empty_title">Kein Workout im Verlauf</string>
     <string name="history_workouts_empty_desc">Beende dein erstes Workout und es erscheint hier mit allen Metriken.</string>
     <string name="history_workouts_empty_cta">Workout generieren</string>

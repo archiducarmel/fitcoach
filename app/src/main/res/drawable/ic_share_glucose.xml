@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Icône share-target "Glycémie" affichée dans la system share sheet quand
+  l'user partage une image vers ShredCoach. Design : carré emerald foncé
+  (cohérent avec la palette Dr. Glykos) + cross médical blanc centré.
+
+  108x108 = adaptive icon safe zone Android (matche le launcher icon ratio).
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Background emerald 700 -->
+    <path
+        android:fillColor="#047857"
+        android:pathData="M0,0h108v108h-108z" />
+
+    <!-- Medical cross blanc centré (vertical + horizontal bars) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M48,30h12v18h18v12h-18v18h-12v-18h-18v-12h18z" />
+</vector>

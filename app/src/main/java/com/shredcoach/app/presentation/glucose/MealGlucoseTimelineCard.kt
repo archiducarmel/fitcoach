@@ -41,12 +41,13 @@ import java.time.LocalDate
 import java.time.LocalTime
 import javax.inject.Inject
 
-/** Palette médicale Dr. Glykos. Aligné sur TodayGlucoseCard et AiToolsSection. */
-private val GlucoseEmerald = Color(0xFF059669)
-private val GlucoseEmeraldSoft = Color(0xFFD1FAE5)
-private val TargetGreen = Color(0xFF22C55E)
-private val SpikeAmber = Color(0xFFF59E0B)
-private val SpikeRed = Color(0xFFEF4444)
+// Aliases vers le design system glucose pour rester cohérent avec
+// TodayGlucoseCard / GlucoseEntryScreen / Dashboard / History.
+private val GlucoseEmerald = GlucoseColors.Emerald600
+private val GlucoseEmeraldSoft = GlucoseColors.Emerald100
+private val TargetGreen = GlucoseColors.InRange
+private val SpikeAmber = GlucoseColors.Warning
+private val SpikeRed = GlucoseColors.Critical
 
 /** Référence athlète strict — pour la zone "ok" sur le graphe. */
 private const val TARGET_LOW = 70.0
@@ -126,24 +127,35 @@ fun MealGlucoseTimelineCard(
         shape = RoundedCornerShape(20.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(shape = CircleShape, color = GlucoseEmeraldSoft, modifier = Modifier.size(28.dp)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Header premium : icône caissée + titre + pill avg du jour
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Surface(shape = CircleShape, color = GlucoseEmeraldSoft, modifier = Modifier.size(32.dp)) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(Icons.Default.MedicalServices, null,
-                            Modifier.size(16.dp), tint = GlucoseEmerald)
+                            Modifier.size(18.dp), tint = GlucoseEmerald)
                     }
                 }
-                Spacer(Modifier.width(8.dp))
                 Text(stringResource(R.string.nutrition_glucose_timeline_title),
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = GlucoseEmerald, modifier = Modifier.weight(1f))
+                    fontWeight = FontWeight.ExtraBold,
+                    color = GlucoseColors.Emerald800, modifier = Modifier.weight(1f))
                 state.log?.avgMgdl?.let {
-                    Text("${it.toInt()} ${stringResource(R.string.nutrition_glucose_timeline_axis_unit)}",
-                        style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
-                        fontWeight = FontWeight.Bold,
-                        color = GlucoseEmerald)
+                    Surface(
+                        color = GlucoseEmeraldSoft, shape = RoundedCornerShape(10.dp),
+                    ) {
+                        Row(Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically) {
+                            Text("${it.toInt()}",
+                                style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"),
+                                fontWeight = FontWeight.Black,
+                                color = GlucoseEmerald)
+                            androidx.compose.foundation.layout.Spacer(Modifier.width(2.dp))
+                            Text(stringResource(R.string.nutrition_glucose_timeline_axis_unit),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = GlucoseEmerald.copy(alpha = 0.7f))
+                        }
+                    }
                 }
             }
 
@@ -170,67 +182,74 @@ fun MealGlucoseTimelineCard(
 
 @Composable
 private fun EmptyTimelineBlock(onUploadCgm: () -> Unit) {
-    Column(
-        Modifier.fillMaxWidth().padding(vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = GlucoseEmeraldSoft.copy(alpha = 0.4f),
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        Text(stringResource(R.string.nutrition_glucose_timeline_empty),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-        OutlinedButton(
-            onClick = onUploadCgm,
-            border = androidx.compose.foundation.BorderStroke(1.dp, GlucoseEmerald.copy(alpha = 0.5f)),
+        Column(
+            Modifier.fillMaxWidth().padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text(stringResource(R.string.nutrition_glucose_timeline_cta),
-                color = GlucoseEmerald, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.nutrition_glucose_timeline_empty),
+                style = MaterialTheme.typography.bodyMedium,
+                color = GlucoseColors.Emerald800.copy(alpha = 0.75f))
+            androidx.compose.material3.Button(
+                onClick = onUploadCgm,
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = GlucoseEmerald, contentColor = Color.White,
+                ),
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Text(stringResource(R.string.nutrition_glucose_timeline_cta),
+                    fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
 
 @Composable
 private fun KpiOnlyBlock(log: GlucoseLogEntity, onOpenDrGlykos: () -> Unit) {
-    Row(
-        Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    Column(
+        Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        log.peakMgdl?.let { peak ->
-            MiniChip(label = stringResource(R.string.glucose_entry_kpi_peak),
-                value = "${peak.toInt()}", unit = "mg/dL",
-                tint = if (peak < 140) TargetGreen else if (peak < 180) SpikeAmber else SpikeRed)
-        }
-        log.timeInRangePct?.let { tir ->
-            MiniChip(label = stringResource(R.string.glucose_entry_kpi_tir),
-                value = "$tir", unit = "%",
-                tint = if (tir >= 70) TargetGreen else SpikeAmber)
-        }
-        log.hypoCount?.takeIf { it > 0 }?.let {
-            MiniChip(label = stringResource(R.string.glucose_entry_kpi_hypo),
-                value = "$it", unit = "", tint = SpikeRed)
-        }
-        Spacer(Modifier.weight(1f))
-        TextButton(onClick = onOpenDrGlykos) {
-            Text(stringResource(R.string.glucose_entry_open_dr_glykos),
-                color = GlucoseEmerald, fontWeight = FontWeight.SemiBold)
-        }
-    }
-}
-
-@Composable
-private fun MiniChip(label: String, value: String, unit: String, tint: Color) {
-    Surface(color = tint.copy(alpha = 0.12f), shape = RoundedCornerShape(10.dp)) {
-        Column(Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
-            Text(label, style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), maxLines = 1)
-            Row(verticalAlignment = Alignment.Bottom) {
-                Text(value,
-                    style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
-                    fontWeight = FontWeight.Bold, color = tint, maxLines = 1)
-                if (unit.isNotEmpty()) {
-                    Text(unit, style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), maxLines = 1)
-                }
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            log.peakMgdl?.let { peak ->
+                GlucoseKpiTile(
+                    label = stringResource(R.string.glucose_entry_kpi_peak),
+                    value = "${peak.toInt()}", unit = "mg/dL",
+                    status = GlucoseStatus.forPeak(peak),
+                    modifier = Modifier.weight(1f),
+                )
             }
+            log.timeInRangePct?.let { tir ->
+                GlucoseKpiTile(
+                    label = stringResource(R.string.glucose_entry_kpi_tir),
+                    value = "$tir", unit = "%",
+                    status = GlucoseStatus.forTir(tir),
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            log.hypoCount?.takeIf { it > 0 }?.let {
+                GlucoseKpiTile(
+                    label = stringResource(R.string.glucose_entry_kpi_hypo),
+                    value = "$it", unit = "",
+                    status = GlucoseStatus.forHypoCount(it),
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+        TextButton(
+            onClick = onOpenDrGlykos,
+            modifier = Modifier.align(Alignment.End),
+        ) {
+            Text(stringResource(R.string.glucose_entry_open_dr_glykos),
+                color = GlucoseEmerald, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -277,9 +296,10 @@ private fun GlucoseGraph(
                 pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f)),
             )
 
-            // Courbe glucose
+            // Courbe glucose : gradient fill sous la courbe (premium "stocks app")
+            // + path stroke par-dessus pour le contour net.
             if (curve.size >= 2) {
-                val path = Path().apply {
+                val strokePath = Path().apply {
                     val first = curve.first()
                     moveTo(x(first.time), y(first.mgdl))
                     for (i in 1 until curve.size) {
@@ -287,8 +307,26 @@ private fun GlucoseGraph(
                         lineTo(x(p.time), y(p.mgdl))
                     }
                 }
+                // Fill path : même tracé + fermeture vers le bas → polygone à remplir.
+                val fillPath = Path().apply {
+                    addPath(strokePath)
+                    val last = curve.last()
+                    lineTo(x(last.time), h)
+                    lineTo(x(curve.first().time), h)
+                    close()
+                }
                 drawPath(
-                    path = path, color = GlucoseEmerald,
+                    path = fillPath,
+                    brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                        colors = listOf(
+                            GlucoseEmerald.copy(alpha = 0.32f),
+                            GlucoseEmerald.copy(alpha = 0.02f),
+                        ),
+                    ),
+                )
+                drawPath(
+                    path = strokePath,
+                    color = GlucoseEmerald,
                     style = Stroke(width = with(density) { 2.5.dp.toPx() }),
                 )
             }

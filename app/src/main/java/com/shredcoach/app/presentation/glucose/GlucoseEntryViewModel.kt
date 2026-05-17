@@ -10,11 +10,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shredcoach.app.data.local.entity.GlucoseLogEntity
 import com.shredcoach.app.data.repository.GlucoseRepository
+import com.shredcoach.app.presentation.common.IncomingShareIntent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -61,6 +63,21 @@ class GlucoseEntryViewModel @Inject constructor(
         viewModelScope.launch {
             val existing = glucoseRepository.getForDate(initialDate)
             _state.update { it.copy(log = existing) }
+        }
+
+        // Si l'écran est ouvert via un share intent (Partage → ShredCoach
+        // Glycémie), MainActivity a déposé l'Uri dans IncomingShareIntent.
+        // On la consomme dès que ce VM se réveille, et on déclenche la
+        // preview comme un picker galerie classique.
+        viewModelScope.launch {
+            IncomingShareIntent.pending
+                .filterNotNull()
+                .collect { pending ->
+                    if (pending.target == IncomingShareIntent.Target.GLUCOSE) {
+                        onImageSelected(pending.uri)
+                        IncomingShareIntent.consume()
+                    }
+                }
         }
     }
 

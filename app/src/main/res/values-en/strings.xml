@@ -963,6 +963,27 @@
         <item quantity="one">%d hypo</item>
         <item quantity="other">%d hypos</item>
     </plurals>
+    <!-- Gemini overload retry — light humor while the transparent retry runs. -->
+    <string name="gemini_retry_humor_1">Gemini\'s catching its breath 🤖💨 Hang tight…</string>
+    <string name="gemini_retry_humor_2">The AI is in the lunch queue 🍽️ Retrying in 2s…</string>
+    <string name="gemini_retry_humor_3">Small traffic jam on Google\'s side 🚦 Trying again…</string>
+    <string name="gemini_retry_recovered">Back on track ✓</string>
+    <string name="gemini_retry_failed">Gemini is really overloaded. Try again in a minute 🙏</string>
+    <!-- Glucose design system — status labels + premium card -->
+    <string name="glucose_status_in_range">Optimal</string>
+    <string name="glucose_status_warning">Watch out</string>
+    <string name="glucose_status_critical">High</string>
+    <string name="glucose_status_unknown">—</string>
+    <string name="home_glucose_card_empty_subtitle">Dr. Glykos CGM tracking</string>
+    <string name="home_glucose_card_avg_label">Today\'s average</string>
+    <string name="home_glucose_card_kpi_hypo">Hypos</string>
+    <string name="glucose_dashboard_pattern_section">Pattern detected</string>
+    <string name="glucose_dashboard_trend_section">Weekly trend</string>
+    <string name="glucose_history_log_no_metrics">Image only, no OCR metrics</string>
+    <string name="glucose_history_subtitle">Your latest analyzed CGM logs</string>
+    <!-- Share sheet targets — visible when sharing an image -->
+    <string name="share_target_glucose">ShredCoach · Glucose</string>
+    <string name="share_target_meal">ShredCoach · Meal</string>
     <string name="history_workouts_empty_title">No session in history</string>
     <string name="history_workouts_empty_desc">Finish your first session and it will appear here with all its metrics.</string>
     <string name="history_workouts_empty_cta">Generate a session</string>

@@ -1104,6 +1104,27 @@
         <item quantity="one">%d hypo</item>
         <item quantity="other">%d hypos</item>
     </plurals>
+    <!-- Gemini overload retry — humour léger pour rassurer l\'user pendant le retry transparent. -->
+    <string name="gemini_retry_humor_1">Gemini reprend son souffle 🤖💨 J\'insiste, ça arrive…</string>
+    <string name="gemini_retry_humor_2">L\'IA fait la queue à la cantine 🍽️ Je relance dans 2s…</string>
+    <string name="gemini_retry_humor_3">Petit embouteillage côté Google 🚦 On retente, t\'inquiète…</string>
+    <string name="gemini_retry_recovered">Ça repart ✓</string>
+    <string name="gemini_retry_failed">Gemini est vraiment surchargé. Réessaie dans 1 minute 🙏</string>
+    <!-- Glucose design system — status labels + premium card -->
+    <string name="glucose_status_in_range">Optimal</string>
+    <string name="glucose_status_warning">À surveiller</string>
+    <string name="glucose_status_critical">Élevé</string>
+    <string name="glucose_status_unknown">—</string>
+    <string name="home_glucose_card_empty_subtitle">Suivi CGM Dr. Glykos</string>
+    <string name="home_glucose_card_avg_label">Moyenne du jour</string>
+    <string name="home_glucose_card_kpi_hypo">Hypos</string>
+    <string name="glucose_dashboard_pattern_section">Pattern détecté</string>
+    <string name="glucose_dashboard_trend_section">Tendance hebdomadaire</string>
+    <string name="glucose_history_log_no_metrics">Image seule, pas de métriques OCR</string>
+    <string name="glucose_history_subtitle">Tes derniers logs CGM analysés</string>
+    <!-- Share sheet targets — visibles quand l'user partage une image -->
+    <string name="share_target_glucose">ShredCoach · Glycémie</string>
+    <string name="share_target_meal">ShredCoach · Repas</string>
     <string name="history_workouts_empty_title">Aucune séance dans l\'historique</string>
     <string name="history_workouts_empty_desc">Termine ta première séance et elle apparaîtra ici avec toutes ses métriques.</string>
     <string name="history_workouts_empty_cta">Générer une séance</string>

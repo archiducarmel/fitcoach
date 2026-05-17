@@ -1094,6 +1094,27 @@
         <item quantity="one">%d hipo</item>
         <item quantity="other">%d hipos</item>
     </plurals>
+    <!-- Gemini overload retry — humor para tranquilizar al usuario durante el reintento transparente. -->
+    <string name="gemini_retry_humor_1">Gemini está cogiendo aire 🤖💨 Aguanta un momento…</string>
+    <string name="gemini_retry_humor_2">La IA está en la cola del comedor 🍽️ Reintentando en 2s…</string>
+    <string name="gemini_retry_humor_3">Pequeño atasco en Google 🚦 Volvemos a intentarlo…</string>
+    <string name="gemini_retry_recovered">¡Listo! ✓</string>
+    <string name="gemini_retry_failed">Gemini está realmente saturado. Inténtalo de nuevo en un minuto 🙏</string>
+    <!-- Glucose design system — status labels + premium card -->
+    <string name="glucose_status_in_range">Óptimo</string>
+    <string name="glucose_status_warning">Atención</string>
+    <string name="glucose_status_critical">Elevado</string>
+    <string name="glucose_status_unknown">—</string>
+    <string name="home_glucose_card_empty_subtitle">Seguimiento CGM Dr. Glykos</string>
+    <string name="home_glucose_card_avg_label">Media del día</string>
+    <string name="home_glucose_card_kpi_hypo">Hipos</string>
+    <string name="glucose_dashboard_pattern_section">Patrón detectado</string>
+    <string name="glucose_dashboard_trend_section">Tendencia semanal</string>
+    <string name="glucose_history_log_no_metrics">Solo imagen, sin métricas OCR</string>
+    <string name="glucose_history_subtitle">Tus últimos registros CGM analizados</string>
+    <!-- Share sheet targets — visibles al compartir una imagen -->
+    <string name="share_target_glucose">ShredCoach · Glucosa</string>
+    <string name="share_target_meal">ShredCoach · Comida</string>
     <string name="history_workouts_empty_title">Ninguna sesión en el historial</string>
     <string name="history_workouts_empty_desc">Termina tu primera sesión y aparecerá aquí con todas sus métricas.</string>
     <string name="history_workouts_empty_cta">Generar una sesión</string>

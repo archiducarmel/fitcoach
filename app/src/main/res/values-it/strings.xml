@@ -1040,6 +1040,27 @@
         <item quantity="one">%d ipoglicemia</item>
         <item quantity="other">%d ipoglicemie</item>
     </plurals>
+    <!-- Gemini overload retry — umorismo leggero per rassicurare l\'utente durante il retry trasparente. -->
+    <string name="gemini_retry_humor_1">Gemini sta riprendendo fiato 🤖💨 Resisti un attimo…</string>
+    <string name="gemini_retry_humor_2">L\'IA è in coda alla mensa 🍽️ Riprovo tra 2s…</string>
+    <string name="gemini_retry_humor_3">Piccolo ingorgo da Google 🚦 Riprovo…</string>
+    <string name="gemini_retry_recovered">Tutto a posto ✓</string>
+    <string name="gemini_retry_failed">Gemini è davvero sovraccarico. Riprova tra un minuto 🙏</string>
+    <!-- Glucose design system — status labels + premium card -->
+    <string name="glucose_status_in_range">Ottimale</string>
+    <string name="glucose_status_warning">Attenzione</string>
+    <string name="glucose_status_critical">Elevato</string>
+    <string name="glucose_status_unknown">—</string>
+    <string name="home_glucose_card_empty_subtitle">Monitoraggio CGM Dr. Glykos</string>
+    <string name="home_glucose_card_avg_label">Media del giorno</string>
+    <string name="home_glucose_card_kpi_hypo">Ipo</string>
+    <string name="glucose_dashboard_pattern_section">Pattern rilevato</string>
+    <string name="glucose_dashboard_trend_section">Trend settimanale</string>
+    <string name="glucose_history_log_no_metrics">Solo immagine, nessuna metrica OCR</string>
+    <string name="glucose_history_subtitle">I tuoi ultimi log CGM analizzati</string>
+    <!-- Share sheet targets — visibili quando condividi un\'immagine -->
+    <string name="share_target_glucose">ShredCoach · Glicemia</string>
+    <string name="share_target_meal">ShredCoach · Pasto</string>
     <string name="history_workouts_empty_title">Nessuna sessione nella cronologia</string>
     <string name="history_workouts_empty_desc">Termina la tua prima sessione e apparirà qui con tutte le metriche.</string>
     <string name="history_workouts_empty_cta">Genera una sessione</string>

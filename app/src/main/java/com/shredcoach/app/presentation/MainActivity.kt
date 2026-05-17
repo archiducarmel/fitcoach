@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -22,6 +23,8 @@ import androidx.compose.ui.Modifier
 import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.domain.session.ActiveSessionManager
 import com.shredcoach.app.notification.AppNotificationDispatcher
+import com.shredcoach.app.presentation.common.GeminiRetryBanner
+import com.shredcoach.app.presentation.common.IncomingShareIntent
 import com.shredcoach.app.presentation.navigation.ShredCoachNavigation
 import com.shredcoach.app.presentation.theme.ShredCoachTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -104,6 +107,9 @@ class MainActivity : ComponentActivity() {
         intent?.getStringExtra(AppNotificationDispatcher.EXTRA_DEEPLINK_ROUTE)?.let { route ->
             deeplinkRouteState.value = (deeplinkRouteState.value.first + 1) to route
         }
+        // ACTION_SEND : l'user a partagé une image vers une cible ShredCoach
+        // (via activity-alias dans le manifest). Route vers la bonne destination.
+        intent?.let { handleIncomingShare(it) }
 
         // Restaure une séance non-complétée (<24h) après un cold-start. Idempotent
         // — la tentative est garde-fou-ée dans le manager, donc onCreate multiple
@@ -152,14 +158,28 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    when {
-                        !profileLoaded -> Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
-                        else -> ShredCoachNavigation(
-                            sessionManager = sessionManager,
-                            hasProfile = hasProfile,
-                            openNotificationsTrigger = openNotifsTrigger,
-                            deeplinkRoute = deeplinkPair,
-                        )
+                    // Box global : NavHost en fond + GeminiRetryBanner aligné
+                    // en bas pour rassurer l'user pendant un retry transparent.
+                    // Le banner est SOUS la nav bar (navigationBarsPadding) pour
+                    // ne pas être masqué par le swipe gesture handle.
+                    Box(Modifier.fillMaxSize()) {
+                        when {
+                            !profileLoaded -> Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
+                            else -> ShredCoachNavigation(
+                                sessionManager = sessionManager,
+                                hasProfile = hasProfile,
+                                openNotificationsTrigger = openNotifsTrigger,
+                                deeplinkRoute = deeplinkPair,
+                            )
+                        }
+                        // Banner global Gemini retry — overlay non-bloquant.
+                        Box(
+                            Modifier
+                                .align(Alignment.BottomCenter)
+                                .navigationBarsPadding()
+                        ) {
+                            GeminiRetryBanner()
+                        }
                     }
                 }
             }
@@ -176,5 +196,35 @@ class MainActivity : ComponentActivity() {
         intent.getStringExtra(AppNotificationDispatcher.EXTRA_DEEPLINK_ROUTE)?.let { route ->
             deeplinkRouteState.value = (deeplinkRouteState.value.first + 1) to route
         }
+        handleIncomingShare(intent)
+    }
+
+    /**
+     * Route un ACTION_SEND (mime image) vers la destination fonctionnelle
+     * choisie par l'user dans la system share sheet.
+     *
+     * Identification de la cible via intent.component.className :
+     *  - ShareGlucoseAlias - analyse glycemique
+     *  - ShareMealAlias    - analyse repas
+     *
+     * Si l'intent vient d'autre part (alias inconnu, intent direct sans
+     * component, action differente), on ignore silencieusement.
+     */
+    private fun handleIncomingShare(intent: Intent) {
+        if (intent.action != Intent.ACTION_SEND) return
+        // IntentCompat gère le split d'API entre legacy getParcelableExtra
+        // (deprecated en 33+) et la nouvelle signature typée Class<T>.
+        val uri = androidx.core.content.IntentCompat
+            .getParcelableExtra(intent, Intent.EXTRA_STREAM, android.net.Uri::class.java)
+            ?: return
+
+        val className = intent.component?.className.orEmpty()
+        val target = when {
+            className.endsWith("ShareGlucoseAlias") -> IncomingShareIntent.Target.GLUCOSE
+            className.endsWith("ShareMealAlias") -> IncomingShareIntent.Target.MEAL
+            else -> return
+        }
+        android.util.Log.i("MainActivity", "handleIncomingShare: target=$target uri=$uri")
+        IncomingShareIntent.set(target, uri)
     }
 }

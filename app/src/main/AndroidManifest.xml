@@ -45,6 +45,48 @@
             </intent-filter>
         </activity>
 
+        <!-- ════════════════════════════════════════════════════════════════
+             SHARE TARGETS — l'user partage une image depuis une autre app
+             (CGM LibreLink, Photos, etc.) → System share sheet propose 2
+             entrées distinctes ShredCoach grâce aux activity-alias suivants.
+
+             Chaque alias :
+              - cible la même MainActivity (qui route selon component name)
+              - affiche son propre label/icône dans la share sheet
+              - filter sur ACTION_SEND + image/* uniquement
+
+             MainActivity lit `intent.component?.className` pour identifier
+             la cible choisie et déposer dans IncomingShareIntent.set(...).
+             ════════════════════════════════════════════════════════════════ -->
+
+        <activity-alias
+            android:name=".ShareGlucoseAlias"
+            android:targetActivity=".presentation.MainActivity"
+            android:label="@string/share_target_glucose"
+            android:icon="@drawable/ic_share_glucose"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter android:label="@string/share_target_glucose">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".ShareMealAlias"
+            android:targetActivity=".presentation.MainActivity"
+            android:label="@string/share_target_meal"
+            android:icon="@drawable/ic_share_meal"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter android:label="@string/share_target_meal">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+        </activity-alias>
+
         <!-- Désactiver l'init automatique de WorkManager (on utilise Configuration.Provider) -->
         <provider
             android:name="androidx.startup.InitializationProvider"

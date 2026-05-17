@@ -24,6 +24,7 @@ import com.shredcoach.app.data.repository.GlucoseRepository
 import com.shredcoach.app.data.repository.NutritionRepository
 import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.domain.nutrition.NutriScoreCalculator
+import com.shredcoach.app.presentation.common.IncomingShareIntent
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -121,6 +122,46 @@ class MealScannerViewModel @Inject constructor(
         viewModelScope.launch {
             mealScanDao.getAllScans().collect { scans ->
                 _state.update { it.copy(scanHistory = scans) }
+            }
+        }
+        // Share intent entrant : l'user a partagé une image vers ShredCoach
+        // Repas (system share sheet). MainActivity a déposé l'Uri dans le bus.
+        // On charge le Bitmap depuis l'Uri puis on bascule en preview comme
+        // si l'user l'avait pickée dans la galerie.
+        viewModelScope.launch {
+            IncomingShareIntent.pending
+                .filterNotNull()
+                .collect { pending ->
+                    if (pending.target == IncomingShareIntent.Target.MEAL) {
+                        loadSharedImage(pending.uri)
+                        IncomingShareIntent.consume()
+                    }
+                }
+        }
+    }
+
+    /**
+     * Charge une image depuis une Uri (partagée par une autre app via
+     * ACTION_SEND) et déclenche le flow standard de scan repas.
+     *
+     * Lecture safe : si le contentResolver échoue ou que l'image est corrompue,
+     * on remonte une error sans crasher. Le flow EXIF est réutilisé pour
+     * récupérer la date de prise de vue si dispo.
+     */
+    private fun loadSharedImage(uri: android.net.Uri) {
+        viewModelScope.launch {
+            try {
+                val bmp = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    appContext.contentResolver.openInputStream(uri)?.use {
+                        android.graphics.BitmapFactory.decodeStream(it)
+                    }
+                } ?: run {
+                    _state.update { it.copy(error = "Image partagée illisible") }
+                    return@launch
+                }
+                setImageFromGallery(bmp, uri)
+            } catch (e: Exception) {
+                _state.update { it.copy(error = "Image partagée illisible : ${e.message?.take(80)}") }
             }
         }
     }

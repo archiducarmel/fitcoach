@@ -1,6 +1,8 @@
 package com.shredcoach.app.presentation.glucose
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -8,9 +10,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
-import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -23,18 +25,15 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import javax.inject.Inject
 
-/** Palette médicale Dr. Glykos. Aligné sur TodayGlucoseCard et AiToolsSection. */
-private val GlucoseEmerald = Color(0xFF059669)
-private val GlucoseEmeraldSoft = Color(0xFFD1FAE5)
-
 /**
- * Chip compact à afficher à côté d'un header de date (ex: "Hier") dans
- * WorkoutHistoryScreen. Récupère le log glucose de [date] (one-shot suspend)
- * et affiche avg / TIR si dispo. Affiche rien si aucun log → pas de pollution
- * visuelle.
+ * Chip glycémique compacte affichée à côté d'un header de date (ex: "Hier")
+ * dans WorkoutHistoryScreen. Couleur dérivée du statut clinique de la moyenne :
+ *  - in-range → emerald soft + emerald 700
+ *  - warning  → amber soft + amber 700
+ *  - critical → red soft + red 700
  *
- * **Hilt dependency** : utilise un VM scoped à la card pour avoir accès au
- * GlucoseRepository sans le passer en param.
+ * Un petit dot coloré matérialise le statut au-delà de la couleur du texte.
+ * Affiche rien si aucun log → pas de pollution visuelle.
  */
 @Composable
 fun BucketGlucoseChip(
@@ -47,6 +46,7 @@ fun BucketGlucoseChip(
     val current = log ?: return
     val avg = current.avgMgdl ?: return
     val tir = current.timeInRangePct
+    val status = GlucoseStatus.forAvg(avg)
 
     val text = if (tir != null) {
         stringResource(R.string.history_glucose_chip, avg.toInt(), tir)
@@ -55,17 +55,28 @@ fun BucketGlucoseChip(
     }
 
     Surface(
-        color = GlucoseEmeraldSoft,
-        shape = RoundedCornerShape(8.dp),
+        color = status.color.copy(alpha = 0.12f),
+        shape = RoundedCornerShape(10.dp),
     ) {
-        Text(
-            text,
-            style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
-            fontWeight = FontWeight.SemiBold,
-            color = GlucoseEmerald,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-            maxLines = 1,
-        )
+        Row(
+            Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Box(
+                Modifier
+                    .size(6.dp)
+                    .clip(CircleShape)
+                    .background(status.color)
+            )
+            Text(
+                text,
+                style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
+                fontWeight = FontWeight.Bold,
+                color = status.color,
+                maxLines = 1,
+            )
+        }
     }
 }
 

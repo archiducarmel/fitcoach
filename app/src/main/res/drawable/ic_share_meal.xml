@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Icône share-target "Repas" affichée dans la system share sheet quand l'user
+  partage une image vers ShredCoach. Design : carré orange vif (palette
+  Shreddy / brand principale) + couvert fork+knife stylisé blanc.
+
+  108x108 = adaptive icon safe zone Android (matche le launcher icon ratio).
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Background orange brand (Shreddy) -->
+    <path
+        android:fillColor="#FF6B35"
+        android:pathData="M0,0h108v108h-108z" />
+
+    <!-- Fork (gauche) : 3 dents + manche -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,30v18a6,6 0,0 0,4 5.66V82h4V53.66A6,6 0,0 0,50 48V30h-3v18h-2v-18h-2v18h-2v-18z" />
+
+    <!-- Couteau (droite) : lame + manche -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M62,30v52h4V52h6c0,-12 -3,-22 -6,-22z" />
+</vector>

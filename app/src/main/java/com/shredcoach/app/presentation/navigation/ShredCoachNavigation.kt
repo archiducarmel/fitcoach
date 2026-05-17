@@ -59,6 +59,7 @@ import com.shredcoach.app.presentation.workout.FavoriteWorkoutsScreen
 import com.shredcoach.app.presentation.workout.WorkoutGeneratorScreen
 import com.shredcoach.app.presentation.workout.WorkoutPreviewScreen
 import com.shredcoach.app.presentation.chat.ChatScreen
+import com.shredcoach.app.presentation.common.IncomingShareIntent
 import com.shredcoach.app.presentation.nutrition.MealScanDetailScreen
 import com.shredcoach.app.presentation.nutrition.MealScannerScreen
 import com.shredcoach.app.presentation.workout.FavoritePreviewScreen
@@ -231,6 +232,21 @@ fun ShredCoachNavigation(
                 }
             }
         }
+    }
+
+    // Share intent entrant : l'user a partagé une image vers ShredCoach via
+    // la system share sheet. MainActivity a déposé (target, uri) dans le
+    // IncomingShareIntent bus → on navigue vers la destination correspondante.
+    // Le ViewModel cible observera ensuite ce même bus pour consommer l'Uri.
+    val pendingShare by IncomingShareIntent.pending.collectAsState()
+    LaunchedEffect(pendingShare, hasProfile) {
+        val p = pendingShare ?: return@LaunchedEffect
+        if (!hasProfile) return@LaunchedEffect
+        val route = when (p.target) {
+            IncomingShareIntent.Target.GLUCOSE -> Screen.GlucoseEntry.createRoute()
+            IncomingShareIntent.Target.MEAL -> Screen.MealScanner.route
+        }
+        navController.navigate(route) { launchSingleTop = true }
     }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route

@@ -5,16 +5,21 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MedicalServices
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.AutoGraph
+import androidx.compose.material.icons.filled.Bloodtype
+import androidx.compose.material.icons.filled.MonitorHeart
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -32,15 +37,6 @@ import java.time.format.FormatStyle
 import java.util.Locale
 import javax.inject.Inject
 
-/** Palette médicale Dr. Glykos. Aligné sur la card AiToolsSection.kt. */
-private val GlucoseEmerald = Color(0xFF059669)
-private val GlucoseTeal = Color(0xFF14B8A6)
-
-/**
- * ViewModel léger qui observe le log glucose du jour pour la card HomeScreen.
- * Cycle de vie scoped au callsite (HomeScreen) — pas de partage avec
- * GlucoseEntryViewModel pour rester découplé.
- */
 @HiltViewModel
 class TodayGlucoseCardViewModel @Inject constructor(
     private val glucoseRepository: GlucoseRepository,
@@ -49,7 +45,6 @@ class TodayGlucoseCardViewModel @Inject constructor(
     val log: StateFlow<GlucoseLogEntity?> = _log.asStateFlow()
 
     init {
-        // Observe : on resync à chaque ouverture de Home.
         viewModelScope.launch {
             glucoseRepository.observeForDate(LocalDate.now()).collect { _log.value = it }
         }
@@ -57,16 +52,19 @@ class TodayGlucoseCardViewModel @Inject constructor(
 }
 
 /**
- * Card sur Home affichant l'état glycémique du jour.
+ * Card hero du suivi glycémique sur la Home. Deux états :
  *
- * **Design** : gradient emerald → teal (palette médicale) avec texte blanc
- * full contrast en light + dark mode. Cohérent visuellement avec la card
- * Dr. Glykos sur AiToolsSection (même gradient) — l'user associe instantanément
- * "ce vert = endocrino IA".
+ *  - **EMPTY** : surface emerald 50 (light bg), icône hero, message,
+ *    CTA emerald 600 → upload CGM. Lisibilité parfaite, pas de blanc
+ *    sur vert clair.
  *
- * **2 états** :
- *  - LOGGED : KPI compact (avg / TIR / pic) + CTA "Voir analyse Dr. Glykos"
- *  - EMPTY  : CTA "Upload ta CGM du jour" → GlucoseEntryScreen
+ *  - **LOGGED** : surface gradient emerald 900→700 (foncé) + texte blanc
+ *    WCAG AAA. Big number central (moyenne du jour) + status pill +
+ *    3 KPI tiles glassmorphiques + CTA "Analyse Dr. Glykos".
+ *
+ * Le design est volontairement aligné sur AiToolsSection / Dr. Glykos
+ * (palette identique) pour que l'user fasse l'association immédiate
+ * "ce vert = mon endocrino IA".
  */
 @Composable
 fun TodayGlucoseCard(
@@ -75,108 +73,212 @@ fun TodayGlucoseCard(
     viewModel: TodayGlucoseCardViewModel = hiltViewModel(),
 ) {
     val log by viewModel.log.collectAsState()
+    val current = log
 
+    if (current == null || !current.hasAnyMetric()) {
+        EmptyTodayGlucoseCard(onUploadClick)
+    } else {
+        LoggedTodayGlucoseCard(current, onAnalyzeClick)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EMPTY STATE — fond clair, texte foncé, CTA emerald
+// ═══════════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun EmptyTodayGlucoseCard(onUploadClick: () -> Unit) {
     Card(
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = GlucoseColors.Emerald50),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Box(
-            Modifier.fillMaxWidth().background(
-                Brush.linearGradient(listOf(GlucoseEmerald, GlucoseTeal))
-            ),
+        Column(
+            Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Column(
-                Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+            GlucoseSectionHeader(
+                icon = Icons.Default.MonitorHeart,
+                title = stringResource(R.string.home_glucose_card_title),
+                subtitle = stringResource(R.string.home_glucose_card_empty_subtitle),
+            )
+            Text(
+                stringResource(R.string.home_glucose_card_empty_desc),
+                style = MaterialTheme.typography.bodyMedium,
+                color = GlucoseColors.Emerald800.copy(alpha = 0.78f),
+            )
+            Button(
+                onClick = onUploadClick,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = GlucoseColors.Emerald600,
+                    contentColor = Color.White,
+                ),
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.fillMaxWidth().height(50.dp),
             ) {
-                // Header — texte blanc, icône blanche sur surface alpha
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Surface(shape = CircleShape, color = Color.White.copy(alpha = 0.22f), modifier = Modifier.size(34.dp)) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.MedicalServices, null,
-                                Modifier.size(20.dp), tint = Color.White)
-                        }
-                    }
-                    Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.home_glucose_card_title),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color.White,
-                            maxLines = 1)
-                        val dateStr = remember {
-                            LocalDate.now().format(
-                                DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
-                                    .withLocale(Locale.getDefault())
-                            ).replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-                        }
-                        Text(dateStr,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.White.copy(alpha = 0.78f),
-                            maxLines = 1)
-                    }
-                }
+                Icon(Icons.Default.PhotoCamera, null, Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    stringResource(R.string.home_glucose_card_cta_upload),
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.3.sp,
+                )
+            }
+        }
+    }
+}
 
-                val current = log
-                if (current == null || !current.hasAnyMetric()) {
-                    Text(stringResource(R.string.home_glucose_card_empty_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.88f))
-                    // CTA inversé : fond blanc + texte emerald → action premium
-                    Button(
-                        onClick = onUploadClick,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White,
-                            contentColor = GlucoseEmerald,
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(stringResource(R.string.home_glucose_card_cta_upload),
-                            fontWeight = FontWeight.ExtraBold)
-                    }
-                } else {
-                    // KPIs compacts — texte blanc full contrast
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                        current.avgMgdl?.let {
-                            MiniKpi(
-                                label = stringResource(R.string.home_glucose_card_kpi_avg),
-                                value = "${it.toInt()}",
-                                unit = "mg/dL",
-                                modifier = Modifier.weight(1f),
-                            )
-                        }
-                        current.timeInRangePct?.let {
-                            MiniKpi(
-                                label = stringResource(R.string.home_glucose_card_kpi_tir),
-                                value = "$it",
-                                unit = "%",
-                                modifier = Modifier.weight(1f),
-                            )
-                        }
-                        current.peakMgdl?.let {
-                            MiniKpi(
-                                label = stringResource(R.string.home_glucose_card_kpi_peak),
-                                value = "${it.toInt()}",
-                                unit = "mg/dL",
-                                modifier = Modifier.weight(1f),
-                            )
-                        }
-                    }
-                    Button(
-                        onClick = onAnalyzeClick,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White,
-                            contentColor = GlucoseEmerald,
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(stringResource(R.string.home_glucose_card_cta_analyze),
-                            fontWeight = FontWeight.ExtraBold)
-                    }
+// ═══════════════════════════════════════════════════════════════════════════
+// LOGGED STATE — hero gradient foncé, big number, KPI tiles glassy
+// ═══════════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun LoggedTodayGlucoseCard(log: GlucoseLogEntity, onAnalyzeClick: () -> Unit) {
+    val avgStatus = GlucoseStatus.forAvg(log.avgMgdl)
+    val tirStatus = GlucoseStatus.forTir(log.timeInRangePct)
+    val peakStatus = GlucoseStatus.forPeak(log.peakMgdl)
+
+    val dateStr = remember {
+        LocalDate.now().format(
+            DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
+                .withLocale(Locale.getDefault())
+        ).replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+    }
+
+    val statusLabel = when (avgStatus) {
+        GlucoseStatus.InRange -> stringResource(R.string.glucose_status_in_range)
+        GlucoseStatus.Warning -> stringResource(R.string.glucose_status_warning)
+        GlucoseStatus.Critical -> stringResource(R.string.glucose_status_critical)
+        GlucoseStatus.Unknown -> stringResource(R.string.glucose_status_unknown)
+    }
+
+    GlucoseHeroSurface(modifier = Modifier.fillMaxWidth()) {
+        // ─── Header : icône + titre + date ───
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Surface(shape = CircleShape, color = Color.White.copy(alpha = 0.18f), modifier = Modifier.size(36.dp)) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.MonitorHeart, null, Modifier.size(20.dp), tint = Color.White)
                 }
+            }
+            Column(Modifier.weight(1f)) {
+                Text(
+                    stringResource(R.string.home_glucose_card_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White,
+                    maxLines = 1,
+                )
+                Text(
+                    dateStr,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.White.copy(alpha = 0.72f),
+                    maxLines = 1,
+                )
+            }
+            // Status pill : couleur status, fond blanc translucide pour fond foncé.
+            GlucoseStatusPill(status = avgStatus, label = statusLabel, onDark = true)
+        }
+
+        // ─── Hero number : la moyenne du jour, énorme ───
+        log.avgMgdl?.let { avg ->
+            Row(
+                Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 2.dp),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    "${avg.toInt()}",
+                    style = MaterialTheme.typography.displayMedium.copy(fontFeatureSettings = "tnum"),
+                    fontSize = 52.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color.White,
+                    maxLines = 1,
+                )
+                Column(Modifier.padding(bottom = 8.dp)) {
+                    Text(
+                        "mg/dL",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White.copy(alpha = 0.8f),
+                    )
+                    Text(
+                        stringResource(R.string.home_glucose_card_avg_label).uppercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontSize = 9.sp,
+                        letterSpacing = 1.sp,
+                        color = Color.White.copy(alpha = 0.6f),
+                    )
+                }
+            }
+        }
+
+        // ─── KPI tiles : TIR / Pic / Hypos ───
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            log.timeInRangePct?.let { tir ->
+                GlucoseHeroKpiTile(
+                    label = stringResource(R.string.home_glucose_card_kpi_tir),
+                    value = "$tir",
+                    unit = "%",
+                    status = tirStatus,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            log.peakMgdl?.let { peak ->
+                GlucoseHeroKpiTile(
+                    label = stringResource(R.string.home_glucose_card_kpi_peak),
+                    value = "${peak.toInt()}",
+                    unit = "mg/dL",
+                    status = peakStatus,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            log.hypoCount?.let { hypo ->
+                GlucoseHeroKpiTile(
+                    label = stringResource(R.string.home_glucose_card_kpi_hypo),
+                    value = "$hypo",
+                    unit = "",
+                    status = GlucoseStatus.forHypoCount(hypo),
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+
+        // ─── CTA "Analyse Dr. Glykos" : fond blanc, texte emerald ───
+        Surface(
+            onClick = onAnalyzeClick,
+            shape = RoundedCornerShape(14.dp),
+            color = Color.White,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(
+                Modifier.padding(horizontal = 16.dp, vertical = 13.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Default.AutoGraph,
+                    null,
+                    Modifier.size(18.dp),
+                    tint = GlucoseColors.Emerald600,
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    stringResource(R.string.home_glucose_card_cta_analyze),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = GlucoseColors.Emerald800,
+                    letterSpacing = 0.3.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowForward,
+                    null,
+                    Modifier.size(16.dp),
+                    tint = GlucoseColors.Emerald600,
+                )
             }
         }
     }
@@ -184,38 +286,3 @@ fun TodayGlucoseCard(
 
 private fun GlucoseLogEntity.hasAnyMetric(): Boolean =
     avgMgdl != null || peakMgdl != null || timeInRangePct != null
-
-@Composable
-private fun MiniKpi(label: String, value: String, unit: String, modifier: Modifier = Modifier) {
-    // Mini-card semi-transparente blanche pour densité visuelle + contraste
-    // homogène avec le gradient (la KPI a son propre micro-bg pour ne pas être
-    // "perdue" dans le gradient).
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = Color.White.copy(alpha = 0.16f),
-        modifier = modifier,
-    ) {
-        Column(
-            Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
-            horizontalAlignment = Alignment.Start,
-        ) {
-            Text(label,
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.78f),
-                maxLines = 1)
-            Spacer(Modifier.height(2.dp))
-            Row(verticalAlignment = Alignment.Bottom) {
-                Text(value,
-                    style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White,
-                    maxLines = 1)
-                Spacer(Modifier.width(3.dp))
-                Text(unit,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.White.copy(alpha = 0.75f),
-                    maxLines = 1)
-            }
-        }
-    }
-}

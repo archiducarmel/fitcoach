@@ -1,6 +1,7 @@
 package com.shredcoach.app.di
 
 import com.shredcoach.app.BuildConfig
+import com.shredcoach.app.data.remote.GeminiOverloadInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -67,7 +68,8 @@ object NetworkModule {
     @Singleton
     @BaseHttpClient
     fun provideBaseOkHttpClient(
-        loggingInterceptor: HttpLoggingInterceptor
+        loggingInterceptor: HttpLoggingInterceptor,
+        geminiOverloadInterceptor: GeminiOverloadInterceptor,
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
@@ -78,6 +80,10 @@ object NetworkModule {
                     .build()
                 chain.proceed(request)
             }
+            // Retry transparent sur "Gemini overloaded" : 3 retries max avec
+            // backoff exponentiel + jitter. Émet vers GeminiRetryBus pour
+            // l'humour UI. N'affecte que les URLs `generativelanguage.googleapis.com`.
+            .addInterceptor(geminiOverloadInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
             .build()
     }
