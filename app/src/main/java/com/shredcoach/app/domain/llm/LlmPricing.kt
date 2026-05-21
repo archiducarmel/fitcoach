@@ -37,6 +37,7 @@ object LlmPricing {
         // ─── GEMINI ─────────────────────────────────────────────────────
         (LlmProvider.GEMINI to "gemini-2.5-flash") to ModelPricing(0.30, 2.50),
         (LlmProvider.GEMINI to "gemini-3-flash-preview") to ModelPricing(1.50, 9.00),
+        (LlmProvider.GEMINI to "gemini-3.5-flash") to ModelPricing(1.50, 9.00),
         (LlmProvider.GEMINI to "gemini-2.0-flash") to ModelPricing(0.10, 0.40),
 
         // ─── GROQ ───────────────────────────────────────────────────────

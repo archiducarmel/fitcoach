@@ -47,7 +47,13 @@ object LlmCatalog {
                 id = "gemini-3-flash-preview",
                 displayName = "Gemini 3 Flash (Preview)",
                 tier = LlmTier.PREMIUM,
-                notes = "Reasoning étendu (lent, 5× plus cher)",
+                notes = "Preview public, reasoning étendu",
+            ),
+            LlmModelInfo(
+                id = "gemini-3.5-flash",
+                displayName = "Gemini 3.5 Flash",
+                tier = LlmTier.PREMIUM,
+                notes = "Reasoning premium (lent, 5× plus cher)",
             ),
             LlmModelInfo(
                 id = "gemini-2.0-flash",
