@@ -147,6 +147,11 @@ fun NutritionScreen(navController: NavController, viewModel: NutritionViewModel 
                             com.shredcoach.app.presentation.navigation.Screen.DrGlykosChat.route
                         )
                     },
+                    onOpenAnalysis = {
+                        navController.navigate(
+                            com.shredcoach.app.presentation.navigation.Screen.GlucoseAnalysis.createRoute(state.selectedDate)
+                        )
+                    },
                 )
             }
 

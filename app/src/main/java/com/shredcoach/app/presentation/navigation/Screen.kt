@@ -49,6 +49,14 @@ sealed class Screen(val route: String) {
     }
     /** Historique CGM (graphes, KPIs, patterns). */
     object GlucoseHistory : Screen("glucose_history")
+    /**
+     * Analyse experte de la glycémie quotidienne par Dr. Glykos (LLM).
+     * Pattern : `glucose_analysis?date={date}`. Si absent → J-1.
+     */
+    object GlucoseAnalysis : Screen("glucose_analysis?date={date}") {
+        fun createRoute(date: java.time.LocalDate = java.time.LocalDate.now().minusDays(1)) =
+            "glucose_analysis?date=$date"
+    }
     object MealScanner : Screen("meal_scanner")
     object MealScanDetail : Screen("meal_scan_detail/{scanId}") {
         fun createRoute(scanId: Long) = "meal_scan_detail/$scanId"

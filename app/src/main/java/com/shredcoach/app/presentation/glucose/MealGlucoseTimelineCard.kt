@@ -118,6 +118,7 @@ fun MealGlucoseTimelineCard(
     date: LocalDate,
     onUploadCgm: () -> Unit,
     onOpenDrGlykos: () -> Unit,
+    onOpenAnalysis: () -> Unit = {},
     viewModel: MealGlucoseTimelineViewModel = hiltViewModel(),
 ) {
     LaunchedEffect(date) { viewModel.setDate(date) }
@@ -176,7 +177,38 @@ fun MealGlucoseTimelineCard(
                     }
                 }
             }
+            // Bouton "Analyse experte" — visible dès qu'il y a un log glucose
+            // (avec ou sans courbe). Le ViewModel analyse fera son propre
+            // état (loading, error, success) avec gating sur la dispo des data.
+            if (log != null) {
+                ExpertAnalysisButton(onClick = onOpenAnalysis)
+            }
         }
+    }
+}
+
+/**
+ * CTA "Analyse experte" en bas de la card. Bouton plein largeur emerald,
+ * icône stéthoscope, label clair. Ouvre l'écran d'analyse LLM Dr. Glykos
+ * pour la date affichée.
+ */
+@Composable
+private fun ExpertAnalysisButton(onClick: () -> Unit) {
+    androidx.compose.material3.Button(
+        onClick = onClick,
+        colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+            containerColor = GlucoseEmerald,
+            contentColor = androidx.compose.ui.graphics.Color.White,
+        ),
+        shape = RoundedCornerShape(14.dp),
+        modifier = Modifier.fillMaxWidth().height(48.dp),
+    ) {
+        Icon(Icons.Default.MedicalServices, null, Modifier.size(18.dp))
+        androidx.compose.foundation.layout.Spacer(Modifier.width(8.dp))
+        Text(
+            stringResource(R.string.nutrition_glucose_open_analysis),
+            fontWeight = FontWeight.Bold,
+        )
     }
 }
 

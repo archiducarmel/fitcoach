@@ -243,7 +243,12 @@
       "Bash(JAVA_HOME='/c/Program Files/Android/Android Studio/jbr' ./gradlew.bat :app:testDebugUnitTest --tests \"com.shredcoach.app.domain.glucose.*\" --tests \"com.shredcoach.app.domain.chat.*\" --tests \"com.shredcoach.app.domain.notification.*\")",
       "Bash(JAVA_HOME='/c/Program Files/Android/Android Studio/jbr' ./gradlew.bat :app:assembleDebug :app:testDebugUnitTest --tests \"com.shredcoach.app.domain.*\")",
       "Bash(JAVA_HOME='/c/Program Files/Android/Android Studio/jbr' ./gradlew.bat :app:assembleDebug :app:testDebugUnitTest)",
-      "Bash(grep -E --line-buffered \"BUILD SUCCESSFUL|BUILD FAILED|^e: |FAILED$\")"
+      "Bash(grep -E --line-buffered \"BUILD SUCCESSFUL|BUILD FAILED|^e: |FAILED$\")",
+      "PowerShell($env:JAVA_HOME='C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr'; $env:Path=\"$env:JAVA_HOME\\\\bin;$env:Path\"; ./gradlew.bat :app:compileDebugKotlin --no-daemon 2>&1 | Select-String -Pattern \"^e:|BUILD\" | Select-Object -First 15)",
+      "PowerShell($env:JAVA_HOME='C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr'; $env:Path=\"$env:JAVA_HOME\\\\bin;$env:Path\"; ./gradlew.bat :app:compileDebugKotlin --no-daemon 2>&1 | Select-String -Pattern \"^e:|BUILD\" | Select-Object -First 10)",
+      "Bash(tasklist /FI \"IMAGENAME eq java.exe\")",
+      "Bash(tasklist /FI \"IMAGENAME eq gradle*\")",
+      "PowerShell($env:JAVA_HOME='C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr'; $env:Path=\"$env:JAVA_HOME\\\\bin;$env:Path\"; ./gradlew.bat :app:compileDebugKotlin --no-daemon 2>&1 | Select-String -Pattern \"^e:|BUILD\" | Select-Object -First 20)"
     ]
   }
 }

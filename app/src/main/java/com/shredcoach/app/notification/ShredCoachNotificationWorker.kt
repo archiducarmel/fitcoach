@@ -9,6 +9,7 @@ import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.domain.notification.BedtimeBuilder
 import com.shredcoach.app.domain.notification.BreakfastBuilder
 import com.shredcoach.app.domain.notification.DinnerBuilder
+import com.shredcoach.app.domain.glucose.GlucoseAnalysisEngine
 import com.shredcoach.app.domain.notification.GlucoseRecapBuilder
 import com.shredcoach.app.domain.notification.LunchBuilder
 import com.shredcoach.app.domain.notification.MorningBriefBuilder
@@ -43,6 +44,7 @@ class ShredCoachNotificationWorker @AssistedInject constructor(
     private val userRepository: UserRepository,
     private val contextEngine: NotificationContextEngine,
     private val dispatcher: AppNotificationDispatcher,
+    private val glucoseAnalysisEngine: GlucoseAnalysisEngine,
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
@@ -91,7 +93,9 @@ class ShredCoachNotificationWorker @AssistedInject constructor(
             TYPE_BEDTIME -> BedtimeBuilder.build(context, snapshot)
             TYPE_MOTIVATION -> MotivationBuilder.build(context, snapshot)
             TYPE_MORNING_BRIEF -> MorningBriefBuilder.build(context, snapshot)
-            TYPE_GLUCOSE_RECAP -> GlucoseRecapBuilder.build(context, snapshot)
+            // Variante LLM-aware : tente analyse Dr. Glykos (cache-first),
+            // fallback rule-based si LLM indispo. Cf. GlucoseRecapBuilder KDoc.
+            TYPE_GLUCOSE_RECAP -> GlucoseRecapBuilder.build(context, snapshot, glucoseAnalysisEngine)
             else -> return Result.success()
         }
 

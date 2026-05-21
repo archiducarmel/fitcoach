@@ -984,6 +984,26 @@
     <!-- Share sheet targets — visible when sharing an image -->
     <string name="share_target_glucose">ShredCoach · Glucose</string>
     <string name="share_target_meal">ShredCoach · Meal</string>
+    <!-- Glucose analysis — expert daily LLM analysis -->
+    <string name="glucose_analysis_title">Expert analysis</string>
+    <string name="glucose_analysis_overall_verdict">Today\'s verdict</string>
+    <string name="glucose_analysis_insights_header">Key observations</string>
+    <string name="glucose_analysis_curve_title">Annotated curve</string>
+    <string name="glucose_analysis_advice_title">Advice for tomorrow</string>
+    <string name="glucose_analysis_ask_dr_glykos_title">Ask Dr. Glykos</string>
+    <string name="glucose_analysis_ask_dr_glykos_subtitle">Dig into a specific point</string>
+    <string name="glucose_analysis_refresh_cd">Re-analyze</string>
+    <string name="glucose_analysis_retry">Retry</string>
+    <string name="glucose_analysis_loading_title">Analyzing…</string>
+    <string name="glucose_analysis_loading_subtitle">Dr. Glykos is studying your glucose curve and meals.</string>
+    <string name="glucose_analysis_legend_positive">Favorable</string>
+    <string name="glucose_analysis_legend_neutral">Neutral</string>
+    <string name="glucose_analysis_legend_concern">Watch out</string>
+    <string name="glucose_verdict_excellent">Excellent</string>
+    <string name="glucose_verdict_good">Good</string>
+    <string name="glucose_verdict_fair">Fair</string>
+    <string name="glucose_verdict_concern">Watch out</string>
+    <string name="nutrition_glucose_open_analysis">Dr. Glykos expert analysis</string>
     <string name="history_workouts_empty_title">No session in history</string>
     <string name="history_workouts_empty_desc">Finish your first session and it will appear here with all its metrics.</string>
     <string name="history_workouts_empty_cta">Generate a session</string>

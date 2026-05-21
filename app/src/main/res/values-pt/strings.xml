@@ -1111,6 +1111,26 @@
     <!-- Share sheet targets — visíveis ao compartilhar uma imagem -->
     <string name="share_target_glucose">ShredCoach · Glicemia</string>
     <string name="share_target_meal">ShredCoach · Refeição</string>
+    <!-- Glucose analysis — expert daily LLM analysis -->
+    <string name="glucose_analysis_title">Análise especializada</string>
+    <string name="glucose_analysis_overall_verdict">Veredicto do dia</string>
+    <string name="glucose_analysis_insights_header">Pontos-chave observados</string>
+    <string name="glucose_analysis_curve_title">Curva anotada</string>
+    <string name="glucose_analysis_advice_title">Conselho para amanhã</string>
+    <string name="glucose_analysis_ask_dr_glykos_title">Perguntar ao Dr. Glykos</string>
+    <string name="glucose_analysis_ask_dr_glykos_subtitle">Aprofundar um ponto específico</string>
+    <string name="glucose_analysis_refresh_cd">Re-analisar</string>
+    <string name="glucose_analysis_retry">Tentar novamente</string>
+    <string name="glucose_analysis_loading_title">Analisando…</string>
+    <string name="glucose_analysis_loading_subtitle">O Dr. Glykos está estudando a sua curva glicêmica e refeições do dia.</string>
+    <string name="glucose_analysis_legend_positive">Favorável</string>
+    <string name="glucose_analysis_legend_neutral">Neutro</string>
+    <string name="glucose_analysis_legend_concern">Atenção</string>
+    <string name="glucose_verdict_excellent">Excelente</string>
+    <string name="glucose_verdict_good">Bom</string>
+    <string name="glucose_verdict_fair">Razoável</string>
+    <string name="glucose_verdict_concern">Atenção</string>
+    <string name="nutrition_glucose_open_analysis">Análise especializada Dr. Glykos</string>
     <string name="history_workouts_empty_title">Nenhum treino no histórico</string>
     <string name="history_workouts_empty_desc">Conclua seu primeiro treino e ele vai aparecer aqui com todas as métricas.</string>
     <string name="history_workouts_empty_cta">Gerar um treino</string>

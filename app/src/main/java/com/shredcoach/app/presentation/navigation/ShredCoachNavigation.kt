@@ -153,6 +153,8 @@ private val ALLOWED_DEEPLINK_PREFIXES = setOf(
     "stats",
     "profile",
     "settings",
+    "glucose_analysis",  // deeplink notif recap quotidien 12h17 → analyse J-1
+    "glucose_entry",     // permettre aussi un deeplink vers upload
 )
 
 // Direction du slide entre tabs : -1 = vers la gauche, +1 = vers la droite
@@ -456,6 +458,18 @@ fun ShredCoachNavigation(
             }
             composable(Screen.GlucoseHistory.route) {
                 com.shredcoach.app.presentation.glucose.GlucoseHistoryScreen(navController = navController)
+            }
+            composable(
+                route = Screen.GlucoseAnalysis.route,
+                arguments = listOf(
+                    androidx.navigation.navArgument("date") {
+                        type = androidx.navigation.NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
+            ) {
+                com.shredcoach.app.presentation.glucose.GlucoseAnalysisScreen(navController = navController)
             }
 
             composable(Screen.Notifications.route) {

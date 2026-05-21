@@ -1061,6 +1061,26 @@
     <!-- Share sheet targets — visibili quando condividi un\'immagine -->
     <string name="share_target_glucose">ShredCoach · Glicemia</string>
     <string name="share_target_meal">ShredCoach · Pasto</string>
+    <!-- Glucose analysis — expert daily LLM analysis -->
+    <string name="glucose_analysis_title">Analisi esperta</string>
+    <string name="glucose_analysis_overall_verdict">Verdetto del giorno</string>
+    <string name="glucose_analysis_insights_header">Punti chiave osservati</string>
+    <string name="glucose_analysis_curve_title">Curva annotata</string>
+    <string name="glucose_analysis_advice_title">Consiglio per domani</string>
+    <string name="glucose_analysis_ask_dr_glykos_title">Chiedi al Dr. Glykos</string>
+    <string name="glucose_analysis_ask_dr_glykos_subtitle">Approfondisci un punto specifico</string>
+    <string name="glucose_analysis_refresh_cd">Ri-analizza</string>
+    <string name="glucose_analysis_retry">Riprova</string>
+    <string name="glucose_analysis_loading_title">Analisi in corso…</string>
+    <string name="glucose_analysis_loading_subtitle">Il Dr. Glykos sta studiando la tua curva glicemica e i pasti del giorno.</string>
+    <string name="glucose_analysis_legend_positive">Favorevole</string>
+    <string name="glucose_analysis_legend_neutral">Neutro</string>
+    <string name="glucose_analysis_legend_concern">Attenzione</string>
+    <string name="glucose_verdict_excellent">Eccellente</string>
+    <string name="glucose_verdict_good">Buono</string>
+    <string name="glucose_verdict_fair">Discreto</string>
+    <string name="glucose_verdict_concern">Attenzione</string>
+    <string name="nutrition_glucose_open_analysis">Analisi esperta Dr. Glykos</string>
     <string name="history_workouts_empty_title">Nessuna sessione nella cronologia</string>
     <string name="history_workouts_empty_desc">Termina la tua prima sessione e apparirà qui con tutte le metriche.</string>
     <string name="history_workouts_empty_cta">Genera una sessione</string>
