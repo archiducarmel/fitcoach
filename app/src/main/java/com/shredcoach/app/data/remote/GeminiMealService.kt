@@ -375,16 +375,27 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         disableThinking: Boolean,
     ): String {
         val url = "$GEMINI_BASE_URL/$model:generateContent"
+        // Gemini 3.x deprecate temperature/top_p/top_k → on les retire (per
+        // Google recommendation officielle). 2.x les supporte toujours.
+        val isGemini3Plus = model.startsWith("gemini-3.") || model.startsWith("gemini-3-")
         val generationConfig = mutableMapOf<String, Any>(
-            "temperature" to 0.4,
             "maxOutputTokens" to maxOutputTokens,
             "responseMimeType" to "application/json",
         )
+        if (!isGemini3Plus) {
+            generationConfig["temperature"] = 0.4
+        }
         if (disableThinking) {
-            // Désactive le thinking (Gemini 2.5+). Budget=0 = aucun token CoT.
-            // Notre prompt fournit déjà la structure et les exemples, le modèle
-            // peut générer directement le JSON final.
-            generationConfig["thinkingConfig"] = mapOf("thinkingBudget" to 0)
+            // BREAKING CHANGE Gemini 3.x : thinkingBudget (numeric) deprecated
+            // → thinkingLevel enum {LOW, MEDIUM, HIGH}. Pas de "OFF" possible
+            // (tested via POC, retourne 400 INVALID_ARGUMENT). On utilise LOW
+            // sur 3.x (~620 thinking tokens, ~3× moins que default) et
+            // thinkingBudget=0 sur 2.x (vraiment 0 thinking).
+            generationConfig["thinkingConfig"] = if (isGemini3Plus) {
+                mapOf("thinkingLevel" to "LOW")
+            } else {
+                mapOf("thinkingBudget" to 0)
+            }
         }
         val payload = mapOf(
             "contents" to listOf(mapOf(
