@@ -138,6 +138,7 @@ class GlucoseAnalysisEngine @Inject constructor(
             apiKey = apiKey,
             prompt = prompt,
             model = effectiveModel,
+            assistant = AiAssistant.GLUCOSE_ANALYSIS,
         )
         val latencyMs = System.currentTimeMillis() - startMs
 

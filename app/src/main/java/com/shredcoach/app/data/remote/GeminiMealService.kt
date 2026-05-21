@@ -76,7 +76,15 @@ data class Micronutrient(
 
 @Singleton
 class GeminiMealService @Inject constructor(
-    @com.shredcoach.app.di.NetworkModule.BaseHttpClient baseClient: OkHttpClient
+    @com.shredcoach.app.di.NetworkModule.BaseHttpClient baseClient: OkHttpClient,
+    /**
+     * Recorder de télémétrie LLM. Si non-null, chaque appel emit un event
+     * pour le dashboard de consommation IA (Settings → Consommation).
+     * Injected via Hilt — pas optionnel à l'execution, mais on garde la
+     * possibilité null si jamais un service standalone l'instancie sans Hilt
+     * dans le futur.
+     */
+    private val usageRecorder: com.shredcoach.app.domain.llm.LlmUsageRecorder,
 ) {
 
     private val client = baseClient.newBuilder()
@@ -86,6 +94,34 @@ class GeminiMealService @Inject constructor(
 
     private val gson = Gson()
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
+
+    /**
+     * Parse l'usageMetadata d'une réponse Gemini pour récupérer les tokens.
+     * Format de réponse :
+     * ```
+     * { "usageMetadata": { "promptTokenCount": N, "candidatesTokenCount": M,
+     *                      "thoughtsTokenCount": K, "totalTokenCount": ... } }
+     * ```
+     * Retourne (input, output, thinking). Tous à 0 si parse échoue.
+     */
+    private fun parseGeminiUsage(responseJson: com.google.gson.JsonObject): Triple<Int, Int, Int> {
+        val usage = responseJson.getAsJsonObject("usageMetadata") ?: return Triple(0, 0, 0)
+        val input = usage.get("promptTokenCount")?.asInt ?: 0
+        val output = usage.get("candidatesTokenCount")?.asInt ?: 0
+        val thinking = usage.get("thoughtsTokenCount")?.asInt ?: 0
+        return Triple(input, output, thinking)
+    }
+
+    /**
+     * Parse l'usage block d'une réponse OpenAI-compatible (Groq, Mistral).
+     * Format : `{ "usage": { "prompt_tokens": N, "completion_tokens": M } }`.
+     */
+    private fun parseOpenAiUsage(responseJson: com.google.gson.JsonObject): Triple<Int, Int, Int> {
+        val usage = responseJson.getAsJsonObject("usage") ?: return Triple(0, 0, 0)
+        val input = usage.get("prompt_tokens")?.asInt ?: 0
+        val output = usage.get("completion_tokens")?.asInt ?: 0
+        return Triple(input, output, 0)
+    }
 
     companion object {
         private const val TAG = "MealScanner"
@@ -302,9 +338,12 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         apiKey: String,
         model: String = "gemini-2.5-flash",
         provider: String = "GEMINI",
-        prompt: String
+        prompt: String,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
     ): Result<String> = withContext(Dispatchers.IO) {
+        val startMs = System.currentTimeMillis()
         try {
+            // TODO Phase 2b : passer assistant aux private methods + emit success-path telemetry
             val raw = when (provider.uppercase()) {
                 "GROQ" -> callGroqText(apiKey, prompt)
                 "MISTRAL" -> callMistralText(apiKey, prompt)
@@ -313,6 +352,14 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
             if (raw.isBlank()) Result.failure(Exception("Réponse LLM vide")) else Result.success(raw)
         } catch (e: Exception) {
             Log.e(TAG, "callTextLLM failed", e)
+            // Emit failure event pour le dashboard
+            val effectiveProvider = runCatching { com.shredcoach.app.data.remote.LlmProvider.valueOf(provider.uppercase()) }
+                .getOrDefault(com.shredcoach.app.data.remote.LlmProvider.GEMINI)
+            usageRecorder.record(
+                assistant = assistant, provider = effectiveProvider, model = model,
+                tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
+                latencyMs = System.currentTimeMillis() - startMs, success = false,
+            )
             Result.failure(e)
         }
     }
@@ -350,7 +397,9 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         model: String = "gemini-2.5-flash",
         maxOutputTokens: Int = 8192,
         disableThinking: Boolean = true,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
     ): Result<String> = withContext(Dispatchers.IO) {
+        val startMs = System.currentTimeMillis()
         try {
             val raw = callGeminiJsonAnalysis(
                 apiKey = apiKey,
@@ -358,11 +407,17 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
                 prompt = prompt,
                 maxOutputTokens = maxOutputTokens,
                 disableThinking = disableThinking,
+                assistant = assistant,
             )
             if (raw.isBlank()) Result.failure(Exception("Réponse LLM vide"))
             else Result.success(raw)
         } catch (e: Exception) {
             Log.e(TAG, "callJsonAnalysisLLM failed", e)
+            usageRecorder.record(
+                assistant = assistant, provider = com.shredcoach.app.data.remote.LlmProvider.GEMINI,
+                model = model, tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
+                latencyMs = System.currentTimeMillis() - startMs, success = false,
+            )
             Result.failure(e)
         }
     }
@@ -373,7 +428,9 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         prompt: String,
         maxOutputTokens: Int,
         disableThinking: Boolean,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
     ): String {
+        val startMs = System.currentTimeMillis()
         val url = "$GEMINI_BASE_URL/$model:generateContent"
         // Gemini 3.x deprecate temperature/top_p/top_k → on les retire (per
         // Google recommendation officielle). 2.x les supporte toujours.
@@ -431,6 +488,17 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         val raw = textParts.joinToString("").trim()
             .removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
         Log.d(TAG, "Analysis LLM raw output: ${raw.length} chars, finishReason=$finishReason")
+
+        // ─── Telemetrie : emit usage event pour le dashboard ──
+        val (tIn, tOut, tThink) = parseGeminiUsage(json)
+        usageRecorder.record(
+            assistant = assistant,
+            provider = com.shredcoach.app.data.remote.LlmProvider.GEMINI,
+            model = model,
+            tokensInput = tIn, tokensOutput = tOut, tokensThinking = tThink,
+            latencyMs = System.currentTimeMillis() - startMs,
+            success = true,
+        )
         return raw
     }
 
