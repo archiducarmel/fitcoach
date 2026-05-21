@@ -8,6 +8,7 @@ import com.google.gson.JsonParser
 import com.shredcoach.app.data.local.entity.AnalysisVerdict
 import com.shredcoach.app.data.local.entity.GlucoseAnalysisEntity
 import com.shredcoach.app.data.local.entity.GlucoseLogEntity
+import com.shredcoach.app.data.local.entity.MealLogEntity
 import com.shredcoach.app.data.repository.GlucoseRepository
 import com.shredcoach.app.data.repository.NutritionRepository
 import com.shredcoach.app.domain.glucose.GlucoseAnalysisEngine
@@ -65,6 +66,8 @@ data class GlucoseAnalysisState(
     val insights: List<GlucoseInsight> = emptyList(),
     /** Le log glucose source — utilisé pour rendre la courbe annotée. */
     val glucoseLog: GlucoseLogEntity? = null,
+    /** Repas du jour — affichés comme markers SUR la courbe. */
+    val meals: List<MealLogEntity> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     /** Vrai si l'écran a déjà tenté un fetch initial (évite double-trigger). */
@@ -89,9 +92,12 @@ class GlucoseAnalysisViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            // 1. Charge le log glucose (pour rendre la courbe annotée)
+            // 1. Charge le log glucose + repas du jour (pour rendre la courbe annotée
+            //    avec markers de repas sur la trajectoire).
             val log = glucoseRepository.getForDate(initialDate)
-            _state.update { it.copy(glucoseLog = log) }
+            val mealsForDay = runCatching { nutritionRepository.getMealsForDateOnce(initialDate) }
+                .getOrDefault(emptyList())
+            _state.update { it.copy(glucoseLog = log, meals = mealsForDay) }
 
             // 2. Déclenche analyse (cache-first)
             triggerAnalyze(force = false)

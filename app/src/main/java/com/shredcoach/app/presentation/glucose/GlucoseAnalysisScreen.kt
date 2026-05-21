@@ -161,6 +161,7 @@ private fun AnalysisContent(
                 AnnotatedCurveCard(
                     curve = curve,
                     insights = state.insights,
+                    meals = state.meals,
                 )
             }
         }
@@ -268,7 +269,37 @@ private fun HeroVerdictCard(verdict: AnalysisVerdict, summary: String) {
 private fun AnnotatedCurveCard(
     curve: List<Pair<LocalTime, Double>>,
     insights: List<GlucoseInsight>,
+    meals: List<com.shredcoach.app.data.local.entity.MealLogEntity>,
 ) {
+    val chartCurve = remember(curve) {
+        curve.map { ChartGlucosePoint(it.first, it.second) }
+    }
+    // Meal markers : couleur dérivée du pic postprandial 30-90 min
+    val chartMeals = remember(meals, curve) {
+        meals.mapNotNull { meal ->
+            val t = meal.time ?: return@mapNotNull null
+            val responsePeak = curve
+                .filter { (time, _) ->
+                    val delta = time.toSecondOfDay() - t.toSecondOfDay()
+                    delta in (30 * 60)..(90 * 60)
+                }
+                .maxOfOrNull { it.second }
+            ChartMealMarker(time = t, responsePeak = responsePeak)
+        }
+    }
+    // Insight markers : couleur dérivée du verdict
+    val chartInsights = remember(insights) {
+        insights.mapNotNull { ins ->
+            val t = ins.time ?: return@mapNotNull null
+            val color = when (ins.verdict) {
+                InsightVerdict.POSITIVE -> GlucoseColors.InRange
+                InsightVerdict.NEUTRAL -> GlucoseColors.Warning
+                InsightVerdict.CONCERN -> GlucoseColors.Critical
+            }
+            ChartInsightMarker(time = t, color = color)
+        }
+    }
+
     Card(
         shape = RoundedCornerShape(20.dp),
         modifier = Modifier.fillMaxWidth(),
@@ -287,118 +318,27 @@ private fun AnnotatedCurveCard(
                     color = GlucoseColors.Emerald800,
                 )
             }
-            // Canvas curve avec markers d'insights
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(180.dp),
-            ) {
-                CurveCanvas(curve = curve, insights = insights)
-            }
-            // Légende
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                LegendDot(GlucoseColors.InRange, stringResource(R.string.glucose_analysis_legend_positive))
-                LegendDot(Color(0xFFF59E0B), stringResource(R.string.glucose_analysis_legend_neutral))
-                LegendDot(GlucoseColors.Critical, stringResource(R.string.glucose_analysis_legend_concern))
-            }
-        }
-    }
-}
-
-@Composable
-private fun CurveCanvas(
-    curve: List<Pair<LocalTime, Double>>,
-    insights: List<GlucoseInsight>,
-) {
-    val density = LocalDensity.current
-    val minMgdl = 50.0
-    val maxMgdl = (curve.maxOf { it.second }.coerceAtLeast(200.0)).coerceAtMost(300.0)
-
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        val w = size.width
-        val h = size.height
-        val yRange = (maxMgdl - minMgdl).coerceAtLeast(1.0).toFloat()
-
-        fun y(mgdl: Double): Float = h - ((mgdl - minMgdl).toFloat() / yRange * h)
-        fun x(time: LocalTime): Float = (time.toSecondOfDay().toFloat() / 86400f) * w
-
-        // Zone cible 70-140 (vert très clair)
-        val targetTopY = y(140.0)
-        val targetBottomY = y(70.0)
-        drawRect(
-            color = GlucoseColors.InRange.copy(alpha = 0.10f),
-            topLeft = Offset(0f, targetTopY),
-            size = Size(w, targetBottomY - targetTopY),
-        )
-
-        // Ligne 180 pointillée
-        val spikeY = y(180.0)
-        drawLine(
-            color = GlucoseColors.Critical.copy(alpha = 0.35f),
-            start = Offset(0f, spikeY), end = Offset(w, spikeY),
-            strokeWidth = with(density) { 1.dp.toPx() },
-            pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f)),
-        )
-
-        // Courbe + gradient fill
-        if (curve.size >= 2) {
-            val stroke = Path().apply {
-                moveTo(x(curve.first().first), y(curve.first().second))
-                for (i in 1 until curve.size) {
-                    lineTo(x(curve[i].first), y(curve[i].second))
-                }
-            }
-            val fill = Path().apply {
-                addPath(stroke)
-                lineTo(x(curve.last().first), h)
-                lineTo(x(curve.first().first), h)
-                close()
-            }
-            drawPath(
-                path = fill,
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        GlucoseColors.Emerald600.copy(alpha = 0.32f),
-                        GlucoseColors.Emerald600.copy(alpha = 0.02f),
-                    ),
-                ),
+            // Chart unifié : courbe + meal markers + insight markers + x-axis hours
+            GlucoseTimelineChart(
+                curve = chartCurve,
+                meals = chartMeals,
+                insights = chartInsights,
+                height = 200.dp,
             )
-            drawPath(
-                path = stroke,
-                color = GlucoseColors.Emerald600,
-                style = Stroke(width = with(density) { 2.5.dp.toPx() }),
-            )
-        }
-
-        // Markers d'insights : dot coloré au timestamp, sur la courbe
-        for (insight in insights) {
-            val t = insight.time ?: continue
-            val mgdl = curve.firstOrNull { it.first.hour == t.hour && kotlin.math.abs(it.first.minute - t.minute) < 30 }?.second
-                ?: continue
-            val color = when (insight.verdict) {
-                InsightVerdict.POSITIVE -> GlucoseColors.InRange
-                InsightVerdict.NEUTRAL -> Color(0xFFF59E0B)
-                InsightVerdict.CONCERN -> GlucoseColors.Critical
-            }
-            // Halo blanc + dot couleur pour ressortir sur le gradient
-            drawCircle(
-                color = Color.White,
-                radius = with(density) { 7.dp.toPx() },
-                center = Offset(x(t), y(mgdl)),
-            )
-            drawCircle(
-                color = color,
-                radius = with(density) { 5.dp.toPx() },
-                center = Offset(x(t), y(mgdl)),
+            // Légende : si on a des repas, on montre les couleurs repas. Sinon
+            // on bascule sur la légende d'insights (verdict).
+            GlucoseChartLegend(
+                showMealMarkers = chartMeals.isNotEmpty(),
+                showInsightMarkers = chartMeals.isEmpty() && chartInsights.isNotEmpty(),
             )
         }
     }
 }
 
+// CurveCanvas et LegendDot supprimés — remplacés par GlucoseTimelineChart
+// + GlucoseChartLegend (shared via GlucoseTimelineChart.kt).
+
+@Suppress("unused")
 @Composable
 private fun LegendDot(color: Color, label: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
