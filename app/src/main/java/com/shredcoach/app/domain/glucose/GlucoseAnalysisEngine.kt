@@ -114,11 +114,13 @@ class GlucoseAnalysisEngine @Inject constructor(
         Log.d(TAG, "Prompt length: ${prompt.length} chars")
 
         val startMs = System.currentTimeMillis()
-        val callResult = geminiService.callTextLLM(
+        // Appel dédié structured-JSON (maxOutputTokens=8192 + thinking off)
+        // au lieu de callTextLLM (2048 tokens, thinking on) qui truncait
+        // systématiquement la réponse → PARSE_FAILURE.
+        val callResult = geminiService.callJsonAnalysisLLM(
             apiKey = apiKey,
-            model = LLM_MODEL,
-            provider = "GEMINI",
             prompt = prompt,
+            model = LLM_MODEL,
         )
         val latencyMs = System.currentTimeMillis() - startMs
 
@@ -132,7 +134,12 @@ class GlucoseAnalysisEngine @Inject constructor(
 
         // 6. Parse + cache
         val parsed = runCatching { parseLlmResponse(rawJson) }.getOrElse { e ->
-            Log.e(TAG, "Parse failed. Raw: ${rawJson.take(500)}", e)
+            // Log généreux : on conserve les 800 premiers + 200 derniers caractères
+            // pour diagnostiquer si le LLM tronque ou prefix avec du texte. Sur
+            // une truncation, le tail révèle un objet JSON inachevé.
+            val head = rawJson.take(800).replace("\n", "\\n")
+            val tail = rawJson.takeLast(200).replace("\n", "\\n")
+            Log.e(TAG, "Parse failed (len=${rawJson.length}). Head: $head ... Tail: $tail", e)
             return@withContext Result.Error(
                 ErrorReason.PARSE_FAILURE,
                 "Réponse Dr. Glykos malformée. Réessaie dans quelques instants.",
@@ -182,10 +189,22 @@ class GlucoseAnalysisEngine @Inject constructor(
     )
 
     private fun parseLlmResponse(raw: String): ParsedAnalysis {
-        // Strip code fences si le LLM les ajoute
-        val cleaned = raw.trim()
+        // Strip code fences si le LLM les ajoute (rare avec responseMimeType=
+        // application/json mais on garde la sécurité).
+        var cleaned = raw.trim()
             .removePrefix("```json").removePrefix("```")
             .removeSuffix("```").trim()
+
+        // Extra robustness : certains LLMs prefix un "Voici l'analyse:" ou
+        // similaire malgré l'instruction de ne pas le faire. On cherche le
+        // premier `{` ouvrant et on tronque tout ce qui précède.
+        val firstBrace = cleaned.indexOf('{')
+        if (firstBrace > 0) cleaned = cleaned.substring(firstBrace)
+
+        // Si le JSON est tronqué (Gemini hit maxOutputTokens) → on tente de
+        // réparer en fermant proprement les structures ouvertes.
+        cleaned = repairTruncatedJson(cleaned)
+
         val root = JsonParser.parseString(cleaned).asJsonObject
 
         val verdict = root.get("verdict")?.asString
@@ -207,6 +226,53 @@ class GlucoseAnalysisEngine @Inject constructor(
             globalAdvice = globalAdvice,
             insightsJson = insightsJson,
         )
+    }
+
+    /**
+     * Répare un JSON tronqué en fermant proprement les structures ouvertes
+     * (objects `{}`, arrays `[]`, strings `"`). Algorithme : on parcourt
+     * caractère par caractère en suivant l'état de la pile de structures.
+     *
+     * À la fin :
+     *  - Si on est dans une string non-fermée, on la ferme par un `"`
+     *  - Si la dernière virgule traîne (`,]` ou `,}`), on la retire
+     *  - On ferme la pile restante avec les bonnes accolades dans l'ordre
+     *
+     * **Pourquoi pas Gson lenient mode** : Gson lenient ne ferme PAS les
+     * structures, il rend juste le parser plus tolérant aux espaces / quotes.
+     * Inutile pour notre cas (truncation pure).
+     *
+     * Identique à `GeminiMealService.repairTruncatedJson` (pattern éprouvé).
+     */
+    private fun repairTruncatedJson(json: String): String {
+        var trimmed = json.trimEnd()
+        while (trimmed.endsWith(",") || trimmed.endsWith(":")) {
+            trimmed = trimmed.dropLast(1).trimEnd()
+        }
+        val stack = mutableListOf<Char>()
+        var inString = false
+        var escaped = false
+        for (c in trimmed) {
+            when {
+                escaped -> escaped = false
+                c == '\\' && inString -> escaped = true
+                c == '"' -> inString = !inString
+                !inString && (c == '{' || c == '[') -> stack.add(c)
+                !inString && c == '}' -> { if (stack.lastOrNull() == '{') stack.removeAt(stack.size - 1) }
+                !inString && c == ']' -> { if (stack.lastOrNull() == '[') stack.removeAt(stack.size - 1) }
+            }
+        }
+        if (inString) trimmed += "\""
+        val sb = StringBuilder(trimmed)
+        for (open in stack.reversed()) {
+            val last = sb.toString().trimEnd()
+            if (last.endsWith(",")) {
+                sb.setLength(0)
+                sb.append(last.dropLast(1))
+            }
+            sb.append(if (open == '{') "}" else "]")
+        }
+        return sb.toString()
     }
 
     companion object {

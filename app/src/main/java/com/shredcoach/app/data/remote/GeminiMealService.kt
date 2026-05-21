@@ -317,6 +317,112 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         }
     }
 
+    /**
+     * Appel Gemini DÉDIÉ aux outputs JSON volumineux et structurés (analyse
+     * glycémique experte, etc.).
+     *
+     * **Pourquoi pas réutiliser [callTextLLM]** :
+     *  - `callTextLLM` cible des outputs courts (~1k tokens) et limite donc à
+     *    `maxOutputTokens=2048`. C'est suffisant pour de la traduction
+     *    d'instructions ou un résumé bref.
+     *  - L'analyse glycémique requiert ~6 insights × ~150 tokens + verdict +
+     *    summary + globalAdvice + overhead JSON → 1500-2500 tokens d'output net.
+     *  - **Gemini 2.5 Flash a le mode "thinking" activé par défaut** : la
+     *    réflexion CoT consomme une part importante du budget (`thoughts` parts
+     *    dans la réponse). Avec `maxOutputTokens=2048`, le thinking peut
+     *    facilement épuiser le budget avant que le JSON final ne soit
+     *    intégralement émis → output tronqué → JSON malformé → PARSE_FAILURE
+     *    systématique côté caller. **C'est exactement le bug remonté sur la
+     *    fonction d'analyse Dr. Glykos.**
+     *
+     * **Fix structural** :
+     *  - `maxOutputTokens=8192` : confortable pour un JSON multi-insights
+     *  - `thinkingConfig.thinkingBudget=0` : désactive le thinking (notre
+     *    prompt fournit déjà la méthode + few-shot examples, le LLM n'a pas
+     *    besoin de raisonner step-by-step côté serveur — il génère direct)
+     *  - `responseMimeType=application/json` : enforce JSON output côté API
+     *
+     * Compatible avec [GeminiOverloadInterceptor] (retry transparent sur 503).
+     */
+    suspend fun callJsonAnalysisLLM(
+        apiKey: String,
+        prompt: String,
+        model: String = "gemini-2.5-flash",
+        maxOutputTokens: Int = 8192,
+        disableThinking: Boolean = true,
+    ): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            val raw = callGeminiJsonAnalysis(
+                apiKey = apiKey,
+                model = model,
+                prompt = prompt,
+                maxOutputTokens = maxOutputTokens,
+                disableThinking = disableThinking,
+            )
+            if (raw.isBlank()) Result.failure(Exception("Réponse LLM vide"))
+            else Result.success(raw)
+        } catch (e: Exception) {
+            Log.e(TAG, "callJsonAnalysisLLM failed", e)
+            Result.failure(e)
+        }
+    }
+
+    private fun callGeminiJsonAnalysis(
+        apiKey: String,
+        model: String,
+        prompt: String,
+        maxOutputTokens: Int,
+        disableThinking: Boolean,
+    ): String {
+        val url = "$GEMINI_BASE_URL/$model:generateContent"
+        val generationConfig = mutableMapOf<String, Any>(
+            "temperature" to 0.4,
+            "maxOutputTokens" to maxOutputTokens,
+            "responseMimeType" to "application/json",
+        )
+        if (disableThinking) {
+            // Désactive le thinking (Gemini 2.5+). Budget=0 = aucun token CoT.
+            // Notre prompt fournit déjà la structure et les exemples, le modèle
+            // peut générer directement le JSON final.
+            generationConfig["thinkingConfig"] = mapOf("thinkingBudget" to 0)
+        }
+        val payload = mapOf(
+            "contents" to listOf(mapOf(
+                "parts" to listOf(mapOf("text" to prompt))
+            )),
+            "generationConfig" to generationConfig,
+        )
+        val request = Request.Builder()
+            .url(url)
+            .header("Content-Type", "application/json")
+            .header("x-goog-api-key", apiKey)
+            .post(gson.toJson(payload).toRequestBody(jsonMediaType))
+            .build()
+        val response = client.newCall(request).execute()
+        val responseBody = response.body?.string() ?: throw Exception("Réponse vide")
+        if (!response.isSuccessful) {
+            val errorMsg = try {
+                JsonParser.parseString(responseBody).asJsonObject
+                    .getAsJsonObject("error")?.get("message")?.asString
+            } catch (_: Exception) { null } ?: "Erreur Gemini ${response.code}"
+            throw Exception(errorMsg)
+        }
+        val json = JsonParser.parseString(responseBody).asJsonObject
+        val candidates = json.getAsJsonArray("candidates") ?: throw Exception("Aucun résultat")
+        if (candidates.size() == 0) throw Exception("Aucun résultat Gemini")
+        val finishReason = candidates[0].asJsonObject.get("finishReason")?.asString
+        if (finishReason != null && finishReason != "STOP") {
+            Log.w(TAG, "Gemini analysis non-STOP finishReason=$finishReason")
+        }
+        val parts = candidates[0].asJsonObject.getAsJsonObject("content")?.getAsJsonArray("parts")
+        val textParts = parts?.filter { it.asJsonObject.has("text") && !it.asJsonObject.has("thought") }
+            ?.mapNotNull { it.asJsonObject.get("text")?.asString } ?: emptyList()
+        val raw = textParts.joinToString("").trim()
+            .removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
+        Log.d(TAG, "Analysis LLM raw output: ${raw.length} chars, finishReason=$finishReason")
+        return raw
+    }
+
     private fun callGeminiText(apiKey: String, model: String, prompt: String): String {
         val url = "$GEMINI_BASE_URL/$model:generateContent"
         val payload = mapOf(
