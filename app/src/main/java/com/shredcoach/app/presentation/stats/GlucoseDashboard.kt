@@ -64,6 +64,7 @@ import java.util.Locale
 fun GlucoseDashboard(
     onOpenDrGlykos: () -> Unit,
     onUploadCgm: () -> Unit,
+    onOpenAnalysis: (java.time.LocalDate) -> Unit = {},
     viewModel: GlucoseHistoryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -105,7 +106,7 @@ fun GlucoseDashboard(
             }
             item { RecentDaysHeader() }
             items(state.recentLogs.take(14), key = { it.id }) { log ->
-                CompactLogRow(log)
+                CompactLogRow(log = log, onTap = { onOpenAnalysis(log.date) })
             }
             item { Spacer(Modifier.height(24.dp)) }
         }
@@ -498,7 +499,7 @@ private fun RecentDaysHeader() {
 }
 
 @Composable
-private fun CompactLogRow(log: GlucoseLogEntity) {
+private fun CompactLogRow(log: GlucoseLogEntity, onTap: () -> Unit) {
     val locale = Locale.getDefault()
     val dateFmt = remember(locale) {
         DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
@@ -506,6 +507,7 @@ private fun CompactLogRow(log: GlucoseLogEntity) {
     val avgStatus = GlucoseStatus.forAvg(log.avgMgdl)
 
     Card(
+        onClick = onTap,
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -543,6 +545,12 @@ private fun CompactLogRow(log: GlucoseLogEntity) {
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     maxLines = 1,
                 )
+            }
+            // Mini sparkline 24h compressed — reuses MiniSparkline from
+            // GlucoseHistoryScreen via copy ici (file-local). Premium UX
+            // permettant un aperçu visuel rapide sans ouvrir la full analysis.
+            log.glucoseMgdlCurveJson?.takeIf { it.isNotBlank() }?.let { json ->
+                CompactSparkline(curveJson = json, tint = avgStatus.color)
             }
             log.hypoCount?.takeIf { it > 0 }?.let { n ->
                 Surface(
@@ -869,5 +877,62 @@ private fun BestDayCard(log: GlucoseLogEntity, modifier: Modifier = Modifier) {
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
             )
         }
+    }
+}
+
+/**
+ * Sparkline minimaliste 64×24dp pour les rows compactes — courbe glucose 24h
+ * compressée sans axes ni labels. Duplication locale (vs export public) car
+ * 30 lignes simples, on évite une API publique cross-file pour ce détail.
+ */
+@Composable
+private fun CompactSparkline(curveJson: String, tint: Color) {
+    val points = remember(curveJson) {
+        runCatching {
+            JsonParser.parseString(curveJson).asJsonArray.mapNotNull { el ->
+                val o = el.asJsonObject
+                val t = o.get("t")?.asString?.take(5)
+                    ?.let { runCatching { LocalTime.parse(it) }.getOrNull() }
+                    ?: return@mapNotNull null
+                val mgdl = o.get("mgdl")?.asDouble ?: return@mapNotNull null
+                t to mgdl
+            }.sortedBy { it.first }
+        }.getOrNull() ?: emptyList()
+    }
+    if (points.size < 2) return
+
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val minMgdl = 50.0
+    val maxMgdl = (points.maxOf { it.second }.coerceAtLeast(200.0)).coerceAtMost(300.0)
+    val yRange = (maxMgdl - minMgdl).coerceAtLeast(1.0).toFloat()
+
+    androidx.compose.foundation.Canvas(
+        modifier = Modifier.size(width = 64.dp, height = 24.dp),
+    ) {
+        val w = size.width
+        val h = size.height
+        fun y(mgdl: Double): Float = h - ((mgdl - minMgdl).toFloat() / yRange * h)
+        fun x(time: LocalTime): Float = (time.toSecondOfDay().toFloat() / 86400f) * w
+
+        val path = androidx.compose.ui.graphics.Path().apply {
+            moveTo(x(points.first().first), y(points.first().second))
+            for (i in 1 until points.size) {
+                lineTo(x(points[i].first), y(points[i].second))
+            }
+        }
+        val fill = androidx.compose.ui.graphics.Path().apply {
+            addPath(path)
+            lineTo(x(points.last().first), h)
+            lineTo(x(points.first().first), h)
+            close()
+        }
+        drawPath(path = fill, color = tint.copy(alpha = 0.18f))
+        drawPath(
+            path = path,
+            color = tint,
+            style = androidx.compose.ui.graphics.drawscope.Stroke(
+                width = with(density) { 1.5.dp.toPx() },
+            ),
+        )
     }
 }

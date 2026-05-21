@@ -179,7 +179,14 @@ fun GlucoseHistoryScreen(
                     )
                 }
                 items(state.recentLogs, key = { it.id }) { log ->
-                    LogRow(log)
+                    LogRow(
+                        log = log,
+                        onTap = {
+                            navController.navigate(
+                                com.shredcoach.app.presentation.navigation.Screen.GlucoseAnalysis.createRoute(log.date)
+                            )
+                        },
+                    )
                 }
                 item { Spacer(Modifier.height(24.dp)) }
             }
@@ -346,7 +353,10 @@ private fun SummaryCard(s: GlucoseWindowSummary) {
 }
 
 @Composable
-private fun LogRow(log: GlucoseLogEntity) {
+private fun LogRow(
+    log: GlucoseLogEntity,
+    onTap: () -> Unit,
+) {
     val locale = Locale.getDefault()
     val dateFormatter = remember(locale) {
         DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
@@ -354,6 +364,7 @@ private fun LogRow(log: GlucoseLogEntity) {
     val avgStatus = GlucoseStatus.forAvg(log.avgMgdl)
 
     Card(
+        onClick = onTap,
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -392,6 +403,13 @@ private fun LogRow(log: GlucoseLogEntity) {
                     maxLines = 1,
                 )
             }
+            // Mini sparkline : courbe glucose 24h compressee (60×24dp), aper-
+            // cu visuel rapide sans avoir a ouvrir la full analyse. Si pas
+            // de courbe parsee côté log → on n'affiche rien (le status dot
+            // a gauche transporte deja le signal d'etat).
+            log.glucoseMgdlCurveJson?.takeIf { it.isNotBlank() }?.let { json ->
+                MiniSparkline(curveJson = json, tint = avgStatus.color)
+            }
             log.hypoCount?.takeIf { it > 0 }?.let { n ->
                 Surface(
                     color = GlucoseColors.Critical.copy(alpha = 0.12f),
@@ -424,4 +442,72 @@ private fun patternLabel(p: GlucosePattern): String = when (p) {
     GlucosePattern.FALLING_TREND -> stringResource(R.string.glucose_pattern_falling)
     GlucosePattern.STABLE_OPTIMAL -> stringResource(R.string.glucose_pattern_stable)
     GlucosePattern.NORMAL -> stringResource(R.string.glucose_pattern_normal)
+}
+
+/**
+ * Sparkline minimaliste pour les rows d'historique : courbe glucose 24h
+ * compressée en 60×24dp, sans axes ni labels. Tint du stroke = couleur
+ * de statut du jour (vert = optimal, amber = warning, rouge = critical).
+ *
+ * Pourquoi pas réutiliser [GlucoseTimelineChart] : trop d'overhead visuel
+ * (target zone, threshold, axes…) pour une vignette de 24dp. Cette
+ * mini-version est dédiée à l'aperçu en row, sans bruit.
+ *
+ * Parsing direct du JSON inline pour éviter une dépendance circulaire ou
+ * d'exposer le parser de [GlucoseAnalysisScreen] (qui retourne des paires).
+ */
+@Composable
+private fun MiniSparkline(curveJson: String, tint: androidx.compose.ui.graphics.Color) {
+    val points = remember(curveJson) {
+        runCatching {
+            com.google.gson.JsonParser.parseString(curveJson).asJsonArray.mapNotNull { el ->
+                val o = el.asJsonObject
+                val t = o.get("t")?.asString?.take(5)
+                    ?.let { runCatching { java.time.LocalTime.parse(it) }.getOrNull() }
+                    ?: return@mapNotNull null
+                val mgdl = o.get("mgdl")?.asDouble ?: return@mapNotNull null
+                t to mgdl
+            }.sortedBy { it.first }
+        }.getOrNull() ?: emptyList()
+    }
+    if (points.size < 2) return
+
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val minMgdl = 50.0
+    val maxMgdl = (points.maxOf { it.second }.coerceAtLeast(200.0)).coerceAtMost(300.0)
+    val yRange = (maxMgdl - minMgdl).coerceAtLeast(1.0).toFloat()
+
+    androidx.compose.foundation.Canvas(
+        modifier = Modifier.size(width = 64.dp, height = 24.dp),
+    ) {
+        val w = size.width
+        val h = size.height
+        fun y(mgdl: Double): Float = h - ((mgdl - minMgdl).toFloat() / yRange * h)
+        fun x(time: java.time.LocalTime): Float = (time.toSecondOfDay().toFloat() / 86400f) * w
+
+        val path = androidx.compose.ui.graphics.Path().apply {
+            moveTo(x(points.first().first), y(points.first().second))
+            for (i in 1 until points.size) {
+                lineTo(x(points[i].first), y(points[i].second))
+            }
+        }
+        // Fill subtle pour le volume + stroke net pour le contour
+        val fill = androidx.compose.ui.graphics.Path().apply {
+            addPath(path)
+            lineTo(x(points.last().first), h)
+            lineTo(x(points.first().first), h)
+            close()
+        }
+        drawPath(
+            path = fill,
+            color = tint.copy(alpha = 0.18f),
+        )
+        drawPath(
+            path = path,
+            color = tint,
+            style = androidx.compose.ui.graphics.drawscope.Stroke(
+                width = with(density) { 1.5.dp.toPx() },
+            ),
+        )
+    }
 }

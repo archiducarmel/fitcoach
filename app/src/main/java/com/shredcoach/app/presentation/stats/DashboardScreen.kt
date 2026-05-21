@@ -170,6 +170,11 @@ fun DashboardScreen(navController: NavController, viewModel: StatsViewModel = hi
                         com.shredcoach.app.presentation.navigation.Screen.GlucoseEntry.createRoute()
                     )
                 },
+                onOpenAnalysis = { date ->
+                    navController.navigate(
+                        com.shredcoach.app.presentation.navigation.Screen.GlucoseAnalysis.createRoute(date)
+                    )
+                },
             )
         } else if (selectedTab == 1) {
             // ═══ NUTRITION STATS ═══
