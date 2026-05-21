@@ -559,6 +559,12 @@ fun ShredCoachNavigation(
                 )
             }
 
+            composable(Screen.AssistantLlmSettings.route) {
+                com.shredcoach.app.presentation.settings.llm.AssistantLlmSettingsScreen(
+                    navController = navController,
+                )
+            }
+
             composable(
                 Screen.WorkoutHistory.route,
                 enterTransition = { tabEnter(this) },

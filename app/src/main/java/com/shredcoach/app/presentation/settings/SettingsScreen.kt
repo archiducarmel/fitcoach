@@ -17,7 +17,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
+import androidx.compose.foundation.border
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import kotlinx.coroutines.launch
@@ -520,6 +522,50 @@ fun SettingsScreen(
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                         }
                     )
+                }
+
+                // ═══ CONFIG LLM PAR ASSISTANT (avancé) ═══
+                // Permet de définir un LLM different pour chaque assistant IA
+                // de l'app (chat, scan, analyse, background). Override l'option
+                // par-defaut quand l'user veut un LLM specifique sur un cas.
+                SettingsSection(
+                    stringResource(R.string.settings_section_assistants_advanced),
+                    Icons.Default.Tune,
+                ) {
+                    Surface(
+                        onClick = { navController.navigate(com.shredcoach.app.presentation.navigation.Screen.AssistantLlmSettings.route) },
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
+                    ) {
+                        Row(
+                            Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            Icon(Icons.Default.SettingsSuggest, null, Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.primary)
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    stringResource(R.string.settings_assistants_advanced_title),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Text(
+                                    stringResource(R.string.settings_assistants_advanced_subtitle),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                )
+                            }
+                            Icon(
+                                Icons.AutoMirrored.Filled.KeyboardArrowRight, null,
+                                Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
+                            )
+                        }
+                    }
                 }
 
                 // ═══ CONFIDENTIALITÉ & DONNÉES (RGPD) ═══
