@@ -308,6 +308,43 @@ object Migrations {
         }
     }
 
+    /**
+     * v45 → v46 : ajoute la table `glucose_analyses` pour cacher les analyses
+     * expertes Dr. Glykos quotidiennes (LLM-generated).
+     *
+     * Cache durable : on persiste l'analyse pour éviter une inférence LLM à
+     * chaque ouverture de l'écran. Invalidation par `inputHash` (hash SHA-256
+     * de curve + meals) — si l'user modifie un repas ou re-upload son CGM,
+     * le hash change automatiquement → re-analyse au prochain open.
+     *
+     * Pas de FK vers `glucose_logs` car la relation est par date (déjà unique
+     * côté glucose_logs). Cleanup orphans batch possible en background si
+     * l'user supprime un log glucose.
+     */
+    fun migration45to46(): Migration = object : Migration(45, 46) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS `glucose_analyses` (
+                    `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    `date` TEXT NOT NULL,
+                    `createdAt` TEXT NOT NULL,
+                    `verdict` TEXT NOT NULL,
+                    `summary` TEXT NOT NULL,
+                    `globalAdvice` TEXT NOT NULL,
+                    `insightsJson` TEXT NOT NULL,
+                    `inputHash` TEXT NOT NULL,
+                    `llmModel` TEXT NOT NULL,
+                    `tokensUsed` INTEGER,
+                    `latencyMs` INTEGER
+                )
+            """.trimIndent())
+            db.execSQL("""
+                CREATE UNIQUE INDEX IF NOT EXISTS `index_glucose_analyses_date`
+                ON `glucose_analyses` (`date`)
+            """.trimIndent())
+        }
+    }
+
     fun migration42to43(): Migration = object : Migration(42, 43) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("""

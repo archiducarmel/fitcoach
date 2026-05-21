@@ -142,4 +142,13 @@ class Converters {
 
     @TypeConverter
     fun toPhotoType(value: String?): com.shredcoach.app.data.local.entity.PhotoType? = value?.let { com.shredcoach.app.data.local.entity.PhotoType.valueOf(it) }
+
+    // AnalysisVerdict (glucose daily analysis)
+    @TypeConverter
+    fun fromAnalysisVerdict(value: com.shredcoach.app.data.local.entity.AnalysisVerdict?): String? =
+        value?.name
+
+    @TypeConverter
+    fun toAnalysisVerdict(value: String?): com.shredcoach.app.data.local.entity.AnalysisVerdict? =
+        value?.let { com.shredcoach.app.data.local.entity.AnalysisVerdict.valueOf(it) }
 }

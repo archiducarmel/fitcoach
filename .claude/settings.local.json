@@ -242,7 +242,8 @@
       "Bash(JAVA_HOME='/c/Program Files/Android/Android Studio/jbr' ./gradlew.bat :app:assembleDebug)",
       "Bash(JAVA_HOME='/c/Program Files/Android/Android Studio/jbr' ./gradlew.bat :app:testDebugUnitTest --tests \"com.shredcoach.app.domain.glucose.*\" --tests \"com.shredcoach.app.domain.chat.*\" --tests \"com.shredcoach.app.domain.notification.*\")",
       "Bash(JAVA_HOME='/c/Program Files/Android/Android Studio/jbr' ./gradlew.bat :app:assembleDebug :app:testDebugUnitTest --tests \"com.shredcoach.app.domain.*\")",
-      "Bash(JAVA_HOME='/c/Program Files/Android/Android Studio/jbr' ./gradlew.bat :app:assembleDebug :app:testDebugUnitTest)"
+      "Bash(JAVA_HOME='/c/Program Files/Android/Android Studio/jbr' ./gradlew.bat :app:assembleDebug :app:testDebugUnitTest)",
+      "Bash(grep -E --line-buffered \"BUILD SUCCESSFUL|BUILD FAILED|^e: |FAILED$\")"
     ]
   }
 }
