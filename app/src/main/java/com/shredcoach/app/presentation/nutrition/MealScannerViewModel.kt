@@ -23,6 +23,8 @@ import com.shredcoach.app.data.remote.buildMealHintBlockForText
 import com.shredcoach.app.data.repository.GlucoseRepository
 import com.shredcoach.app.data.repository.NutritionRepository
 import com.shredcoach.app.data.repository.UserRepository
+import com.shredcoach.app.domain.llm.AiAssistant
+import com.shredcoach.app.domain.llm.AssistantLlmResolver
 import com.shredcoach.app.domain.nutrition.NutriScoreCalculator
 import com.shredcoach.app.presentation.common.IncomingShareIntent
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -101,6 +103,7 @@ class MealScannerViewModel @Inject constructor(
     private val mealScanDao: MealScanDao,
     private val nutritionRepository: NutritionRepository,
     private val glucoseRepository: GlucoseRepository,
+    private val llmResolver: AssistantLlmResolver,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
@@ -277,13 +280,16 @@ class MealScannerViewModel @Inject constructor(
             // Sélection du provider : Gemini en priorité si clé dispo, sinon
             // fallback sur la préférence vision de l'user.
             val hasGemini = userRepository.hasApiKey(SecureKeyStore.Provider.GEMINI)
-            val provider = if (hasGemini) "GEMINI" else (profile?.mealScanProvider ?: "GEMINI")
+            // Resolver per-assistant : MEAL_SCAN_TEXT peut etre configure
+            // independamment de MEAL_SCAN_PHOTO via Settings → Assistants IA.
+            val llmConfig = llmResolver.resolveWithProfile(AiAssistant.MEAL_SCAN_TEXT, profile)
+            val provider = if (hasGemini) "GEMINI" else llmConfig.provider.name
             val apiKey = when (provider) {
                 "GROQ" -> userRepository.getApiKey(SecureKeyStore.Provider.GROQ_MEAL)
                 "MISTRAL" -> userRepository.getApiKey(SecureKeyStore.Provider.MISTRAL)
                 else -> userRepository.getApiKey(SecureKeyStore.Provider.GEMINI)
             }
-            val model = profile?.geminiModel ?: "gemini-2.5-flash"
+            val model = llmConfig.modelId
 
             if (apiKey.isBlank()) {
                 val providerName = when (provider) { "GROQ" -> "Groq"; "MISTRAL" -> "Mistral"; else -> "Gemini" }
@@ -366,13 +372,15 @@ class MealScannerViewModel @Inject constructor(
 
         viewModelScope.launch {
             val profile = userRepository.getUserProfileOnce()
-            val provider = profile?.mealScanProvider ?: "GEMINI"
+            // Resolver per-assistant : MEAL_SCAN_PHOTO configurable independamment.
+            val llmConfig = llmResolver.resolveWithProfile(AiAssistant.MEAL_SCAN_PHOTO, profile)
+            val provider = llmConfig.provider.name
             val apiKey = when (provider) {
                 "GROQ" -> userRepository.getApiKey(SecureKeyStore.Provider.GROQ_MEAL)
                 "MISTRAL" -> userRepository.getApiKey(SecureKeyStore.Provider.MISTRAL)
                 else -> userRepository.getApiKey(SecureKeyStore.Provider.GEMINI)
             }
-            val model = profile?.geminiModel ?: "gemini-2.5-flash"
+            val model = llmConfig.modelId
 
             if (apiKey.isBlank()) {
                 val providerName = when (provider) { "GROQ" -> "Groq"; "MISTRAL" -> "Mistral"; else -> "Gemini" }

@@ -13,6 +13,8 @@ import com.shredcoach.app.data.repository.ChatRepository
 import com.shredcoach.app.data.repository.UserContextBuilder
 import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.domain.chat.ChatPersona
+import com.shredcoach.app.domain.llm.AiAssistant
+import com.shredcoach.app.domain.llm.AssistantLlmResolver
 import com.shredcoach.app.domain.locale.withCurrentLocale
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -41,6 +43,7 @@ class ChatViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val userRepository: UserRepository,
     private val userContextBuilder: UserContextBuilder,
+    private val llmResolver: AssistantLlmResolver,
     @dagger.hilt.android.qualifiers.ApplicationContext
     private val applicationContext: android.content.Context,
     savedStateHandle: SavedStateHandle,
@@ -150,9 +153,12 @@ class ChatViewModel @Inject constructor(
 
             val profile = userRepository.getUserProfileOnce()
             val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.LLM)
-            val providerStr = profile?.llmProvider ?: "GROQ"
-            val provider = try { LlmProvider.valueOf(providerStr) } catch (_: Exception) { LlmProvider.GROQ }
-            val model = profile?.llmModel?.takeIf { it.isNotBlank() }
+            // Resolver per-assistant : ChatShreddy vs ChatDrGlykos peuvent
+            // utiliser un LLM different (configurable dans Settings → Assistants IA).
+            val assistant = if (persona == ChatPersona.DR_GLYKOS) AiAssistant.CHAT_DR_GLYKOS else AiAssistant.CHAT_SHREDDY
+            val llmConfig = llmResolver.resolveWithProfile(assistant, profile)
+            val provider = llmConfig.provider
+            val model: String? = llmConfig.modelId  // jamais null (resolver garantit non-blank)
 
             if (apiKey.isBlank()) {
                 // Persona-aware : message renvoie vers l'écran de réglages du

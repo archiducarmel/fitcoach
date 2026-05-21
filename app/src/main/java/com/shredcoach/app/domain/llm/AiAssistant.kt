@@ -38,7 +38,7 @@ enum class AiAssistant(
     GYM_SCAN("gym_scan", AiCategory.VISION, needsVision = true,
         fallbackLegacy = LegacyConfigSource.MEAL_SCAN),
     GLUCOSE_OCR("glucose_ocr", AiCategory.VISION, needsVision = true,
-        fallbackLegacy = LegacyConfigSource.HARDCODED_GEMINI_25),
+        fallbackLegacy = LegacyConfigSource.MEAL_SCAN),
 
     // ─── ANALYSE LONG-HORIZON / REASONING ────────────────────────────────
     GLUCOSE_ANALYSIS("glucose_analysis", AiCategory.ANALYSIS, needsVision = false,
@@ -70,7 +70,7 @@ enum class AiAssistant(
     GYM_SCAN_RERANK("gym_scan_rerank", AiCategory.ANALYSIS, needsVision = false,
         fallbackLegacy = LegacyConfigSource.CHAT),
     INSTRUCTIONS_TRANSLATE("instructions_translate", AiCategory.ANALYSIS, needsVision = false,
-        fallbackLegacy = LegacyConfigSource.HARDCODED_GEMINI_25);
+        fallbackLegacy = LegacyConfigSource.MEAL_SCAN);
 
     companion object {
         fun fromKey(key: String?): AiAssistant? =

@@ -34,6 +34,7 @@ class WorkoutDebriefWorker @AssistedInject constructor(
     private val chatRepository: ChatRepository,
     private val dispatcher: AppNotificationDispatcher,
     private val streakService: StreakService,
+    private val llmResolver: com.shredcoach.app.domain.llm.AssistantLlmResolver,
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
@@ -81,8 +82,10 @@ class WorkoutDebriefWorker @AssistedInject constructor(
         val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.LLM)
         val llmMessage = if (apiKey.isNotBlank()) {
             try {
-                val provider = runCatching { LlmProvider.valueOf(profile.llmProvider) }.getOrDefault(LlmProvider.GROQ)
-                val model = profile.llmModel.takeIf { it.isNotBlank() }
+                // Resolver per-assistant : WORKOUT_DEBRIEF configurable via Settings.
+                val llmConfig = llmResolver.resolveWithProfile(com.shredcoach.app.domain.llm.AiAssistant.WORKOUT_DEBRIEF, profile)
+                val provider = llmConfig.provider
+                val model: String? = llmConfig.modelId
                 val result = withTimeout(25_000) {
                     chatRepository.quickCoachMessage(
                         prompt = prompt,

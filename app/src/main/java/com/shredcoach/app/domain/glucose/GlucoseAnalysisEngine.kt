@@ -8,9 +8,12 @@ import com.shredcoach.app.data.local.entity.GlucoseAnalysisEntity
 import com.shredcoach.app.data.local.entity.GlucoseLogEntity
 import com.shredcoach.app.data.local.secure.SecureKeyStore
 import com.shredcoach.app.data.remote.GeminiMealService
+import com.shredcoach.app.data.remote.LlmProvider
 import com.shredcoach.app.data.repository.GlucoseRepository
 import com.shredcoach.app.data.repository.NutritionRepository
 import com.shredcoach.app.data.repository.UserRepository
+import com.shredcoach.app.domain.llm.AiAssistant
+import com.shredcoach.app.domain.llm.AssistantLlmResolver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
@@ -46,6 +49,7 @@ class GlucoseAnalysisEngine @Inject constructor(
     private val userRepository: UserRepository,
     private val analysisDao: GlucoseAnalysisDao,
     private val geminiService: GeminiMealService,
+    private val llmResolver: AssistantLlmResolver,
 ) {
 
     sealed class Result {
@@ -98,20 +102,33 @@ class GlucoseAnalysisEngine @Inject constructor(
         val context = GlucoseCurvePreprocessor.preprocess(log, mealsWithNames)
             ?: return@withContext Result.Error(ErrorReason.NO_CURVE_DATA, "Pas de courbe glycémique exploitable")
 
-        // 4. API key
+        // 4. Profile + resolver pour LLM config (back-compat : par defaut
+        //    GEMINI + gemini-2.5-flash via fallback HARDCODED_GEMINI_25).
+        val profile = runCatching { userRepository.getUserProfileOnce() }.getOrNull()
+        val llmConfig = llmResolver.resolveWithProfile(AiAssistant.GLUCOSE_ANALYSIS, profile)
+
+        // 5. API key — pour cette V1, seul GEMINI est gere ici (le prompt et
+        //    le parser sont specifiques au format Gemini). Si l'user a override
+        //    vers un autre provider, on log et retombe sur Gemini avec sa key.
+        val effectiveProvider = if (llmConfig.provider == LlmProvider.GEMINI) {
+            LlmProvider.GEMINI
+        } else {
+            Log.w(TAG, "User configured provider=${llmConfig.provider} but Glucose Analysis only supports GEMINI in V1, ignoring override")
+            LlmProvider.GEMINI
+        }
         val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.GEMINI)
         if (apiKey.isBlank()) {
             return@withContext Result.Error(ErrorReason.NO_API_KEY, "Clé Gemini non configurée")
         }
 
-        // 5. Prompt + LLM call
-        val profile = runCatching { userRepository.getUserProfileOnce() }.getOrNull()
+        // 6. Prompt + LLM call
         val prompt = GlucoseAnalysisPrompt.build(
             context = context,
             userFirstName = profile?.firstName?.takeIf { it.isNotBlank() },
             athleteGoal = profile?.goal?.name,
         )
-        Log.d(TAG, "Prompt length: ${prompt.length} chars")
+        val effectiveModel = if (llmConfig.provider == LlmProvider.GEMINI) llmConfig.modelId else LLM_MODEL
+        Log.d(TAG, "Prompt length: ${prompt.length} chars, model=$effectiveModel")
 
         val startMs = System.currentTimeMillis()
         // Appel dédié structured-JSON (maxOutputTokens=8192 + thinking off)
@@ -120,7 +137,7 @@ class GlucoseAnalysisEngine @Inject constructor(
         val callResult = geminiService.callJsonAnalysisLLM(
             apiKey = apiKey,
             prompt = prompt,
-            model = LLM_MODEL,
+            model = effectiveModel,
         )
         val latencyMs = System.currentTimeMillis() - startMs
 
@@ -154,7 +171,7 @@ class GlucoseAnalysisEngine @Inject constructor(
             globalAdvice = parsed.globalAdvice,
             insightsJson = parsed.insightsJson,
             inputHash = inputHash,
-            llmModel = LLM_MODEL,
+            llmModel = effectiveModel,
             tokensUsed = null,  // Gemini ne renvoie pas les tokens via callTextLLM
             latencyMs = latencyMs,
         )

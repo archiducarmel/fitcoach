@@ -7,6 +7,8 @@ import com.shredcoach.app.data.local.dao.GlucoseDao
 import com.shredcoach.app.data.local.entity.GlucoseLogEntity
 import com.shredcoach.app.data.local.secure.SecureKeyStore
 import com.shredcoach.app.data.remote.GlucoseOcrService
+import com.shredcoach.app.domain.llm.AiAssistant
+import com.shredcoach.app.domain.llm.AssistantLlmResolver
 import com.shredcoach.app.data.remote.GlucoseParseResult
 import com.shredcoach.app.domain.glucose.GlucoseAnalyzer
 import com.shredcoach.app.domain.glucose.GlucoseDaySummary
@@ -43,6 +45,7 @@ class GlucoseRepository @Inject constructor(
     private val glucoseDao: GlucoseDao,
     private val glucoseOcrService: GlucoseOcrService,
     private val userRepository: UserRepository,
+    private val llmResolver: AssistantLlmResolver,
     @ApplicationContext private val appContext: Context,
 ) {
 
@@ -82,13 +85,15 @@ class GlucoseRepository @Inject constructor(
         // 1. Persist le bitmap dans filesDir/glucose/
         val imagePath = saveBitmap(bitmap, date)
 
-        // 2. Récupère clé API + provider OCR depuis le profil
+        // 2. Récupère config LLM via le resolver (back-compat : fallback sur
+        //    profile.mealScanProvider + profile.geminiModel si aucun override).
         val profile = userRepository.getUserProfileOnce()
             ?: return@withContext Result.failure(IllegalStateException("Profil utilisateur absent"))
-        val provider = profile.mealScanProvider.takeIf { it.isNotBlank() } ?: "GEMINI"
-        val apiKey = when (provider.uppercase()) {
-            "GROQ" -> userRepository.getApiKey(SecureKeyStore.Provider.GROQ_MEAL)
-            "MISTRAL" -> userRepository.getApiKey(SecureKeyStore.Provider.MISTRAL)
+        val llmConfig = llmResolver.resolveWithProfile(AiAssistant.GLUCOSE_OCR, profile)
+        val provider = llmConfig.provider.name
+        val apiKey = when (llmConfig.provider) {
+            com.shredcoach.app.data.remote.LlmProvider.GROQ -> userRepository.getApiKey(SecureKeyStore.Provider.GROQ_MEAL)
+            com.shredcoach.app.data.remote.LlmProvider.MISTRAL -> userRepository.getApiKey(SecureKeyStore.Provider.MISTRAL)
             else -> userRepository.getApiKey(SecureKeyStore.Provider.GEMINI)
         }
         if (apiKey.isBlank()) {
@@ -103,11 +108,11 @@ class GlucoseRepository @Inject constructor(
             return@withContext Result.failure(IllegalStateException("Clé API ${provider} absente — screenshot conservé, à compléter manuellement"))
         }
 
-        // 3. OCR Gemini Vision
+        // 3. OCR Vision LLM (provider configurable via Settings)
         val bytes = bitmapToJpegBytes(bitmap)
         val parseResult = glucoseOcrService.parseScreenshot(
             imageBytes = bytes, mimeType = "image/jpeg",
-            apiKey = apiKey, model = profile.geminiModel, provider = provider,
+            apiKey = apiKey, model = llmConfig.modelId, provider = provider,
         )
 
         val parse: GlucoseParseResult = parseResult.getOrElse {

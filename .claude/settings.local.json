@@ -258,7 +258,9 @@
       "Bash(rm -rf /tmp/gemini-poc)",
       "Bash(history -c)",
       "Bash(awk '/file/{flag=1} flag{getline next; print prev_line, $0; prev_line=$0}')",
-      "Bash(awk '/^e:/{flag=1; line=\"\"} flag && /^[^\\\\s]/{print line $0; flag=0; next} flag{line=line $0}' C:/Users/Sitou/AppData/Local/Temp/claude/C--Users-Sitou-Desktop-FitCoach/333e3c91-adf3-4eff-beec-e78e85df2cd5/tasks/bmebkkyw3.output)"
+      "Bash(awk '/^e:/{flag=1; line=\"\"} flag && /^[^\\\\s]/{print line $0; flag=0; next} flag{line=line $0}' C:/Users/Sitou/AppData/Local/Temp/claude/C--Users-Sitou-Desktop-FitCoach/333e3c91-adf3-4eff-beec-e78e85df2cd5/tasks/bmebkkyw3.output)",
+      "PowerShell(Tee-Object *)",
+      "Bash(iconv -f UTF-16LE -t UTF-8 build-w2.log)"
     ]
   }
 }

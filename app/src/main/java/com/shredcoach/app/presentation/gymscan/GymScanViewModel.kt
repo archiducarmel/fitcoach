@@ -13,6 +13,8 @@ import com.shredcoach.app.data.remote.GymScanMatcher
 import com.shredcoach.app.data.remote.GymScanResult
 import com.shredcoach.app.data.remote.GymScanService
 import com.shredcoach.app.data.repository.UserRepository
+import com.shredcoach.app.domain.llm.AiAssistant
+import com.shredcoach.app.domain.llm.AssistantLlmResolver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,7 +40,8 @@ class GymScanViewModel @Inject constructor(
     private val gymScanService: GymScanService,
     private val exerciseDbService: ExerciseDbService,
     private val gymScanMatcher: GymScanMatcher, // Fallback si sélection LLM échoue
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val llmResolver: AssistantLlmResolver,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(GymScanState())
@@ -78,13 +81,15 @@ class GymScanViewModel @Inject constructor(
 
         viewModelScope.launch {
             val profile = userRepository.getUserProfileOnce()
-            val provider = profile?.mealScanProvider ?: "GEMINI"
+            // Resolver per-assistant : GYM_SCAN configurable via Settings → Assistants IA.
+            val llmConfig = llmResolver.resolveWithProfile(AiAssistant.GYM_SCAN, profile)
+            val provider = llmConfig.provider.name
             val apiKey = when (provider) {
                 "GROQ" -> userRepository.getApiKey(SecureKeyStore.Provider.GROQ_MEAL)
                 "MISTRAL" -> userRepository.getApiKey(SecureKeyStore.Provider.MISTRAL)
                 else -> userRepository.getApiKey(SecureKeyStore.Provider.GEMINI)
             }
-            val model = profile?.geminiModel ?: "gemini-2.5-flash"
+            val model = llmConfig.modelId
 
             if (apiKey.isBlank()) {
                 val providerName = when (provider) { "GROQ" -> "Groq"; "MISTRAL" -> "Mistral"; else -> "Gemini" }

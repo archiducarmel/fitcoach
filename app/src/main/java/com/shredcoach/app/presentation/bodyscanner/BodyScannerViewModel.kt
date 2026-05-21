@@ -17,6 +17,8 @@ import com.shredcoach.app.data.local.entity.BodyScanLogEntity
 import com.shredcoach.app.domain.bodymesh.BodyInsightGenerator
 import com.shredcoach.app.domain.bodymesh.BodyMeshExtractor
 import com.shredcoach.app.domain.bodymesh.MeshFeatures
+import com.shredcoach.app.domain.llm.AiAssistant
+import com.shredcoach.app.domain.llm.AssistantLlmResolver
 import com.shredcoach.app.domain.locale.withCurrentLocale
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -122,6 +124,7 @@ class BodyScannerViewModel @Inject constructor(
     private val insightGenerator: BodyInsightGenerator,
     private val bodyScanLogDao: BodyScanLogDao,
     private val userRepository: UserRepository,
+    private val llmResolver: AssistantLlmResolver,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
@@ -231,14 +234,15 @@ class BodyScannerViewModel @Inject constructor(
 
         viewModelScope.launch {
             val profile = userRepository.getUserProfileOnce()
-            // On réutilise le provider du Meal Scanner (même pipeline multi-provider vision)
-            val provider = profile?.mealScanProvider ?: "GEMINI"
+            // Resolver per-assistant : BODY_SCAN configurable via Settings → Assistants IA.
+            val llmConfig = llmResolver.resolveWithProfile(AiAssistant.BODY_SCAN, profile)
+            val provider = llmConfig.provider.name
             val apiKey = when (provider) {
                 "GROQ" -> userRepository.getApiKey(SecureKeyStore.Provider.GROQ_MEAL)
                 "MISTRAL" -> userRepository.getApiKey(SecureKeyStore.Provider.MISTRAL)
                 else -> userRepository.getApiKey(SecureKeyStore.Provider.GEMINI)
             }
-            val model = profile?.geminiModel ?: "gemini-2.5-flash"
+            val model = llmConfig.modelId
 
             if (apiKey.isBlank()) {
                 val providerName = when (provider) { "GROQ" -> "Groq"; "MISTRAL" -> "Mistral"; else -> "Gemini" }
