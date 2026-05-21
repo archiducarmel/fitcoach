@@ -100,6 +100,20 @@ data class UserProfileEntity(
     // ── Assistant IA ──
     val llmProvider: String = "GROQ", // GROQ, OPENAI, CLAUDE
     val llmModel: String = "", // vide = défaut du provider
+    /**
+     * Overrides per-assistant pour le LLM utilisé. JSON map de la forme :
+     * `{"assistant_key": {"provider": "GEMINI", "model": "gemini-3.5-flash"}}`.
+     *
+     * **Back-compat absolue** : si une clé n'est pas présente dans cette map,
+     * le resolver retombe sur les champs legacy (mealScanProvider/geminiModel
+     * ou llmProvider/llmModel) selon `AiAssistant.fallbackLegacy`. Un user qui
+     * n'ouvre jamais le nouveau screen "Assistants IA" ne voit AUCUN changement
+     * de comportement.
+     *
+     * **Source de vérité** : [com.shredcoach.app.domain.llm.AiAssistant.key]
+     * pour les clés acceptées.
+     */
+    val llmAssistantOverridesJson: String = "{}",
     // Profile photo
     val profilePhotoPath: String? = null,
     // ── Routines / Splits (v37) ──

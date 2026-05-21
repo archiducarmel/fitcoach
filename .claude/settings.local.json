@@ -252,7 +252,13 @@
       "Bash(grep -n \"^}$\" app/src/main/java/com/shredcoach/app/presentation/stats/GlucoseDashboard.kt)",
       "Bash(grep -n \"^@Composable$\" app/src/main/java/com/shredcoach/app/presentation/glucose/GlucoseHistoryScreen.kt)",
       "Bash(grep -n \"^}$\" app/src/main/java/com/shredcoach/app/presentation/glucose/GlucoseHistoryScreen.kt)",
-      "Bash(awk '/^e:/{flag=1; printf \"%s \", $0; next} flag && /^[^ ]/{flag=0; print \"\"; if\\($0!~/^>|^Task|^FAILURE|^Caused|^Daemon|^To/\\) print $0} flag{printf \"%s \", $0}')"
+      "Bash(awk '/^e:/{flag=1; printf \"%s \", $0; next} flag && /^[^ ]/{flag=0; print \"\"; if\\($0!~/^>|^Task|^FAILURE|^Caused|^Daemon|^To/\\) print $0} flag{printf \"%s \", $0}')",
+      "WebFetch(domain:ai.google.dev)",
+      "Bash(python3 *)",
+      "Bash(rm -rf /tmp/gemini-poc)",
+      "Bash(history -c)",
+      "Bash(awk '/file/{flag=1} flag{getline next; print prev_line, $0; prev_line=$0}')",
+      "Bash(awk '/^e:/{flag=1; line=\"\"} flag && /^[^\\\\s]/{print line $0; flag=0; next} flag{line=line $0}' C:/Users/Sitou/AppData/Local/Temp/claude/C--Users-Sitou-Desktop-FitCoach/333e3c91-adf3-4eff-beec-e78e85df2cd5/tasks/bmebkkyw3.output)"
     ]
   }
 }

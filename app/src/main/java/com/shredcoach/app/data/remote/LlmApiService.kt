@@ -27,26 +27,56 @@ enum class LlmProvider(
     val displayName: String,
     val baseUrl: String,
     val defaultModel: String,
-    val iconLabel: String
+    val iconLabel: String,
+    /**
+     * `true` si ce provider est utilisable comme backend conversationnel via
+     * [LlmApiService] (chat Shreddy / Dr. Glykos / workers IA). Les providers
+     * vision-only (GEMINI, MISTRAL) ont leur propre pipeline via
+     * [com.shredcoach.app.data.remote.GeminiMealService] et ne sont PAS appelés
+     * depuis LlmApiService — d'où `supportsChat=false`.
+     */
+    val supportsChat: Boolean = true,
 ) {
     GROQ(
         displayName = "Groq",
         baseUrl = "https://api.groq.com/openai/v1/chat/completions",
         defaultModel = "openai/gpt-oss-120b",
-        iconLabel = "G"
+        iconLabel = "G",
     ),
     OPENAI(
         displayName = "OpenAI",
         baseUrl = "https://api.openai.com/v1/chat/completions",
         defaultModel = "gpt-4o-mini",
-        iconLabel = "O"
+        iconLabel = "O",
     ),
     CLAUDE(
         displayName = "Claude",
         baseUrl = "https://api.anthropic.com/v1/messages",
         defaultModel = "claude-sonnet-4-20250514",
-        iconLabel = "C"
-    )
+        iconLabel = "C",
+    ),
+    /**
+     * Google Gemini — utilisé pour Vision (MealScanner, BodyScan, GymScan,
+     * GlucoseOcr) et analyses structurées JSON (GlucoseAnalysis). Appelé via
+     * [com.shredcoach.app.data.remote.GeminiMealService], pas via LlmApiService.
+     */
+    GEMINI(
+        displayName = "Gemini",
+        baseUrl = "https://generativelanguage.googleapis.com/v1beta/models",
+        defaultModel = "gemini-2.5-flash",
+        iconLabel = "G",
+        supportsChat = false,
+    ),
+    /**
+     * Mistral — utilisé pour Vision (alternative MealScanner) via GeminiMealService.
+     */
+    MISTRAL(
+        displayName = "Mistral",
+        baseUrl = "https://api.mistral.ai/v1/chat/completions",
+        defaultModel = "mistral-small-latest",
+        iconLabel = "M",
+        supportsChat = false,
+    ),
 }
 
 // ══════════════════════════════════════════

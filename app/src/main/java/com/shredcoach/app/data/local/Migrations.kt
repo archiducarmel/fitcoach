@@ -321,6 +321,21 @@ object Migrations {
      * côté glucose_logs). Cleanup orphans batch possible en background si
      * l'user supprime un log glucose.
      */
+    /**
+     * v46 → v47 : ajout `llmAssistantOverridesJson` sur `user_profile` pour le
+     * système de configuration LLM per-assistant.
+     *
+     * Default `'{}'` (map vide) → tous les users existants restent sur leur
+     * comportement actuel (back-compat absolue). Le resolver retombe sur les
+     * champs legacy (mealScanProvider/geminiModel ou llmProvider/llmModel)
+     * quand la map ne contient pas la clé de l'assistant interrogé.
+     */
+    fun migration46to47(): Migration = object : Migration(46, 47) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `user_profile` ADD COLUMN `llmAssistantOverridesJson` TEXT NOT NULL DEFAULT '{}'")
+        }
+    }
+
     fun migration45to46(): Migration = object : Migration(45, 46) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("""
