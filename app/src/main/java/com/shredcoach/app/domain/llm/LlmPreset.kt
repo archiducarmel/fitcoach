@@ -77,18 +77,18 @@ enum class LlmPreset(
     }
 
     private fun premiumFor(assistant: AiAssistant): Choice = when (assistant) {
-        // Vision : pas de 3.5 sur vision (pas de gain), reste sur 2.5-flash
+        // Vision : pas de Gemini 3 Preview sur vision (pas de gain), reste sur 2.5-flash
         AiAssistant.MEAL_SCAN_PHOTO,
         AiAssistant.MEAL_SCAN_LEFTOVER,
         AiAssistant.BODY_SCAN,
         AiAssistant.GYM_SCAN,
         AiAssistant.GLUCOSE_OCR -> Choice(LlmProvider.GEMINI, "gemini-2.5-flash")
 
-        // Reasoning long-horizon : Gemini 3.5 Flash brille
+        // Reasoning long-horizon : Gemini 3 Flash Preview brille
         AiAssistant.GLUCOSE_ANALYSIS,
         AiAssistant.WEEKLY_RECAP,
         AiAssistant.BODY_INSIGHT,
-        AiAssistant.CALENDAR_RECAP -> Choice(LlmProvider.GEMINI, "gemini-3.5-flash")
+        AiAssistant.CALENDAR_RECAP -> Choice(LlmProvider.GEMINI, "gemini-3-flash-preview")
 
         // Chat : Claude Sonnet pour la qualité de conversation (Dr. Glykos
         // surtout — medical reasoning premium).

@@ -102,7 +102,7 @@ data class UserProfileEntity(
     val llmModel: String = "", // vide = défaut du provider
     /**
      * Overrides per-assistant pour le LLM utilisé. JSON map de la forme :
-     * `{"assistant_key": {"provider": "GEMINI", "model": "gemini-3.5-flash"}}`.
+     * `{"assistant_key": {"provider": "GEMINI", "model": "gemini-3-flash-preview"}}`.
      *
      * **Back-compat absolue** : si une clé n'est pas présente dans cette map,
      * le resolver retombe sur les champs legacy (mealScanProvider/geminiModel

@@ -566,6 +566,41 @@ fun SettingsScreen(
                             )
                         }
                     }
+                    Spacer(Modifier.height(8.dp))
+                    Surface(
+                        onClick = { navController.navigate(com.shredcoach.app.presentation.navigation.Screen.LlmUsageDashboard.route) },
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
+                    ) {
+                        Row(
+                            Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            Icon(Icons.Default.Analytics, null, Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.primary)
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    stringResource(R.string.settings_usage_dashboard_title),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Text(
+                                    stringResource(R.string.settings_usage_dashboard_subtitle),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                )
+                            }
+                            Icon(
+                                Icons.AutoMirrored.Filled.KeyboardArrowRight, null,
+                                Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
+                            )
+                        }
+                    }
                 }
 
                 // ═══ CONFIDENTIALITÉ & DONNÉES (RGPD) ═══

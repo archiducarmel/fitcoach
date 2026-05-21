@@ -17,6 +17,8 @@ sealed class Screen(val route: String) {
     object Settings : Screen("settings")
     /** Configuration LLM par assistant IA (Settings → "Assistants IA"). */
     object AssistantLlmSettings : Screen("assistant_llm_settings")
+    /** Dashboard de consommation LLM (Settings → "Consommation IA"). */
+    object LlmUsageDashboard : Screen("llm_usage_dashboard")
     object Profile : Screen("profile")
     object ProgressPhotos : Screen("progress_photos")
     object CustomWorkout : Screen("custom_workout")

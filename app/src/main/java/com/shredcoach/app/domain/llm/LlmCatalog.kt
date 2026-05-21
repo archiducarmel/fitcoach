@@ -15,9 +15,9 @@ import com.shredcoach.app.data.remote.LlmProvider
  * en string à l'API) mais l'UI peut proposer du dead-code.
  */
 data class LlmModelInfo(
-    /** Model ID à passer à l'API (e.g., "gemini-3.5-flash"). */
+    /** Model ID à passer à l'API (e.g., "gemini-3-flash-preview"). */
     val id: String,
-    /** Nom court affiché à l'user (e.g., "Gemini 3.5 Flash"). */
+    /** Nom court affiché à l'user (e.g., "Gemini 3 Flash (Preview)"). */
     val displayName: String,
     val supportsVision: Boolean = true,
     val supportsJsonMode: Boolean = true,
@@ -44,8 +44,8 @@ object LlmCatalog {
                 notes = "Rapide, économique, défaut recommandé",
             ),
             LlmModelInfo(
-                id = "gemini-3.5-flash",
-                displayName = "Gemini 3.5 Flash",
+                id = "gemini-3-flash-preview",
+                displayName = "Gemini 3 Flash (Preview)",
                 tier = LlmTier.PREMIUM,
                 notes = "Reasoning étendu (lent, 5× plus cher)",
             ),
