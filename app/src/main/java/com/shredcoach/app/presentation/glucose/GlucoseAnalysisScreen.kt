@@ -1,5 +1,10 @@
 package com.shredcoach.app.presentation.glucose
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -49,6 +54,7 @@ import androidx.navigation.NavController
 import com.google.gson.JsonParser
 import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.AnalysisVerdict
+import com.shredcoach.app.domain.glucose.GlucoseAnalysisEngine
 import com.shredcoach.app.presentation.navigation.Screen
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -114,18 +120,20 @@ fun GlucoseAnalysisScreen(
     ) { pad ->
         Box(Modifier.fillMaxSize().padding(pad)) {
             when {
-                state.isLoading && state.analysis == null -> LoadingScreen()
-                state.errorMessage != null && state.analysis == null ->
-                    ErrorScreen(
-                        message = state.errorMessage!!,
+                state.isLoading && state.analysis == null -> AnalysisSkeleton()
+                state.errorReason != null && state.analysis == null ->
+                    TypedErrorScreen(
+                        reason = state.errorReason!!,
+                        message = state.errorMessage.orEmpty(),
                         onRetry = { viewModel.reanalyze() },
                         onUploadCgm = { navController.navigate(Screen.GlucoseEntry.createRoute(state.date)) },
+                        onOpenSettings = { navController.navigate(Screen.Settings.route) },
                     )
                 state.analysis != null -> AnalysisContent(
                     state = state,
                     onOpenDrGlykos = { navController.navigate(Screen.DrGlykosChat.route) },
                 )
-                else -> LoadingScreen()
+                else -> AnalysisSkeleton()
             }
         }
     }
@@ -537,87 +545,233 @@ private fun ConsultDrGlykosCta(onClick: () -> Unit) {
 // STATES — loading / error / empty
 // ═══════════════════════════════════════════════════════════════════════════
 
+/**
+ * Skeleton loader mimant la structure du contenu final (hero verdict +
+ * 3 insight cards placeholder + advice). Animation pulsation alpha 0.4↔0.8
+ * pour effet "shimmer" léger, plus premium qu'un spinner générique.
+ *
+ * **Pourquoi un skeleton plutôt qu'un spinner** : un skeleton donne
+ * l'impression que l'app "se prépare à afficher quelque chose", alors qu'un
+ * spinner suggère "attente passive". L'UX perçue est ~20% plus rapide pour
+ * la même durée réelle (effet placebo bien documenté).
+ */
 @Composable
-private fun LoadingScreen() {
+private fun AnalysisSkeleton() {
+    val infiniteTransition = rememberInfiniteTransition(label = "skeleton")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 0.85f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(900),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "pulse",
+    )
     Column(
-        Modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+        Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Surface(shape = CircleShape, color = GlucoseColors.Emerald100, modifier = Modifier.size(80.dp)) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(Icons.Default.FactCheck, null, Modifier.size(40.dp), tint = GlucoseColors.Emerald600)
+        // Skeleton hero verdict (gradient + 2 lignes de placeholder)
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = GlucoseColors.Emerald100.copy(alpha = pulseAlpha)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                SkeletonLine(width = 120.dp, height = 14.dp, pulseAlpha = pulseAlpha)
+                SkeletonLine(width = 200.dp, height = 28.dp, pulseAlpha = pulseAlpha)
+                Spacer(Modifier.height(2.dp))
+                SkeletonLine(width = null, height = 12.dp, pulseAlpha = pulseAlpha)
+                SkeletonLine(width = 240.dp, height = 12.dp, pulseAlpha = pulseAlpha)
             }
         }
-        Spacer(Modifier.height(20.dp))
-        CircularProgressIndicator(color = GlucoseColors.Emerald600, strokeWidth = 3.dp, modifier = Modifier.size(32.dp))
-        Spacer(Modifier.height(16.dp))
-        Text(
-            stringResource(R.string.glucose_analysis_loading_title),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.ExtraBold,
-            color = GlucoseColors.Emerald800,
-        )
-        Spacer(Modifier.height(6.dp))
-        Text(
-            stringResource(R.string.glucose_analysis_loading_subtitle),
-            style = MaterialTheme.typography.bodyMedium,
-            color = GlucoseColors.Emerald800.copy(alpha = 0.7f),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-        )
+        // Skeleton 3 insight cards
+        repeat(3) { idx ->
+            Card(
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(
+                        1.dp,
+                        GlucoseColors.Emerald200.copy(alpha = 0.3f * pulseAlpha),
+                        RoundedCornerShape(18.dp),
+                    ),
+            ) {
+                Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Box(
+                        Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(GlucoseColors.Emerald100.copy(alpha = pulseAlpha))
+                    )
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        SkeletonLine(width = 60.dp, height = 10.dp, pulseAlpha = pulseAlpha)
+                        SkeletonLine(width = 180.dp, height = 14.dp, pulseAlpha = pulseAlpha)
+                        SkeletonLine(width = null, height = 10.dp, pulseAlpha = pulseAlpha)
+                        SkeletonLine(width = 220.dp, height = 10.dp, pulseAlpha = pulseAlpha)
+                    }
+                }
+            }
+            if (idx < 2) Spacer(Modifier.height(0.dp))  // gap géré par verticalArrangement
+        }
+        Spacer(Modifier.weight(1f))
+        // Label en bas pour communiquer que c'est intentionnel ("Dr. Glykos analyse…")
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            CircularProgressIndicator(
+                color = GlucoseColors.Emerald600,
+                strokeWidth = 2.dp,
+                modifier = Modifier.size(16.dp),
+            )
+            Spacer(Modifier.width(10.dp))
+            Text(
+                stringResource(R.string.glucose_analysis_loading_title),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = GlucoseColors.Emerald800,
+            )
+        }
+        Spacer(Modifier.height(24.dp))
     }
 }
 
 @Composable
-private fun ErrorScreen(
+private fun SkeletonLine(
+    width: androidx.compose.ui.unit.Dp?,
+    height: androidx.compose.ui.unit.Dp,
+    pulseAlpha: Float,
+) {
+    val mod = if (width == null) Modifier.fillMaxWidth() else Modifier.width(width)
+    Box(
+        mod
+            .height(height)
+            .clip(RoundedCornerShape(height / 2))
+            .background(GlucoseColors.Emerald100.copy(alpha = pulseAlpha))
+    )
+}
+
+/**
+ * Écran d'erreur typé. La VM expose un [GlucoseAnalysisEngine.ErrorReason]
+ * structuré → on switch dessus pour choisir l'icône, le titre, et le CTA
+ * approprié. Plus robuste que de parser le message d'erreur.
+ *
+ * Cas couverts :
+ *  - NO_GLUCOSE_LOG → "Pas de CGM" + CTA upload
+ *  - NO_CURVE_DATA → "Image seule, pas de courbe" + CTA upload nouvelle
+ *  - NO_API_KEY → "Configure ta clé Gemini" + CTA Settings
+ *  - LLM_FAILURE → "Réseau / Gemini down" + CTA retry
+ *  - PARSE_FAILURE → "Réponse malformée" + CTA retry
+ */
+@Composable
+private fun TypedErrorScreen(
+    reason: GlucoseAnalysisEngine.ErrorReason,
     message: String,
     onRetry: () -> Unit,
     onUploadCgm: () -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
-    val isNoCgm = message.contains("CGM", ignoreCase = true) ||
-        message.contains("log", ignoreCase = true) ||
-        message.contains("courbe", ignoreCase = true)
+    val icon = when (reason) {
+        GlucoseAnalysisEngine.ErrorReason.NO_GLUCOSE_LOG -> Icons.Default.AutoGraph
+        GlucoseAnalysisEngine.ErrorReason.NO_CURVE_DATA -> Icons.Default.AutoGraph
+        GlucoseAnalysisEngine.ErrorReason.NO_API_KEY -> Icons.Default.MedicalServices
+        GlucoseAnalysisEngine.ErrorReason.LLM_FAILURE -> Icons.Default.Refresh
+        GlucoseAnalysisEngine.ErrorReason.PARSE_FAILURE -> Icons.Default.Warning
+    }
+    val titleRes = when (reason) {
+        GlucoseAnalysisEngine.ErrorReason.NO_GLUCOSE_LOG -> R.string.glucose_analysis_error_no_log_title
+        GlucoseAnalysisEngine.ErrorReason.NO_CURVE_DATA -> R.string.glucose_analysis_error_no_curve_title
+        GlucoseAnalysisEngine.ErrorReason.NO_API_KEY -> R.string.glucose_analysis_error_no_api_key_title
+        GlucoseAnalysisEngine.ErrorReason.LLM_FAILURE -> R.string.glucose_analysis_error_llm_title
+        GlucoseAnalysisEngine.ErrorReason.PARSE_FAILURE -> R.string.glucose_analysis_error_parse_title
+    }
+    val descRes = when (reason) {
+        GlucoseAnalysisEngine.ErrorReason.NO_GLUCOSE_LOG -> R.string.glucose_analysis_error_no_log_desc
+        GlucoseAnalysisEngine.ErrorReason.NO_CURVE_DATA -> R.string.glucose_analysis_error_no_curve_desc
+        GlucoseAnalysisEngine.ErrorReason.NO_API_KEY -> R.string.glucose_analysis_error_no_api_key_desc
+        GlucoseAnalysisEngine.ErrorReason.LLM_FAILURE -> R.string.glucose_analysis_error_llm_desc
+        GlucoseAnalysisEngine.ErrorReason.PARSE_FAILURE -> R.string.glucose_analysis_error_parse_desc
+    }
 
     Column(
-        Modifier.fillMaxSize().padding(24.dp),
+        Modifier.fillMaxSize().padding(28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Surface(shape = CircleShape, color = GlucoseColors.Emerald100, modifier = Modifier.size(80.dp)) {
             Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    if (isNoCgm) Icons.Default.AutoGraph else Icons.Default.Warning,
-                    null, Modifier.size(40.dp),
-                    tint = GlucoseColors.Emerald600,
-                )
+                Icon(icon, null, Modifier.size(40.dp), tint = GlucoseColors.Emerald600)
             }
         }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(18.dp))
         Text(
-            message,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium,
+            stringResource(titleRes),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.ExtraBold,
             color = GlucoseColors.Emerald800,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )
-        Spacer(Modifier.height(20.dp))
-        if (isNoCgm) {
-            Button(
-                onClick = onUploadCgm,
-                colors = ButtonDefaults.buttonColors(containerColor = GlucoseColors.Emerald600),
-                shape = RoundedCornerShape(12.dp),
-            ) {
-                Text(stringResource(R.string.home_glucose_card_cta_upload), fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(8.dp))
+        Text(
+            stringResource(descRes),
+            style = MaterialTheme.typography.bodyMedium,
+            color = GlucoseColors.Emerald800.copy(alpha = 0.75f),
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            lineHeight = 20.sp,
+        )
+        // Message technique en mode debug uniquement — utile pour diagnostiquer.
+        if (com.shredcoach.app.BuildConfig.DEBUG && message.isNotBlank()) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "Debug: $message",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            )
+        }
+        Spacer(Modifier.height(24.dp))
+        // CTA principal selon le type d'erreur
+        when (reason) {
+            GlucoseAnalysisEngine.ErrorReason.NO_GLUCOSE_LOG,
+            GlucoseAnalysisEngine.ErrorReason.NO_CURVE_DATA -> {
+                Button(
+                    onClick = onUploadCgm,
+                    colors = ButtonDefaults.buttonColors(containerColor = GlucoseColors.Emerald600),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                ) {
+                    Icon(Icons.Default.AutoGraph, null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.home_glucose_card_cta_upload), fontWeight = FontWeight.Bold)
+                }
             }
-        } else {
-            Button(
-                onClick = onRetry,
-                colors = ButtonDefaults.buttonColors(containerColor = GlucoseColors.Emerald600),
-                shape = RoundedCornerShape(12.dp),
-            ) {
-                Icon(Icons.Default.Refresh, null, Modifier.size(18.dp))
-                Spacer(Modifier.width(6.dp))
-                Text(stringResource(R.string.glucose_analysis_retry), fontWeight = FontWeight.Bold)
+            GlucoseAnalysisEngine.ErrorReason.NO_API_KEY -> {
+                Button(
+                    onClick = onOpenSettings,
+                    colors = ButtonDefaults.buttonColors(containerColor = GlucoseColors.Emerald600),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                ) {
+                    Text(stringResource(R.string.glucose_analysis_error_no_api_key_cta), fontWeight = FontWeight.Bold)
+                }
+            }
+            GlucoseAnalysisEngine.ErrorReason.LLM_FAILURE,
+            GlucoseAnalysisEngine.ErrorReason.PARSE_FAILURE -> {
+                Button(
+                    onClick = onRetry,
+                    colors = ButtonDefaults.buttonColors(containerColor = GlucoseColors.Emerald600),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                ) {
+                    Icon(Icons.Default.Refresh, null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.glucose_analysis_retry), fontWeight = FontWeight.Bold)
+                }
             }
         }
     }

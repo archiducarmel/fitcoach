@@ -69,7 +69,13 @@ data class GlucoseAnalysisState(
     /** Repas du jour — affichés comme markers SUR la courbe. */
     val meals: List<MealLogEntity> = emptyList(),
     val isLoading: Boolean = false,
+    /** Message d'erreur user-facing (string déjà localisé). */
     val errorMessage: String? = null,
+    /**
+     * Type structuré d'erreur — drive l'UI choice (icône + CTA). Plus robuste
+     * que de parser le message pour deviner. Null si pas d'erreur en cours.
+     */
+    val errorReason: GlucoseAnalysisEngine.ErrorReason? = null,
     /** Vrai si l'écran a déjà tenté un fetch initial (évite double-trigger). */
     val initialFetchDone: Boolean = false,
 )
@@ -110,7 +116,7 @@ class GlucoseAnalysisViewModel @Inject constructor(
     }
 
     private suspend fun triggerAnalyze(force: Boolean) {
-        _state.update { it.copy(isLoading = true, errorMessage = null) }
+        _state.update { it.copy(isLoading = true, errorMessage = null, errorReason = null) }
         when (val r = engine.analyze(_state.value.date, force = force)) {
             is GlucoseAnalysisEngine.Result.Success -> {
                 val insights = parseInsights(r.entity.insightsJson)
@@ -120,6 +126,7 @@ class GlucoseAnalysisViewModel @Inject constructor(
                         insights = insights,
                         isLoading = false,
                         errorMessage = null,
+                        errorReason = null,
                         initialFetchDone = true,
                     )
                 }
@@ -129,6 +136,7 @@ class GlucoseAnalysisViewModel @Inject constructor(
                     it.copy(
                         isLoading = false,
                         errorMessage = r.message,
+                        errorReason = r.reason,
                         initialFetchDone = true,
                     )
                 }

@@ -979,6 +979,18 @@
     <string name="glucose_dashboard_streak_days">Tage</string>
     <string name="glucose_dashboard_streak_subtitle">in Folge mit TIR ≥ 70%</string>
     <string name="glucose_dashboard_best_day_title">Bester Tag</string>
+    <!-- Typed error states für Experten-Analyse (Polish 4) -->
+    <string name="glucose_analysis_error_no_log_title">Heute kein CGM</string>
+    <string name="glucose_analysis_error_no_log_desc">Lade einen Screenshot deiner Kurve hoch, damit Dr. Glykos sie analysieren kann.</string>
+    <string name="glucose_analysis_error_no_curve_title">Kurve nicht lesbar</string>
+    <string name="glucose_analysis_error_no_curve_desc">Bild gespeichert, aber die 24h-Kurve wurde nicht extrahiert. Lade eine deutlichere Aufnahme hoch.</string>
+    <string name="glucose_analysis_error_no_api_key_title">Gemini-Schlüssel fehlt</string>
+    <string name="glucose_analysis_error_no_api_key_desc">Konfiguriere deinen Gemini-API-Schlüssel in den Einstellungen, um die Dr.-Glykos-Analyse zu aktivieren.</string>
+    <string name="glucose_analysis_error_no_api_key_cta">Einstellungen öffnen</string>
+    <string name="glucose_analysis_error_llm_title">Dr. Glykos pausiert</string>
+    <string name="glucose_analysis_error_llm_desc">Die KI ist nicht erreichbar. Prüfe deine Verbindung und versuch\'s erneut.</string>
+    <string name="glucose_analysis_error_parse_title">Falsch formatierte Antwort</string>
+    <string name="glucose_analysis_error_parse_desc">Die Analyse konnte nicht interpretiert werden. Ein erneuter Versuch löst das meist.</string>
     <string name="history_workouts_empty_title">Kein Workout im Verlauf</string>
     <string name="history_workouts_empty_desc">Beende dein erstes Workout und es erscheint hier mit allen Metriken.</string>
     <string name="history_workouts_empty_cta">Workout generieren</string>

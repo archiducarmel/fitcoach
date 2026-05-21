@@ -1153,6 +1153,18 @@
     <string name="glucose_dashboard_streak_days">jours</string>
     <string name="glucose_dashboard_streak_subtitle">consécutifs avec TIR ≥ 70%</string>
     <string name="glucose_dashboard_best_day_title">Meilleur jour</string>
+    <!-- Typed error states pour l'analyse experte (Polish 4) -->
+    <string name="glucose_analysis_error_no_log_title">Pas de CGM aujourd\'hui</string>
+    <string name="glucose_analysis_error_no_log_desc">Upload un screenshot de ta courbe pour que Dr. Glykos l\'analyse.</string>
+    <string name="glucose_analysis_error_no_curve_title">Courbe non lisible</string>
+    <string name="glucose_analysis_error_no_curve_desc">L\'image est sauvée mais la courbe 24h n\'a pas été extraite. Re-upload une capture plus nette.</string>
+    <string name="glucose_analysis_error_no_api_key_title">Clé Gemini manquante</string>
+    <string name="glucose_analysis_error_no_api_key_desc">Configure ta clé API Gemini dans les réglages pour activer l\'analyse Dr. Glykos.</string>
+    <string name="glucose_analysis_error_no_api_key_cta">Ouvrir les réglages</string>
+    <string name="glucose_analysis_error_llm_title">Dr. Glykos est en pause</string>
+    <string name="glucose_analysis_error_llm_desc">L\'IA n\'est pas joignable pour le moment. Vérifie ta connexion et réessaie.</string>
+    <string name="glucose_analysis_error_parse_title">Réponse mal formée</string>
+    <string name="glucose_analysis_error_parse_desc">L\'analyse n\'a pas pu être interprétée. Un nouveau lancement résout généralement le problème.</string>
     <string name="history_workouts_empty_title">Aucune séance dans l\'historique</string>
     <string name="history_workouts_empty_desc">Termine ta première séance et elle apparaîtra ici avec toutes ses métriques.</string>
     <string name="history_workouts_empty_cta">Générer une séance</string>

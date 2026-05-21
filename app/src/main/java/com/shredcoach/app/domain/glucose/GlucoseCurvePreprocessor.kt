@@ -105,7 +105,13 @@ object GlucoseCurvePreprocessor {
      * le hash change automatiquement.
      */
     fun computeInputHash(log: GlucoseLogEntity, meals: List<MealContext>): String {
+        // Le hash inclut la locale courante de l'app : si l'user change de
+        // langue (FR -> EN), l'analyse en cache est dans la mauvaise langue
+        // et doit etre re-generee. Sans ce champ, l'user verrait une analyse
+        // FR dans une app passee en EN jusqu'a 24h.
+        val locale = java.util.Locale.getDefault().language
         val payload = buildString {
+            append(locale).append('|')
             append(log.date)
             append('|')
             append(log.glucoseMgdlCurveJson ?: "")

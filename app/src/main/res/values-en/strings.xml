@@ -1012,6 +1012,18 @@
     <string name="glucose_dashboard_streak_days">days</string>
     <string name="glucose_dashboard_streak_subtitle">in a row with TIR ≥ 70%</string>
     <string name="glucose_dashboard_best_day_title">Best day</string>
+    <!-- Typed error states for expert analysis (Polish 4) -->
+    <string name="glucose_analysis_error_no_log_title">No CGM today</string>
+    <string name="glucose_analysis_error_no_log_desc">Upload a screenshot of your curve so Dr. Glykos can analyze it.</string>
+    <string name="glucose_analysis_error_no_curve_title">Curve unreadable</string>
+    <string name="glucose_analysis_error_no_curve_desc">Image saved but the 24h curve was not extracted. Re-upload a clearer capture.</string>
+    <string name="glucose_analysis_error_no_api_key_title">Missing Gemini key</string>
+    <string name="glucose_analysis_error_no_api_key_desc">Set up your Gemini API key in settings to enable Dr. Glykos analysis.</string>
+    <string name="glucose_analysis_error_no_api_key_cta">Open settings</string>
+    <string name="glucose_analysis_error_llm_title">Dr. Glykos is on a break</string>
+    <string name="glucose_analysis_error_llm_desc">The AI is unreachable. Check your connection and retry.</string>
+    <string name="glucose_analysis_error_parse_title">Malformed response</string>
+    <string name="glucose_analysis_error_parse_desc">The analysis couldn\'t be parsed. A re-run usually fixes it.</string>
     <string name="history_workouts_empty_title">No session in history</string>
     <string name="history_workouts_empty_desc">Finish your first session and it will appear here with all its metrics.</string>
     <string name="history_workouts_empty_cta">Generate a session</string>
