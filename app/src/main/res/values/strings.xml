@@ -1200,6 +1200,14 @@
     <string name="assistant_scheduled_reminder">Rappel séance planifiée</string>
     <string name="assistant_gym_scan_rerank">Reranker gym scan</string>
     <string name="assistant_instructions_translate">Traduction instructions exos</string>
+    <!-- Presets one-tap pour configurer 19 assistants en lot -->
+    <string name="llm_settings_presets_header">Configurations rapides</string>
+    <string name="llm_preset_economic">Économique</string>
+    <string name="llm_preset_economic_desc">Tout au moins cher</string>
+    <string name="llm_preset_balanced">Équilibré</string>
+    <string name="llm_preset_balanced_desc">Recommandé pour la plupart</string>
+    <string name="llm_preset_premium">Premium</string>
+    <string name="llm_preset_premium_desc">Qualité max, coût élevé</string>
     <string name="history_workouts_empty_title">Aucune séance dans l\'historique</string>
     <string name="history_workouts_empty_desc">Termine ta première séance et elle apparaîtra ici avec toutes ses métriques.</string>
     <string name="history_workouts_empty_cta">Générer une séance</string>

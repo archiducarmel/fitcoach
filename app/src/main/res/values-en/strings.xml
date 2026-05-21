@@ -1059,6 +1059,14 @@
     <string name="assistant_scheduled_reminder">Scheduled workout reminder</string>
     <string name="assistant_gym_scan_rerank">Gym scan reranker</string>
     <string name="assistant_instructions_translate">Exercise instructions translation</string>
+    <!-- One-tap presets to configure all 19 assistants -->
+    <string name="llm_settings_presets_header">Quick presets</string>
+    <string name="llm_preset_economic">Economic</string>
+    <string name="llm_preset_economic_desc">Cheapest everywhere</string>
+    <string name="llm_preset_balanced">Balanced</string>
+    <string name="llm_preset_balanced_desc">Recommended for most</string>
+    <string name="llm_preset_premium">Premium</string>
+    <string name="llm_preset_premium_desc">Max quality, high cost</string>
     <string name="history_workouts_empty_title">No session in history</string>
     <string name="history_workouts_empty_desc">Finish your first session and it will appear here with all its metrics.</string>
     <string name="history_workouts_empty_cta">Generate a session</string>

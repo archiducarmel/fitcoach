@@ -37,6 +37,7 @@ import com.shredcoach.app.data.remote.LlmProvider
 import com.shredcoach.app.domain.llm.AiAssistant
 import com.shredcoach.app.domain.llm.AiCategory
 import com.shredcoach.app.domain.llm.LlmCatalog
+import com.shredcoach.app.domain.llm.LlmPreset
 import com.shredcoach.app.domain.llm.LlmTier
 
 /**
@@ -83,6 +84,9 @@ fun AssistantLlmSettingsScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item { IntroCard() }
+
+            // Presets one-tap pour configurer 19 assistants en bloc
+            item { PresetsRow(onPresetSelected = viewModel::applyPreset) }
 
             state.rowsByCategory.forEach { (category, rows) ->
                 item { CategoryHeader(category) }
@@ -132,6 +136,98 @@ fun AssistantLlmSettingsScreen(
 // ═══════════════════════════════════════════════════════════════════════════
 // COMPOSABLES
 // ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Row de 3 presets one-tap pour configurer 19 assistants en lot :
+ *  - ECONOMIC (vert)    : tout sur les modèles low-cost
+ *  - BALANCED (bleu)    : équilibre coût/qualité (defaults)
+ *  - PREMIUM (orange)   : qualité max sur les assistants reasoning-heavy
+ *
+ * Effet visuel premium : cards avec icones distincts + couleurs tier + tap
+ * applique immediatement. Notification visuelle de l'application.
+ */
+@Composable
+private fun PresetsRow(onPresetSelected: (LlmPreset) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            stringResource(R.string.llm_settings_presets_header).uppercase(),
+            style = MaterialTheme.typography.labelMedium,
+            fontSize = 11.sp,
+            letterSpacing = 1.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+            modifier = Modifier.padding(start = 4.dp),
+        )
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            PresetCard(
+                icon = Icons.Default.Bolt,
+                label = stringResource(R.string.llm_preset_economic),
+                description = stringResource(R.string.llm_preset_economic_desc),
+                tint = Color(0xFF10B981),
+                modifier = Modifier.weight(1f),
+                onClick = { onPresetSelected(LlmPreset.ECONOMIC) },
+            )
+            PresetCard(
+                icon = Icons.Default.AutoAwesome,
+                label = stringResource(R.string.llm_preset_balanced),
+                description = stringResource(R.string.llm_preset_balanced_desc),
+                tint = Color(0xFF6366F1),
+                modifier = Modifier.weight(1f),
+                onClick = { onPresetSelected(LlmPreset.BALANCED) },
+            )
+            PresetCard(
+                icon = Icons.Default.AutoAwesome,
+                label = stringResource(R.string.llm_preset_premium),
+                description = stringResource(R.string.llm_preset_premium_desc),
+                tint = Color(0xFFF59E0B),
+                modifier = Modifier.weight(1f),
+                onClick = { onPresetSelected(LlmPreset.PREMIUM) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun PresetCard(
+    icon: ImageVector,
+    label: String,
+    description: String,
+    tint: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(14.dp),
+        color = tint.copy(alpha = 0.08f),
+        modifier = modifier.border(1.dp, tint.copy(alpha = 0.3f), RoundedCornerShape(14.dp)),
+    ) {
+        Column(
+            Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Icon(icon, null, Modifier.size(22.dp), tint = tint)
+            Text(
+                label,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = tint,
+            )
+            Text(
+                description,
+                style = MaterialTheme.typography.labelSmall,
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                lineHeight = 12.sp,
+            )
+        }
+    }
+}
 
 @Composable
 private fun IntroCard() {

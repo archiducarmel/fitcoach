@@ -1136,6 +1136,14 @@
     <string name="assistant_scheduled_reminder">Promemoria allenamento</string>
     <string name="assistant_gym_scan_rerank">Reranker gym scan</string>
     <string name="assistant_instructions_translate">Traduzione istruzioni</string>
+    <!-- Presets -->
+    <string name="llm_settings_presets_header">Configurazioni rapide</string>
+    <string name="llm_preset_economic">Economico</string>
+    <string name="llm_preset_economic_desc">Tutto al più economico</string>
+    <string name="llm_preset_balanced">Bilanciato</string>
+    <string name="llm_preset_balanced_desc">Raccomandato</string>
+    <string name="llm_preset_premium">Premium</string>
+    <string name="llm_preset_premium_desc">Massima qualità, costo alto</string>
     <string name="history_workouts_empty_title">Nessuna sessione nella cronologia</string>
     <string name="history_workouts_empty_desc">Termina la tua prima sessione e apparirà qui con tutte le metriche.</string>
     <string name="history_workouts_empty_cta">Genera una sessione</string>

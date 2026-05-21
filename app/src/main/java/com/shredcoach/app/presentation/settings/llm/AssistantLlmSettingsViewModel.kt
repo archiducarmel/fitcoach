@@ -182,6 +182,19 @@ class AssistantLlmSettingsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Applique un preset (ECONOMIC / BALANCED / PREMIUM) → override les 19
+     * assistants en lot. Réversible via "Reinitialiser tout" qui revide la map.
+     */
+    fun applyPreset(preset: com.shredcoach.app.domain.llm.LlmPreset) {
+        viewModelScope.launch {
+            val profile = userRepository.getUserProfileOnce() ?: return@launch
+            val newJson = preset.buildOverridesJson()
+            userRepository.updateUserProfile(profile.copy(llmAssistantOverridesJson = newJson))
+            reload()
+        }
+    }
+
     private fun isOverridden(json: String, key: String): Boolean {
         if (json.isBlank() || json == "{}") return false
         return runCatching {
