@@ -45,6 +45,7 @@ class BodyInsightGenerator @Inject constructor(
     private val userRepository: UserRepository,
     private val chatRepository: ChatRepository,
     private val consentStore: ConsentStore,
+    private val llmResolver: com.shredcoach.app.domain.llm.AssistantLlmResolver,
 ) {
 
     /**
@@ -70,9 +71,10 @@ class BodyInsightGenerator @Inject constructor(
         if (apiKey.isBlank()) return null
 
         // ─── 3. Génération LLM ───
-        val provider = runCatching { LlmProvider.valueOf(profile.llmProvider) }
-            .getOrDefault(LlmProvider.GROQ)
-        val model = profile.llmModel.takeIf { it.isNotBlank() }
+        // Resolver per-assistant : BODY_INSIGHT configurable via Settings.
+        val llmConfig = llmResolver.resolveWithProfile(com.shredcoach.app.domain.llm.AiAssistant.BODY_INSIGHT, profile)
+        val provider = llmConfig.provider
+        val model: String? = llmConfig.modelId
 
         val systemPrompt = buildSystemPrompt()
         val userPrompt = buildUserPrompt(features, profile)

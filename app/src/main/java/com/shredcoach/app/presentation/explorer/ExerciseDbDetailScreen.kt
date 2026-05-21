@@ -75,6 +75,7 @@ class ExerciseDbDetailViewModel @Inject constructor(
     private val exerciseRepository: ExerciseRepository,
     private val userRepository: UserRepository,
     private val instructionsTranslator: InstructionsTranslator,
+    private val llmResolver: com.shredcoach.app.domain.llm.AssistantLlmResolver,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -114,7 +115,9 @@ class ExerciseDbDetailViewModel @Inject constructor(
     private fun translateInBackground(ex: ExerciseDbExercise) {
         viewModelScope.launch {
             val profile = userRepository.getUserProfileOnce() ?: return@launch
-            val provider = profile.mealScanProvider
+            // Resolver per-assistant : INSTRUCTIONS_TRANSLATE configurable via Settings.
+            val llmConfig = llmResolver.resolveWithProfile(com.shredcoach.app.domain.llm.AiAssistant.INSTRUCTIONS_TRANSLATE, profile)
+            val provider = llmConfig.provider.name
             val apiKey = when (provider) {
                 "GROQ" -> userRepository.getApiKey(com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.GROQ_MEAL)
                 "MISTRAL" -> userRepository.getApiKey(com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.MISTRAL)
@@ -127,7 +130,7 @@ class ExerciseDbDetailViewModel @Inject constructor(
                 exerciseId = ex.id,
                 instructionsEn = ex.instructions,
                 apiKey = apiKey,
-                model = profile.geminiModel,
+                model = llmConfig.modelId,
                 provider = provider
             ).onSuccess { translated ->
                 _state.update { it.copy(translatedInstructions = translated, isTranslating = false) }

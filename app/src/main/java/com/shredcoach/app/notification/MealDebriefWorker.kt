@@ -59,6 +59,7 @@ class MealDebriefWorker @AssistedInject constructor(
     private val coachSettings: CoachSettingsStore,
     private val coachHistory: CoachHistoryStore,
     private val dispatcher: AppNotificationDispatcher,
+    private val llmResolver: com.shredcoach.app.domain.llm.AssistantLlmResolver,
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
@@ -167,9 +168,10 @@ class MealDebriefWorker @AssistedInject constructor(
         val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.LLM)
         val llmMessage = if (apiKey.isNotBlank()) {
             try {
-                val provider = runCatching { LlmProvider.valueOf(profile.llmProvider) }
-                    .getOrDefault(LlmProvider.GROQ)
-                val model = profile.llmModel.takeIf { it.isNotBlank() }
+                // Resolver per-assistant : MEAL_DEBRIEF configurable via Settings.
+                val llmConfig = llmResolver.resolveWithProfile(com.shredcoach.app.domain.llm.AiAssistant.MEAL_DEBRIEF, profile)
+                val provider = llmConfig.provider
+                val model: String? = llmConfig.modelId
                 withTimeout(25_000) {
                     chatRepository.quickCoachMessage(
                         prompt = userPrompt,

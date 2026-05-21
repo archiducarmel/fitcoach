@@ -36,7 +36,8 @@ class ScheduledWorkoutReminderWorker @AssistedInject constructor(
     private val userRepository: UserRepository,
     private val workoutRepository: WorkoutRepository,
     private val chatRepository: ChatRepository,
-    private val dispatcher: AppNotificationDispatcher
+    private val dispatcher: AppNotificationDispatcher,
+    private val llmResolver: com.shredcoach.app.domain.llm.AssistantLlmResolver,
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
@@ -114,8 +115,10 @@ class ScheduledWorkoutReminderWorker @AssistedInject constructor(
         val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.LLM)
         val llmMessage = if (apiKey.isNotBlank()) {
             try {
-                val provider = runCatching { LlmProvider.valueOf(profile.llmProvider) }.getOrDefault(LlmProvider.GROQ)
-                val model = profile.llmModel.takeIf { it.isNotBlank() }
+                // Resolver per-assistant : SCHEDULED_REMINDER configurable via Settings.
+                val llmConfig = llmResolver.resolveWithProfile(com.shredcoach.app.domain.llm.AiAssistant.SCHEDULED_REMINDER, profile)
+                val provider = llmConfig.provider
+                val model: String? = llmConfig.modelId
                 withTimeout(15_000) {
                     chatRepository.quickCoachMessage(
                         prompt = userPrompt,

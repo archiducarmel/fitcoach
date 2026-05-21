@@ -10,6 +10,8 @@ import com.shredcoach.app.data.local.secure.SecureKeyStore
 import com.shredcoach.app.data.remote.GeminiMealService
 import com.shredcoach.app.data.remote.MealAnalysisResult
 import com.shredcoach.app.data.repository.UserRepository
+import com.shredcoach.app.domain.llm.AiAssistant
+import com.shredcoach.app.domain.llm.AssistantLlmResolver
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -41,6 +43,7 @@ class MealScanModifierService @Inject constructor(
     private val mealScanDao: MealScanDao,
     private val geminiService: GeminiMealService,
     private val userRepository: UserRepository,
+    private val llmResolver: AssistantLlmResolver,
 ) {
     private val gson = Gson()
 
@@ -79,9 +82,10 @@ class MealScanModifierService @Inject constructor(
         val scan = mealScanDao.getScanById(scanId)
             ?: return@withContext Result.failure(IllegalArgumentException("Scan introuvable"))
 
-        // 1. Récupérer provider + clé API (même logique que MealScannerViewModel)
+        // 1. Resolver per-assistant : MEAL_SCAN_LEFTOVER configurable via Settings.
         val profile = userRepository.getUserProfileOnce()
-        val provider = profile?.mealScanProvider ?: "GEMINI"
+        val llmConfig = llmResolver.resolveWithProfile(AiAssistant.MEAL_SCAN_LEFTOVER, profile)
+        val provider = llmConfig.provider.name
         val apiKey = when (provider) {
             "GROQ" -> userRepository.getApiKey(SecureKeyStore.Provider.GROQ_MEAL)
             "MISTRAL" -> userRepository.getApiKey(SecureKeyStore.Provider.MISTRAL)
@@ -90,7 +94,7 @@ class MealScanModifierService @Inject constructor(
         if (apiKey.isBlank()) {
             return@withContext Result.failure(IllegalStateException("Clé API $provider absente"))
         }
-        val model = profile?.geminiModel ?: "gemini-2.5-flash"
+        val model = llmConfig.modelId
 
         // 2. Compresser + appeler le LLM
         val bytes = ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.JPEG, 85, it) }.toByteArray()

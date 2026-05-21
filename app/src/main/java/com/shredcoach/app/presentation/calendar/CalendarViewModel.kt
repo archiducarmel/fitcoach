@@ -71,6 +71,7 @@ class CalendarViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
     private val userRepository: UserRepository,
     private val chatRepository: ChatRepository,
+    private val llmResolver: com.shredcoach.app.domain.llm.AssistantLlmResolver,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
@@ -267,9 +268,10 @@ class CalendarViewModel @Inject constructor(
             val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.LLM)
             val llmMessage = if (apiKey.isNotBlank() && suggestions.isNotEmpty() && profile != null) {
                 try {
-                    val provider = runCatching { LlmProvider.valueOf(profile.llmProvider) }
-                        .getOrDefault(LlmProvider.GROQ)
-                    val model = profile.llmModel.takeIf { it.isNotBlank() }
+                    // Resolver per-assistant : CALENDAR_RECAP configurable via Settings.
+                    val llmConfig = llmResolver.resolveWithProfile(com.shredcoach.app.domain.llm.AiAssistant.CALENDAR_RECAP, profile)
+                    val provider = llmConfig.provider
+                    val model: String? = llmConfig.modelId
 
                     val en = com.shredcoach.app.domain.i18n.PromptLocale.isEn()
                     val datesStr = suggestions.joinToString(", ") {
