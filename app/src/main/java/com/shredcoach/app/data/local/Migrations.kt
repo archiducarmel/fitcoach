@@ -322,6 +322,40 @@ object Migrations {
      * l'user supprime un log glucose.
      */
     /**
+     * v47 → v48 : nouvelle table `llm_usage_events` pour la telemetrie LLM.
+     *
+     * Chaque appel LLM (Gemini, Groq, OpenAI, Claude, Mistral) emet un event
+     * pour le dashboard "Consommation IA". Indexes sur timestamp + assistantKey
+     * + model pour les agrégations frequentes (group-by + time-window).
+     *
+     * Default empty table — pas de migration de donnees historiques (la
+     * telemetrie commence à la migration v48, l'historique anterieur a la
+     * mise a jour n'est pas reconstruit).
+     */
+    fun migration47to48(): Migration = object : Migration(47, 48) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS `llm_usage_events` (
+                    `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    `assistantKey` TEXT NOT NULL,
+                    `provider` TEXT NOT NULL,
+                    `model` TEXT NOT NULL,
+                    `tokensInput` INTEGER NOT NULL,
+                    `tokensOutput` INTEGER NOT NULL,
+                    `tokensThinking` INTEGER NOT NULL DEFAULT 0,
+                    `latencyMs` INTEGER NOT NULL,
+                    `timestamp` TEXT NOT NULL,
+                    `success` INTEGER NOT NULL,
+                    `costUsd` REAL NOT NULL
+                )
+            """.trimIndent())
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_llm_usage_events_timestamp` ON `llm_usage_events` (`timestamp`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_llm_usage_events_assistantKey` ON `llm_usage_events` (`assistantKey`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_llm_usage_events_model` ON `llm_usage_events` (`model`)")
+        }
+    }
+
+    /**
      * v46 → v47 : ajout `llmAssistantOverridesJson` sur `user_profile` pour le
      * système de configuration LLM per-assistant.
      *

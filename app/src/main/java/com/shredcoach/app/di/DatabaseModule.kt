@@ -126,6 +126,7 @@ object DatabaseModule {
                 Migrations.migration44to45(),
                 Migrations.migration45to46(),
                 Migrations.migration46to47(),
+                Migrations.migration47to48(),
             )
             // Fallback uniquement en cas de **downgrade** (ex : utilisateur
             // sideload une version plus ancienne). Aucun fallback destructif
@@ -195,4 +196,9 @@ object DatabaseModule {
     @Singleton
     fun provideGlucoseAnalysisDao(database: ShredCoachDatabase): com.shredcoach.app.data.local.dao.GlucoseAnalysisDao =
         database.glucoseAnalysisDao()
+
+    @Provides
+    @Singleton
+    fun provideLlmUsageDao(database: ShredCoachDatabase): com.shredcoach.app.data.local.dao.LlmUsageDao =
+        database.llmUsageDao()
 }
