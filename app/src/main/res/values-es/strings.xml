@@ -1135,6 +1135,14 @@
     <string name="glucose_verdict_fair">Correcto</string>
     <string name="glucose_verdict_concern">Atención</string>
     <string name="nutrition_glucose_open_analysis">Análisis experto Dr. Glykos</string>
+    <!-- Stats glycémie premium overhaul (Polish 2) -->
+    <string name="glucose_dashboard_today_hero_title">Hoy</string>
+    <string name="glucose_dashboard_tir_breakdown">Tiempo en rango</string>
+    <string name="glucose_dashboard_streak_title">Racha óptima</string>
+    <string name="glucose_dashboard_streak_day">día</string>
+    <string name="glucose_dashboard_streak_days">días</string>
+    <string name="glucose_dashboard_streak_subtitle">consecutivos con TIR ≥ 70%</string>
+    <string name="glucose_dashboard_best_day_title">Mejor día</string>
     <string name="history_workouts_empty_title">Ninguna sesión en el historial</string>
     <string name="history_workouts_empty_desc">Termina tu primera sesión y aparecerá aquí con todas sus métricas.</string>
     <string name="history_workouts_empty_cta">Generar una sesión</string>

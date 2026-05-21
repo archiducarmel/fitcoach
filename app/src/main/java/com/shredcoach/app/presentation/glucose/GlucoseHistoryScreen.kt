@@ -29,7 +29,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.shredcoach.app.R
 import com.shredcoach.app.data.local.entity.GlucoseLogEntity
+import com.shredcoach.app.data.local.entity.MealLogEntity
 import com.shredcoach.app.data.repository.GlucoseRepository
+import com.shredcoach.app.data.repository.NutritionRepository
 import com.shredcoach.app.domain.glucose.GlucosePattern
 import com.shredcoach.app.domain.glucose.GlucoseWindowSummary
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -50,11 +52,25 @@ data class GlucoseHistoryState(
     val window: GlucoseHistoryWindow = GlucoseHistoryWindow.W7,
     val summary: GlucoseWindowSummary? = null,
     val recentLogs: List<GlucoseLogEntity> = emptyList(),
+    // Polish 2 — Stats glycémie premium
+    /** Log glucose du jour pour le hero curve. */
+    val todayLog: GlucoseLogEntity? = null,
+    /** Repas du jour pour markers sur le hero curve. */
+    val todayMeals: List<MealLogEntity> = emptyList(),
+    /** Meilleur jour de la fenêtre (plus haut TIR, tiebreaker = date la plus récente). */
+    val bestDay: GlucoseLogEntity? = null,
+    /**
+     * Nombre de jours consécutifs en plage optimale (TIR>=70%) en partant du
+     * jour le plus récent et en remontant. S'interrompt au 1er jour sous-cible
+     * ou absent du log.
+     */
+    val optimalStreakDays: Int = 0,
 )
 
 @HiltViewModel
 class GlucoseHistoryViewModel @Inject constructor(
     private val glucoseRepository: GlucoseRepository,
+    private val nutritionRepository: NutritionRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(GlucoseHistoryState())
     val state: StateFlow<GlucoseHistoryState> = _state.asStateFlow()
@@ -73,7 +89,35 @@ class GlucoseHistoryViewModel @Inject constructor(
             val summary = glucoseRepository.getWindowSummary(today, w.days)
             val from = today.minusDays((w.days - 1).toLong())
             val logs = glucoseRepository.getRange(from, today).sortedByDescending { it.date }
-            _state.update { it.copy(summary = summary, recentLogs = logs) }
+
+            // Hero today : log + meals
+            val todayLog = logs.firstOrNull { it.date == today } ?: glucoseRepository.getForDate(today)
+            val todayMeals = runCatching { nutritionRepository.getMealsForDateOnce(today) }
+                .getOrDefault(emptyList())
+
+            // Best day : log avec le plus haut TIR (>=70 obligatoire pour être candidat)
+            val bestDay = logs
+                .filter { (it.timeInRangePct ?: -1) >= 70 }
+                .maxByOrNull { it.timeInRangePct ?: -1 }
+
+            // Streak optimal : depuis today, on remonte tant que TIR>=70.
+            // On utilise une window large (30j) pour ne pas couper artificiellement.
+            val streakWindow = glucoseRepository.getRange(today.minusDays(30), today)
+                .sortedByDescending { it.date }
+            val streak = streakWindow
+                .takeWhile { (it.timeInRangePct ?: -1) >= 70 }
+                .size
+
+            _state.update {
+                it.copy(
+                    summary = summary,
+                    recentLogs = logs,
+                    todayLog = todayLog,
+                    todayMeals = todayMeals,
+                    bestDay = bestDay,
+                    optimalStreakDays = streak,
+                )
+            }
         }
     }
 }

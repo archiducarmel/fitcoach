@@ -248,7 +248,8 @@
       "PowerShell($env:JAVA_HOME='C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr'; $env:Path=\"$env:JAVA_HOME\\\\bin;$env:Path\"; ./gradlew.bat :app:compileDebugKotlin --no-daemon 2>&1 | Select-String -Pattern \"^e:|BUILD\" | Select-Object -First 10)",
       "Bash(tasklist /FI \"IMAGENAME eq java.exe\")",
       "Bash(tasklist /FI \"IMAGENAME eq gradle*\")",
-      "PowerShell($env:JAVA_HOME='C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr'; $env:Path=\"$env:JAVA_HOME\\\\bin;$env:Path\"; ./gradlew.bat :app:compileDebugKotlin --no-daemon 2>&1 | Select-String -Pattern \"^e:|BUILD\" | Select-Object -First 20)"
+      "PowerShell($env:JAVA_HOME='C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr'; $env:Path=\"$env:JAVA_HOME\\\\bin;$env:Path\"; ./gradlew.bat :app:compileDebugKotlin --no-daemon 2>&1 | Select-String -Pattern \"^e:|BUILD\" | Select-Object -First 20)",
+      "Bash(grep -n \"^}$\" app/src/main/java/com/shredcoach/app/presentation/stats/GlucoseDashboard.kt)"
     ]
   }
 }
