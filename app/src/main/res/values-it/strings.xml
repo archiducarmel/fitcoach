@@ -1142,6 +1142,25 @@
     <string name="assistant_scheduled_reminder">Promemoria allenamento</string>
     <string name="assistant_gym_scan_rerank">Reranker gym scan</string>
     <string name="assistant_instructions_translate">Traduzione istruzioni</string>
+    <!-- Descrizioni brevi (orientate all\'azione) per ogni assistente -->
+    <string name="assistant_desc_meal_scan_photo">Analizza i tuoi pasti da una foto: macro, calorie, ingredienti, indice glicemico</string>
+    <string name="assistant_desc_meal_scan_text">Analizza un pasto descritto in testo quando non puoi fare una foto</string>
+    <string name="assistant_desc_meal_scan_leftover">Rileva gli avanzi nel piatto per regolare le calorie reali</string>
+    <string name="assistant_desc_body_scan">Stima le tue misure corporee (altezza, peso, grasso) da una foto</string>
+    <string name="assistant_desc_gym_scan">Identifica automaticamente le macchine della palestra da una foto</string>
+    <string name="assistant_desc_glucose_ocr">Estrae i dati glicemici da uno screenshot del tuo CGM</string>
+    <string name="assistant_desc_glucose_analysis">Analisi esperta quotidiana della tua curva glicemica da Dr. Glykos (IA endocrinologo)</string>
+    <string name="assistant_desc_body_insight">Genera insight personalizzati dal tuo scan corporeo</string>
+    <string name="assistant_desc_weekly_recap">Riepilogo settimanale personalizzato dei tuoi progressi (calorie, sessioni, peso)</string>
+    <string name="assistant_desc_calendar_recap">Riepilogo motivante della tua giornata in arrivo nella pagina Calendario</string>
+    <string name="assistant_desc_chat_shreddy">Il tuo coach IA conversazionale per fitness, nutrizione e motivazione</string>
+    <string name="assistant_desc_chat_dr_glykos">IA dietista endocrinologo specializzato in glicemia e nutrizione di precisione</string>
+    <string name="assistant_desc_proactive_coach">Messaggi di coaching contestuali inviati come notifiche</string>
+    <string name="assistant_desc_workout_debrief">Debrief umoristico e motivante dopo ogni sessione completata</string>
+    <string name="assistant_desc_meal_debrief">Analisi 45 min dopo il tuo pasto: bilancio macro, punteggio, consigli</string>
+    <string name="assistant_desc_scheduled_reminder">Promemoria personalizzato prima delle sessioni programmate</string>
+    <string name="assistant_desc_gym_scan_rerank">Affina i risultati di riconoscimento macchina per più precisione</string>
+    <string name="assistant_desc_instructions_translate">Traduce le istruzioni degli esercizi nella lingua dell\'app</string>
     <!-- Presets -->
     <string name="llm_settings_presets_header">Configurazioni rapide</string>
     <string name="llm_preset_economic">Economico</string>

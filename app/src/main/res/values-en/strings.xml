@@ -1065,6 +1065,25 @@
     <string name="assistant_scheduled_reminder">Scheduled workout reminder</string>
     <string name="assistant_gym_scan_rerank">Gym scan reranker</string>
     <string name="assistant_instructions_translate">Exercise instructions translation</string>
+    <!-- Short descriptions (action-oriented) for each assistant -->
+    <string name="assistant_desc_meal_scan_photo">Analyzes your meals from a photo: macros, calories, ingredients, glycemic index</string>
+    <string name="assistant_desc_meal_scan_text">Analyzes a meal described in text when you can\'t snap a photo</string>
+    <string name="assistant_desc_meal_scan_leftover">Detects leftovers in your plate to adjust real calorie intake</string>
+    <string name="assistant_desc_body_scan">Estimates your body measurements (height, weight, body fat) from a photo</string>
+    <string name="assistant_desc_gym_scan">Identifies gym equipment automatically from a photo</string>
+    <string name="assistant_desc_glucose_ocr">Extracts glucose data from a CGM screenshot</string>
+    <string name="assistant_desc_glucose_analysis">Daily expert analysis of your glucose curve by Dr. Glykos (AI endocrinologist)</string>
+    <string name="assistant_desc_body_insight">Generates personalized insights from your body scan</string>
+    <string name="assistant_desc_weekly_recap">Personalized weekly recap of your progress (calories, sessions, weight)</string>
+    <string name="assistant_desc_calendar_recap">Motivating summary of your upcoming day in the Calendar page</string>
+    <string name="assistant_desc_chat_shreddy">Your conversational AI coach for fitness, nutrition and motivation</string>
+    <string name="assistant_desc_chat_dr_glykos">AI endocrinologist dietitian specialized in glycemia and precision nutrition</string>
+    <string name="assistant_desc_proactive_coach">Contextual coaching messages sent as notifications (motivation, reminders)</string>
+    <string name="assistant_desc_workout_debrief">Humorous and motivating debrief after each completed session</string>
+    <string name="assistant_desc_meal_debrief">Analysis 45 min after your meal: macro balance, nutrition score, advice</string>
+    <string name="assistant_desc_scheduled_reminder">Personalized reminder before your scheduled sessions</string>
+    <string name="assistant_desc_gym_scan_rerank">Refines machine recognition results for higher accuracy</string>
+    <string name="assistant_desc_instructions_translate">Translates exercise instructions into the app\'s language</string>
     <!-- One-tap presets to configure all 19 assistants -->
     <string name="llm_settings_presets_header">Quick presets</string>
     <string name="llm_preset_economic">Economic</string>

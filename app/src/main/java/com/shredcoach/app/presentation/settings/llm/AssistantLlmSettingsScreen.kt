@@ -338,7 +338,17 @@ private fun AssistantRow(
                         }
                     }
                 }
+                // Description du rôle de l'assistant (1-2 lignes max)
                 Spacer(Modifier.height(2.dp))
+                Text(
+                    stringResource(assistantDescriptionRes(row.assistant)),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    lineHeight = 14.sp,
+                )
+                Spacer(Modifier.height(4.dp))
                 Text(
                     buildString {
                         append(row.resolved.provider.displayName)
@@ -348,6 +358,7 @@ private fun AssistantRow(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
                     maxLines = 1,
+                    fontWeight = FontWeight.Medium,
                 )
                 // Fallback chip si configure (v50)
                 row.fallback?.let { fb ->
@@ -428,6 +439,37 @@ private fun assistantLabelRes(assistant: AiAssistant): Int = when (assistant) {
     AiAssistant.INSTRUCTIONS_TRANSLATE -> R.string.assistant_instructions_translate
 }
 
+/**
+ * Mapping assistant → description courte (1-2 lignes) qui explique a l'user
+ * ce que fait cet assistant concretement dans l'app. Affiche sous le titre
+ * dans la card du Settings.
+ *
+ * **Tone** : action-oriented, du point de vue user, sans jargon technique.
+ * Ex : "Analyse tes repas a partir d'une photo" (pas "Pipeline LLM vision
+ * Gemini avec parsing JSON robuste").
+ */
+@androidx.annotation.StringRes
+private fun assistantDescriptionRes(assistant: AiAssistant): Int = when (assistant) {
+    AiAssistant.MEAL_SCAN_PHOTO -> R.string.assistant_desc_meal_scan_photo
+    AiAssistant.MEAL_SCAN_TEXT -> R.string.assistant_desc_meal_scan_text
+    AiAssistant.MEAL_SCAN_LEFTOVER -> R.string.assistant_desc_meal_scan_leftover
+    AiAssistant.BODY_SCAN -> R.string.assistant_desc_body_scan
+    AiAssistant.GYM_SCAN -> R.string.assistant_desc_gym_scan
+    AiAssistant.GLUCOSE_OCR -> R.string.assistant_desc_glucose_ocr
+    AiAssistant.GLUCOSE_ANALYSIS -> R.string.assistant_desc_glucose_analysis
+    AiAssistant.BODY_INSIGHT -> R.string.assistant_desc_body_insight
+    AiAssistant.WEEKLY_RECAP -> R.string.assistant_desc_weekly_recap
+    AiAssistant.CALENDAR_RECAP -> R.string.assistant_desc_calendar_recap
+    AiAssistant.CHAT_SHREDDY -> R.string.assistant_desc_chat_shreddy
+    AiAssistant.CHAT_DR_GLYKOS -> R.string.assistant_desc_chat_dr_glykos
+    AiAssistant.PROACTIVE_COACH -> R.string.assistant_desc_proactive_coach
+    AiAssistant.WORKOUT_DEBRIEF -> R.string.assistant_desc_workout_debrief
+    AiAssistant.MEAL_DEBRIEF -> R.string.assistant_desc_meal_debrief
+    AiAssistant.SCHEDULED_REMINDER -> R.string.assistant_desc_scheduled_reminder
+    AiAssistant.GYM_SCAN_RERANK -> R.string.assistant_desc_gym_scan_rerank
+    AiAssistant.INSTRUCTIONS_TRANSLATE -> R.string.assistant_desc_instructions_translate
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // BOTTOM SHEET PICKER
 // ═══════════════════════════════════════════════════════════════════════════
@@ -484,8 +526,15 @@ private fun AssistantLlmPickerSheet(
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.ExtraBold,
                 )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    stringResource(assistantDescriptionRes(assistant)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    lineHeight = 18.sp,
+                )
                 if (assistant.needsVision) {
-                    Spacer(Modifier.height(4.dp))
+                    Spacer(Modifier.height(6.dp))
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         Icon(Icons.Default.PhotoCamera, null, Modifier.size(12.dp),
                             tint = MaterialTheme.colorScheme.primary)
