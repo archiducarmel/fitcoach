@@ -44,7 +44,29 @@ data class BodyAnalysisResult(
 class BodyAnalysisService @Inject constructor(
     @com.shredcoach.app.di.NetworkModule.BaseHttpClient baseClient: OkHttpClient,
     private val usageRecorder: com.shredcoach.app.domain.llm.LlmUsageRecorder,
+    private val fallbackBus: com.shredcoach.app.domain.llm.LlmFallbackBus,
 ) {
+
+    private fun shouldTriggerFallback(
+        provider: String,
+        exception: Throwable,
+        fallback: com.shredcoach.app.domain.llm.FallbackConfig?,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant?,
+    ): Boolean {
+        if (fallback == null || assistant == null) return false
+        val primaryEnum = runCatching { LlmProvider.valueOf(provider.uppercase()) }.getOrNull() ?: return false
+        val classification = com.shredcoach.app.domain.llm.LlmQuotaDetector
+            .classifyException(primaryEnum, exception)
+        if (classification != com.shredcoach.app.domain.llm.LlmQuotaDetector.Classification.QUOTA_EXHAUSTED) {
+            return false
+        }
+        val fallbackEnum = runCatching { LlmProvider.valueOf(fallback.provider.uppercase()) }.getOrNull()
+            ?: return false
+        fallbackBus.emitTrySync(
+            com.shredcoach.app.domain.llm.LlmFallbackEvent(assistant, primaryEnum, fallbackEnum)
+        )
+        return true
+    }
 
     private val client = baseClient.newBuilder()
         .readTimeout(180, TimeUnit.SECONDS)
@@ -149,6 +171,7 @@ Si l'image N'EST PAS un corps humain → retourne {"error": "not_body"}
         model: String = "gemini-2.5-flash",
         provider: String = "GEMINI",
         assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+        fallback: com.shredcoach.app.domain.llm.FallbackConfig? = null,
     ): Result<BodyAnalysisResult> = withContext(Dispatchers.IO) {
         val startMs = System.currentTimeMillis()
         try {
@@ -171,7 +194,6 @@ Si l'image N'EST PAS un corps humain → retourne {"error": "not_body"}
             }
             Result.success(result)
         } catch (e: Exception) {
-            // Telemetrie failure (success est recorde dans la private)
             val effectiveProvider = runCatching { LlmProvider.valueOf(provider.uppercase()) }
                 .getOrDefault(LlmProvider.GEMINI)
             usageRecorder.record(
@@ -179,6 +201,13 @@ Si l'image N'EST PAS un corps humain → retourne {"error": "not_body"}
                 tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
                 latencyMs = System.currentTimeMillis() - startMs, success = false,
             )
+            if (shouldTriggerFallback(provider, e, fallback, assistant)) {
+                return@withContext analyzeBody(
+                    imageBytes = imageBytes, mimeType = mimeType,
+                    apiKey = fallback!!.apiKey, model = fallback.model,
+                    provider = fallback.provider, assistant = assistant, fallback = null,
+                )
+            }
             Result.failure(e)
         }
     }

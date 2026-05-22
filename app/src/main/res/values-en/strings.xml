@@ -1041,6 +1041,11 @@
     <string name="llm_settings_no_model">No model available for this provider</string>
     <string name="llm_settings_reset_one">Reset</string>
     <string name="llm_settings_reset_all">Reset all to default</string>
+    <!-- LLM Fallback (v50) -->
+    <string name="llm_settings_fallback_section">Fallback</string>
+    <string name="llm_settings_fallback_subtitle">Backup LLM when the primary\'s free tier is exhausted</string>
+    <string name="llm_settings_fallback_chip">Fallback: %1$s · %2$s</string>
+    <string name="llm_settings_fallback_no_alternative">No other provider available</string>
     <string name="assistant_meal_scan_photo">Meal scan (photo)</string>
     <string name="assistant_meal_scan_text">Meal scan (text)</string>
     <string name="assistant_meal_scan_leftover">Leftovers scan</string>

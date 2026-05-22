@@ -1008,6 +1008,11 @@
     <string name="llm_settings_no_model">Kein Modell verfügbar für diesen Anbieter</string>
     <string name="llm_settings_reset_one">Zurücksetzen</string>
     <string name="llm_settings_reset_all">Alles zurücksetzen</string>
+    <!-- LLM Fallback (v50) -->
+    <string name="llm_settings_fallback_section">Fallback</string>
+    <string name="llm_settings_fallback_subtitle">Ersatz-LLM, wenn das Free-Kontingent des Haupt-LLM erschöpft ist</string>
+    <string name="llm_settings_fallback_chip">Fallback: %1$s · %2$s</string>
+    <string name="llm_settings_fallback_no_alternative">Kein anderer Anbieter verfügbar</string>
     <string name="assistant_meal_scan_photo">Mahlzeit-Scan (Foto)</string>
     <string name="assistant_meal_scan_text">Mahlzeit-Scan (Text)</string>
     <string name="assistant_meal_scan_leftover">Reste-Scan</string>

@@ -14,6 +14,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -36,6 +37,7 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var sessionManager: ActiveSessionManager
     @Inject lateinit var userRepository: UserRepository
+    @Inject lateinit var llmFallbackBus: com.shredcoach.app.domain.llm.LlmFallbackBus
 
     // State observé par Compose : bump à chaque nouveau tap notif (onCreate + onNewIntent)
     private val openNotificationsState = mutableStateOf(0)
@@ -179,6 +181,14 @@ class MainActivity : ComponentActivity() {
                                 .navigationBarsPadding()
                         ) {
                             GeminiRetryBanner()
+                        }
+                        // Banner LLM fallback — overlay top, ~4s, humoristique.
+                        Box(
+                            Modifier
+                                .align(Alignment.TopCenter)
+                                .statusBarsPadding()
+                        ) {
+                            com.shredcoach.app.presentation.components.LlmFallbackBanner(bus = llmFallbackBus)
                         }
                     }
                 }

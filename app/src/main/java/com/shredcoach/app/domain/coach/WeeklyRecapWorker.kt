@@ -136,6 +136,9 @@ class WeeklyRecapWorker @AssistedInject constructor(
                         apiKey = apiKey,
                         model = model,
                         assistant = com.shredcoach.app.domain.llm.AiAssistant.WEEKLY_RECAP,
+                        fallback = llmResolver.buildFallbackConfig(
+                            com.shredcoach.app.domain.llm.AiAssistant.WEEKLY_RECAP, profile, apiKey,
+                        ),
                     )
                 }.getOrNull()?.takeIf { it.isNotBlank() }
             } catch (e: Exception) {

@@ -86,6 +86,9 @@ class BodyInsightGenerator @Inject constructor(
             apiKey = apiKey,
             model = model,
             assistant = com.shredcoach.app.domain.llm.AiAssistant.BODY_INSIGHT,
+            fallback = llmResolver.buildFallbackConfig(
+                com.shredcoach.app.domain.llm.AiAssistant.BODY_INSIGHT, profile, apiKey,
+            ),
         )
 
         return result.fold(

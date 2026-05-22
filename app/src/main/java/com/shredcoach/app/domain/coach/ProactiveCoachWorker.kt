@@ -121,6 +121,9 @@ class ProactiveCoachWorker @AssistedInject constructor(
                         apiKey = apiKey,
                         model = model,
                         assistant = com.shredcoach.app.domain.llm.AiAssistant.PROACTIVE_COACH,
+                        fallback = llmResolver.buildFallbackConfig(
+                            com.shredcoach.app.domain.llm.AiAssistant.PROACTIVE_COACH, profile, apiKey,
+                        ),
                     )
                 }.getOrNull()?.takeIf { it.isNotBlank() }
             } catch (e: Exception) {

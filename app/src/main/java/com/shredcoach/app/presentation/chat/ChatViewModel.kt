@@ -270,6 +270,14 @@ class ChatViewModel @Inject constructor(
                             ChatPersona.DR_GLYKOS -> com.shredcoach.app.domain.llm.AiAssistant.CHAT_DR_GLYKOS
                             ChatPersona.SHREDDY -> com.shredcoach.app.domain.llm.AiAssistant.CHAT_SHREDDY
                         },
+                        fallback = llmResolver.buildFallbackConfig(
+                            assistant = when (persona) {
+                                ChatPersona.DR_GLYKOS -> com.shredcoach.app.domain.llm.AiAssistant.CHAT_DR_GLYKOS
+                                ChatPersona.SHREDDY -> com.shredcoach.app.domain.llm.AiAssistant.CHAT_SHREDDY
+                            },
+                            profile = profile,
+                            apiKeyForFallbackProvider = apiKey,
+                        ),
                     ).collect { token ->
                         buffer.append(token)
                         _state.update { it.copy(streamingText = buffer.toString()) }

@@ -1172,6 +1172,11 @@
     <string name="llm_settings_no_model">Sin modelo disponible para este proveedor</string>
     <string name="llm_settings_reset_one">Restablecer</string>
     <string name="llm_settings_reset_all">Restablecer todo</string>
+    <!-- LLM Fallback (v50) -->
+    <string name="llm_settings_fallback_section">Respaldo</string>
+    <string name="llm_settings_fallback_subtitle">LLM de respaldo si la cuota gratuita del principal se agota</string>
+    <string name="llm_settings_fallback_chip">Respaldo: %1$s · %2$s</string>
+    <string name="llm_settings_fallback_no_alternative">Sin otro proveedor disponible</string>
     <string name="assistant_meal_scan_photo">Escaneo comida (foto)</string>
     <string name="assistant_meal_scan_text">Escaneo comida (texto)</string>
     <string name="assistant_meal_scan_leftover">Escaneo sobras</string>

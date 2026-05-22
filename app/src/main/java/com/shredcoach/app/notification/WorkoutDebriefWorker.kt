@@ -94,6 +94,9 @@ class WorkoutDebriefWorker @AssistedInject constructor(
                         apiKey = apiKey,
                         model = model,
                         assistant = com.shredcoach.app.domain.llm.AiAssistant.WORKOUT_DEBRIEF,
+                        fallback = llmResolver.buildFallbackConfig(
+                            com.shredcoach.app.domain.llm.AiAssistant.WORKOUT_DEBRIEF, profile, apiKey,
+                        ),
                     )
                 }
                 result.getOrNull()?.takeIf { it.isNotBlank() }

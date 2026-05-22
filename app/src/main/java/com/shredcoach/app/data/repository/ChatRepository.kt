@@ -72,6 +72,7 @@ class ChatRepository @Inject constructor(
         apiKey: String,
         model: String? = null,
         assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+        fallback: com.shredcoach.app.domain.llm.FallbackConfig? = null,
     ): Result<String> = try {
         val messages = listOf(ChatMessage(role = "user", content = prompt))
         val buffer = StringBuilder()
@@ -80,6 +81,7 @@ class ChatRepository @Inject constructor(
             overrideSystemPrompt = systemPrompt, // Remplace le system prompt principal
             slowMode = false, // Pas de delay entre tokens — on veut la réponse vite
             assistant = assistant,
+            fallback = fallback,
         ).collect { token -> buffer.append(token) }
         val result = buffer.toString().trim()
         if (result.isNotBlank()) Result.success(result)
@@ -97,6 +99,7 @@ class ChatRepository @Inject constructor(
         userContext: String = "",
         persona: ChatPersona = ChatPersona.SHREDDY,
         assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+        fallback: com.shredcoach.app.domain.llm.FallbackConfig? = null,
     ): Flow<String> {
         val history = recentMessages.filter { !it.isError }.map {
             ChatMessage(role = it.role, content = it.content)
@@ -114,10 +117,14 @@ class ChatRepository @Inject constructor(
                     messages = messages, provider = provider, apiKey = apiKey, model = model,
                     overrideSystemPrompt = composed,
                     assistant = assistant,
+                    fallback = fallback,
                 )
             }
             ChatPersona.SHREDDY ->
-                llmApiService.streamMessage(messages, provider, apiKey, model, userContext, assistant = assistant)
+                llmApiService.streamMessage(
+                    messages = messages, provider = provider, apiKey = apiKey, model = model,
+                    userContext = userContext, assistant = assistant, fallback = fallback,
+                )
         }
     }
 

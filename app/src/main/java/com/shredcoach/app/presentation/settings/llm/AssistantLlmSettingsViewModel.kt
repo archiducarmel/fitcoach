@@ -31,6 +31,8 @@ data class AssistantRowState(
     val assistant: AiAssistant,
     val resolved: ResolvedLlmConfig,
     val isOverridden: Boolean,
+    /** Fallback configure (null = pas de fallback, propage l'erreur primary). */
+    val fallback: ResolvedLlmConfig? = null,
 )
 
 @Immutable
@@ -44,6 +46,10 @@ data class AssistantLlmSettingsState(
     val sheetProvider: LlmProvider? = null,
     /** Model id sélectionné dans la sheet. */
     val sheetModelId: String? = null,
+    /** Provider fallback selectionne dans la sheet (null = pas de fallback). */
+    val sheetFallbackProvider: LlmProvider? = null,
+    /** Model fallback. */
+    val sheetFallbackModelId: String? = null,
 )
 
 @HiltViewModel
@@ -69,10 +75,12 @@ class AssistantLlmSettingsViewModel @Inject constructor(
             val overridesJson = profile?.llmAssistantOverridesJson.orEmpty()
             val rows = AiAssistant.values().map { assistant ->
                 val resolved = llmResolver.resolveWithProfile(assistant, profile)
+                val fb = llmResolver.resolveFallbackWithProfile(assistant, profile)
                 AssistantRowState(
                     assistant = assistant,
                     resolved = resolved,
                     isOverridden = isOverridden(overridesJson, assistant.key),
+                    fallback = fb,
                 )
             }
             val grouped = rows.groupBy { it.assistant.category }
@@ -98,6 +106,8 @@ class AssistantLlmSettingsViewModel @Inject constructor(
                 editingAssistant = assistant,
                 sheetProvider = row.resolved.provider,
                 sheetModelId = row.resolved.modelId,
+                sheetFallbackProvider = row.fallback?.provider,
+                sheetFallbackModelId = row.fallback?.modelId,
             )
         }
     }
@@ -109,6 +119,8 @@ class AssistantLlmSettingsViewModel @Inject constructor(
                 editingAssistant = null,
                 sheetProvider = null,
                 sheetModelId = null,
+                sheetFallbackProvider = null,
+                sheetFallbackModelId = null,
             )
         }
     }
@@ -129,6 +141,26 @@ class AssistantLlmSettingsViewModel @Inject constructor(
         _state.update { it.copy(sheetModelId = modelId) }
     }
 
+    /** Change le fallback provider — auto-pick premier modele. Null = pas de fallback. */
+    fun setSheetFallbackProvider(provider: LlmProvider?) {
+        if (provider == null) {
+            _state.update { it.copy(sheetFallbackProvider = null, sheetFallbackModelId = null) }
+            return
+        }
+        val firstModel = LlmCatalog.modelsFor(provider).firstOrNull()
+        _state.update {
+            it.copy(
+                sheetFallbackProvider = provider,
+                sheetFallbackModelId = firstModel?.id,
+            )
+        }
+    }
+
+    /** Change le modele fallback. */
+    fun setSheetFallbackModel(modelId: String) {
+        _state.update { it.copy(sheetFallbackModelId = modelId) }
+    }
+
     /**
      * Sauve l'override courant (sheet state) pour l'assistant en cours d'édition.
      * Ferme la sheet et recharge.
@@ -138,12 +170,24 @@ class AssistantLlmSettingsViewModel @Inject constructor(
         val assistant = s.editingAssistant ?: return
         val provider = s.sheetProvider ?: return
         val modelId = s.sheetModelId?.takeIf { it.isNotBlank() } ?: return
+        val fbProvider = s.sheetFallbackProvider
+        val fbModelId = s.sheetFallbackModelId?.takeIf { it.isNotBlank() }
         viewModelScope.launch {
             val profile = userRepository.getUserProfileOnce() ?: return@launch
-            val newJson = llmResolver.writeOverride(
+            // Sauve primary
+            var newJson = llmResolver.writeOverride(
                 currentJson = profile.llmAssistantOverridesJson,
                 assistant = assistant,
                 config = ResolvedLlmConfig(provider, modelId),
+            )
+            // Sauve fallback (ou clear si null)
+            val fbConfig = if (fbProvider != null && fbModelId != null) {
+                ResolvedLlmConfig(fbProvider, fbModelId)
+            } else null
+            newJson = llmResolver.writeFallbackOverride(
+                currentJson = newJson,
+                assistant = assistant,
+                config = fbConfig,
             )
             userRepository.updateUserProfile(profile.copy(llmAssistantOverridesJson = newJson))
             closePicker()

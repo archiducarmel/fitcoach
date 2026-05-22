@@ -127,6 +127,9 @@ class ScheduledWorkoutReminderWorker @AssistedInject constructor(
                         apiKey = apiKey,
                         model = model,
                         assistant = com.shredcoach.app.domain.llm.AiAssistant.SCHEDULED_REMINDER,
+                        fallback = llmResolver.buildFallbackConfig(
+                            com.shredcoach.app.domain.llm.AiAssistant.SCHEDULED_REMINDER, profile, apiKey,
+                        ),
                     )
                 }.getOrNull()?.takeIf { it.isNotBlank() }
             } catch (_: Exception) { null }

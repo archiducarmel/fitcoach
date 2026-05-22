@@ -180,6 +180,9 @@ class MealDebriefWorker @AssistedInject constructor(
                         apiKey = apiKey,
                         model = model,
                         assistant = com.shredcoach.app.domain.llm.AiAssistant.MEAL_DEBRIEF,
+                        fallback = llmResolver.buildFallbackConfig(
+                            com.shredcoach.app.domain.llm.AiAssistant.MEAL_DEBRIEF, profile, apiKey,
+                        ),
                     )
                 }.getOrNull()?.takeIf { it.isNotBlank() }
             } catch (e: Exception) {

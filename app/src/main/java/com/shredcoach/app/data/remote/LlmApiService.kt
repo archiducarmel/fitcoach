@@ -151,6 +151,7 @@ sealed interface LlmStreamEvent {
 class LlmApiService @Inject constructor(
     @com.shredcoach.app.di.NetworkModule.BaseHttpClient baseClient: OkHttpClient,
     private val usageRecorder: com.shredcoach.app.domain.llm.LlmUsageRecorder,
+    private val fallbackBus: com.shredcoach.app.domain.llm.LlmFallbackBus,
 ) {
 
     private val client = baseClient.newBuilder()
@@ -167,6 +168,30 @@ class LlmApiService @Inject constructor(
      * anglais/francais (cf. OpenAI tokenizer doc).
      */
     private fun estimateTokens(text: String): Int = (text.length / 4).coerceAtLeast(1)
+
+    /**
+     * Decide si on doit basculer sur le fallback : exception classifiee
+     * QUOTA_EXHAUSTED ET fallback configure. Emit l'event sur le bus si oui.
+     */
+    private fun shouldTriggerFallback(
+        provider: LlmProvider,
+        exception: Throwable,
+        fallback: com.shredcoach.app.domain.llm.FallbackConfig?,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant?,
+    ): Boolean {
+        if (fallback == null || assistant == null) return false
+        val classification = com.shredcoach.app.domain.llm.LlmQuotaDetector
+            .classifyException(provider, exception)
+        if (classification != com.shredcoach.app.domain.llm.LlmQuotaDetector.Classification.QUOTA_EXHAUSTED) {
+            return false
+        }
+        val fallbackEnum = runCatching { LlmProvider.valueOf(fallback.provider.uppercase()) }.getOrNull()
+            ?: return false
+        fallbackBus.emitTrySync(
+            com.shredcoach.app.domain.llm.LlmFallbackEvent(assistant, provider, fallbackEnum)
+        )
+        return true
+    }
 
     companion object {
         private const val SYSTEM_PROMPT_FR = """Tu es Shreddy, le coach sportif et nutritionnel personnel de l'app ShredCoach. Tu parles en français.
@@ -282,6 +307,7 @@ The user's personalized data follows below (only sent on the first message)."""
         overrideSystemPrompt: String? = null,
         slowMode: Boolean = true,
         assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+        fallback: com.shredcoach.app.domain.llm.FallbackConfig? = null,
     ): Flow<String> = flow {
         val effectiveModel = model?.takeIf { it.isNotBlank() } ?: provider.defaultModel
         val fullSystemPrompt = overrideSystemPrompt ?: if (userContext.isNotBlank()) {
@@ -289,29 +315,49 @@ The user's personalized data follows below (only sent on the first message)."""
         } else SYSTEM_PROMPT
 
         // Telemetrie : on accumule le texte emit + on mesure latence, puis record
-        // dans le finally (succes OU echec OU cancellation).
+        // au finally (succes OU echec OU cancellation).
         val startMs = System.currentTimeMillis()
         val accumulated = StringBuilder()
         var failed = false
+        var actualProvider = provider
+        var actualModel = effectiveModel
         try {
-            when (provider) {
-                LlmProvider.CLAUDE -> streamClaude(messages, apiKey, effectiveModel, fullSystemPrompt, slowMode).collect {
-                    accumulated.append(it); emit(it)
+            try {
+                when (provider) {
+                    LlmProvider.CLAUDE -> streamClaude(messages, apiKey, effectiveModel, fullSystemPrompt, slowMode).collect {
+                        accumulated.append(it); emit(it)
+                    }
+                    else -> streamOpenAiCompatible(messages, provider, apiKey, effectiveModel, fullSystemPrompt, slowMode).collect {
+                        accumulated.append(it); emit(it)
+                    }
                 }
-                else -> streamOpenAiCompatible(messages, provider, apiKey, effectiveModel, fullSystemPrompt, slowMode).collect {
-                    accumulated.append(it); emit(it)
+            } catch (e: Exception) {
+                // Fallback uniquement si AUCUN token emit (echec a l'init HTTP =
+                // typique d'un quota out). Si tokens deja emit, on accepte le
+                // partial — re-streamer du fallback creerait des duplicates UI.
+                if (accumulated.isEmpty() && shouldTriggerFallback(provider, e, fallback, assistant)) {
+                    val fbEnum = LlmProvider.valueOf(fallback!!.provider.uppercase())
+                    actualProvider = fbEnum
+                    actualModel = fallback.model
+                    when (fbEnum) {
+                        LlmProvider.CLAUDE -> streamClaude(messages, fallback.apiKey, fallback.model, fullSystemPrompt, slowMode).collect {
+                            accumulated.append(it); emit(it)
+                        }
+                        else -> streamOpenAiCompatible(messages, fbEnum, fallback.apiKey, fallback.model, fullSystemPrompt, slowMode).collect {
+                            accumulated.append(it); emit(it)
+                        }
+                    }
+                } else {
+                    failed = true
+                    throw e
                 }
             }
-        } catch (e: Exception) {
-            failed = true
-            throw e
         } finally {
             // Estimation tokens (streaming SSE ne fournit pas l'usage block).
-            // Ratio ~4 chars/token (heuristique standard OpenAI tokenizer).
             val tIn = estimateTokens(fullSystemPrompt) + messages.sumOf { estimateTokens(it.content) }
             val tOut = if (accumulated.isNotEmpty()) estimateTokens(accumulated.toString()) else 0
             usageRecorder.record(
-                assistant = assistant, provider = provider, model = effectiveModel,
+                assistant = assistant, provider = actualProvider, model = actualModel,
                 tokensInput = tIn, tokensOutput = tOut, tokensThinking = 0,
                 latencyMs = System.currentTimeMillis() - startMs,
                 success = !failed,

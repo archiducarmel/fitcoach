@@ -305,6 +305,9 @@ Pas de salutations, pas de liste — juste la phrase.
                             apiKey = apiKey,
                             model = model,
                             assistant = com.shredcoach.app.domain.llm.AiAssistant.CALENDAR_RECAP,
+                            fallback = llmResolver.buildFallbackConfig(
+                                com.shredcoach.app.domain.llm.AiAssistant.CALENDAR_RECAP, profile, apiKey,
+                            ),
                         )
                     }.getOrNull()?.takeIf { it.isNotBlank() }
                 } catch (_: Exception) { null }

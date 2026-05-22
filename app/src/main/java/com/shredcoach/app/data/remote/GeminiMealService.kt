@@ -100,7 +100,40 @@ class GeminiMealService @Inject constructor(
      * dans le futur.
      */
     private val usageRecorder: com.shredcoach.app.domain.llm.LlmUsageRecorder,
+    /**
+     * Bus pour notifier l'UI quand on bascule sur un LLM fallback (quota
+     * primary epuise). Le banner UI ecoute et affiche un message humouristique.
+     */
+    private val fallbackBus: com.shredcoach.app.domain.llm.LlmFallbackBus,
 ) {
+
+    /**
+     * Helper interne : si le fallback est configure ET que l'erreur est
+     * classifiee QUOTA_EXHAUSTED, emit l'event et retourne true (caller doit
+     * retry avec le fallback). Sinon retourne false (caller doit propager
+     * l'erreur, le retry standard suffira pour TRANSIENT).
+     */
+    private fun shouldTriggerFallback(
+        provider: String,
+        exception: Throwable,
+        fallback: com.shredcoach.app.domain.llm.FallbackConfig?,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant?,
+    ): Boolean {
+        if (fallback == null || assistant == null) return false
+        val primaryEnum = runCatching { LlmProvider.valueOf(provider.uppercase()) }.getOrNull() ?: return false
+        val classification = com.shredcoach.app.domain.llm.LlmQuotaDetector
+            .classifyException(primaryEnum, exception)
+        if (classification != com.shredcoach.app.domain.llm.LlmQuotaDetector.Classification.QUOTA_EXHAUSTED) {
+            return false
+        }
+        val fallbackEnum = runCatching { LlmProvider.valueOf(fallback.provider.uppercase()) }.getOrNull()
+            ?: return false
+        Log.i(TAG, "Quota exhausted on $primaryEnum → falling back to $fallbackEnum for $assistant")
+        fallbackBus.emitTrySync(
+            com.shredcoach.app.domain.llm.LlmFallbackEvent(assistant, primaryEnum, fallbackEnum)
+        )
+        return true
+    }
 
     private val client = baseClient.newBuilder()
         .readTimeout(180, TimeUnit.SECONDS)
@@ -420,6 +453,7 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         provider: String = "GEMINI",
         prompt: String,
         assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+        fallback: com.shredcoach.app.domain.llm.FallbackConfig? = null,
     ): Result<String> = withContext(Dispatchers.IO) {
         val startMs = System.currentTimeMillis()
         try {
@@ -439,6 +473,14 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
                 tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
                 latencyMs = System.currentTimeMillis() - startMs, success = false,
             )
+            // Try fallback si quota epuise (pas pour engorgement transient)
+            if (shouldTriggerFallback(provider, e, fallback, assistant)) {
+                return@withContext callTextLLM(
+                    apiKey = fallback!!.apiKey, model = fallback.model,
+                    provider = fallback.provider, prompt = prompt,
+                    assistant = assistant, fallback = null,
+                )
+            }
             Result.failure(e)
         }
     }
@@ -715,6 +757,7 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         provider: String = "GEMINI",
         prompt: String,
         assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+        fallback: com.shredcoach.app.domain.llm.FallbackConfig? = null,
     ): Result<String> = withContext(Dispatchers.IO) {
         val startMs = System.currentTimeMillis()
         try {
@@ -726,7 +769,6 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
             if (rawJson.isBlank()) Result.failure(Exception("Réponse LLM vide"))
             else Result.success(rawJson)
         } catch (e: Exception) {
-            // Telemetrie failure (success est recorde dans la private)
             val effectiveProvider = runCatching { LlmProvider.valueOf(provider.uppercase()) }
                 .getOrDefault(LlmProvider.GEMINI)
             usageRecorder.record(
@@ -734,6 +776,14 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
                 tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
                 latencyMs = System.currentTimeMillis() - startMs, success = false,
             )
+            if (shouldTriggerFallback(provider, e, fallback, assistant)) {
+                return@withContext callVisionLLM(
+                    imageBytes = imageBytes, mimeType = mimeType,
+                    apiKey = fallback!!.apiKey, model = fallback.model,
+                    provider = fallback.provider, prompt = prompt,
+                    assistant = assistant, fallback = null,
+                )
+            }
             Result.failure(e)
         }
     }
@@ -755,6 +805,7 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         provider: String = "GEMINI",
         hintBlock: String = "",
         assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+        fallback: com.shredcoach.app.domain.llm.FallbackConfig? = null,
     ): Result<MealAnalysisResult> = withContext(Dispatchers.IO) {
         val startMs = System.currentTimeMillis()
         try {
@@ -798,7 +849,6 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
             }
             Result.success(result)
         } catch (e: Exception) {
-            // Telemetrie failure (success est recorde dans la private)
             val effectiveProvider = runCatching { LlmProvider.valueOf(provider.uppercase()) }
                 .getOrDefault(LlmProvider.GEMINI)
             usageRecorder.record(
@@ -806,6 +856,13 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
                 tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
                 latencyMs = System.currentTimeMillis() - startMs, success = false,
             )
+            if (shouldTriggerFallback(provider, e, fallback, assistant)) {
+                return@withContext analyzeMealFromText(
+                    description = description, apiKey = fallback!!.apiKey,
+                    model = fallback.model, provider = fallback.provider,
+                    hintBlock = hintBlock, assistant = assistant, fallback = null,
+                )
+            }
             Result.failure(e)
         }
     }
@@ -818,6 +875,7 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         provider: String = "GEMINI",
         hintBlock: String = "",
         assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+        fallback: com.shredcoach.app.domain.llm.FallbackConfig? = null,
     ): Result<MealAnalysisResult> = withContext(Dispatchers.IO) {
         val startMs = System.currentTimeMillis()
         try {
@@ -847,7 +905,6 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
             }
             Result.success(result)
         } catch (e: Exception) {
-            // Telemetrie failure (success est recorde dans la private)
             val effectiveProvider = runCatching { LlmProvider.valueOf(provider.uppercase()) }
                 .getOrDefault(LlmProvider.GEMINI)
             usageRecorder.record(
@@ -855,6 +912,14 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
                 tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
                 latencyMs = System.currentTimeMillis() - startMs, success = false,
             )
+            if (shouldTriggerFallback(provider, e, fallback, assistant)) {
+                return@withContext analyzeMeal(
+                    imageBytes = imageBytes, mimeType = mimeType,
+                    apiKey = fallback!!.apiKey, model = fallback.model,
+                    provider = fallback.provider, hintBlock = hintBlock,
+                    assistant = assistant, fallback = null,
+                )
+            }
             Result.failure(e)
         }
     }

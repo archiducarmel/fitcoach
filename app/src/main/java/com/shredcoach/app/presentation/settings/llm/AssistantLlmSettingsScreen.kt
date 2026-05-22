@@ -5,6 +5,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -18,6 +20,7 @@ import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.WorkOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -122,10 +125,14 @@ fun AssistantLlmSettingsScreen(
             assistant = state.editingAssistant!!,
             currentProvider = state.sheetProvider,
             currentModelId = state.sheetModelId,
+            currentFallbackProvider = state.sheetFallbackProvider,
+            currentFallbackModelId = state.sheetFallbackModelId,
             providers = viewModel.providersFor(state.editingAssistant!!),
             modelsForProvider = { p -> viewModel.availableModelsFor(p, state.editingAssistant!!.needsVision) },
             onProviderSelected = viewModel::setSheetProvider,
             onModelSelected = viewModel::setSheetModel,
+            onFallbackProviderSelected = viewModel::setSheetFallbackProvider,
+            onFallbackModelSelected = viewModel::setSheetFallbackModel,
             onSave = viewModel::saveCurrentOverride,
             onReset = viewModel::resetCurrentOverride,
             onDismiss = viewModel::closePicker,
@@ -342,6 +349,29 @@ private fun AssistantRow(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
                     maxLines = 1,
                 )
+                // Fallback chip si configure (v50)
+                row.fallback?.let { fb ->
+                    Spacer(Modifier.height(3.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(
+                            Icons.Default.SwapHoriz, null,
+                            Modifier.size(11.dp),
+                            tint = Color(0xFFFF8A65),
+                        )
+                        Text(
+                            stringResource(
+                                R.string.llm_settings_fallback_chip,
+                                fb.provider.displayName,
+                                com.shredcoach.app.domain.llm.LlmCatalog.modelInfo(fb.modelId)?.displayName ?: fb.modelId,
+                            ),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontSize = 10.sp,
+                            color = Color(0xFFFF8A65),
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                        )
+                    }
+                }
             }
             // Tier badge
             modelInfo?.let { TierBadge(it.tier) }
@@ -408,10 +438,14 @@ private fun AssistantLlmPickerSheet(
     assistant: AiAssistant,
     currentProvider: LlmProvider?,
     currentModelId: String?,
+    currentFallbackProvider: LlmProvider?,
+    currentFallbackModelId: String?,
     providers: List<LlmProvider>,
     modelsForProvider: (LlmProvider) -> List<com.shredcoach.app.domain.llm.LlmModelInfo>,
     onProviderSelected: (LlmProvider) -> Unit,
     onModelSelected: (String) -> Unit,
+    onFallbackProviderSelected: (LlmProvider?) -> Unit,
+    onFallbackModelSelected: (String) -> Unit,
     onSave: () -> Unit,
     onReset: () -> Unit,
     onDismiss: () -> Unit,
@@ -422,12 +456,25 @@ private fun AssistantLlmPickerSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        // Hauteur cible : 88% de l'ecran → laisse le pull-handle visible
+        // ET garantit que le footer sticky a sa place reservee.
+        modifier = Modifier.fillMaxHeight(0.88f),
     ) {
+        // ─── Structure : contenu scrollable + footer sticky toujours visible ──
+        // Sans cette structure, la section Fallback + Actions etaient tronquees
+        // ou inaccessibles (cf. feedback user "boutons inaccessibles").
         Column(
             Modifier
                 .fillMaxWidth()
+                .fillMaxHeight(),
+        ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .weight(1f) // Prend tout l'espace restant SAUF le footer
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp)
-                .padding(bottom = 24.dp),
+                .padding(bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             // Header
@@ -580,9 +627,32 @@ private fun AssistantLlmPickerSheet(
 
             Divider()
 
-            // Actions
+            // ── Section Fallback (v50) — optionnel ────────────────────────
+            FallbackSection(
+                assistant = assistant,
+                primaryProvider = currentProvider,
+                fallbackProvider = currentFallbackProvider,
+                fallbackModelId = currentFallbackModelId,
+                providers = providers,
+                modelsForProvider = modelsForProvider,
+                onProviderSelected = onFallbackProviderSelected,
+                onModelSelected = onFallbackModelSelected,
+            )
+        } // fin du Column scrollable
+
+        // ─── Footer STICKY : Save + Reset toujours visibles ───────────────
+        // Surface avec ombre haute pour separer visuellement du contenu scrollable.
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            tonalElevation = 6.dp,
+            shadowElevation = 8.dp,
+            color = MaterialTheme.colorScheme.surface,
+        ) {
             Row(
-                Modifier.fillMaxWidth(),
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .navigationBarsPadding(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 OutlinedButton(
@@ -608,6 +678,161 @@ private fun AssistantLlmPickerSheet(
                         stringResource(R.string.common_save),
                         fontWeight = FontWeight.Bold,
                     )
+                }
+            }
+        }
+        } // fin du Column parent
+    }
+}
+
+/**
+ * Section "Fallback" en bas du sheet picker. Toggle on/off + provider + modele.
+ *
+ * **Logique** :
+ *  - Si fallbackProvider null → toggle OFF + bouton "Activer un fallback"
+ *  - Si actif → header explicatif + picker provider compact (chips) + picker modele
+ *  - On exclut le provider primaire du picker fallback (sinon "fallback = primary" = no-op)
+ *
+ * **Pourquoi compact** : c'est un setting AVANCE, pas la fonction principale. UI
+ * doit etre claire mais moins proeminente que le picker primary.
+ */
+@Composable
+private fun FallbackSection(
+    assistant: AiAssistant,
+    primaryProvider: LlmProvider?,
+    fallbackProvider: LlmProvider?,
+    fallbackModelId: String?,
+    providers: List<LlmProvider>,
+    modelsForProvider: (LlmProvider) -> List<com.shredcoach.app.domain.llm.LlmModelInfo>,
+    onProviderSelected: (LlmProvider?) -> Unit,
+    onModelSelected: (String) -> Unit,
+) {
+    val fallbackEnabled = fallbackProvider != null
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        // Header avec toggle
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    stringResource(R.string.llm_settings_fallback_section).uppercase(),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontSize = 11.sp,
+                    letterSpacing = 1.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                )
+                Text(
+                    stringResource(R.string.llm_settings_fallback_subtitle),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+            }
+            Switch(
+                checked = fallbackEnabled,
+                onCheckedChange = { enabled ->
+                    if (enabled) {
+                        // Auto-pick le premier provider != primary
+                        val firstOther = providers.firstOrNull { it != primaryProvider }
+                            ?: providers.firstOrNull()
+                        onProviderSelected(firstOther)
+                    } else {
+                        onProviderSelected(null)
+                    }
+                },
+            )
+        }
+
+        if (fallbackEnabled) {
+            // Filtre : exclure le provider primaire du picker fallback
+            val fbCandidates = providers.filter { it != primaryProvider }
+            if (fbCandidates.isEmpty()) {
+                // Edge case : un seul provider dispo (rare) → message
+                Text(
+                    stringResource(R.string.llm_settings_fallback_no_alternative),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+                return
+            }
+
+            // Picker provider compact (chips horizontaux)
+            androidx.compose.foundation.lazy.LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                items(fbCandidates) { provider ->
+                    val selected = provider == fallbackProvider
+                    Surface(
+                        onClick = { onProviderSelected(provider) },
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (selected) MaterialTheme.colorScheme.primaryContainer
+                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                        border = if (selected) androidx.compose.foundation.BorderStroke(
+                            1.dp, MaterialTheme.colorScheme.primary
+                        ) else null,
+                    ) {
+                        Text(
+                            provider.displayName,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+                                else MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
+                }
+            }
+
+            // Picker modele du fallback provider
+            val fbModels = remember(fallbackProvider) {
+                fallbackProvider?.let {
+                    modelsForProvider(it).filter { m -> !assistant.needsVision || m.supportsVision }
+                } ?: emptyList()
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                fbModels.forEach { model ->
+                    val selected = model.id == fallbackModelId
+                    Surface(
+                        onClick = { onModelSelected(model.id) },
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (selected) MaterialTheme.colorScheme.primaryContainer
+                            else MaterialTheme.colorScheme.surface,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(
+                                1.dp,
+                                if (selected) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                                RoundedCornerShape(10.dp),
+                            ),
+                    ) {
+                        Row(
+                            Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    model.displayName,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                if (model.notes.isNotBlank()) {
+                                    Text(
+                                        model.notes,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontSize = 10.sp,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                                    )
+                                }
+                            }
+                            if (selected) {
+                                Icon(
+                                    Icons.Default.CheckCircle, null,
+                                    Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

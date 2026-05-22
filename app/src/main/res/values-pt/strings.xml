@@ -1168,6 +1168,11 @@
     <string name="llm_settings_no_model">Sem modelo disponível para este provedor</string>
     <string name="llm_settings_reset_one">Redefinir</string>
     <string name="llm_settings_reset_all">Redefinir tudo</string>
+    <!-- LLM Fallback (v50) -->
+    <string name="llm_settings_fallback_section">Fallback</string>
+    <string name="llm_settings_fallback_subtitle">LLM de reserva se a cota gratuita do principal acabar</string>
+    <string name="llm_settings_fallback_chip">Fallback: %1$s · %2$s</string>
+    <string name="llm_settings_fallback_no_alternative">Nenhum outro provedor disponível</string>
     <string name="assistant_meal_scan_photo">Scan refeição (foto)</string>
     <string name="assistant_meal_scan_text">Scan refeição (texto)</string>
     <string name="assistant_meal_scan_leftover">Scan sobras</string>

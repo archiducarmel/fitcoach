@@ -1182,6 +1182,11 @@
     <string name="llm_settings_no_model">Aucun modèle disponible pour ce fournisseur</string>
     <string name="llm_settings_reset_one">Réinitialiser</string>
     <string name="llm_settings_reset_all">Tout réinitialiser au défaut</string>
+    <!-- LLM Fallback (v50) -->
+    <string name="llm_settings_fallback_section">Fallback</string>
+    <string name="llm_settings_fallback_subtitle">LLM de secours si le quota gratuit du principal est épuisé</string>
+    <string name="llm_settings_fallback_chip">Fallback : %1$s · %2$s</string>
+    <string name="llm_settings_fallback_no_alternative">Aucun autre fournisseur disponible</string>
     <string name="assistant_meal_scan_photo">Scan repas (photo)</string>
     <string name="assistant_meal_scan_text">Scan repas (texte)</string>
     <string name="assistant_meal_scan_leftover">Scan restes (j\'ai pas fini)</string>
