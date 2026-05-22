@@ -202,6 +202,13 @@ fun MealScanDetailScreen(
                         )
                     }
 
+                    // ── v49 : Indice glycémique (hero card pleine largeur) ──
+                    item {
+                        com.shredcoach.app.presentation.nutrition.components.GlycemicIndexBadge.Hero(
+                            scan = scan,
+                        )
+                    }
+
                     // ── Macros et plats (valeurs effectives) ──
                     item { MacrosCard(effectiveResult) }
                     effectiveResult.dishes.forEachIndexed { idx, dish ->

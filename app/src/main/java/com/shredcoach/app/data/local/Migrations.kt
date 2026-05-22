@@ -332,6 +332,32 @@ object Migrations {
      * telemetrie commence à la migration v48, l'historique anterieur a la
      * mise a jour n'est pas reconstruit).
      */
+    /**
+     * v48 → v49 : ajout des colonnes d'indice glycémique (GI) et charge
+     * glycémique (GL) sur `meal_scans`.
+     *
+     * Toutes les colonnes sont **nullable** → les scans existants restent
+     * exploitables sans backfill (l'UI affiche "—" gracieusement). Les
+     * nouveaux scans peupleront ces champs depuis la réponse LLM.
+     *
+     *  - `glycemicIndex`  : 0-110, NULL si LLM incertain
+     *  - `glycemicLoad`   : GL raw (sans modifier), NULL si GI manquant
+     *  - `giCategory`     : LOW/MEDIUM/HIGH/NULL
+     *  - `giConfidence`   : HIGH/MEDIUM/LOW/NULL
+     *
+     * Index sur `giCategory` pour accélérer la distribution Stats (groupement
+     * sur la période).
+     */
+    fun migration48to49(): Migration = object : Migration(48, 49) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `meal_scans` ADD COLUMN `glycemicIndex` INTEGER DEFAULT NULL")
+            db.execSQL("ALTER TABLE `meal_scans` ADD COLUMN `glycemicLoad` REAL DEFAULT NULL")
+            db.execSQL("ALTER TABLE `meal_scans` ADD COLUMN `giCategory` TEXT DEFAULT NULL")
+            db.execSQL("ALTER TABLE `meal_scans` ADD COLUMN `giConfidence` TEXT DEFAULT NULL")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_meal_scans_giCategory` ON `meal_scans` (`giCategory`)")
+        }
+    }
+
     fun migration47to48(): Migration = object : Migration(47, 48) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("""

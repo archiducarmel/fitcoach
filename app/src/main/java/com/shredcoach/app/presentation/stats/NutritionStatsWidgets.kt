@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.NightsStay
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.TrendingDown
 import androidx.compose.material3.*
@@ -1327,4 +1328,194 @@ private fun buildSmoothPath(pts: List<Offset>): Path {
         path.cubicTo(c1x, c1y, c2x, c2y, p2.x, p2.y)
     }
     return path
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 11. GLYCEMIC LOAD CARD (v49) — GL journalier moyen + distribution LOW/MED/HIGH
+// ═══════════════════════════════════════════════════════════════════════════
+
+private val GiColorLow = Color(0xFF34A853)
+private val GiColorMedium = Color(0xFFF59E0B)
+private val GiColorHigh = Color(0xFFEF4444)
+private val GiColorUnknown = Color(0xFF9CA3AF)
+
+/**
+ * Widget premium FAANG-grade — indice glycémique global de la période.
+ *
+ * Composé :
+ *  - Hero metric : GL journalier moyen + catégorie qualitative
+ *  - Stacked bar : distribution % LOW/MEDIUM/HIGH/UNKNOWN sur la période
+ *  - Légende avec counts par catégorie
+ *
+ * Se cache automatiquement si aucun scan n'a de GI sur la période (legacy
+ * graceful — pas de placeholder vide qui n'apporte rien à l'utilisateur).
+ */
+@Composable
+fun GlycemicLoadCard(state: NutritionStatsData) {
+    val totalKnown = state.giCountLow + state.giCountMedium + state.giCountHigh
+    val totalAll = totalKnown + state.giCountUnknown
+    if (totalAll == 0) return // pas de scans du tout sur la période → on cache
+
+    val avgGl = state.avgDailyGl
+    val avgGlCategory = when {
+        avgGl <= 0.0 -> com.shredcoach.app.domain.nutrition.GLCategory.UNKNOWN
+        avgGl <= 80.0 -> com.shredcoach.app.domain.nutrition.GLCategory.LOW
+        avgGl < 160.0 -> com.shredcoach.app.domain.nutrition.GLCategory.MEDIUM
+        else -> com.shredcoach.app.domain.nutrition.GLCategory.HIGH
+    }
+    val heroColor = when (avgGlCategory) {
+        com.shredcoach.app.domain.nutrition.GLCategory.LOW -> GiColorLow
+        com.shredcoach.app.domain.nutrition.GLCategory.MEDIUM -> GiColorMedium
+        com.shredcoach.app.domain.nutrition.GLCategory.HIGH -> GiColorHigh
+        com.shredcoach.app.domain.nutrition.GLCategory.UNKNOWN -> GiColorUnknown
+    }
+
+    Card(
+        Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Column(
+            Modifier.fillMaxWidth().padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            // ─── Header ─────────────────────────────────────────────────
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(
+                    Icons.Default.Speed, null,
+                    Modifier.size(20.dp), tint = heroColor,
+                )
+                Text(
+                    stringResource(R.string.gi_widget_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+
+            // ─── Hero metric : GL journalier moyen ──────────────────────
+            if (avgGl > 0.0) {
+                Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "%.0f".format(avgGl),
+                        style = MaterialTheme.typography.displaySmall.copy(fontFeatureSettings = "tnum"),
+                        fontWeight = FontWeight.Black,
+                        color = heroColor,
+                    )
+                    Column(
+                        Modifier.padding(bottom = 6.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        Text(
+                            stringResource(R.string.gi_widget_gl_unit),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        )
+                        Text(
+                            stringResource(glCategoryLabel(avgGlCategory)),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = heroColor,
+                        )
+                    }
+                }
+            }
+
+            // ─── Stacked horizontal bar — distribution ──────────────────
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .height(14.dp)
+                    .clip(RoundedCornerShape(7.dp)),
+            ) {
+                val totalSafe = totalAll.coerceAtLeast(1).toFloat()
+                if (state.giCountLow > 0) {
+                    Box(
+                        Modifier
+                            .weight(state.giCountLow / totalSafe)
+                            .fillMaxHeight()
+                            .background(GiColorLow)
+                    )
+                }
+                if (state.giCountMedium > 0) {
+                    Box(
+                        Modifier
+                            .weight(state.giCountMedium / totalSafe)
+                            .fillMaxHeight()
+                            .background(GiColorMedium)
+                    )
+                }
+                if (state.giCountHigh > 0) {
+                    Box(
+                        Modifier
+                            .weight(state.giCountHigh / totalSafe)
+                            .fillMaxHeight()
+                            .background(GiColorHigh)
+                    )
+                }
+                if (state.giCountUnknown > 0) {
+                    Box(
+                        Modifier
+                            .weight(state.giCountUnknown / totalSafe)
+                            .fillMaxHeight()
+                            .background(GiColorUnknown.copy(alpha = 0.4f))
+                    )
+                }
+            }
+
+            // ─── Légende avec counts ────────────────────────────────────
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                GiLegendItem(GiColorLow, stringResource(R.string.gi_category_low), state.giCountLow)
+                GiLegendItem(GiColorMedium, stringResource(R.string.gi_category_medium), state.giCountMedium)
+                GiLegendItem(GiColorHigh, stringResource(R.string.gi_category_high), state.giCountHigh)
+                if (state.giCountUnknown > 0) {
+                    GiLegendItem(
+                        GiColorUnknown,
+                        stringResource(R.string.gi_category_unknown_short),
+                        state.giCountUnknown,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GiLegendItem(color: Color, label: String, count: Int) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Box(
+                Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(color)
+            )
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            )
+        }
+        Text(
+            count.toString(),
+            style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
+            fontWeight = FontWeight.Bold,
+            color = color,
+        )
+    }
+}
+
+private fun glCategoryLabel(category: com.shredcoach.app.domain.nutrition.GLCategory): Int = when (category) {
+    com.shredcoach.app.domain.nutrition.GLCategory.LOW -> R.string.gi_widget_avg_low
+    com.shredcoach.app.domain.nutrition.GLCategory.MEDIUM -> R.string.gi_widget_avg_medium
+    com.shredcoach.app.domain.nutrition.GLCategory.HIGH -> R.string.gi_widget_avg_high
+    com.shredcoach.app.domain.nutrition.GLCategory.UNKNOWN -> R.string.gi_widget_avg_unknown
 }

@@ -232,6 +232,17 @@ data class NutritionStatsData(
     val nutriCountD: Int = 0,
     val nutriCountE: Int = 0,
 
+    // ── v49 : Indice glycémique agrégé (depuis MealScanEntity) ──
+    // GL journalier moyen = somme des GL effectifs / nombre de jours trackés.
+    // Distribution : nombre de scans par catégorie LOW/MEDIUM/HIGH sur la période.
+    /** GL journalier moyen sur la période (charge glycémique totale / jours trackés). */
+    val avgDailyGl: Double = 0.0,
+    val giCountLow: Int = 0,
+    val giCountMedium: Int = 0,
+    val giCountHigh: Int = 0,
+    /** Scans sans GI estimé (legacy ou LLM incertain) — comptabilisés pour transparence. */
+    val giCountUnknown: Int = 0,
+
     // ── Comparaison vs période précédente ──
     val prevAvgCalories: Int = 0,
     val caloriesDelta: Int = 0,
@@ -760,6 +771,27 @@ class StatsViewModel @Inject constructor(
                 }
                 val avgScore = if (scansInPeriod.isNotEmpty()) scansInPeriod.sumOf { it.healthScore } / scansInPeriod.size else 0
 
+                // ─── v49 : Distribution GI + GL journalier moyen ───
+                // GL effectif tient compte des modificateurs v45 (×reprises, restes).
+                // On groupe par jour pour calculer un GL daily, puis moyenne sur les
+                // jours réellement trackés (cohérent avec la définition de daysTracked).
+                var giLow = 0; var giMed = 0; var giHigh = 0; var giUnknown = 0
+                val glByDay = mutableMapOf<java.time.LocalDate, Double>()
+                for (scan in scansInPeriod) {
+                    when (com.shredcoach.app.domain.nutrition.GlycemicMath.category(scan)) {
+                        com.shredcoach.app.domain.nutrition.GICategory.LOW -> giLow++
+                        com.shredcoach.app.domain.nutrition.GICategory.MEDIUM -> giMed++
+                        com.shredcoach.app.domain.nutrition.GICategory.HIGH -> giHigh++
+                        com.shredcoach.app.domain.nutrition.GICategory.UNKNOWN -> giUnknown++
+                    }
+                    val gl = com.shredcoach.app.domain.nutrition.GlycemicMath.effectiveGl(scan)
+                    if (gl != null && gl > 0.0) {
+                        val day = scan.timestamp.toLocalDate()
+                        glByDay[day] = (glByDay[day] ?: 0.0) + gl
+                    }
+                }
+                val avgDailyGlValue = if (glByDay.isNotEmpty()) glByDay.values.average() else 0.0
+
                 // ─── Streak tracking (jours consécutifs avec ≥1 repas, en remontant depuis aujourd'hui) ───
                 var streak = 0
                 var cursor = today
@@ -815,6 +847,8 @@ class StatsViewModel @Inject constructor(
                         macroSplitVerdict = macroVerdict,
                         macroSplitVerdictTone = macroVerdictTone,
                         nutriCountA = nA, nutriCountB = nB, nutriCountC = nC, nutriCountD = nD, nutriCountE = nE,
+                        avgDailyGl = avgDailyGlValue,
+                        giCountLow = giLow, giCountMedium = giMed, giCountHigh = giHigh, giCountUnknown = giUnknown,
                         prevAvgCalories = prevAvgCal,
                         caloriesDelta = avgCal - prevAvgCal,
                         prevAvgProteins = prevAvgProt,

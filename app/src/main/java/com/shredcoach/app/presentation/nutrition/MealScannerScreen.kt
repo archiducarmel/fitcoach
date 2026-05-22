@@ -1108,7 +1108,11 @@ private fun ScanHistoryCard(scan: com.shredcoach.app.data.local.entity.MealScanE
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(scan.dishName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold,
                     maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-                com.shredcoach.app.domain.nutrition.NutriScorePictogram(nutriGrade, height = 20.dp)
+                // Nutri-Score + Badge GI inline (v49) — alignés horizontalement
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    com.shredcoach.app.domain.nutrition.NutriScorePictogram(nutriGrade, height = 20.dp)
+                    com.shredcoach.app.presentation.nutrition.components.GlycemicIndexBadge.Inline(scan = scan)
+                }
                 // v45 : valeur effective (×N portions − restes). Si pas de
                 // modificateur, identique à scan.totalCalories.
                 val effectiveCal = com.shredcoach.app.domain.nutrition.MealScanModifierMath.effectiveCalories(scan)

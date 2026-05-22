@@ -33,7 +33,19 @@ data class MealAnalysisResult(
     val healthScore: Int = 0,
     val verdict: String = "",
     val allergens: List<String> = emptyList(),
-    val micronutrients: List<Micronutrient> = emptyList()
+    val micronutrients: List<Micronutrient> = emptyList(),
+    // ── v49 : Indice glycémique (GI) + Glycemic Load (GL) ──
+    // Agrégés au niveau du scan (pas du plat) : GI = moyenne pondérée par
+    // les carbs de chaque plat, GL = somme additive des GL individuels.
+    // Voir GlycemicMath pour la formule détaillée.
+    //  - glycemicIndex : 0-110, null si aucun plat n'a fourni de GI fiable
+    //  - glycemicLoad  : GL total raw (sans modifier), scale avec ×reprises
+    //  - giCategory    : LOW/MEDIUM/HIGH (dérivé du GI, persisté pour stabilité)
+    //  - giConfidence  : HIGH/MEDIUM/LOW agrégé depuis les confidences per-dish
+    val glycemicIndex: Int? = null,
+    val glycemicLoad: Double? = null,
+    @SerializedName("gi_category") val giCategory: String? = null,
+    @SerializedName("gi_confidence") val giConfidence: String? = null,
 )
 
 @Immutable
@@ -50,7 +62,10 @@ data class AnalyzedDish(
     @SerializedName("fats_saturated") val fatsSaturated: Double = 0.0,
     val fibers: Double = 0.0,
     val salt: Double = 0.0,
-    val ingredients: List<Ingredient> = emptyList()
+    val ingredients: List<Ingredient> = emptyList(),
+    // ── v49 : GI per-dish (peuplé par LLM, agrégé au scan via GlycemicMath) ──
+    @SerializedName("glycemic_index") val glycemicIndex: Int? = null,
+    @SerializedName("gi_confidence") val giConfidence: String? = null,
 )
 
 data class Ingredient(
@@ -198,7 +213,41 @@ OBLIGATOIRE). Les totaux = somme des plats.
 Pour chaque plat, identifie le type : "petit_dejeuner", "dejeuner",
 "gouter", "diner", "collation", "shaker" ou "grignotage".
 
-JSON (mêmes champs que l'analyse photo) :
+══ ÉTAPE 4 — INDICE GLYCÉMIQUE (GI) PAR PLAT ══
+Estime l'indice glycémique de CHAQUE plat (0-110, échelle ISO 26642 / base
+Sydney). Le GI dépend de la composition du plat (féculents, sucres, fibres,
+gras) et de la cuisson :
+
+  RÉFÉRENCES IG (plat composé, valeurs typiques) :
+  - Salade verte + protéine maigre : 15-25 (peu de glucides)
+  - Légumineuses cuites (lentilles, pois chiches) : 25-35
+  - Riz basmati + légumes + protéine : 50-58
+  - Pâtes al dente + sauce tomate : 45-55
+  - Pizza pâte fine + garniture : 50-60
+  - Burger + frites : 65-75
+  - Pain blanc + Nutella : 70-80
+  - Sushi (riz vinaigré) : 65-75
+  - Smoothie fruits avec banane : 50-60
+  - Soupe de légumes : 30-45
+  - Yaourt nature + fruits : 30-40
+
+  RÈGLES D'AJUSTEMENT :
+  - Présence de fibres (>5g) → IG baisse de ~5-10 points
+  - Présence de gras/protéines avec les glucides → IG baisse de ~5-15 points
+  - Cuisson longue ou très molle (pâtes trop cuites, purée) → IG monte de 10-15 pts
+  - Boissons sucrées, jus, sucre pur → IG très élevé (>70)
+  - Plat sans glucides significatifs (<5g carbs) → IG à 0 (non applicable)
+
+  CONFIDENCE :
+  - "HIGH" : plat clair, ingrédients identifiés, base CIQUAL/Sydney disponible
+  - "MEDIUM" : plat composé classique, estimation raisonnable
+  - "LOW" : plat exotique, recette incertaine, ingrédients ambigus
+
+Si tu ne peux PAS estimer le GI d'un plat avec confiance raisonnable
+(recette inconnue, mélange trop complexe), mets `glycemic_index: null` et
+`gi_confidence: "LOW"`. NE DEVINE PAS au hasard.
+
+JSON (mêmes champs que l'analyse photo, plus glycemic_index + gi_confidence par plat) :
 {
   "dishes": [
     {
@@ -214,6 +263,8 @@ JSON (mêmes champs que l'analyse photo) :
       "fats_saturated": 0.0,
       "fibers": 0.0,
       "salt": 0.0,
+      "glycemic_index": 55,
+      "gi_confidence": "MEDIUM",
       "ingredients": [
         {"name": "Ingrédient", "weight_g": 0, "category": "Cat", "calories": 0, "proteins": 0.0, "carbs": 0.0, "fats": 0.0, "fibers": 0.0}
       ]
@@ -234,7 +285,7 @@ JSON (mêmes champs que l'analyse photo) :
 }
 
 Remplace tous les 0 par tes estimations RÉELLES basées sur la description.
-healthScore = note 0–10 (entier). AJR EFSA 2000kcal, 8–12 micronutriments
+healthScore = note 0-10 (entier). AJR EFSA 2000kcal, 8-12 micronutriments
 > 5% AJR. Le verdict mentionne "analyse texte" pour signaler à l'user que
 les valeurs sont basées sur sa description (sans photo).
 
@@ -287,6 +338,33 @@ Si image NON alimentaire : {"error": "non_food"}
 Pour chaque ingrédient : macros = (weight_g estimé / 100) × valeur CIQUAL/USDA pour 100g.
 Les macros du plat = somme des macros de ses ingrédients (COHÉRENCE OBLIGATOIRE).
 
+══ ÉTAPE 4 — INDICE GLYCÉMIQUE (GI) PAR PLAT ══
+Estime l'indice glycémique de CHAQUE plat (0-110, échelle ISO 26642 / base Sydney).
+
+  RÉFÉRENCES IG (plat composé, valeurs typiques) :
+  - Salade verte + protéine maigre : 15-25 (peu de glucides)
+  - Légumineuses cuites (lentilles, pois chiches) : 25-35
+  - Riz basmati + légumes + protéine : 50-58
+  - Pâtes al dente + sauce tomate : 45-55
+  - Pizza pâte fine + garniture : 50-60
+  - Burger + frites : 65-75
+  - Pain blanc + Nutella : 70-80
+  - Sushi (riz vinaigré) : 65-75
+  - Smoothie fruits avec banane : 50-60
+  - Soupe de légumes : 30-45
+  - Yaourt nature + fruits : 30-40
+
+  AJUSTEMENTS : fibres élevées → IG baisse ~5-10 pts | gras/protéines présents → IG baisse ~5-15 pts |
+  cuisson longue/molle → IG monte 10-15 pts | sucres rapides → IG > 70 | <5g carbs → IG = 0 (non applicable).
+
+  CONFIDENCE :
+  - "HIGH" : plat clair, ingrédients identifiés, base CIQUAL/Sydney disponible
+  - "MEDIUM" : plat composé classique, estimation raisonnable
+  - "LOW" : plat exotique, recette incertaine, ingrédients ambigus
+
+Si tu ne peux PAS estimer avec confiance raisonnable : `glycemic_index: null` + `gi_confidence: "LOW"`.
+NE DEVINE PAS au hasard.
+
 JSON :
 {
   "dishes": [
@@ -303,6 +381,8 @@ JSON :
       "fats_saturated": 0.0,
       "fibers": 0.0,
       "salt": 0.0,
+      "glycemic_index": 55,
+      "gi_confidence": "MEDIUM",
       "ingredients": [
         {"name": "Ingrédient", "weight_g": 0, "category": "Cat", "calories": 0, "proteins": 0.0, "carbs": 0.0, "fats": 0.0, "fibers": 0.0}
       ]
@@ -999,7 +1079,7 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         try {
             val r = gson.fromJson(repaired, MealAnalysisResult::class.java)
             Log.d(TAG, "✓ Tentative 1 (strict) OK")
-            return r
+            return enrichWithGlycemicAggregation(r)
         } catch (e: Exception) {
             Log.w(TAG, "✗ Tentative 1: ${e.message}")
         }
@@ -1009,7 +1089,7 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         try {
             val r = gson.fromJson(cleaned, MealAnalysisResult::class.java)
             Log.d(TAG, "✓ Tentative 2 (sanitized) OK")
-            return r
+            return enrichWithGlycemicAggregation(r)
         } catch (e: Exception) {
             Log.w(TAG, "✗ Tentative 2: ${e.message}")
         }
@@ -1020,7 +1100,7 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
             reader.isLenient = true
             val r = gson.getAdapter(MealAnalysisResult::class.java).read(reader)
             Log.d(TAG, "✓ Tentative 3 (lenient) OK")
-            return r
+            return enrichWithGlycemicAggregation(r)
         } catch (e: Exception) {
             Log.w(TAG, "✗ Tentative 3: ${e.message}")
         }
@@ -1028,13 +1108,61 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         // Tentative 4 : extraction manuelle
         try {
             val r = extractManual(cleaned)
-            if (r != null) Log.d(TAG, "✓ Tentative 4 (manual) OK — ${r.dishes.size} plats")
-            return r
+            if (r != null) {
+                Log.d(TAG, "✓ Tentative 4 (manual) OK — ${r.dishes.size} plats")
+                return enrichWithGlycemicAggregation(r)
+            }
         } catch (e: Exception) {
             Log.e(TAG, "✗ Tentative 4: ${e.message}", e)
         }
 
         return null
+    }
+
+    /**
+     * Calcule le GI/GL/catégorie/confidence agrégés au niveau du scan à partir
+     * des plats individuels. Single source of truth pour la projection
+     * per-dish → scan-level (cf. [com.shredcoach.app.domain.nutrition.GlycemicMath]).
+     *
+     * **Pourquoi en post-parse plutôt que demander au LLM les agrégats** :
+     *  - Cohérence garantie : pas de risque que le LLM additionne mal les GL
+     *  - Resilience : marche aussi sur les anciens LLMs/providers qui ne
+     *    fournissent que les valeurs per-dish
+     *  - Single source of truth : la formule pondérée vit dans GlycemicMath
+     */
+    private fun enrichWithGlycemicAggregation(result: MealAnalysisResult): MealAnalysisResult {
+        if (result.dishes.isEmpty()) return result
+        // Pair<GI per dish, carbs per dish> pour la moyenne pondérée
+        val dishGis = result.dishes.map { it.glycemicIndex to it.carbs }
+        val aggregatedGi = com.shredcoach.app.domain.nutrition.GlycemicMath
+            .weightedAverageGi(dishGis)
+
+        // GL raw du scan = somme additive des GL per-dish (additive sur les carbs)
+        val aggregatedGl: Double? = result.dishes
+            .mapNotNull { dish ->
+                val gi = dish.glycemicIndex
+                if (gi == null || dish.carbs <= 0.0) null
+                else (gi * dish.carbs / 100.0)
+            }
+            .takeIf { it.isNotEmpty() }
+            ?.sum()
+
+        // Confidence agrégée : règle "chaîne la plus faible"
+        val confidences = result.dishes.map {
+            com.shredcoach.app.domain.nutrition.GIConfidence.fromString(it.giConfidence)
+        }
+        val aggregatedConfidence = com.shredcoach.app.domain.nutrition.GlycemicMath
+            .aggregateConfidence(confidences)
+
+        // Catégorie : depuis le GI agrégé
+        val category = com.shredcoach.app.domain.nutrition.GICategory.fromGi(aggregatedGi)
+
+        return result.copy(
+            glycemicIndex = aggregatedGi,
+            glycemicLoad = aggregatedGl,
+            giCategory = if (category == com.shredcoach.app.domain.nutrition.GICategory.UNKNOWN) null else category.name,
+            giConfidence = if (aggregatedConfidence == com.shredcoach.app.domain.nutrition.GIConfidence.UNKNOWN) null else aggregatedConfidence.name,
+        )
     }
 
     private fun repairTruncatedJson(json: String): String {
@@ -1109,6 +1237,12 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
                     fatsSaturated = try { d.get("fats_saturated")?.asDouble ?: 0.0 } catch (_: Exception) { 0.0 },
                     fibers = try { d.get("fibers")?.asDouble ?: 0.0 } catch (_: Exception) { 0.0 },
                     salt = try { d.get("salt")?.asDouble ?: 0.0 } catch (_: Exception) { 0.0 },
+                    glycemicIndex = try {
+                        d.get("glycemic_index")?.takeIf { !it.isJsonNull }?.asInt
+                    } catch (_: Exception) { null },
+                    giConfidence = try {
+                        d.get("gi_confidence")?.takeIf { !it.isJsonNull }?.asString
+                    } catch (_: Exception) { null },
                     ingredients = try {
                         d.getAsJsonArray("ingredients")?.map { ingEl ->
                             val ig = ingEl.asJsonObject

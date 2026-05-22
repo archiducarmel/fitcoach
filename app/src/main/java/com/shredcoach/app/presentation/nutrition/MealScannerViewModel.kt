@@ -488,7 +488,14 @@ class MealScannerViewModel @Inject constructor(
             ingredientCount = analysis.dishes.sumOf { it.ingredients.size },
             resultJson = gson.toJson(analysis),
             photoPath = photoPath,
-            nutriScoreGrade = nutriResult.grade.toString()
+            nutriScoreGrade = nutriResult.grade.toString(),
+            // v49 — Indice glycémique : champs agrégés au scan via
+            // GlycemicMath dans GeminiMealService.enrichWithGlycemicAggregation.
+            // null si le LLM n'a pas pu estimer (legacy graceful).
+            glycemicIndex = analysis.glycemicIndex,
+            glycemicLoad = analysis.glycemicLoad,
+            giCategory = analysis.giCategory,
+            giConfidence = analysis.giConfidence,
         )
         val id = mealScanDao.insertScan(scan)
         _state.update { it.copy(savedScanId = id) }

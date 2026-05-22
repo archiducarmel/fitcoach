@@ -603,8 +603,15 @@ private fun MealCard(
                         if (hasLeftover) LeftoverInlineBadge(scan!!.leftoverCalories)
                     }
                 }
-                // Ligne 2 : PICTOGRAMME NUTRI-SCORE (toujours visible)
-                com.shredcoach.app.domain.nutrition.NutriScorePictogram(nutriGrade, height = 24.dp)
+                // Ligne 2 : PICTOGRAMME NUTRI-SCORE + Badge GI (v49)
+                // Le badge GI ne s'affiche que pour les repas issus d'un scan
+                // (sinon, pas de données). MealWithFood expose scan? nullable.
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    com.shredcoach.app.domain.nutrition.NutriScorePictogram(nutriGrade, height = 24.dp)
+                    mwf.scan?.let { scan ->
+                        com.shredcoach.app.presentation.nutrition.components.GlycemicIndexBadge.Compact(scan = scan)
+                    }
+                }
                 // Ligne 3 : barres macros (valeurs effectives)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     NutritionMealMacro(stringResource(R.string.nutrition_macro_proteins), effectiveProteins, ProteinColor, Modifier.weight(1f))

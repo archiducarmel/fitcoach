@@ -415,6 +415,10 @@ private fun NutritionDashboard(stats: NutritionStatsData, viewModel: StatsViewMo
             item { NutriDistributionCard(stats) }
         }
 
+        // ─── v49 : Indice glycémique sur la période ───
+        // Se cache lui-même si aucun scan dans la période.
+        item { GlycemicLoadCard(stats) }
+
         // ─── Timeline heures de repas (NEW) ───
         if (stats.mealsByHourBucket.values.sum() > 0) {
             item { MealHoursTimelineCard(stats.mealsByHourBucket) }

@@ -678,7 +678,7 @@ private fun MealHistoryCard(scan: com.shredcoach.app.data.local.entity.MealScanE
                         Text(scan.cuisine, style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                     }
-                    // Pictogramme Nutri-Score
+                    // Pictogramme Nutri-Score + Badge GI compact (v49)
                     val nutriGrade = scan.nutriScoreGrade.firstOrNull()
                         ?: com.shredcoach.app.domain.nutrition.NutriScoreCalculator.fromTotals(
                             calories = scan.totalCalories,
@@ -689,7 +689,13 @@ private fun MealHistoryCard(scan: com.shredcoach.app.data.local.entity.MealScanE
                             proteins = scan.totalProteins,
                             weightG = scan.totalWeight
                         ).grade
-                    com.shredcoach.app.domain.nutrition.NutriScorePictogram(nutriGrade, height = 22.dp)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        com.shredcoach.app.domain.nutrition.NutriScorePictogram(nutriGrade, height = 22.dp)
+                        com.shredcoach.app.presentation.nutrition.components.GlycemicIndexBadge.Compact(scan = scan)
+                    }
                 }
             }
 

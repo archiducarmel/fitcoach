@@ -3,10 +3,17 @@ package com.shredcoach.app.data.local.entity
 
 import androidx.compose.runtime.Immutable
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 
-@Entity(tableName = "meal_scans")
+@Entity(
+    tableName = "meal_scans",
+    // v49 : index sur `giCategory` pour accélérer les agrégations Stats
+    // (distribution LOW/MEDIUM/HIGH sur la période). Doit matcher la migration
+    // 48→49 qui crée le même index — sinon Room.validateMigration crash.
+    indices = [Index(value = ["giCategory"])],
+)
 @Immutable
 data class MealScanEntity(
     @PrimaryKey(autoGenerate = true)
@@ -57,4 +64,26 @@ data class MealScanEntity(
     val leftoverWeight: Int = 0,
     val leftoverResultJson: String = "",
     val leftoverScannedAt: LocalDateTime? = null,
+    // ── v49 : Indice glycémique (GI) & charge glycémique (GL) ──
+    //
+    // `glycemicIndex` : 0-110, agrégé au scan via moyenne pondérée par les
+    //   carbs de chaque plat (cf. GlycemicMath.weightedAverageGi). NULL si
+    //   le LLM n'a pas pu estimer (recette complexe, scan legacy pre-v49).
+    //
+    // `glycemicLoad` : GL raw du scan (sans modifier). Additif sur les plats.
+    //   Le GL effectif (avec ×reprises/restes) se calcule au display via
+    //   GlycemicMath.effectiveGl pour ne pas dupliquer l'état.
+    //
+    // `giCategory` : LOW/MEDIUM/HIGH (seuils ISO 26642). Persisté pour
+    //   stabilité d'affichage et accélérer les requêtes d'agrégation Stats.
+    //
+    // `giConfidence` : HIGH/MEDIUM/LOW — fiabilité de l'estimation LLM.
+    //   Drive l'opacité du badge UI (HIGH=plein, MEDIUM=85%, LOW=70%).
+    //
+    // **Back-compat absolue** : tous nullable, default NULL. Les scans
+    // antérieurs à v49 affichent "—" gracieusement (cf. GlycemicIndexBadge).
+    val glycemicIndex: Int? = null,
+    val glycemicLoad: Double? = null,
+    val giCategory: String? = null,
+    val giConfidence: String? = null,
 )
