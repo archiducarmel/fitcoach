@@ -690,11 +690,15 @@ private fun MealHistoryCard(scan: com.shredcoach.app.data.local.entity.MealScanE
                             weightG = scan.totalWeight
                         ).grade
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         com.shredcoach.app.domain.nutrition.NutriScorePictogram(nutriGrade, height = 22.dp)
-                        com.shredcoach.app.presentation.nutrition.components.GlycemicIndexBadge.Compact(scan = scan)
+                        com.shredcoach.app.presentation.nutrition.components.GlycemicIndexBadge.MiniGauges(
+                            scan = scan,
+                            modifier = Modifier.weight(1f),
+                        )
                     }
                 }
             }

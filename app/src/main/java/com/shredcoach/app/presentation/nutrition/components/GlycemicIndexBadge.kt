@@ -87,7 +87,186 @@ object GlycemicIndexBadge {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // COMPACT — à côté du Nutri-Score sur les meal cards
+    // MINI GAUGES — sur les meal cards (NutritionScreen + History)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * Deux mini-gauges côte-à-côte (IG + GL) pour les meal cards de la
+     * NutritionScreen et de l'historique. Pattern :
+     *
+     *   IG          55              GL          18
+     *   ▓▓▓▓▓│▓│▓▓⊙▓▓▓▓             ▓▓▓⊙▓│▓▓▓▓▓
+     *
+     * - Pin compact (5dp) avec halo blanc + cœur coloré (mini du Hero)
+     * - Barre 7dp, 3 zones colorées (mêmes seuils que Hero)
+     * - Label + valeur en header inline (label gris, valeur colorée)
+     * - Animation `animateFloatAsState` key-stable → ne replay PAS au scroll
+     *   (target value cached par item)
+     *
+     * Affiche un placeholder discret `IG —` si le LLM n'a pas estimé l'IG.
+     */
+    @Composable
+    fun MiniGauges(scan: MealScanEntity, modifier: Modifier = Modifier) {
+        val gi = scan.glycemicIndex
+
+        // ─── Empty state (scan legacy ou LLM incertain) ──────────────────────
+        if (gi == null) {
+            Surface(
+                modifier = modifier,
+                shape = RoundedCornerShape(6.dp),
+                color = ColorUnknown.copy(alpha = 0.10f),
+            ) {
+                Text(
+                    "IG —",
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = ColorUnknown,
+                )
+            }
+            return
+        }
+
+        val confidence = GlycemicMath.confidence(scan)
+        val giCategory = GlycemicMath.category(scan)
+        val giColor = colorFor(giCategory)
+        val gl = GlycemicMath.effectiveGl(scan)
+        val glCategory = GLCategory.fromGl(gl)
+        val glColor = when (glCategory) {
+            GLCategory.LOW -> ColorLow
+            GLCategory.MEDIUM -> ColorMedium
+            GLCategory.HIGH -> ColorHigh
+            GLCategory.UNKNOWN -> ColorUnknown
+        }
+
+        Row(modifier, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            StaticMiniGauge(
+                label = "IG",
+                value = "${if (confidence == GIConfidence.LOW) "~" else ""}$gi",
+                normalizedPos = (gi / 110f).coerceIn(0f, 1f),
+                zoneEndFractions = listOf(0.5f, 0.6364f, 1f),
+                zoneColors = listOf(ColorLow, ColorMedium, ColorHigh),
+                pinColor = giColor,
+                valueColor = giColor,
+                modifier = Modifier.weight(1f),
+            )
+            if (gl != null && gl > 0.0) {
+                StaticMiniGauge(
+                    label = "GL",
+                    value = gl.toInt().toString(),
+                    normalizedPos = (gl.toFloat() / 30f).coerceIn(0f, 1f),
+                    zoneEndFractions = listOf(1f / 3f, 2f / 3f, 1f),
+                    zoneColors = listOf(ColorLow, ColorMedium, ColorHigh),
+                    pinColor = glColor,
+                    valueColor = glColor,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+    }
+
+    /**
+     * Widget mini-gauge atomique. Pas de label de zone (les couleurs et la
+     * position du pin transportent l'info). Optimisé pour LazyColumn :
+     * `animateFloatAsState` ne joue qu'au premier mount d'un item.
+     */
+    @Composable
+    private fun StaticMiniGauge(
+        label: String,
+        value: String,
+        normalizedPos: Float,
+        zoneEndFractions: List<Float>,
+        zoneColors: List<Color>,
+        pinColor: Color,
+        valueColor: Color,
+        modifier: Modifier = Modifier,
+    ) {
+        val density = LocalDensity.current
+        val animatedPos by animateFloatAsState(
+            targetValue = normalizedPos.coerceIn(0f, 1f),
+            animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
+            label = "mini_pin_$label",
+        )
+
+        Column(modifier, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            // Header : label + valeur
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
+                    letterSpacing = 0.6.sp,
+                )
+                Text(
+                    value,
+                    style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = valueColor,
+                )
+            }
+            // Bar avec pin animé
+            Canvas(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(7.dp),
+            ) {
+                val w = size.width
+                val h = size.height
+                val cornerRadius = h / 2f
+                val barPath = Path().apply {
+                    addRoundRect(
+                        androidx.compose.ui.geometry.RoundRect(
+                            left = 0f, top = 0f,
+                            right = w, bottom = h,
+                            cornerRadius = CornerRadius(cornerRadius, cornerRadius),
+                        )
+                    )
+                }
+                clipPath(barPath) {
+                    var startFrac = 0f
+                    for ((endFrac, color) in zoneEndFractions.zip(zoneColors)) {
+                        drawRect(
+                            color = color.copy(alpha = 0.40f),
+                            topLeft = Offset(w * startFrac, 0f),
+                            size = Size(w * (endFrac - startFrac), h),
+                        )
+                        startFrac = endFrac
+                    }
+                    // Tick lines aux frontières (blanc subtil)
+                    val sep = with(density) { 0.5.dp.toPx() }
+                    for (i in 0 until zoneEndFractions.size - 1) {
+                        val x = w * zoneEndFractions[i]
+                        drawRect(
+                            color = Color.White.copy(alpha = 0.6f),
+                            topLeft = Offset(x - sep / 2, 0f),
+                            size = Size(sep, h),
+                        )
+                    }
+                }
+                // Pin : halo blanc + cœur coloré (cohérent avec le Hero)
+                val pinX = animatedPos * w
+                val pinOuterR = with(density) { 5.dp.toPx() }
+                val pinInnerR = with(density) { 3.dp.toPx() }
+                val pinCenter = Offset(
+                    pinX.coerceIn(pinOuterR, w - pinOuterR),
+                    h / 2f,
+                )
+                drawCircle(Color.White, pinOuterR, pinCenter)
+                drawCircle(pinColor, pinInnerR, pinCenter)
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // COMPACT — pill horizontale (legacy, conservée pour usage futur)
     // ═══════════════════════════════════════════════════════════════════════
 
     /**
