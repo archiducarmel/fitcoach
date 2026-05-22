@@ -30,7 +30,10 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.shredcoach.app.R
@@ -304,185 +307,151 @@ object GlycemicIndexBadge {
      *  - 3 zones colorées (LOW vert 0-55 / MEDIUM orange 55-70 / HIGH rouge 70-110)
      *  - Tick marks aux frontières 55 et 70
      *  - Pin animé positionné selon le GI
-     *  - Labels de zone sous la barre
+     *  - **Threshold numbers (0/55/70/110) dessinés en Canvas aux positions exactes**
+     *  - **Légende découplée** : 3 items équi-larges avec dot coloré + label complet
+     *    → aucune troncature possible, l'œil n'est pas dépendant de la largeur de zone
      */
     @Composable
     private fun GiLinearGauge(gi: Int, pinColor: Color) {
         val density = LocalDensity.current
+        val textMeasurer = rememberTextMeasurer()
+        val labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
         val animatedGi by animateFloatAsState(
             targetValue = gi.toFloat().coerceIn(0f, 110f),
             animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
             label = "gi_pin_position",
         )
 
-        // Proportions des zones sur 110 :
-        //   LOW    : 0..55  → 50% de la barre
+        // Proportions ISO des zones sur 110 :
+        //   LOW    : 0..55  → 50.0% de la barre
         //   MEDIUM : 55..70 → 13.6%
         //   HIGH   : 70..110 → 36.4%
-        val lowFrac = 55f / 110f       // 0.5
-        val medFrac = (70f - 55f) / 110f // 0.1364
-        val highFrac = (110f - 70f) / 110f // 0.3636
+        val lowEnd = 55f / 110f       // 0.5
+        val medEnd = 70f / 110f       // 0.6364
 
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            // ─── Barre + pin ──────────────────────────────────────────────────
+        val numberStyle = TextStyle(
+            fontSize = 10.sp,
+            color = labelColor,
+            fontFeatureSettings = "tnum",
+            fontWeight = FontWeight.SemiBold,
+        )
+
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            // ─── Canvas : barre + pin + threshold numbers ─────────────────────
             Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(34.dp),
+                    .height(44.dp),
             ) {
                 val w = size.width
                 val barHeight = with(density) { 14.dp.toPx() }
-                val barY = (size.height - barHeight) / 2f
+                val barY = with(density) { 8.dp.toPx() } // marge top pour laisser space au halo du pin
                 val barCornerRadius = barHeight / 2f
 
-                // Clip rounded rect → puis dessiner 3 zones rectangulaires dedans
+                // Bar avec 3 zones colorées (clip rounded rect)
                 val barPath = Path().apply {
                     addRoundRect(
                         androidx.compose.ui.geometry.RoundRect(
-                            left = 0f,
-                            top = barY,
-                            right = w,
-                            bottom = barY + barHeight,
+                            left = 0f, top = barY,
+                            right = w, bottom = barY + barHeight,
                             cornerRadius = CornerRadius(barCornerRadius, barCornerRadius),
                         )
                     )
                 }
                 clipPath(barPath) {
-                    val lowW = w * lowFrac
-                    val medW = w * medFrac
-                    val highW = w * highFrac
-                    drawRect(
-                        color = ColorLow,
-                        topLeft = Offset(0f, barY),
-                        size = Size(lowW, barHeight),
-                    )
-                    drawRect(
-                        color = ColorMedium,
-                        topLeft = Offset(lowW, barY),
-                        size = Size(medW, barHeight),
-                    )
-                    drawRect(
-                        color = ColorHigh,
-                        topLeft = Offset(lowW + medW, barY),
-                        size = Size(highW, barHeight),
-                    )
-                    // Subtle inner separators (tick lines blanches semi-transparentes)
-                    val sep = with(density) { 1.dp.toPx() }
-                    drawRect(
-                        color = Color.White.copy(alpha = 0.35f),
-                        topLeft = Offset(lowW - sep / 2, barY),
-                        size = Size(sep, barHeight),
-                    )
-                    drawRect(
-                        color = Color.White.copy(alpha = 0.35f),
-                        topLeft = Offset(lowW + medW - sep / 2, barY),
-                        size = Size(sep, barHeight),
-                    )
+                    val lowW = w * lowEnd
+                    val medW = w * (medEnd - lowEnd)
+                    val highW = w * (1f - medEnd)
+                    drawRect(ColorLow, Offset(0f, barY), Size(lowW, barHeight))
+                    drawRect(ColorMedium, Offset(lowW, barY), Size(medW, barHeight))
+                    drawRect(ColorHigh, Offset(lowW + medW, barY), Size(highW, barHeight))
+                    // Tick lines aux frontières 55 et 70 (blancs subtils, marquent la séparation)
+                    val sep = with(density) { 1.5.dp.toPx() }
+                    drawRect(Color.White.copy(alpha = 0.45f), Offset(lowW - sep / 2, barY), Size(sep, barHeight))
+                    drawRect(Color.White.copy(alpha = 0.45f), Offset(lowW + medW - sep / 2, barY), Size(sep, barHeight))
                 }
 
-                // ─── Pin : cercle blanc bordé de la couleur catégorie ──────
+                // Pin animé à la position GI
                 val pinX = (animatedGi / 110f) * w
                 val pinRadius = with(density) { 11.dp.toPx() }
-                val pinCenter = Offset(pinX.coerceIn(pinRadius, w - pinRadius), size.height / 2f)
+                val pinCenterY = barY + barHeight / 2f
+                val pinCenter = Offset(pinX.coerceIn(pinRadius, w - pinRadius), pinCenterY)
 
-                // Halo de couleur (subtile, donne du poids visuel)
-                drawCircle(
-                    color = pinColor.copy(alpha = 0.20f),
-                    radius = pinRadius + with(density) { 4.dp.toPx() },
-                    center = pinCenter,
+                drawCircle(pinColor.copy(alpha = 0.20f), pinRadius + with(density) { 4.dp.toPx() }, pinCenter)
+                drawCircle(Color.Black.copy(alpha = 0.18f), pinRadius, pinCenter.copy(y = pinCenter.y + with(density) { 1.5.dp.toPx() }))
+                drawCircle(Color.White, pinRadius, pinCenter)
+                drawCircle(pinColor, pinRadius, pinCenter, style = Stroke(width = with(density) { 2.5.dp.toPx() }))
+                drawCircle(pinColor, pinRadius - with(density) { 5.dp.toPx() }, pinCenter)
+
+                // ─── Threshold numbers : 0 / 55 / 70 / 110 aux positions exactes ──
+                // Position x cible (sur la barre) + clamp aux bords pour ne jamais
+                // sortir du canvas. Centré horizontalement sur la valeur.
+                val numbersY = barY + barHeight + with(density) { 6.dp.toPx() }
+                val thresholds = listOf(
+                    "0" to 0f,
+                    "55" to w * lowEnd,
+                    "70" to w * medEnd,
+                    "110" to w,
                 )
-                // Ombre portée discrète
-                drawCircle(
-                    color = Color.Black.copy(alpha = 0.18f),
-                    radius = pinRadius,
-                    center = pinCenter.copy(y = pinCenter.y + with(density) { 1.5.dp.toPx() }),
-                )
-                // Anneau extérieur blanc
-                drawCircle(
-                    color = Color.White,
-                    radius = pinRadius,
-                    center = pinCenter,
-                )
-                // Anneau bordure de couleur
-                drawCircle(
-                    color = pinColor,
-                    radius = pinRadius,
-                    center = pinCenter,
-                    style = Stroke(width = with(density) { 2.5.dp.toPx() }),
-                )
-                // Point central rempli
-                drawCircle(
-                    color = pinColor,
-                    radius = pinRadius - with(density) { 5.dp.toPx() },
-                    center = pinCenter,
-                )
+                for ((label, x) in thresholds) {
+                    val layout = textMeasurer.measure(label, numberStyle)
+                    val tw = layout.size.width.toFloat()
+                    val drawX = (x - tw / 2f).coerceIn(0f, w - tw)
+                    drawText(layout, topLeft = Offset(drawX, numbersY))
+                }
             }
 
-            // ─── Labels des zones sous la barre ──────────────────────────────
-            // Positionnés proportionnellement aux fractions LOW/MED/HIGH.
-            Row(Modifier.fillMaxWidth()) {
-                ZoneLabel(stringResource(R.string.gi_category_low), ColorLow, weight = lowFrac)
-                ZoneLabel(stringResource(R.string.gi_category_medium), ColorMedium, weight = medFrac)
-                ZoneLabel(stringResource(R.string.gi_category_high), ColorHigh, weight = highFrac)
-            }
-            // Échelle numérique discrète
-            Row(Modifier.fillMaxWidth()) {
-                ScaleNumber("0", weight = 1f, align = Alignment.Start)
-                ScaleNumber("55", weight = (lowFrac - 0.5f / 110f) * 2f, align = Alignment.End)
-                Spacer(Modifier.weight(medFrac))
-                ScaleNumber("70", weight = 0.001f, align = Alignment.Start)
-                ScaleNumber("110", weight = highFrac, align = Alignment.End)
+            // ─── Légende équi-largeur : dot + label complet ──────────────────
+            // Découplée des proportions de la barre → "Modéré" ne sera JAMAIS
+            // tronqué quelle que soit la largeur du conteneur.
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                LegendChip(stringResource(R.string.gi_category_low), ColorLow, Modifier.weight(1f))
+                LegendChip(stringResource(R.string.gi_category_medium), ColorMedium, Modifier.weight(1f))
+                LegendChip(stringResource(R.string.gi_category_high), ColorHigh, Modifier.weight(1f))
             }
         }
     }
 
     @Composable
-    private fun androidx.compose.foundation.layout.RowScope.ZoneLabel(label: String, color: Color, weight: Float) {
-        Box(
-            Modifier
-                .weight(weight)
-                .padding(horizontal = 2.dp),
-            contentAlignment = Alignment.Center,
+    private fun LegendChip(label: String, color: Color, modifier: Modifier = Modifier) {
+        Row(
+            modifier = modifier,
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
         ) {
+            Box(
+                Modifier
+                    .size(7.dp)
+                    .clip(CircleShape)
+                    .background(color)
+            )
             Text(
                 label,
                 style = MaterialTheme.typography.labelSmall,
                 fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                color = color,
-                letterSpacing = 0.3.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
                 maxLines = 1,
-            )
-        }
-    }
-
-    @Composable
-    private fun androidx.compose.foundation.layout.RowScope.ScaleNumber(text: String, weight: Float, align: Alignment.Horizontal) {
-        Box(
-            Modifier.weight(weight),
-            contentAlignment = when (align) {
-                Alignment.Start -> Alignment.CenterStart
-                Alignment.End -> Alignment.CenterEnd
-                else -> Alignment.Center
-            },
-        ) {
-            Text(
-                text,
-                style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                letterSpacing = 0.1.sp,
             )
         }
     }
 
     /**
-     * Mini gauge GL secondaire — barre fine 0..30 avec pin discret.
-     * GL > 30 (très rare) → pin clampé à l'extrémité droite (visual saturate).
+     * Mini gauge GL secondaire — barre fine avec pin discret.
+     *
+     * Échelle 0..30 (3 zones équi-largeur LOW≤10 / MED 11-19 / HIGH≥20).
+     * GL > 30 (très rare, repas extrême) → pin clampé à droite.
+     *
+     * Inclut threshold numbers 0/10/20/30 dessinés en Canvas aux positions exactes.
      */
     @Composable
     private fun GlMiniGauge(gl: Double) {
         val density = LocalDensity.current
+        val textMeasurer = rememberTextMeasurer()
         val maxScale = 30.0
         val clamped = gl.coerceIn(0.0, maxScale).toFloat()
         val animatedGl by animateFloatAsState(
@@ -503,6 +472,13 @@ object GlycemicIndexBadge {
             GLCategory.HIGH -> stringResource(R.string.gl_label_high)
             GLCategory.UNKNOWN -> ""
         }
+        val labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+        val numberStyle = TextStyle(
+            fontSize = 9.sp,
+            color = labelColor,
+            fontFeatureSettings = "tnum",
+            fontWeight = FontWeight.Medium,
+        )
 
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(
@@ -531,40 +507,60 @@ object GlycemicIndexBadge {
                     )
                 }
             }
-            // Mini barre
+            // Canvas : barre + pin + threshold numbers (0/10/20/30)
             Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(8.dp),
+                    .height(28.dp),
             ) {
                 val w = size.width
-                val barHeight = size.height
+                val barHeight = with(density) { 8.dp.toPx() }
+                val barY = with(density) { 4.dp.toPx() }
                 val cornerRadius = barHeight / 2f
+
                 val barPath = Path().apply {
                     addRoundRect(
                         androidx.compose.ui.geometry.RoundRect(
-                            left = 0f, top = 0f,
-                            right = w, bottom = barHeight,
+                            left = 0f, top = barY,
+                            right = w, bottom = barY + barHeight,
                             cornerRadius = CornerRadius(cornerRadius, cornerRadius),
                         )
                     )
                 }
-                // Background segments — proportions GL : LOW≤10, MED 11-19, HIGH≥20
                 clipPath(barPath) {
-                    val lowF = 10f / maxScale.toFloat()       // 0.333
-                    val medF = 10f / maxScale.toFloat()       // 0.333 (10-20)
-                    val highF = 10f / maxScale.toFloat()      // 0.333 (20-30)
-                    drawRect(color = ColorLow.copy(alpha = 0.35f), topLeft = Offset(0f, 0f), size = Size(w * lowF, barHeight))
-                    drawRect(color = ColorMedium.copy(alpha = 0.35f), topLeft = Offset(w * lowF, 0f), size = Size(w * medF, barHeight))
-                    drawRect(color = ColorHigh.copy(alpha = 0.35f), topLeft = Offset(w * (lowF + medF), 0f), size = Size(w * highF, barHeight))
+                    // Proportions équi-largeur sur 0..30
+                    val third = w / 3f
+                    drawRect(ColorLow.copy(alpha = 0.40f), Offset(0f, barY), Size(third, barHeight))
+                    drawRect(ColorMedium.copy(alpha = 0.40f), Offset(third, barY), Size(third, barHeight))
+                    drawRect(ColorHigh.copy(alpha = 0.40f), Offset(2 * third, barY), Size(third, barHeight))
+                    // Tick lines aux frontières 10 et 20
+                    val sep = with(density) { 1.dp.toPx() }
+                    drawRect(Color.White.copy(alpha = 0.4f), Offset(third - sep / 2, barY), Size(sep, barHeight))
+                    drawRect(Color.White.copy(alpha = 0.4f), Offset(2 * third - sep / 2, barY), Size(sep, barHeight))
                 }
-                // Pin position
+
+                // Pin
                 val pinX = (animatedGl / maxScale.toFloat()) * w
                 val pinRadius = with(density) { 6.dp.toPx() }
-                val pinCenter = Offset(pinX.coerceIn(pinRadius, w - pinRadius), barHeight / 2f)
+                val pinCenter = Offset(pinX.coerceIn(pinRadius, w - pinRadius), barY + barHeight / 2f)
+                drawCircle(Color.Black.copy(alpha = 0.15f), pinRadius, pinCenter.copy(y = pinCenter.y + with(density) { 1.dp.toPx() }))
+                drawCircle(Color.White, pinRadius, pinCenter)
+                drawCircle(glColor, pinRadius - with(density) { 2.dp.toPx() }, pinCenter)
 
-                drawCircle(color = Color.White, radius = pinRadius, center = pinCenter)
-                drawCircle(color = glColor, radius = pinRadius - with(density) { 2.dp.toPx() }, center = pinCenter)
+                // Threshold numbers — positions exactes 0/10/20/30
+                val numbersY = barY + barHeight + with(density) { 4.dp.toPx() }
+                val thresholds = listOf(
+                    "0" to 0f,
+                    "10" to w / 3f,
+                    "20" to 2f * w / 3f,
+                    "30+" to w,
+                )
+                for ((label, x) in thresholds) {
+                    val layout = textMeasurer.measure(label, numberStyle)
+                    val tw = layout.size.width.toFloat()
+                    val drawX = (x - tw / 2f).coerceIn(0f, w - tw)
+                    drawText(layout, topLeft = Offset(drawX, numbersY))
+                }
             }
         }
     }
