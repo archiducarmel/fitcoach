@@ -1013,6 +1013,7 @@
     <string name="llm_settings_fallback_subtitle">Ersatz-LLM, wenn das Free-Kontingent des Haupt-LLM erschöpft ist</string>
     <string name="llm_settings_fallback_chip">Fallback: %1$s · %2$s</string>
     <string name="llm_settings_fallback_no_alternative">Kein anderer Anbieter verfügbar</string>
+    <string name="llm_settings_fallback_same_model_hint">Kein anderes Modell von diesem Anbieter. Wähle oben einen anderen Anbieter.</string>
     <string name="assistant_meal_scan_photo">Mahlzeit-Scan (Foto)</string>
     <string name="assistant_meal_scan_text">Mahlzeit-Scan (Text)</string>
     <string name="assistant_meal_scan_leftover">Reste-Scan</string>

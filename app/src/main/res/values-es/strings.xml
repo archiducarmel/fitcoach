@@ -1177,6 +1177,7 @@
     <string name="llm_settings_fallback_subtitle">LLM de respaldo si la cuota gratuita del principal se agota</string>
     <string name="llm_settings_fallback_chip">Respaldo: %1$s · %2$s</string>
     <string name="llm_settings_fallback_no_alternative">Sin otro proveedor disponible</string>
+    <string name="llm_settings_fallback_same_model_hint">No hay otro modelo de este proveedor. Elige otro proveedor arriba.</string>
     <string name="assistant_meal_scan_photo">Escaneo comida (foto)</string>
     <string name="assistant_meal_scan_text">Escaneo comida (texto)</string>
     <string name="assistant_meal_scan_leftover">Escaneo sobras</string>

@@ -1187,6 +1187,7 @@
     <string name="llm_settings_fallback_subtitle">LLM de secours si le quota gratuit du principal est épuisé</string>
     <string name="llm_settings_fallback_chip">Fallback : %1$s · %2$s</string>
     <string name="llm_settings_fallback_no_alternative">Aucun autre fournisseur disponible</string>
+    <string name="llm_settings_fallback_same_model_hint">Aucun modèle alternatif chez ce fournisseur. Choisis un autre fournisseur ci-dessus.</string>
     <string name="assistant_meal_scan_photo">Scan repas (photo)</string>
     <string name="assistant_meal_scan_text">Scan repas (texte)</string>
     <string name="assistant_meal_scan_leftover">Scan restes (j\'ai pas fini)</string>

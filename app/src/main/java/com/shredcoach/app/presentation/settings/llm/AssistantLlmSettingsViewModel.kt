@@ -141,17 +141,33 @@ class AssistantLlmSettingsViewModel @Inject constructor(
         _state.update { it.copy(sheetModelId = modelId) }
     }
 
-    /** Change le fallback provider — auto-pick premier modele. Null = pas de fallback. */
+    /**
+     * Change le fallback provider — auto-pick premier modele DIFFERENT du
+     * primary (si meme provider, sinon le premier dispo). Null = pas de fallback.
+     *
+     * **Critique** : si on auto-pickait simplement le premier modele du provider,
+     * et que ce modele est le meme que le primary (cas typique : primary =
+     * Gemini 2.5 Flash, fallback provider = Gemini), on aurait fallback = primary,
+     * une bascule no-op silencieuse. On filtre donc explicitement.
+     */
     fun setSheetFallbackProvider(provider: LlmProvider?) {
         if (provider == null) {
             _state.update { it.copy(sheetFallbackProvider = null, sheetFallbackModelId = null) }
             return
         }
-        val firstModel = LlmCatalog.modelsFor(provider).firstOrNull()
+        val s = _state.value
+        val primaryModelId = s.sheetModelId
+        val sameAsPrimary = provider == s.sheetProvider
+        val candidates = LlmCatalog.modelsFor(provider)
+        val pick = if (sameAsPrimary && primaryModelId != null) {
+            candidates.firstOrNull { it.id != primaryModelId }
+        } else {
+            candidates.firstOrNull()
+        }
         _state.update {
             it.copy(
                 sheetFallbackProvider = provider,
-                sheetFallbackModelId = firstModel?.id,
+                sheetFallbackModelId = pick?.id,
             )
         }
     }

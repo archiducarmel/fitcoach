@@ -631,6 +631,7 @@ private fun AssistantLlmPickerSheet(
             FallbackSection(
                 assistant = assistant,
                 primaryProvider = currentProvider,
+                primaryModelId = currentModelId,
                 fallbackProvider = currentFallbackProvider,
                 fallbackModelId = currentFallbackModelId,
                 providers = providers,
@@ -700,6 +701,7 @@ private fun AssistantLlmPickerSheet(
 private fun FallbackSection(
     assistant: AiAssistant,
     primaryProvider: LlmProvider?,
+    primaryModelId: String?,
     fallbackProvider: LlmProvider?,
     fallbackModelId: String?,
     providers: List<LlmProvider>,
@@ -742,10 +744,13 @@ private fun FallbackSection(
         }
 
         if (fallbackEnabled) {
-            // Filtre : exclure le provider primaire du picker fallback
-            val fbCandidates = providers.filter { it != primaryProvider }
+            // Tous les providers sont eligibles, MEME le primary : on autorise
+            // "primary Gemini 3 Preview → fallback Gemini 2.5 Flash" car les
+            // quotas free tier sont per-MODELE chez Gemini/Groq/OpenAI, pas
+            // per-provider. La contrainte d'unicite est sur le (provider, model)
+            // complet, gere au niveau du picker modele ci-dessous.
+            val fbCandidates = providers
             if (fbCandidates.isEmpty()) {
-                // Edge case : un seul provider dispo (rare) → message
                 Text(
                     stringResource(R.string.llm_settings_fallback_no_alternative),
                     style = MaterialTheme.typography.bodySmall,
@@ -760,6 +765,7 @@ private fun FallbackSection(
             ) {
                 items(fbCandidates) { provider ->
                     val selected = provider == fallbackProvider
+                    val isSameAsPrimary = provider == primaryProvider
                     Surface(
                         onClick = { onProviderSelected(provider) },
                         shape = RoundedCornerShape(10.dp),
@@ -769,23 +775,60 @@ private fun FallbackSection(
                             1.dp, MaterialTheme.colorScheme.primary
                         ) else null,
                     ) {
-                        Text(
-                            provider.displayName,
+                        Row(
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                            color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
-                                else MaterialTheme.colorScheme.onSurface,
-                        )
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Text(
+                                provider.displayName,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+                                    else MaterialTheme.colorScheme.onSurface,
+                            )
+                            if (isSameAsPrimary) {
+                                // Hint visuel : meme provider que le primary → l'user
+                                // devra choisir un modele different ci-dessous
+                                Text(
+                                    "=",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontSize = 9.sp,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
+                                )
+                            }
+                        }
                     }
                 }
             }
 
             // Picker modele du fallback provider
-            val fbModels = remember(fallbackProvider) {
-                fallbackProvider?.let {
+            // **Critique** : si fallback provider == primary provider, on doit
+            // exclure le modele primary du picker (sinon fallback = primary,
+            // bascule no-op = bug subtil).
+            val isSameProviderAsPrimary = fallbackProvider == primaryProvider
+            val fbModels = remember(fallbackProvider, primaryProvider, primaryModelId) {
+                val all = fallbackProvider?.let {
                     modelsForProvider(it).filter { m -> !assistant.needsVision || m.supportsVision }
                 } ?: emptyList()
+                if (isSameProviderAsPrimary && primaryModelId != null) {
+                    all.filter { it.id != primaryModelId }
+                } else all
+            }
+            if (fbModels.isEmpty()) {
+                // Empty state : meme provider que primary mais aucun autre modele dispo
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        stringResource(R.string.llm_settings_fallback_same_model_hint),
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    )
+                }
             }
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 fbModels.forEach { model ->

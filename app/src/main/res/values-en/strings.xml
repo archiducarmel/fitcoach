@@ -1046,6 +1046,7 @@
     <string name="llm_settings_fallback_subtitle">Backup LLM when the primary\'s free tier is exhausted</string>
     <string name="llm_settings_fallback_chip">Fallback: %1$s · %2$s</string>
     <string name="llm_settings_fallback_no_alternative">No other provider available</string>
+    <string name="llm_settings_fallback_same_model_hint">No alternative model from this provider. Pick another provider above.</string>
     <string name="assistant_meal_scan_photo">Meal scan (photo)</string>
     <string name="assistant_meal_scan_text">Meal scan (text)</string>
     <string name="assistant_meal_scan_leftover">Leftovers scan</string>

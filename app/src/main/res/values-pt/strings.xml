@@ -1173,6 +1173,7 @@
     <string name="llm_settings_fallback_subtitle">LLM de reserva se a cota gratuita do principal acabar</string>
     <string name="llm_settings_fallback_chip">Fallback: %1$s · %2$s</string>
     <string name="llm_settings_fallback_no_alternative">Nenhum outro provedor disponível</string>
+    <string name="llm_settings_fallback_same_model_hint">Nenhum modelo alternativo deste provedor. Escolha outro provedor acima.</string>
     <string name="assistant_meal_scan_photo">Scan refeição (foto)</string>
     <string name="assistant_meal_scan_text">Scan refeição (texto)</string>
     <string name="assistant_meal_scan_leftover">Scan sobras</string>
