@@ -92,7 +92,8 @@ class WorkoutDebriefWorker @AssistedInject constructor(
                         systemPrompt = DebriefPrompts.DEBRIEF_SYSTEM_PROMPT,
                         provider = provider,
                         apiKey = apiKey,
-                        model = model
+                        model = model,
+                        assistant = com.shredcoach.app.domain.llm.AiAssistant.WORKOUT_DEBRIEF,
                     )
                 }
                 result.getOrNull()?.takeIf { it.isNotBlank() }

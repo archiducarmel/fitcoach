@@ -135,6 +135,7 @@ class WeeklyRecapWorker @AssistedInject constructor(
                         provider = provider,
                         apiKey = apiKey,
                         model = model,
+                        assistant = com.shredcoach.app.domain.llm.AiAssistant.WEEKLY_RECAP,
                     )
                 }.getOrNull()?.takeIf { it.isNotBlank() }
             } catch (e: Exception) {

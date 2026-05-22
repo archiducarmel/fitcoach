@@ -303,7 +303,8 @@ Pas de salutations, pas de liste — juste la phrase.
                             systemPrompt = systemPrompt,
                             provider = provider,
                             apiKey = apiKey,
-                            model = model
+                            model = model,
+                            assistant = com.shredcoach.app.domain.llm.AiAssistant.CALENDAR_RECAP,
                         )
                     }.getOrNull()?.takeIf { it.isNotBlank() }
                 } catch (_: Exception) { null }

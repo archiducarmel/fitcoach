@@ -120,6 +120,7 @@ class ProactiveCoachWorker @AssistedInject constructor(
                         provider = provider,
                         apiKey = apiKey,
                         model = model,
+                        assistant = com.shredcoach.app.domain.llm.AiAssistant.PROACTIVE_COACH,
                     )
                 }.getOrNull()?.takeIf { it.isNotBlank() }
             } catch (e: Exception) {

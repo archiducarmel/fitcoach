@@ -89,7 +89,8 @@ Retourne UNIQUEMENT ce JSON (aucun texte autour, aucun markdown) :
             apiKey = apiKey,
             model = model,
             provider = provider,
-            prompt = prompt
+            prompt = prompt,
+            assistant = com.shredcoach.app.domain.llm.AiAssistant.INSTRUCTIONS_TRANSLATE,
         )
         val raw = rawResult.getOrElse {
             Log.e(TAG, "LLM appel échoué : ${it.message}")

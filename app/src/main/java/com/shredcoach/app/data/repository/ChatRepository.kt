@@ -70,14 +70,16 @@ class ChatRepository @Inject constructor(
         systemPrompt: String,
         provider: LlmProvider,
         apiKey: String,
-        model: String? = null
+        model: String? = null,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
     ): Result<String> = try {
         val messages = listOf(ChatMessage(role = "user", content = prompt))
         val buffer = StringBuilder()
         llmApiService.streamMessage(
             messages = messages, provider = provider, apiKey = apiKey, model = model,
             overrideSystemPrompt = systemPrompt, // Remplace le system prompt principal
-            slowMode = false // Pas de delay entre tokens — on veut la réponse vite
+            slowMode = false, // Pas de delay entre tokens — on veut la réponse vite
+            assistant = assistant,
         ).collect { token -> buffer.append(token) }
         val result = buffer.toString().trim()
         if (result.isNotBlank()) Result.success(result)
@@ -94,6 +96,7 @@ class ChatRepository @Inject constructor(
         recentMessages: List<ChatMessageEntity>,
         userContext: String = "",
         persona: ChatPersona = ChatPersona.SHREDDY,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
     ): Flow<String> {
         val history = recentMessages.filter { !it.isError }.map {
             ChatMessage(role = it.role, content = it.content)
@@ -110,10 +113,11 @@ class ChatRepository @Inject constructor(
                 llmApiService.streamMessage(
                     messages = messages, provider = provider, apiKey = apiKey, model = model,
                     overrideSystemPrompt = composed,
+                    assistant = assistant,
                 )
             }
             ChatPersona.SHREDDY ->
-                llmApiService.streamMessage(messages, provider, apiKey, model, userContext)
+                llmApiService.streamMessage(messages, provider, apiKey, model, userContext, assistant = assistant)
         }
     }
 
@@ -140,6 +144,7 @@ class ChatRepository @Inject constructor(
         recentMessages: List<ChatMessageEntity>,
         systemPrompt: String,
         persona: ChatPersona = ChatPersona.SHREDDY,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
     ): Flow<String> = flow {
         // Set d'outils par persona. Shreddy peut logger meals/poids; Dr. Glykos
         // ne fait QUE de la lecture glucose (pas de log médical sans encadrement).
@@ -173,6 +178,7 @@ class ChatRepository @Inject constructor(
                 systemPrompt = systemPrompt,
                 model = model,
                 tools = tools,
+                assistant = assistant,
             ).collect { event ->
                 when (event) {
                     is LlmStreamEvent.Token -> emit(event.text)
@@ -203,6 +209,7 @@ class ChatRepository @Inject constructor(
             systemPrompt = systemPrompt + "\n\nRépondre maintenant en texte uniquement, sans appeler d'outils.",
             model = model,
             tools = emptyList(),
+            assistant = assistant,
         ).collect { event ->
             if (event is LlmStreamEvent.Token) emit(event.text)
         }

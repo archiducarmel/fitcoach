@@ -151,6 +151,7 @@ JSON DE SORTIE (exemple) :
             model = model,
             provider = provider,
             prompt = GLUCOSE_OCR_PROMPT_FR,
+            assistant = com.shredcoach.app.domain.llm.AiAssistant.GLUCOSE_OCR,
         )
         if (raw.isFailure) return Result.failure(raw.exceptionOrNull() ?: Exception("OCR call failed"))
         val rawJson = raw.getOrNull() ?: return Result.failure(Exception("Empty OCR response"))

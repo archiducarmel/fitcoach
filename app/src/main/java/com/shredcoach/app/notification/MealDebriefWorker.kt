@@ -178,7 +178,8 @@ class MealDebriefWorker @AssistedInject constructor(
                         systemPrompt = systemPrompt,
                         provider = provider,
                         apiKey = apiKey,
-                        model = model
+                        model = model,
+                        assistant = com.shredcoach.app.domain.llm.AiAssistant.MEAL_DEBRIEF,
                     )
                 }.getOrNull()?.takeIf { it.isNotBlank() }
             } catch (e: Exception) {

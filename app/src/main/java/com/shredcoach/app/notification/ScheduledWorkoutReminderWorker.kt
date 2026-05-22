@@ -125,7 +125,8 @@ class ScheduledWorkoutReminderWorker @AssistedInject constructor(
                         systemPrompt = systemPrompt,
                         provider = provider,
                         apiKey = apiKey,
-                        model = model
+                        model = model,
+                        assistant = com.shredcoach.app.domain.llm.AiAssistant.SCHEDULED_REMINDER,
                     )
                 }.getOrNull()?.takeIf { it.isNotBlank() }
             } catch (_: Exception) { null }

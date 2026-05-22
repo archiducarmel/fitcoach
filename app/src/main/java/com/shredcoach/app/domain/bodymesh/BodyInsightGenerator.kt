@@ -85,6 +85,7 @@ class BodyInsightGenerator @Inject constructor(
             provider = provider,
             apiKey = apiKey,
             model = model,
+            assistant = com.shredcoach.app.domain.llm.AiAssistant.BODY_INSIGHT,
         )
 
         return result.fold(

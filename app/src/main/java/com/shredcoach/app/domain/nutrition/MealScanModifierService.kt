@@ -105,6 +105,7 @@ class MealScanModifierService @Inject constructor(
             model = model,
             provider = provider,
             hintBlock = LEFTOVER_HINT,
+            assistant = com.shredcoach.app.domain.llm.AiAssistant.MEAL_SCAN_LEFTOVER,
         ).getOrElse { return@withContext Result.failure(it) }
 
         // 3. Sauver la photo des restes dans le même répertoire que les scans

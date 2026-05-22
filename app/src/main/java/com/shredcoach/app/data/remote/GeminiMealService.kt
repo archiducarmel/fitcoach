@@ -423,18 +423,17 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
     ): Result<String> = withContext(Dispatchers.IO) {
         val startMs = System.currentTimeMillis()
         try {
-            // TODO Phase 2b : passer assistant aux private methods + emit success-path telemetry
             val raw = when (provider.uppercase()) {
-                "GROQ" -> callGroqText(apiKey, prompt)
-                "MISTRAL" -> callMistralText(apiKey, prompt)
-                else -> callGeminiText(apiKey, model, prompt)
+                "GROQ" -> callGroqText(apiKey, prompt, assistant)
+                "MISTRAL" -> callMistralText(apiKey, prompt, assistant)
+                else -> callGeminiText(apiKey, model, prompt, assistant)
             }
             if (raw.isBlank()) Result.failure(Exception("Réponse LLM vide")) else Result.success(raw)
         } catch (e: Exception) {
             Log.e(TAG, "callTextLLM failed", e)
-            // Emit failure event pour le dashboard
-            val effectiveProvider = runCatching { com.shredcoach.app.data.remote.LlmProvider.valueOf(provider.uppercase()) }
-                .getOrDefault(com.shredcoach.app.data.remote.LlmProvider.GEMINI)
+            // Emit failure event pour le dashboard (success est emit dans la private)
+            val effectiveProvider = runCatching { LlmProvider.valueOf(provider.uppercase()) }
+                .getOrDefault(LlmProvider.GEMINI)
             usageRecorder.record(
                 assistant = assistant, provider = effectiveProvider, model = model,
                 tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
@@ -582,7 +581,11 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         return raw
     }
 
-    private fun callGeminiText(apiKey: String, model: String, prompt: String): String {
+    private fun callGeminiText(
+        apiKey: String, model: String, prompt: String,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+    ): String {
+        val startMs = System.currentTimeMillis()
         val url = "$GEMINI_BASE_URL/$model:generateContent"
         val payload = mapOf(
             "contents" to listOf(mapOf(
@@ -615,11 +618,22 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         val parts = candidates[0].asJsonObject.getAsJsonObject("content")?.getAsJsonArray("parts")
         val textParts = parts?.filter { it.asJsonObject.has("text") && !it.asJsonObject.has("thought") }
             ?.mapNotNull { it.asJsonObject.get("text")?.asString } ?: emptyList()
+        // Telemetrie success
+        val (tIn, tOut, tThink) = parseGeminiUsage(json)
+        usageRecorder.record(
+            assistant = assistant, provider = LlmProvider.GEMINI, model = model,
+            tokensInput = tIn, tokensOutput = tOut, tokensThinking = tThink,
+            latencyMs = System.currentTimeMillis() - startMs, success = true,
+        )
         return textParts.joinToString("").trim()
             .removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
     }
 
-    private fun callGroqText(apiKey: String, prompt: String): String {
+    private fun callGroqText(
+        apiKey: String, prompt: String,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+    ): String {
+        val startMs = System.currentTimeMillis()
         val payload = mapOf(
             "model" to GROQ_MODEL,
             "messages" to listOf(mapOf(
@@ -642,10 +656,21 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         val json = JsonParser.parseString(responseBody).asJsonObject
         val raw = json.getAsJsonArray("choices")?.get(0)?.asJsonObject
             ?.getAsJsonObject("message")?.get("content")?.asString ?: throw Exception("Réponse Groq vide")
+        // Telemetrie success
+        val (tIn, tOut, _) = parseOpenAiUsage(json)
+        usageRecorder.record(
+            assistant = assistant, provider = LlmProvider.GROQ, model = GROQ_MODEL,
+            tokensInput = tIn, tokensOutput = tOut, tokensThinking = 0,
+            latencyMs = System.currentTimeMillis() - startMs, success = true,
+        )
         return raw.removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
     }
 
-    private fun callMistralText(apiKey: String, prompt: String): String {
+    private fun callMistralText(
+        apiKey: String, prompt: String,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+    ): String {
+        val startMs = System.currentTimeMillis()
         val payload = mapOf(
             "model" to MISTRAL_MODEL,
             "messages" to listOf(mapOf(
@@ -668,6 +693,13 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         val json = JsonParser.parseString(responseBody).asJsonObject
         val raw = json.getAsJsonArray("choices")?.get(0)?.asJsonObject
             ?.getAsJsonObject("message")?.get("content")?.asString ?: throw Exception("Réponse Mistral vide")
+        // Telemetrie success
+        val (tIn, tOut, _) = parseOpenAiUsage(json)
+        usageRecorder.record(
+            assistant = assistant, provider = LlmProvider.MISTRAL, model = MISTRAL_MODEL,
+            tokensInput = tIn, tokensOutput = tOut, tokensThinking = 0,
+            latencyMs = System.currentTimeMillis() - startMs, success = true,
+        )
         return raw.removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
     }
 
@@ -681,17 +713,27 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         apiKey: String,
         model: String = "gemini-2.5-flash",
         provider: String = "GEMINI",
-        prompt: String
+        prompt: String,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
     ): Result<String> = withContext(Dispatchers.IO) {
+        val startMs = System.currentTimeMillis()
         try {
             val rawJson = when (provider.uppercase()) {
-                "GROQ" -> callGroq(imageBytes, mimeType, apiKey, prompt)
-                "MISTRAL" -> callMistral(imageBytes, mimeType, apiKey, prompt)
-                else -> callGemini(imageBytes, mimeType, apiKey, model, prompt)
+                "GROQ" -> callGroq(imageBytes, mimeType, apiKey, prompt, assistant)
+                "MISTRAL" -> callMistral(imageBytes, mimeType, apiKey, prompt, assistant)
+                else -> callGemini(imageBytes, mimeType, apiKey, model, prompt, assistant)
             }
             if (rawJson.isBlank()) Result.failure(Exception("Réponse LLM vide"))
             else Result.success(rawJson)
         } catch (e: Exception) {
+            // Telemetrie failure (success est recorde dans la private)
+            val effectiveProvider = runCatching { LlmProvider.valueOf(provider.uppercase()) }
+                .getOrDefault(LlmProvider.GEMINI)
+            usageRecorder.record(
+                assistant = assistant, provider = effectiveProvider, model = model,
+                tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
+                latencyMs = System.currentTimeMillis() - startMs, success = false,
+            )
             Result.failure(e)
         }
     }
@@ -711,8 +753,10 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         apiKey: String,
         model: String = "gemini-2.5-flash",
         provider: String = "GEMINI",
-        hintBlock: String = ""
+        hintBlock: String = "",
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
     ): Result<MealAnalysisResult> = withContext(Dispatchers.IO) {
+        val startMs = System.currentTimeMillis()
         try {
             // Substitution simple via `replace` (PAS String.format) : le prompt
             // contient des `%` littéraux ("+50% portion", "5% AJR"…) qui
@@ -729,9 +773,9 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
             val finalPrompt = com.shredcoach.app.domain.i18n.PromptLocale.outputLanguageDirective() + withHints
 
             val rawJson = when (provider.uppercase()) {
-                "GROQ" -> callGroqTextMeal(apiKey, finalPrompt)
-                "MISTRAL" -> callMistralTextMeal(apiKey, finalPrompt)
-                else -> callGeminiTextMeal(apiKey, model, finalPrompt)
+                "GROQ" -> callGroqTextMeal(apiKey, finalPrompt, assistant)
+                "MISTRAL" -> callMistralTextMeal(apiKey, finalPrompt, assistant)
+                else -> callGeminiTextMeal(apiKey, model, finalPrompt, assistant)
             }
 
             if (rawJson.isBlank()) return@withContext Result.failure(Exception("Analyse vide"))
@@ -754,6 +798,14 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
             }
             Result.success(result)
         } catch (e: Exception) {
+            // Telemetrie failure (success est recorde dans la private)
+            val effectiveProvider = runCatching { LlmProvider.valueOf(provider.uppercase()) }
+                .getOrDefault(LlmProvider.GEMINI)
+            usageRecorder.record(
+                assistant = assistant, provider = effectiveProvider, model = model,
+                tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
+                latencyMs = System.currentTimeMillis() - startMs, success = false,
+            )
             Result.failure(e)
         }
     }
@@ -764,8 +816,10 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         apiKey: String,
         model: String = "gemini-2.5-flash",
         provider: String = "GEMINI",
-        hintBlock: String = ""
+        hintBlock: String = "",
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
     ): Result<MealAnalysisResult> = withContext(Dispatchers.IO) {
+        val startMs = System.currentTimeMillis()
         try {
             // Construit le prompt final : prompt de base + bloc d'indices utilisateur (vide si aucun indice)
             val withHints = if (hintBlock.isBlank()) MEAL_PROMPT else MEAL_PROMPT + "\n" + hintBlock
@@ -773,9 +827,9 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
             val finalPrompt = com.shredcoach.app.domain.i18n.PromptLocale.outputLanguageDirective() + withHints
 
             val rawJson = when (provider.uppercase()) {
-                "GROQ" -> callGroq(imageBytes, mimeType, apiKey, finalPrompt)
-                "MISTRAL" -> callMistral(imageBytes, mimeType, apiKey, finalPrompt)
-                else -> callGemini(imageBytes, mimeType, apiKey, model, finalPrompt)
+                "GROQ" -> callGroq(imageBytes, mimeType, apiKey, finalPrompt, assistant)
+                "MISTRAL" -> callMistral(imageBytes, mimeType, apiKey, finalPrompt, assistant)
+                else -> callGemini(imageBytes, mimeType, apiKey, model, finalPrompt, assistant)
             }
 
             if (rawJson.isBlank()) return@withContext Result.failure(Exception("Analyse vide"))
@@ -793,6 +847,14 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
             }
             Result.success(result)
         } catch (e: Exception) {
+            // Telemetrie failure (success est recorde dans la private)
+            val effectiveProvider = runCatching { LlmProvider.valueOf(provider.uppercase()) }
+                .getOrDefault(LlmProvider.GEMINI)
+            usageRecorder.record(
+                assistant = assistant, provider = effectiveProvider, model = model,
+                tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
+                latencyMs = System.currentTimeMillis() - startMs, success = false,
+            )
             Result.failure(e)
         }
     }
@@ -807,7 +869,11 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
     // (~16k pour Gemini, 4k pour Groq/Mistral). callTextLLM utilise 2048,
     // ce qui tronquerait souvent la réponse pour les repas riches.
 
-    private fun callGeminiTextMeal(apiKey: String, model: String, prompt: String): String {
+    private fun callGeminiTextMeal(
+        apiKey: String, model: String, prompt: String,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+    ): String {
+        val startMs = System.currentTimeMillis()
         val url = "$GEMINI_BASE_URL/$model:generateContent"
         val payload = mapOf(
             "contents" to listOf(mapOf(
@@ -840,11 +906,22 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         val parts = candidates[0].asJsonObject.getAsJsonObject("content")?.getAsJsonArray("parts")
         val textParts = parts?.filter { it.asJsonObject.has("text") && !it.asJsonObject.has("thought") }
             ?.mapNotNull { it.asJsonObject.get("text")?.asString } ?: emptyList()
+        // Telemetrie success
+        val (tIn, tOut, tThink) = parseGeminiUsage(json)
+        usageRecorder.record(
+            assistant = assistant, provider = LlmProvider.GEMINI, model = model,
+            tokensInput = tIn, tokensOutput = tOut, tokensThinking = tThink,
+            latencyMs = System.currentTimeMillis() - startMs, success = true,
+        )
         return textParts.joinToString("").trim()
             .removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
     }
 
-    private fun callGroqTextMeal(apiKey: String, prompt: String): String {
+    private fun callGroqTextMeal(
+        apiKey: String, prompt: String,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+    ): String {
+        val startMs = System.currentTimeMillis()
         val payload = mapOf(
             "model" to GROQ_MODEL,
             "messages" to listOf(mapOf("role" to "user", "content" to prompt)),
@@ -872,10 +949,21 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         val raw = json.getAsJsonArray("choices")?.get(0)?.asJsonObject
             ?.getAsJsonObject("message")?.get("content")?.asString
             ?: throw Exception("Réponse Groq vide")
+        // Telemetrie success
+        val (tIn, tOut, _) = parseOpenAiUsage(json)
+        usageRecorder.record(
+            assistant = assistant, provider = LlmProvider.GROQ, model = GROQ_MODEL,
+            tokensInput = tIn, tokensOutput = tOut, tokensThinking = 0,
+            latencyMs = System.currentTimeMillis() - startMs, success = true,
+        )
         return raw.removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
     }
 
-    private fun callMistralTextMeal(apiKey: String, prompt: String): String {
+    private fun callMistralTextMeal(
+        apiKey: String, prompt: String,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+    ): String {
+        val startMs = System.currentTimeMillis()
         val payload = mapOf(
             "model" to MISTRAL_MODEL,
             "messages" to listOf(mapOf("role" to "user", "content" to prompt)),
@@ -903,6 +991,13 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         val raw = json.getAsJsonArray("choices")?.get(0)?.asJsonObject
             ?.getAsJsonObject("message")?.get("content")?.asString
             ?: throw Exception("Réponse Mistral vide")
+        // Telemetrie success
+        val (tIn, tOut, _) = parseOpenAiUsage(json)
+        usageRecorder.record(
+            assistant = assistant, provider = LlmProvider.MISTRAL, model = MISTRAL_MODEL,
+            tokensInput = tIn, tokensOutput = tOut, tokensThinking = 0,
+            latencyMs = System.currentTimeMillis() - startMs, success = true,
+        )
         return raw.removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
     }
 
@@ -910,7 +1005,12 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
     // GEMINI
     // ═══════════════════════════════════════
 
-    private fun callGemini(imageBytes: ByteArray, mimeType: String, apiKey: String, model: String, prompt: String = MEAL_PROMPT): String {
+    private fun callGemini(
+        imageBytes: ByteArray, mimeType: String, apiKey: String, model: String,
+        prompt: String = MEAL_PROMPT,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+    ): String {
+        val startMs = System.currentTimeMillis()
         val b64 = Base64.encodeToString(imageBytes, Base64.NO_WRAP)
         val url = "$GEMINI_BASE_URL/$model:generateContent"
 
@@ -959,6 +1059,14 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
         }?.mapNotNull { it.asJsonObject.get("text")?.asString } ?: emptyList()
 
         var rawJson = textParts.joinToString("").trim()
+
+        // Telemetrie success — parsing usage avant return
+        val (tIn, tOut, tThink) = parseGeminiUsage(json)
+        usageRecorder.record(
+            assistant = assistant, provider = LlmProvider.GEMINI, model = model,
+            tokensInput = tIn, tokensOutput = tOut, tokensThinking = tThink,
+            latencyMs = System.currentTimeMillis() - startMs, success = true,
+        )
         return rawJson.removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
     }
 
@@ -966,7 +1074,12 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
     // GROQ (Llama 4 Scout — OpenAI-compatible)
     // ═══════════════════════════════════════
 
-    private fun callGroq(imageBytes: ByteArray, mimeType: String, apiKey: String, prompt: String = MEAL_PROMPT): String {
+    private fun callGroq(
+        imageBytes: ByteArray, mimeType: String, apiKey: String,
+        prompt: String = MEAL_PROMPT,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+    ): String {
+        val startMs = System.currentTimeMillis()
         val b64 = Base64.encodeToString(imageBytes, Base64.NO_WRAP)
         val dataUrl = "data:$mimeType;base64,$b64"
 
@@ -1010,6 +1123,13 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
             ?.get("content")?.asString ?: throw Exception("Réponse Groq vide")
 
         Log.d(TAG, "Groq usage: ${json.getAsJsonObject("usage")}")
+        // Telemetrie success
+        val (tIn, tOut, _) = parseOpenAiUsage(json)
+        usageRecorder.record(
+            assistant = assistant, provider = LlmProvider.GROQ, model = GROQ_MODEL,
+            tokensInput = tIn, tokensOutput = tOut, tokensThinking = 0,
+            latencyMs = System.currentTimeMillis() - startMs, success = true,
+        )
         return rawJson.removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
     }
 
@@ -1017,7 +1137,12 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
     // MISTRAL (Mistral Small — OpenAI-compatible)
     // ═══════════════════════════════════════
 
-    private fun callMistral(imageBytes: ByteArray, mimeType: String, apiKey: String, prompt: String = MEAL_PROMPT): String {
+    private fun callMistral(
+        imageBytes: ByteArray, mimeType: String, apiKey: String,
+        prompt: String = MEAL_PROMPT,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+    ): String {
+        val startMs = System.currentTimeMillis()
         val b64 = Base64.encodeToString(imageBytes, Base64.NO_WRAP)
         val dataUrl = "data:$mimeType;base64,$b64"
 
@@ -1061,6 +1186,13 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
             ?.get("content")?.asString ?: throw Exception("Réponse Mistral vide")
 
         Log.d(TAG, "Mistral usage: ${json.getAsJsonObject("usage")}")
+        // Telemetrie success
+        val (tIn, tOut, _) = parseOpenAiUsage(json)
+        usageRecorder.record(
+            assistant = assistant, provider = LlmProvider.MISTRAL, model = MISTRAL_MODEL,
+            tokensInput = tIn, tokensOutput = tOut, tokensThinking = 0,
+            latencyMs = System.currentTimeMillis() - startMs, success = true,
+        )
         return rawJson.removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
     }
 

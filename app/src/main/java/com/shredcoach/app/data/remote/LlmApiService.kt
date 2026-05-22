@@ -149,7 +149,8 @@ sealed interface LlmStreamEvent {
 
 @Singleton
 class LlmApiService @Inject constructor(
-    @com.shredcoach.app.di.NetworkModule.BaseHttpClient baseClient: OkHttpClient
+    @com.shredcoach.app.di.NetworkModule.BaseHttpClient baseClient: OkHttpClient,
+    private val usageRecorder: com.shredcoach.app.domain.llm.LlmUsageRecorder,
 ) {
 
     private val client = baseClient.newBuilder()
@@ -159,6 +160,13 @@ class LlmApiService @Inject constructor(
 
     private val gson = Gson()
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
+
+    /**
+     * Estimateur de tokens fallback pour les paths qui ne recoivent pas d'usage
+     * block (streaming partiel, etc.). Ratio approximatif 1 token ≈ 4 chars en
+     * anglais/francais (cf. OpenAI tokenizer doc).
+     */
+    private fun estimateTokens(text: String): Int = (text.length / 4).coerceAtLeast(1)
 
     companion object {
         private const val SYSTEM_PROMPT_FR = """Tu es Shreddy, le coach sportif et nutritionnel personnel de l'app ShredCoach. Tu parles en français.
@@ -272,16 +280,42 @@ The user's personalized data follows below (only sent on the first message)."""
         model: String? = null,
         userContext: String = "",
         overrideSystemPrompt: String? = null,
-        slowMode: Boolean = true
+        slowMode: Boolean = true,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
     ): Flow<String> = flow {
         val effectiveModel = model?.takeIf { it.isNotBlank() } ?: provider.defaultModel
         val fullSystemPrompt = overrideSystemPrompt ?: if (userContext.isNotBlank()) {
             "$SYSTEM_PROMPT\n\n$userContext"
         } else SYSTEM_PROMPT
 
-        when (provider) {
-            LlmProvider.CLAUDE -> streamClaude(messages, apiKey, effectiveModel, fullSystemPrompt, slowMode).collect { emit(it) }
-            else -> streamOpenAiCompatible(messages, provider, apiKey, effectiveModel, fullSystemPrompt, slowMode).collect { emit(it) }
+        // Telemetrie : on accumule le texte emit + on mesure latence, puis record
+        // dans le finally (succes OU echec OU cancellation).
+        val startMs = System.currentTimeMillis()
+        val accumulated = StringBuilder()
+        var failed = false
+        try {
+            when (provider) {
+                LlmProvider.CLAUDE -> streamClaude(messages, apiKey, effectiveModel, fullSystemPrompt, slowMode).collect {
+                    accumulated.append(it); emit(it)
+                }
+                else -> streamOpenAiCompatible(messages, provider, apiKey, effectiveModel, fullSystemPrompt, slowMode).collect {
+                    accumulated.append(it); emit(it)
+                }
+            }
+        } catch (e: Exception) {
+            failed = true
+            throw e
+        } finally {
+            // Estimation tokens (streaming SSE ne fournit pas l'usage block).
+            // Ratio ~4 chars/token (heuristique standard OpenAI tokenizer).
+            val tIn = estimateTokens(fullSystemPrompt) + messages.sumOf { estimateTokens(it.content) }
+            val tOut = if (accumulated.isNotEmpty()) estimateTokens(accumulated.toString()) else 0
+            usageRecorder.record(
+                assistant = assistant, provider = provider, model = effectiveModel,
+                tokensInput = tIn, tokensOutput = tOut, tokensThinking = 0,
+                latencyMs = System.currentTimeMillis() - startMs,
+                success = !failed,
+            )
         }
     }.flowOn(Dispatchers.IO)
 
@@ -396,11 +430,36 @@ The user's personalized data follows below (only sent on the first message)."""
         systemPrompt: String,
         model: String? = null,
         tools: List<com.google.gson.JsonObject>,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
     ): LlmResponse = withContext(Dispatchers.IO) {
         val effectiveModel = model?.takeIf { it.isNotBlank() } ?: provider.defaultModel
-        when (provider) {
-            LlmProvider.CLAUDE -> claudeWithTools(messages, apiKey, effectiveModel, systemPrompt, tools)
-            else -> openAiWithTools(messages, provider, apiKey, effectiveModel, systemPrompt, tools)
+        val startMs = System.currentTimeMillis()
+        try {
+            val result = when (provider) {
+                LlmProvider.CLAUDE -> claudeWithTools(messages, apiKey, effectiveModel, systemPrompt, tools)
+                else -> openAiWithTools(messages, provider, apiKey, effectiveModel, systemPrompt, tools)
+            }
+            // Telemetrie success — estimation tokens (non-streaming pourrait parser
+            // l'usage block, mais on garde l'estimation pour cohérence avec stream).
+            val textLen = when (result) {
+                is LlmResponse.TextOnly -> result.text.length
+                is LlmResponse.WithToolCalls -> result.partialText.length
+            }
+            val tIn = estimateTokens(systemPrompt) + messages.sumOf { estimateTokens(it.content) }
+            usageRecorder.record(
+                assistant = assistant, provider = provider, model = effectiveModel,
+                tokensInput = tIn, tokensOutput = estimateTokens(" ".repeat(textLen)),
+                tokensThinking = 0,
+                latencyMs = System.currentTimeMillis() - startMs, success = true,
+            )
+            result
+        } catch (e: Exception) {
+            usageRecorder.record(
+                assistant = assistant, provider = provider, model = effectiveModel,
+                tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
+                latencyMs = System.currentTimeMillis() - startMs, success = false,
+            )
+            throw e
         }
     }
 
@@ -622,12 +681,33 @@ The user's personalized data follows below (only sent on the first message)."""
         systemPrompt: String,
         model: String? = null,
         tools: List<com.google.gson.JsonObject>,
-    ): Flow<LlmStreamEvent> {
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+    ): Flow<LlmStreamEvent> = flow {
         val effectiveModel = model?.takeIf { it.isNotBlank() } ?: provider.defaultModel
-        return if (provider == LlmProvider.CLAUDE) {
+        val startMs = System.currentTimeMillis()
+        val accumulated = StringBuilder()
+        var failed = false
+        val inner: Flow<LlmStreamEvent> = if (provider == LlmProvider.CLAUDE) {
             claudeStreamWithToolsFallback(messages, apiKey, effectiveModel, systemPrompt, tools)
         } else {
             openAiStreamWithTools(messages, provider, apiKey, effectiveModel, systemPrompt, tools)
+        }
+        try {
+            inner.collect { event ->
+                if (event is LlmStreamEvent.Token) accumulated.append(event.text)
+                emit(event)
+            }
+        } catch (e: Exception) {
+            failed = true
+            throw e
+        } finally {
+            val tIn = estimateTokens(systemPrompt) + messages.sumOf { estimateTokens(it.content) }
+            val tOut = if (accumulated.isNotEmpty()) estimateTokens(accumulated.toString()) else 0
+            usageRecorder.record(
+                assistant = assistant, provider = provider, model = effectiveModel,
+                tokensInput = tIn, tokensOutput = tOut, tokensThinking = 0,
+                latencyMs = System.currentTimeMillis() - startMs, success = !failed,
+            )
         }
     }
 

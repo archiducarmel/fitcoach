@@ -256,7 +256,8 @@ class BodyScannerViewModel @Inject constructor(
             val originalPath = saveImageToFile(stream.toByteArray(), "original")
 
             val result = bodyAnalysisService.analyzeBody(
-                stream.toByteArray(), "image/jpeg", apiKey, model, provider
+                stream.toByteArray(), "image/jpeg", apiKey, model, provider,
+                assistant = com.shredcoach.app.domain.llm.AiAssistant.BODY_SCAN,
             )
 
             result.fold(

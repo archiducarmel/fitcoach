@@ -90,7 +90,8 @@ class GymScanService @Inject constructor(
             apiKey = apiKey,
             model = model,
             provider = provider,
-            prompt = prompt
+            prompt = prompt,
+            assistant = com.shredcoach.app.domain.llm.AiAssistant.GYM_SCAN,
         )
         val raw = rawResult.getOrElse {
             Log.e(TAG, "LLM call failed: ${it.message}")

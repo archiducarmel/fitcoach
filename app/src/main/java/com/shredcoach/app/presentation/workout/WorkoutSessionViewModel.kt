@@ -1202,7 +1202,7 @@ class WorkoutSessionViewModel @Inject constructor(
                 )
                 try {
                     val result = kotlinx.coroutines.withTimeout(15000) {
-                        chatRepository.quickCoachMessage(prompt, ShreddyCoachMessages.COACH_SYSTEM_PROMPT, provider, apiKey, model)
+                        chatRepository.quickCoachMessage(prompt, ShreddyCoachMessages.COACH_SYSTEM_PROMPT, provider, apiKey, model, assistant = com.shredcoach.app.domain.llm.AiAssistant.PROACTIVE_COACH)
                     }
                     result.fold(
                         onSuccess = { llmMsg ->
@@ -1308,7 +1308,7 @@ class WorkoutSessionViewModel @Inject constructor(
                 )
                 try {
                     val result = kotlinx.coroutines.withTimeout(15000) {
-                        chatRepository.quickCoachMessage(prompt, ShreddyCoachMessages.COACH_SYSTEM_PROMPT, provider, apiKey, model)
+                        chatRepository.quickCoachMessage(prompt, ShreddyCoachMessages.COACH_SYSTEM_PROMPT, provider, apiKey, model, assistant = com.shredcoach.app.domain.llm.AiAssistant.PROACTIVE_COACH)
                     }
                     result.fold(
                         onSuccess = { llmMsg ->
@@ -1524,7 +1524,7 @@ class WorkoutSessionViewModel @Inject constructor(
                         )
                         try {
                             val result = kotlinx.coroutines.withTimeout(5000) {
-                                chatRepository.quickCoachMessage(prompt, ShreddyCoachMessages.COACH_SYSTEM_PROMPT, provider, apiKey, model)
+                                chatRepository.quickCoachMessage(prompt, ShreddyCoachMessages.COACH_SYSTEM_PROMPT, provider, apiKey, model, assistant = com.shredcoach.app.domain.llm.AiAssistant.PROACTIVE_COACH)
                             }
                             result.getOrNull()?.takeIf { it.isNotBlank() }?.let { llmMsg ->
                                 sessionManager.lastShreddyMessage = llmMsg

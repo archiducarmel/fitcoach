@@ -247,6 +247,10 @@ class ChatViewModel @Inject constructor(
                         recentMessages = recent,
                         systemPrompt = fullSystemPrompt,
                         persona = persona,
+                        assistant = when (persona) {
+                            ChatPersona.DR_GLYKOS -> com.shredcoach.app.domain.llm.AiAssistant.CHAT_DR_GLYKOS
+                            ChatPersona.SHREDDY -> com.shredcoach.app.domain.llm.AiAssistant.CHAT_SHREDDY
+                        },
                     ).collect { token ->
                         buffer.append(token)
                         _state.update { it.copy(streamingText = buffer.toString()) }
@@ -262,6 +266,10 @@ class ChatViewModel @Inject constructor(
                         recentMessages = recent,
                         userContext = userContext,
                         persona = persona,
+                        assistant = when (persona) {
+                            ChatPersona.DR_GLYKOS -> com.shredcoach.app.domain.llm.AiAssistant.CHAT_DR_GLYKOS
+                            ChatPersona.SHREDDY -> com.shredcoach.app.domain.llm.AiAssistant.CHAT_SHREDDY
+                        },
                     ).collect { token ->
                         buffer.append(token)
                         _state.update { it.copy(streamingText = buffer.toString()) }

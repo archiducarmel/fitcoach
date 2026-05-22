@@ -42,7 +42,8 @@ data class BodyAnalysisResult(
 
 @Singleton
 class BodyAnalysisService @Inject constructor(
-    @com.shredcoach.app.di.NetworkModule.BaseHttpClient baseClient: OkHttpClient
+    @com.shredcoach.app.di.NetworkModule.BaseHttpClient baseClient: OkHttpClient,
+    private val usageRecorder: com.shredcoach.app.domain.llm.LlmUsageRecorder,
 ) {
 
     private val client = baseClient.newBuilder()
@@ -52,6 +53,29 @@ class BodyAnalysisService @Inject constructor(
 
     private val gson = Gson()
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
+
+    /**
+     * Parse l'usage block d'une réponse Gemini (totalTokenCount + thinking).
+     * Format identique a GeminiMealService.parseGeminiUsage (duplication acceptee
+     * pour eviter une dependance cross-service ; le helper fait 8 lignes).
+     */
+    private fun parseGeminiUsage(json: com.google.gson.JsonObject): Triple<Int, Int, Int> {
+        val usage = json.getAsJsonObject("usageMetadata") ?: return Triple(0, 0, 0)
+        return Triple(
+            usage.get("promptTokenCount")?.asInt ?: 0,
+            usage.get("candidatesTokenCount")?.asInt ?: 0,
+            usage.get("thoughtsTokenCount")?.asInt ?: 0,
+        )
+    }
+
+    private fun parseOpenAiUsage(json: com.google.gson.JsonObject): Triple<Int, Int, Int> {
+        val usage = json.getAsJsonObject("usage") ?: return Triple(0, 0, 0)
+        return Triple(
+            usage.get("prompt_tokens")?.asInt ?: 0,
+            usage.get("completion_tokens")?.asInt ?: 0,
+            0,
+        )
+    }
 
     companion object {
         private const val GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
@@ -123,13 +147,15 @@ Si l'image N'EST PAS un corps humain → retourne {"error": "not_body"}
         mimeType: String,
         apiKey: String,
         model: String = "gemini-2.5-flash",
-        provider: String = "GEMINI"
+        provider: String = "GEMINI",
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
     ): Result<BodyAnalysisResult> = withContext(Dispatchers.IO) {
+        val startMs = System.currentTimeMillis()
         try {
             val rawJson = when (provider.uppercase()) {
-                "GROQ" -> callGroq(imageBytes, mimeType, apiKey)
-                "MISTRAL" -> callMistral(imageBytes, mimeType, apiKey)
-                else -> callGemini(imageBytes, mimeType, apiKey, model)
+                "GROQ" -> callGroq(imageBytes, mimeType, apiKey, assistant)
+                "MISTRAL" -> callMistral(imageBytes, mimeType, apiKey, assistant)
+                else -> callGemini(imageBytes, mimeType, apiKey, model, assistant)
             }
 
             if (rawJson.isBlank()) return@withContext Result.failure(Exception("Analyse vide"))
@@ -145,6 +171,14 @@ Si l'image N'EST PAS un corps humain → retourne {"error": "not_body"}
             }
             Result.success(result)
         } catch (e: Exception) {
+            // Telemetrie failure (success est recorde dans la private)
+            val effectiveProvider = runCatching { LlmProvider.valueOf(provider.uppercase()) }
+                .getOrDefault(LlmProvider.GEMINI)
+            usageRecorder.record(
+                assistant = assistant, provider = effectiveProvider, model = model,
+                tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
+                latencyMs = System.currentTimeMillis() - startMs, success = false,
+            )
             Result.failure(e)
         }
     }
@@ -153,7 +187,11 @@ Si l'image N'EST PAS un corps humain → retourne {"error": "not_body"}
     // GEMINI
     // ═══════════════════════════════════════
 
-    private fun callGemini(imageBytes: ByteArray, mimeType: String, apiKey: String, model: String): String {
+    private fun callGemini(
+        imageBytes: ByteArray, mimeType: String, apiKey: String, model: String,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+    ): String {
+        val startMs = System.currentTimeMillis()
         val b64 = Base64.encodeToString(imageBytes, Base64.NO_WRAP)
         val url = "$GEMINI_BASE_URL/$model:generateContent"
 
@@ -202,6 +240,13 @@ Si l'image N'EST PAS un corps humain → retourne {"error": "not_body"}
         }?.mapNotNull { it.asJsonObject.get("text")?.asString } ?: emptyList()
 
         var rawJson = textParts.joinToString("").trim()
+        // Telemetrie success
+        val (tIn, tOut, tThink) = parseGeminiUsage(json)
+        usageRecorder.record(
+            assistant = assistant, provider = LlmProvider.GEMINI, model = model,
+            tokensInput = tIn, tokensOutput = tOut, tokensThinking = tThink,
+            latencyMs = System.currentTimeMillis() - startMs, success = true,
+        )
         return rawJson.removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
     }
 
@@ -209,7 +254,11 @@ Si l'image N'EST PAS un corps humain → retourne {"error": "not_body"}
     // GROQ
     // ═══════════════════════════════════════
 
-    private fun callGroq(imageBytes: ByteArray, mimeType: String, apiKey: String): String {
+    private fun callGroq(
+        imageBytes: ByteArray, mimeType: String, apiKey: String,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+    ): String {
+        val startMs = System.currentTimeMillis()
         val b64 = Base64.encodeToString(imageBytes, Base64.NO_WRAP)
         val dataUrl = "data:$mimeType;base64,$b64"
 
@@ -252,6 +301,13 @@ Si l'image N'EST PAS un corps humain → retourne {"error": "not_body"}
             ?.getAsJsonObject("message")
             ?.get("content")?.asString ?: throw Exception("Réponse Groq vide")
 
+        // Telemetrie success
+        val (tIn, tOut, _) = parseOpenAiUsage(json)
+        usageRecorder.record(
+            assistant = assistant, provider = LlmProvider.GROQ, model = GROQ_MODEL,
+            tokensInput = tIn, tokensOutput = tOut, tokensThinking = 0,
+            latencyMs = System.currentTimeMillis() - startMs, success = true,
+        )
         return rawJson.removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
     }
 
@@ -259,7 +315,11 @@ Si l'image N'EST PAS un corps humain → retourne {"error": "not_body"}
     // MISTRAL
     // ═══════════════════════════════════════
 
-    private fun callMistral(imageBytes: ByteArray, mimeType: String, apiKey: String): String {
+    private fun callMistral(
+        imageBytes: ByteArray, mimeType: String, apiKey: String,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+    ): String {
+        val startMs = System.currentTimeMillis()
         val b64 = Base64.encodeToString(imageBytes, Base64.NO_WRAP)
         val dataUrl = "data:$mimeType;base64,$b64"
 
@@ -302,6 +362,13 @@ Si l'image N'EST PAS un corps humain → retourne {"error": "not_body"}
             ?.getAsJsonObject("message")
             ?.get("content")?.asString ?: throw Exception("Réponse Mistral vide")
 
+        // Telemetrie success
+        val (tIn, tOut, _) = parseOpenAiUsage(json)
+        usageRecorder.record(
+            assistant = assistant, provider = LlmProvider.MISTRAL, model = MISTRAL_MODEL,
+            tokensInput = tIn, tokensOutput = tOut, tokensThinking = 0,
+            latencyMs = System.currentTimeMillis() - startMs, success = true,
+        )
         return rawJson.removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
     }
 

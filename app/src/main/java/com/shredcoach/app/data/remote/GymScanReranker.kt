@@ -65,7 +65,8 @@ class GymScanReranker @Inject constructor(
             apiKey = apiKey,
             model = model,
             provider = provider,
-            prompt = prompt
+            prompt = prompt,
+            assistant = com.shredcoach.app.domain.llm.AiAssistant.GYM_SCAN_RERANK,
         )
         val raw = rawResult.getOrElse { err ->
             Log.w(TAG, "LLM rerank échoué, fallback heuristique : ${err.message}")

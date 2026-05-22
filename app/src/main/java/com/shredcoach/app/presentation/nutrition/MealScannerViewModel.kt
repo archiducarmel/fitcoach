@@ -318,7 +318,8 @@ class MealScannerViewModel @Inject constructor(
                 apiKey = apiKey,
                 model = model,
                 provider = provider,
-                hintBlock = hintBlock
+                hintBlock = hintBlock,
+                assistant = com.shredcoach.app.domain.llm.AiAssistant.MEAL_SCAN_TEXT,
             )
 
             result.fold(
@@ -403,7 +404,7 @@ class MealScannerViewModel @Inject constructor(
             } catch (_: Exception) { "" }
             val hintBlock = (mealHints + "\n" + glucoseHints).trim()
 
-            val result = geminiService.analyzeMeal(stream.toByteArray(), "image/jpeg", apiKey, model, provider, hintBlock)
+            val result = geminiService.analyzeMeal(stream.toByteArray(), "image/jpeg", apiKey, model, provider, hintBlock, assistant = com.shredcoach.app.domain.llm.AiAssistant.MEAL_SCAN_PHOTO)
 
             result.fold(
                 onSuccess = { analysis ->
