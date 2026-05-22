@@ -700,6 +700,13 @@ private fun MealHistoryCard(scan: com.shredcoach.app.data.local.entity.MealScanE
                             modifier = Modifier.weight(1f),
                         )
                     }
+                    // Séparateur subtil — sépare le bloc qualité (Nutri+IG/GL) du
+                    // bloc macros quantitatives en dessous (qui a son propre bg).
+                    HorizontalDivider(
+                        modifier = Modifier.padding(top = 4.dp),
+                        thickness = 1.dp,
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
+                    )
                 }
             }
 

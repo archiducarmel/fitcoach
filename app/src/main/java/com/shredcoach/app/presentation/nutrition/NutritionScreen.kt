@@ -615,6 +615,12 @@ private fun MealCard(
                         )
                     }
                 }
+                // Séparateur subtil — sépare visuellement le bloc qualité
+                // (Nutri-Score + IG/GL) du bloc macros quantitatives en dessous.
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
+                )
                 // Ligne 3 : barres macros (valeurs effectives)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     NutritionMealMacro(stringResource(R.string.nutrition_macro_proteins), effectiveProteins, ProteinColor, Modifier.weight(1f))

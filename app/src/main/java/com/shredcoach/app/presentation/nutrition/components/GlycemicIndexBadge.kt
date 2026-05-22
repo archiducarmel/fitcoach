@@ -167,9 +167,15 @@ object GlycemicIndexBadge {
     }
 
     /**
-     * Widget mini-gauge atomique. Pas de label de zone (les couleurs et la
-     * position du pin transportent l'info). Optimisé pour LazyColumn :
-     * `animateFloatAsState` ne joue qu'au premier mount d'un item.
+     * Widget mini-gauge atomique HORIZONTAL : `[Label] [Bar weight=1f] [Value]`.
+     *
+     * **Pourquoi horizontal** : le centre vertical du widget = centre vertical
+     * de la barre. Quand ce widget est `CenterVertically` aligné dans un Row
+     * avec un Nutri-Score, la barre s'aligne pile au milieu du pictogramme.
+     * (En layout vertical, la barre était en bas et apparaissait plus basse.)
+     *
+     * Optimisé pour LazyColumn : `animateFloatAsState` ne joue qu'au premier
+     * mount d'un item (target value cached).
      */
     @Composable
     private fun StaticMiniGauge(
@@ -189,33 +195,23 @@ object GlycemicIndexBadge {
             label = "mini_pin_$label",
         )
 
-        Column(modifier, verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            // Header : label + valeur
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    label,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
-                    letterSpacing = 0.6.sp,
-                )
-                Text(
-                    value,
-                    style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = valueColor,
-                )
-            }
-            // Bar avec pin animé
+        Row(
+            modifier,
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                letterSpacing = 0.6.sp,
+            )
+            // Bar avec pin animé — prend l'espace résiduel
             Canvas(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .weight(1f)
                     .height(7.dp),
             ) {
                 val w = size.width
@@ -262,6 +258,17 @@ object GlycemicIndexBadge {
                 drawCircle(Color.White, pinOuterR, pinCenter)
                 drawCircle(pinColor, pinInnerR, pinCenter)
             }
+            // Valeur — width minimale réservée pour stabilité visuelle
+            // (sinon le bar "respire" entre valeurs à 1 et 3 chiffres)
+            Text(
+                value,
+                style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = valueColor,
+                modifier = Modifier.widthIn(min = 22.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.End,
+            )
         }
     }
 
