@@ -92,6 +92,8 @@ class NvidiaNimCatalogService @Inject constructor(
                 ?: json.getAsJsonArray("models")
                 ?: throw Exception("Format inattendu (pas de data[] ni models[])")
 
+            Log.d("LlmDiag", "▶ NVIDIA dataArr.size=${dataArr.size()}")
+
             // Build LlmModelInfo from each id with inferred metadata
             val models = dataArr.mapNotNull { el ->
                 runCatching {
@@ -101,8 +103,9 @@ class NvidiaNimCatalogService @Inject constructor(
                         ?: return@runCatching null
                     val ownedBy = obj.get("owned_by")?.takeIf { it.isJsonPrimitive }?.asString
                     classifyNvidiaModel(id, ownedBy)
-                }.getOrNull()
+                }.onFailure { Log.e("LlmDiag", "× NVIDIA classify failed", it) }.getOrNull()
             }
+            Log.d("LlmDiag", "▶ NVIDIA classified ${models.size} models (sample first 3 : ${models.take(3).joinToString { "${it.id}/${it.kind}" }})")
 
             // Trier : LANGUAGE/VLM (chat) d'abord, puis embeddings, puis le reste
             val sorted = models.sortedWith(
@@ -114,7 +117,7 @@ class NvidiaNimCatalogService @Inject constructor(
             )
             cachedCatalog = sorted
             cachedAtMs = now
-            Log.i(TAG, "NVIDIA NIM : ${sorted.size} modeles classifies (LANGUAGE/VLM/STT/TTS/etc.)")
+            Log.d("LlmDiag", "✓ NVIDIA fetchCatalog returns ${sorted.size} models")
             Result.success(sorted)
         } catch (e: Exception) {
             Log.e(TAG, "fetchCatalog failed", e)

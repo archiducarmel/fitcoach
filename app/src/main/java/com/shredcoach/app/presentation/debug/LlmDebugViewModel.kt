@@ -130,19 +130,22 @@ class LlmDebugViewModel @Inject constructor(
         val apiKey = runCatching { secureKeyStore.getKey(SecureKeyStore.Provider.NVIDIA_NIM) }
             .getOrDefault("")
         if (apiKey.isBlank()) {
+            android.util.Log.e("LlmDiag", "× refreshNvidiaCatalog : NVIDIA key blank")
             _state.update { it.copy(catalogError = "Clé NVIDIA manquante. Configure-la d'abord.") }
             return
         }
+        android.util.Log.d("LlmDiag", "▶ refreshNvidiaCatalog START apiKey.length=${apiKey.length}")
         viewModelScope.launch {
             _state.update { it.copy(isFetchingCatalog = true, catalogError = null) }
             val result = runCatching { nvidiaCatalog.fetchCatalog(apiKey, forceRefresh = true) }
                 .getOrElse {
-                    android.util.Log.e(TAG, "refreshNvidiaCatalog crash", it)
+                    android.util.Log.e("LlmDiag", "× refreshNvidiaCatalog crash", it)
                     Result.failure(it)
                 }
             result.fold(
                 onSuccess = { models ->
                     val resolved = models.map { ResolvedModel(LlmProvider.NVIDIA_NIM, it) }
+                    android.util.Log.d("LlmDiag", "✓ refreshNvidiaCatalog SUCCESS : ${models.size} models, ${resolved.size} resolved")
                     _state.update {
                         it.copy(
                             dynamicNvidiaModels = resolved,
@@ -150,8 +153,10 @@ class LlmDebugViewModel @Inject constructor(
                             catalogError = null,
                         )
                     }
+                    android.util.Log.d("LlmDiag", "✓ state.dynamicNvidiaModels.size = ${_state.value.dynamicNvidiaModels.size}")
                 },
                 onFailure = { err ->
+                    android.util.Log.e("LlmDiag", "× refreshNvidiaCatalog FAILURE : ${err.message}", err)
                     _state.update {
                         it.copy(
                             isFetchingCatalog = false,
