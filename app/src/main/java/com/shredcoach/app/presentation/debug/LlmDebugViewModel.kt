@@ -358,7 +358,12 @@ class LlmDebugViewModel @Inject constructor(
                     )
                 }
 
+                var tokenCount = 0
                 flow.collect { token ->
+                    tokenCount++
+                    if (tokenCount <= 3 || tokenCount % 20 == 0) {
+                        android.util.Log.d("LlmDiag", "◀ VM token #$tokenCount : '${token.take(40)}'")
+                    }
                     responseBuf.append(token)
                     // Update in-place le dernier message (assistant placeholder)
                     _state.update { st ->
@@ -370,6 +375,7 @@ class LlmDebugViewModel @Inject constructor(
                         st.copy(messages = msgs)
                     }
                 }
+                android.util.Log.d("LlmDiag", "✓ VM stream FINISHED : tokenCount=$tokenCount responseLength=${responseBuf.length}")
                 val latency = System.currentTimeMillis() - startMs
                 // Finalize message (stop streaming indicator + add metadata)
                 _state.update { st ->

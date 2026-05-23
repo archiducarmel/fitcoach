@@ -605,6 +605,9 @@ The user's personalized data follows below (only sent on the first message)."""
         val reader = response.body?.byteStream()?.bufferedReader()
             ?: throw Exception("Réponse vide")
 
+        var emittedTokens = 0
+        var parseFailures = 0
+        var sampleFailure: String? = null
         parseSseStream(reader, slowMode) { line ->
             // Format: data: {"choices":[{"delta":{"content":"token"}}]}
             try {
@@ -613,9 +616,19 @@ The user's personalized data follows below (only sent on the first message)."""
                     ?.get(0)?.asJsonObject
                     ?.getAsJsonObject("delta")
                 val content = delta?.get("content")?.asString
-                if (!content.isNullOrEmpty()) emit(content)
-            } catch (_: Exception) { /* ignore malformed chunks */ }
+                if (!content.isNullOrEmpty()) {
+                    emittedTokens++
+                    emit(content)
+                } else if (emittedTokens == 0 && parseFailures == 0) {
+                    android.util.Log.w("LlmDiag", "◀ SSE chunk OK but no delta.content : ${line.take(200)}")
+                }
+            } catch (e: Exception) {
+                parseFailures++
+                if (sampleFailure == null) sampleFailure = "${e.javaClass.simpleName}: ${e.message} | line='${line.take(200)}'"
+            }
         }
+        android.util.Log.d("LlmDiag", "◀ openAiCompatible done : emittedTokens=$emittedTokens parseFailures=$parseFailures")
+        if (sampleFailure != null) android.util.Log.e("LlmDiag", "◀ sampleFailure : $sampleFailure")
         reader.close()
     }
 
@@ -1205,14 +1218,27 @@ The user's personalized data follows below (only sent on the first message)."""
 
     private suspend fun parseSseStream(reader: BufferedReader, slowMode: Boolean = true, onData: suspend (String) -> Unit) {
         var line: String?
+        var totalLines = 0
+        var dataLines = 0
+        var firstFewLines = mutableListOf<String>()
         while (reader.readLine().also { line = it } != null) {
             val l = line ?: continue
+            totalLines++
+            if (firstFewLines.size < 5 && l.isNotBlank()) firstFewLines.add(l.take(150))
             if (l.startsWith("data: ")) {
+                dataLines++
                 val data = l.removePrefix("data: ").trim()
-                if (data == "[DONE]") break
+                if (data == "[DONE]") {
+                    android.util.Log.d("LlmDiag", "◀ SSE [DONE] after $dataLines data lines (total $totalLines lines)")
+                    break
+                }
                 onData(data)
                 if (slowMode) kotlinx.coroutines.delay(35)
             }
+        }
+        android.util.Log.d("LlmDiag", "◀ SSE stream ended : totalLines=$totalLines dataLines=$dataLines")
+        if (dataLines == 0) {
+            android.util.Log.e("LlmDiag", "◀ SSE NO DATA LINES — first 5 raw lines : $firstFewLines")
         }
     }
 
