@@ -504,7 +504,19 @@ private fun ChatInteraction(
         }
     }
 
-    Column(Modifier.fillMaxSize()) {
+    // PATTERN MATERIAL3 CANONIQUE pour chat avec IME :
+    // - Column OUTER applique .imePadding() pour consommer l'IME inset sur
+    //   l'ensemble du contenu chat (LazyColumn + InputBar montent ensemble
+    //   quand le clavier ouvre).
+    // - LazyColumn weight=1f recoit la hauteur RESTANTE apres InputBar.
+    // - InputBar n'a PLUS d'imePadding (sinon double-consumption).
+    // - .navigationBarsPadding() reste sur InputBar pour respecter la nav bar.
+    Column(
+        Modifier
+            .fillMaxSize()
+            .imePadding(),
+    ) {
+        android.util.Log.d("LlmDiag", "▶ ChatInteraction recompose messages.size=${state.messages.size}")
         // Messages list (weight 1f)
         LazyColumn(
             state = scrollState,
@@ -596,7 +608,8 @@ private fun ChatInputBar(
         Column(
             Modifier
                 .fillMaxWidth()
-                .imePadding()
+                // PAS d'imePadding ici : applique sur la Column parent de
+                // ChatInteraction. navigationBarsPadding reste pour edge-to-edge.
                 .navigationBarsPadding()
                 .padding(horizontal = 12.dp, vertical = 8.dp),
         ) {

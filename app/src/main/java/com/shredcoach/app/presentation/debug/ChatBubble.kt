@@ -35,6 +35,7 @@ import com.shredcoach.app.data.remote.LlmProvider
  */
 @Composable
 fun ChatBubble(message: DebugChatMessage, isUser: Boolean) {
+    android.util.Log.d("LlmDiag", "▶ ChatBubble compose isUser=$isUser text='${message.text.take(40)}' streaming=${message.isStreaming}")
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(message.timestampMs) { visible = true }
 

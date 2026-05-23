@@ -284,6 +284,16 @@ class LlmDebugViewModel @Inject constructor(
             return
         }
 
+        // Bug A fix : Gemini/Mistral ont `supportsChat=false` car endpoints non
+        // OpenAI-compatible (Gemini = generateContent, Mistral via GeminiMealService).
+        // Bloquer ici plutot que laisser un 404 silencieux remonter au user.
+        if (!resolved.provider.supportsChat) {
+            val msg = "${resolved.provider.displayName} n'est pas compatible chat dans le Playground. Endpoint Gemini/Mistral utilise un format different."
+            android.util.Log.e("LlmDiag", "× provider=${resolved.provider} supportsChat=false — abort")
+            _state.update { it.copy(lastError = msg) }
+            return
+        }
+
         // Get API key for the provider
         val keySlot = apiKeySlotFor(resolved.provider)
         val apiKey = secureKeyStore.getKey(keySlot)
@@ -324,6 +334,7 @@ class LlmDebugViewModel @Inject constructor(
                 lastError = null,
             )
         }
+        android.util.Log.d("LlmDiag", "▶ state.messages.size after add = ${_state.value.messages.size}")
 
         currentStreamJob?.cancel()
         currentStreamJob = viewModelScope.launch {
