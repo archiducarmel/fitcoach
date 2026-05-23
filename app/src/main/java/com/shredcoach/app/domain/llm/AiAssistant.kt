@@ -72,6 +72,18 @@ enum class AiAssistant(
     INSTRUCTIONS_TRANSLATE("instructions_translate", AiCategory.ANALYSIS, needsVision = false,
         fallbackLegacy = LegacyConfigSource.MEAL_SCAN);
 
+    /**
+     * Kind du modele requis par cet assistant. Derivé de [needsVision] pour
+     * back-compat : assistant vision → VLM, sinon CHAT. Permet aux pickers
+     * (Settings, Debug) de filtrer la liste des modeles candidats.
+     *
+     * **A faire evoluer en V2** si on ajoute des assistants STT/TTS/etc.
+     * (ex : "Transcription voice → meal log" = STT). Pour l'instant tous les
+     * 18 assistants existants sont CHAT ou VLM.
+     */
+    val requiredKind: ModelKind
+        get() = if (needsVision) ModelKind.VLM else ModelKind.LANGUAGE
+
     companion object {
         fun fromKey(key: String?): AiAssistant? =
             values().firstOrNull { it.key == key }

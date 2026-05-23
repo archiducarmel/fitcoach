@@ -1051,6 +1051,15 @@
     <string name="assistant_desc_scheduled_reminder">Personalisierte Erinnerung vor deinen geplanten Trainingseinheiten</string>
     <string name="assistant_desc_gym_scan_rerank">Verfeinert die Geräteerkennung für höhere Genauigkeit</string>
     <string name="assistant_desc_instructions_translate">Übersetzt Übungsanleitungen in die App-Sprache</string>
+    <!-- ModelKind labels -->
+    <string name="model_kind_chat">Chat</string>
+    <string name="model_kind_vlm">Vision-Sprache</string>
+    <string name="model_kind_reasoning">Reasoning</string>
+    <string name="model_kind_embedding">Embedding</string>
+    <string name="model_kind_image_gen">Bildgenerierung</string>
+    <string name="model_kind_tts">Sprachsynthese</string>
+    <string name="model_kind_stt">Audio-Transkription</string>
+    <string name="model_kind_object_detection">Objekterkennung</string>
     <!-- Presets -->
     <string name="llm_settings_presets_header">Schnellkonfigurationen</string>
     <string name="llm_preset_economic">Sparsam</string>

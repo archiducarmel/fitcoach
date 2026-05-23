@@ -1084,6 +1084,15 @@
     <string name="assistant_desc_scheduled_reminder">Personalized reminder before your scheduled sessions</string>
     <string name="assistant_desc_gym_scan_rerank">Refines machine recognition results for higher accuracy</string>
     <string name="assistant_desc_instructions_translate">Translates exercise instructions into the app\'s language</string>
+    <!-- ModelKind labels — AI model types -->
+    <string name="model_kind_chat">Chat</string>
+    <string name="model_kind_vlm">Vision-Language</string>
+    <string name="model_kind_reasoning">Reasoning</string>
+    <string name="model_kind_embedding">Embedding</string>
+    <string name="model_kind_image_gen">Image generation</string>
+    <string name="model_kind_tts">Text-to-speech</string>
+    <string name="model_kind_stt">Speech-to-text</string>
+    <string name="model_kind_object_detection">Object detection</string>
     <!-- One-tap presets to configure all 19 assistants -->
     <string name="llm_settings_presets_header">Quick presets</string>
     <string name="llm_preset_economic">Economic</string>

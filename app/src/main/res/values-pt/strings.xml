@@ -1211,6 +1211,15 @@
     <string name="assistant_desc_scheduled_reminder">Lembrete personalizado antes das suas sessões agendadas</string>
     <string name="assistant_desc_gym_scan_rerank">Refina os resultados de reconhecimento de máquinas para mais precisão</string>
     <string name="assistant_desc_instructions_translate">Traduz as instruções de exercícios para o idioma do app</string>
+    <!-- ModelKind labels -->
+    <string name="model_kind_chat">Chat</string>
+    <string name="model_kind_vlm">Visão-Linguagem</string>
+    <string name="model_kind_reasoning">Raciocínio</string>
+    <string name="model_kind_embedding">Embedding</string>
+    <string name="model_kind_image_gen">Geração de imagens</string>
+    <string name="model_kind_tts">Síntese de voz</string>
+    <string name="model_kind_stt">Transcrição de áudio</string>
+    <string name="model_kind_object_detection">Detecção de objetos</string>
     <!-- Presets -->
     <string name="llm_settings_presets_header">Configurações rápidas</string>
     <string name="llm_preset_economic">Econômico</string>
