@@ -655,7 +655,16 @@ data class ResolvedModel(
     val info: LlmModelInfo,
 )
 
-@Immutable
+/**
+ * Message du chat playground.
+ *
+ * **CRITIQUE** : pas de `@Immutable` ni de `equals` custom — DebugChatMessage
+ * doit avoir l'equality data-class par defaut (compare TOUTES les props).
+ * Une ancienne version overridait `equals` pour ne comparer que timestampMs+role
+ * ce qui faisait que Compose smart-skipping voyait les updates de text comme
+ * "rien change" et NE RECOMPOSAIT PAS la ChatBubble pendant le streaming.
+ * Resultat : "•••" stagne meme apres le stream fini.
+ */
 data class DebugChatMessage(
     val role: String, // "user" | "assistant"
     val text: String,
@@ -668,10 +677,7 @@ data class DebugChatMessage(
     val tokensOutput: Int = 0,
     val latencyMs: Long = 0,
     val error: String? = null,
-) {
-    override fun equals(other: Any?): Boolean = other is DebugChatMessage && other.timestampMs == timestampMs && other.role == role
-    override fun hashCode(): Int = (timestampMs.hashCode() * 31) + role.hashCode()
-}
+)
 
 @Immutable
 data class LlmDebugState(
