@@ -230,6 +230,119 @@ class LlmApiService @Inject constructor(
         .build()
 
     /**
+     * Envoie un message multimodal (texte + image) via le content blocks OpenAI
+     * format. Stream SSE des tokens texte de la reponse.
+     *
+     * Format OpenAI-compatible (GitHub Models, NVIDIA NIM, Groq, OpenAI, Cloudflare) :
+     * ```
+     * {messages: [{role: "user", content: [
+     *   {type: "text", text: "..."},
+     *   {type: "image_url", image_url: {"url": "data:image/jpeg;base64,..."}}
+     * ]}]}
+     * ```
+     *
+     * Pour Claude (format Anthropic) : fallback temporaire vers text-only avec
+     * note explicative (V2 = vraie integration Claude vision content blocks).
+     */
+    fun streamMessageWithImage(
+        text: String,
+        imageBytes: ByteArray,
+        imageMimeType: String,
+        provider: LlmProvider,
+        apiKey: String,
+        model: String? = null,
+        overrideSystemPrompt: String? = null,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+    ): Flow<String> = flow {
+        val effectiveModel = model?.takeIf { it.isNotBlank() } ?: provider.defaultModel
+        val systemPrompt = overrideSystemPrompt ?: SYSTEM_PROMPT
+        val startMs = System.currentTimeMillis()
+        val accumulated = StringBuilder()
+        var failed = false
+
+        try {
+            if (provider == LlmProvider.CLAUDE) {
+                // V2 : Claude utilise un format content blocks different
+                // (type: "image", source: {type: "base64", media_type, data}).
+                // Pour V1 : on degrade en text-only avec une note.
+                streamClaude(
+                    messages = listOf(ChatMessage("user", "[image multimodale non supportee en V1 sur Claude]\n$text")),
+                    apiKey = apiKey, model = effectiveModel, systemPrompt = systemPrompt, slowMode = false,
+                ).collect { accumulated.append(it); emit(it) }
+            } else {
+                // OpenAI-compatible : content blocks dans messages[0].content
+                val b64 = android.util.Base64.encodeToString(imageBytes, android.util.Base64.NO_WRAP)
+                val dataUrl = "data:$imageMimeType;base64,$b64"
+                val msgArr = com.google.gson.JsonArray().apply {
+                    // System message
+                    add(com.google.gson.JsonObject().apply {
+                        addProperty("role", "system")
+                        addProperty("content", systemPrompt)
+                    })
+                    // User multimodal
+                    add(com.google.gson.JsonObject().apply {
+                        addProperty("role", "user")
+                        val contentArr = com.google.gson.JsonArray().apply {
+                            add(com.google.gson.JsonObject().apply {
+                                addProperty("type", "text")
+                                addProperty("text", text)
+                            })
+                            add(com.google.gson.JsonObject().apply {
+                                addProperty("type", "image_url")
+                                add("image_url", com.google.gson.JsonObject().apply {
+                                    addProperty("url", dataUrl)
+                                })
+                            })
+                        }
+                        add("content", contentArr)
+                    })
+                }
+                val req = com.google.gson.JsonObject().apply {
+                    addProperty("model", effectiveModel)
+                    add("messages", msgArr)
+                    addProperty("temperature", 0.7)
+                    addProperty("max_tokens", 2048)
+                    addProperty("stream", true)
+                }
+
+                val request = buildOpenAiRequest(provider, apiKey, req.toString())
+                val response = client.newCall(request).execute()
+                if (!response.isSuccessful) {
+                    val errorBody = response.body?.string() ?: ""
+                    throw Exception("Erreur ${response.code}: ${extractError(errorBody)}")
+                }
+                val reader = response.body?.byteStream()?.bufferedReader()
+                    ?: throw Exception("Réponse vide")
+                parseSseStream(reader, slowMode = false) { line ->
+                    try {
+                        val json = JsonParser.parseString(line).asJsonObject
+                        val content = json.getAsJsonArray("choices")?.get(0)?.asJsonObject
+                            ?.getAsJsonObject("delta")?.get("content")?.asString
+                        if (!content.isNullOrEmpty()) {
+                            accumulated.append(content)
+                            emit(content)
+                        }
+                    } catch (_: Exception) { /* ignore */ }
+                }
+                reader.close()
+            }
+        } catch (e: Exception) {
+            failed = true
+            throw e
+        } finally {
+            // Image bytes facturee dans tokensInput approxime (200 tokens estimes pour 512x512)
+            val imgTokens = (imageBytes.size / 1024) * 3 // ~3 tokens/KB approximation
+            val tIn = estimateTokens(systemPrompt) + estimateTokens(text) + imgTokens
+            val tOut = if (accumulated.isNotEmpty()) estimateTokens(accumulated.toString()) else 0
+            usageRecorder.record(
+                assistant = assistant, provider = provider, model = effectiveModel,
+                tokensInput = tIn, tokensOutput = tOut, tokensThinking = 0,
+                latencyMs = System.currentTimeMillis() - startMs, success = !failed,
+            )
+        }
+    }.flowOn(Dispatchers.IO)
+
+    /**
      * Construit une Request OpenAI-compatible avec les headers provider-specifiques.
      *
      *  - GROQ/OPENAI : Bearer + Content-Type JSON standards

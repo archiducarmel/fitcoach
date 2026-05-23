@@ -127,7 +127,7 @@ fun LlmDebugScreen(
                     selected.info.kind == ModelKind.MULTIMODAL_EMBEDDING ->
                         EmbeddingInteraction(
                             state = state,
-                            onGenerate = { text -> viewModel.generateEmbedding(text) },
+                            onGenerate = { text, imgBytes -> viewModel.generateEmbedding(text, imgBytes) },
                             onClear = { viewModel.clearKindResults() },
                         )
                 selected.info.kind == ModelKind.IMAGE_GENERATION ->
@@ -695,6 +695,10 @@ private fun ApiKeyEntryDialog(
     var showValue by remember { mutableStateOf(false) }
     val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
 
+    // Fix #5 : l'Account ID Cloudflare est public (32 chars hex visible sur
+    // dashboard), pas un secret. Ne pas le masquer = meilleure UX (l'user
+    // peut verifier sa saisie). Les vrais tokens restent masques.
+    val isSecret = provider != SecureKeyStore.Provider.CLOUDFLARE_ACCOUNT_ID
     val titlePrefix = when (provider) {
         SecureKeyStore.Provider.GITHUB_MODELS -> "🐙 Token GitHub"
         SecureKeyStore.Provider.NVIDIA_NIM -> "🟢 Clé NVIDIA"
@@ -723,10 +727,12 @@ private fun ApiKeyEntryDialog(
                 OutlinedTextField(
                     value = input,
                     onValueChange = { input = it.trim() },
-                    label = { Text("Coller la clé ici") },
+                    label = { Text(if (isSecret) "Coller la clé ici" else "Coller l'Account ID ici") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    visualTransformation = if (showValue) VisualTransformation.None else PasswordVisualTransformation(),
+                    // Account ID = public, pas de password mask. Tokens = mask par defaut.
+                    visualTransformation = if (!isSecret || showValue) VisualTransformation.None
+                        else PasswordVisualTransformation(),
                     trailingIcon = {
                         Row {
                             IconButton(onClick = {
@@ -734,11 +740,13 @@ private fun ApiKeyEntryDialog(
                             }) {
                                 Icon(Icons.Default.ContentPaste, "Coller")
                             }
-                            IconButton(onClick = { showValue = !showValue }) {
-                                Icon(
-                                    if (showValue) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                    "Afficher/masquer",
-                                )
+                            if (isSecret) {
+                                IconButton(onClick = { showValue = !showValue }) {
+                                    Icon(
+                                        if (showValue) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                        "Afficher/masquer",
+                                    )
+                                }
                             }
                         }
                     },

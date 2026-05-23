@@ -65,6 +65,11 @@ class LlmDebugViewModel @Inject constructor(
         _state.update { it.copy(staticModels = staticModels) }
         // Restore les API keys depuis le keystore (sans afficher leur valeur)
         refreshApiKeyAvailability()
+        // Fix #4 : auto-fetch les catalogues dynamiques si les cles sont deja
+        // configurees, pour que le picker montre l'integralite des modeles
+        // accessibles des l'ouverture du Playground (vs attendre un refresh manuel).
+        if (secureKeyStore.hasKey(SecureKeyStore.Provider.GITHUB_MODELS)) refreshGitHubCatalog()
+        if (secureKeyStore.hasKey(SecureKeyStore.Provider.NVIDIA_NIM)) refreshNvidiaCatalog()
     }
 
     // ─── Catalog management ─────────────────────────────────────────────────
@@ -179,10 +184,19 @@ class LlmDebugViewModel @Inject constructor(
     // ─── Model selection ────────────────────────────────────────────────────
 
     fun selectModel(resolved: ResolvedModel) {
+        // Fix #3 : annule le stream en cours si l'user switche de modele
+        // (sinon les tokens continuent d'arriver vers un state reset).
+        currentStreamJob?.cancel()
+        currentStreamJob = null
         _state.update {
             it.copy(
                 selectedModel = resolved,
                 messages = emptyList(), // reset chat sur change de modele
+                embeddingResult = null,
+                imageResult = null,
+                ttsResult = null,
+                sttResult = null,
+                isSending = false,
                 lastError = null,
                 pickerOpen = false,
             )
@@ -265,30 +279,36 @@ class LlmDebugViewModel @Inject constructor(
         currentStreamJob = viewModelScope.launch {
             val startMs = System.currentTimeMillis()
             try {
-                // Pour VLM, on construit le content sous forme array avec text + image
-                // Mais LlmApiService.streamMessage utilise un simple format text-only.
-                // Pour V1, on convertit l'image en payload OpenAI standard via
-                // un message synthese : "Image attachee (decodee par le modele):" + content blocks.
-                // En realite, LlmApiService.streamOpenAiCompatible accepte des ChatMessage
-                // text-only. Pour vraiment supporter VLM, on doit etendre LlmApiService.
-                // V1 simplification : on envoie juste le texte et on prefixe une note
-                // si image attached. La vraie support VLM image content viendra avec un
-                // payload builder dedie (TODO Commit F).
-                val effectiveText = if (imageBytes != null) {
-                    "[IMAGE ATTACHEE - $imageBytes.size bytes]\n$text"
-                } else text
-
-                val messages = listOf(ApiChatMessage(role = "user", content = effectiveText))
                 val responseBuf = StringBuilder()
+                val systemPrompt = "Tu es un assistant IA en mode test. Reponds naturellement."
 
-                llmApiService.streamMessage(
-                    messages = messages,
-                    provider = resolved.provider,
-                    apiKey = apiKey,
-                    model = resolved.info.id,
-                    overrideSystemPrompt = "Tu es un assistant IA en mode test. Reponds naturellement.",
-                    slowMode = false,
-                ).collect { token ->
+                // Fix #1 VLM proper : si image attachee + VLM, on construit un payload
+                // multimodal OpenAI-compatible (content blocks text + image_url base64).
+                // Pour CHAT pur, on garde le path streamMessage classique text-only.
+                val flow = if (imageBytes != null && resolved.info.acceptsImageInput) {
+                    llmApiService.streamMessageWithImage(
+                        text = text,
+                        imageBytes = imageBytes,
+                        imageMimeType = "image/jpeg",
+                        provider = resolved.provider,
+                        apiKey = apiKey,
+                        model = resolved.info.id,
+                        overrideSystemPrompt = systemPrompt,
+                        assistant = null,
+                    )
+                } else {
+                    val messages = listOf(ApiChatMessage(role = "user", content = text))
+                    llmApiService.streamMessage(
+                        messages = messages,
+                        provider = resolved.provider,
+                        apiKey = apiKey,
+                        model = resolved.info.id,
+                        overrideSystemPrompt = systemPrompt,
+                        slowMode = false,
+                    )
+                }
+
+                flow.collect { token ->
                     responseBuf.append(token)
                     // Update in-place le dernier message (assistant placeholder)
                     _state.update { st ->
@@ -311,7 +331,7 @@ class LlmDebugViewModel @Inject constructor(
                             isStreaming = false,
                             latencyMs = latency,
                             tokensOutput = responseBuf.length / 4, // estimation (LlmApiService streams sans usage block exact)
-                            tokensInput = effectiveText.length / 4,
+                            tokensInput = text.length / 4 + (imageBytes?.size?.div(1024)?.times(3) ?: 0),
                         )
                     }
                     st.copy(messages = msgs, isSending = false)
@@ -354,9 +374,19 @@ class LlmDebugViewModel @Inject constructor(
         _state.update { it.copy(lastError = null) }
     }
 
-    // ─── EMBEDDING ──────────────────────────────────────────────────────────
+    // ─── EMBEDDING (text-only et multimodal) ────────────────────────────────
 
-    fun generateEmbedding(text: String) {
+    /**
+     * Genere un embedding. Route automatiquement vers `embedText` ou
+     * `embedMultimodal` selon le kind du modele :
+     *  - EMBEDDING            -> embedText (texte seul)
+     *  - MULTIMODAL_EMBEDDING -> embedMultimodal (texte + image base64)
+     *
+     * Fix #2 : avant ce fix, MULTIMODAL_EMBEDDING tombait sur embedText et
+     * recevait du texte-seul (les modeles CLIP-like comme NVCLIP refusent ou
+     * retournent un vecteur degrade).
+     */
+    fun generateEmbedding(text: String, imageBytes: ByteArray? = null) {
         val resolved = _state.value.selectedModel ?: return
         val apiKey = secureKeyStore.getKey(apiKeySlotFor(resolved.provider))
         if (apiKey.isBlank()) {
@@ -365,9 +395,21 @@ class LlmDebugViewModel @Inject constructor(
         }
         viewModelScope.launch {
             _state.update { it.copy(isSending = true, lastError = null, embeddingResult = null) }
-            val result = embeddingService.embedText(
-                input = text, model = resolved.info.id, provider = resolved.provider, apiKey = apiKey,
-            )
+            val result = if (resolved.info.kind == ModelKind.MULTIMODAL_EMBEDDING) {
+                embeddingService.embedMultimodal(
+                    text = text.takeIf { it.isNotBlank() },
+                    imageBytes = imageBytes,
+                    mimeType = "image/jpeg",
+                    model = resolved.info.id,
+                    provider = resolved.provider,
+                    apiKey = apiKey,
+                )
+            } else {
+                embeddingService.embedText(
+                    input = text, model = resolved.info.id,
+                    provider = resolved.provider, apiKey = apiKey,
+                )
+            }
             result.fold(
                 onSuccess = { r ->
                     _state.update { it.copy(isSending = false, embeddingResult = r) }

@@ -1,8 +1,15 @@
 package com.shredcoach.app.presentation.debug
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,7 +25,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -41,10 +50,27 @@ import kotlin.math.max
 @Composable
 fun EmbeddingInteraction(
     state: LlmDebugState,
-    onGenerate: (String) -> Unit,
+    onGenerate: (String, ByteArray?) -> Unit,
     onClear: () -> Unit,
 ) {
     var input by remember { mutableStateOf("") }
+    var sourceImageBytes by remember { mutableStateOf<ByteArray?>(null) }
+    var sourceBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    val context = LocalContext.current
+
+    // Fix #2 : detection multimodal embedding → image picker conditionnel
+    val isMultimodal = state.selectedModel?.info?.kind ==
+        com.shredcoach.app.domain.llm.ModelKind.MULTIMODAL_EMBEDDING
+
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            context.contentResolver.openInputStream(it)?.use { stream ->
+                val bytes = stream.readBytes()
+                sourceImageBytes = bytes
+                sourceBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+            }
+        }
+    }
 
     Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         // Header pedagogique
@@ -53,29 +79,71 @@ fun EmbeddingInteraction(
             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
         ) {
             Text(
-                "🔢 Embedding : convertit ton texte en vecteur dense (utilisé pour " +
-                "recherche semantique, clustering, RAG). Le modele retourne un " +
-                "vecteur de dimension fixe (768, 1024, 1536…).",
+                if (isMultimodal)
+                    "🔢👁️ Multimodal embedding : convertit texte ET/OU image en vecteur " +
+                    "unifié dans le même espace sémantique (CLIP-like, ex: NVCLIP)."
+                else
+                    "🔢 Embedding : convertit ton texte en vecteur dense (utilisé pour " +
+                    "recherche sémantique, clustering, RAG). Le modèle retourne un " +
+                    "vecteur de dimension fixe (768, 1024, 1536…).",
                 modifier = Modifier.padding(12.dp),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
             )
         }
 
+        // Image picker conditionnel (multimodal only)
+        if (isMultimodal) {
+            Card(shape = RoundedCornerShape(14.dp)) {
+                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Image (optionnelle, embedding texte+image fusionnés)",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    if (sourceBitmap != null) {
+                        Box(Modifier.fillMaxWidth()) {
+                            Image(
+                                bitmap = sourceBitmap!!.asImageBitmap(),
+                                contentDescription = "Image source",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(max = 160.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .clickable { imagePicker.launch("image/*") },
+                                contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                            )
+                        }
+                    } else {
+                        OutlinedButton(
+                            onClick = { imagePicker.launch("image/*") },
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            shape = RoundedCornerShape(10.dp),
+                        ) {
+                            Text("Sélectionner une image", fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+            }
+        }
+
         OutlinedTextField(
             value = input,
             onValueChange = { input = it },
-            label = { Text("Texte à embedder") },
+            label = { Text(if (isMultimodal) "Texte (optionnel)" else "Texte à embedder") },
             modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp, max = 200.dp),
             maxLines = 8,
             placeholder = { Text("Ex: La récursion en informatique est un concept où une fonction s'appelle elle-même…") },
         )
 
         Button(
-            onClick = { onGenerate(input.trim()) },
+            onClick = { onGenerate(input.trim(), sourceImageBytes) },
             modifier = Modifier.fillMaxWidth().height(48.dp),
             shape = RoundedCornerShape(12.dp),
-            enabled = input.isNotBlank() && !state.isSending,
+            enabled = !state.isSending && (
+                (isMultimodal && (input.isNotBlank() || sourceImageBytes != null)) ||
+                (!isMultimodal && input.isNotBlank())
+            ),
         ) {
             if (state.isSending) {
                 CircularProgressIndicator(

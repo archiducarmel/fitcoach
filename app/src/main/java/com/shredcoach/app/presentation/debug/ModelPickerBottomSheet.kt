@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -166,6 +167,7 @@ fun ModelPickerBottomSheet(
                                 resolved = resolved,
                                 isSelected = state.selectedModel?.info?.id == resolved.info.id &&
                                         state.selectedModel?.provider == resolved.provider,
+                                isKeyMissing = !hasKeyForProvider(state, resolved.provider),
                                 onClick = { onSelectModel(resolved) },
                             )
                         }
@@ -196,7 +198,9 @@ private fun FilterRow(
             items(ModelKind.values()) { k ->
                 FilterChipPill(
                     active = state.pickerKindFilter == k,
-                    label = "${k.emoji} ${k.name.lowercase().replace('_', ' ')}",
+                    // Fix #7 : i18n via stringResource(labelKey) au lieu de
+                    // l'enum name en anglais hardcode
+                    label = "${k.emoji} ${kindLabel(k)}",
                     onClick = { onFilterKind(if (state.pickerKindFilter == k) null else k) },
                 )
             }
@@ -290,8 +294,23 @@ private fun PublisherHeader(publisher: String, count: Int, provider: LlmProvider
     }
 }
 
+/**
+ * Verifie si une cle API est configuree pour le provider du modele.
+ * Pollinations = no auth, toujours OK.
+ */
+private fun hasKeyForProvider(state: LlmDebugState, provider: LlmProvider): Boolean = when (provider) {
+    LlmProvider.POLLINATIONS -> true
+    LlmProvider.GITHUB_MODELS -> state.apiKeyAvailable[com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.GITHUB_MODELS] == true
+    LlmProvider.NVIDIA_NIM -> state.apiKeyAvailable[com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.NVIDIA_NIM] == true
+    LlmProvider.CLOUDFLARE_AI -> state.apiKeyAvailable[com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.CLOUDFLARE_AI_TOKEN] == true &&
+        state.apiKeyAvailable[com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.CLOUDFLARE_ACCOUNT_ID] == true
+    LlmProvider.GEMINI -> state.apiKeyAvailable[com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.GEMINI] == true
+    LlmProvider.MISTRAL -> state.apiKeyAvailable[com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.MISTRAL] == true
+    LlmProvider.GROQ, LlmProvider.OPENAI, LlmProvider.CLAUDE -> state.apiKeyAvailable[com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.LLM] == true
+}
+
 @Composable
-private fun ModelRow(resolved: ResolvedModel, isSelected: Boolean, onClick: () -> Unit) {
+private fun ModelRow(resolved: ResolvedModel, isSelected: Boolean, isKeyMissing: Boolean = false, onClick: () -> Unit) {
     val info = resolved.info
     Surface(
         onClick = onClick,
@@ -319,6 +338,8 @@ private fun ModelRow(resolved: ResolvedModel, isSelected: Boolean, onClick: () -
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
+                        color = if (isKeyMissing) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
+                                else MaterialTheme.colorScheme.onSurface,
                     )
                     if (info.isGated) {
                         Icon(
@@ -326,6 +347,33 @@ private fun ModelRow(resolved: ResolvedModel, isSelected: Boolean, onClick: () -
                             Modifier.size(12.dp),
                             tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
                         )
+                    }
+                    if (isKeyMissing) {
+                        // Badge subtil "🔒 Clé requise" — model selectable mais
+                        // l'user sait qu'il devra configurer la cle avant d'envoyer.
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = MaterialTheme.colorScheme.error.copy(alpha = 0.10f),
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            ) {
+                                Icon(
+                                    Icons.Default.Lock, null,
+                                    Modifier.size(9.dp),
+                                    tint = MaterialTheme.colorScheme.error,
+                                )
+                                Text(
+                                    "clé requise",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontSize = 8.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            }
+                        }
                     }
                 }
                 Spacer(Modifier.height(2.dp))
@@ -450,6 +498,25 @@ private fun EmptyResultPlaceholder(state: LlmDebugState) {
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
         )
     }
+}
+
+@Composable
+private fun kindLabel(kind: ModelKind): String = when (kind) {
+    ModelKind.LANGUAGE -> stringResource(com.shredcoach.app.R.string.model_kind_chat)
+    ModelKind.VLM -> stringResource(com.shredcoach.app.R.string.model_kind_vlm)
+    ModelKind.EMBEDDING -> stringResource(com.shredcoach.app.R.string.model_kind_embedding)
+    ModelKind.MULTIMODAL_EMBEDDING -> stringResource(com.shredcoach.app.R.string.model_kind_embedding) + "+img"
+    ModelKind.RERANKER -> "Reranker"
+    ModelKind.IMAGE_GENERATION -> stringResource(com.shredcoach.app.R.string.model_kind_image_gen)
+    ModelKind.VIDEO_GENERATION -> "Vidéo"
+    ModelKind.TTS -> stringResource(com.shredcoach.app.R.string.model_kind_tts)
+    ModelKind.STT -> stringResource(com.shredcoach.app.R.string.model_kind_stt)
+    ModelKind.OBJECT_DETECTION -> stringResource(com.shredcoach.app.R.string.model_kind_object_detection)
+    ModelKind.OCR -> "OCR"
+    ModelKind.CLASSIFICATION -> "Safety"
+    ModelKind.REWARD_MODEL -> "Reward"
+    ModelKind.SCIENTIFIC -> "Scientifique"
+    ModelKind.OPTIMIZATION -> "Optim."
 }
 
 // ─── Filter logic ───────────────────────────────────────────────────────────

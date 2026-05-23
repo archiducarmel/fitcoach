@@ -214,30 +214,50 @@ class CloudflareAiService @Inject constructor(
 
     /**
      * Resize l'image source pour respecter la contrainte ≤ 512×512 du
-     * modele FLUX.2 Klein (equivalent Python `img.thumbnail((512,512))`).
-     * Si l'image est deja ≤ 512×512, retourne les bytes inchanges.
+     * modele FLUX.2 Klein.
+     *
+     * Fix #8 OOM protection : pour les grosses images (4000×3000 = 50 MB
+     * Bitmap), on ne decode PAS le full bitmap. On lit d'abord les bounds
+     * via `inJustDecodeBounds=true`, on calcule un `inSampleSize` qui
+     * down-sample DECODER-side (jamais alloue la full image en memoire),
+     * puis on scale finement. Garanties : peak memory ~MAX_DIM*MAX_DIM*4
+     * bytes = ~1 MB max, quelle que soit la source.
      */
     private fun resizeImageMax512(sourceBytes: ByteArray): ByteArray {
-        val bitmap = BitmapFactory.decodeByteArray(sourceBytes, 0, sourceBytes.size)
+        // 1. Lire les dimensions sans decoder (memory-cheap)
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(sourceBytes, 0, sourceBytes.size, bounds)
+        val srcW = bounds.outWidth
+        val srcH = bounds.outHeight
+        if (srcW <= 0 || srcH <= 0) throw Exception("Impossible de lire les dimensions source")
+
+        // 2. Calcul inSampleSize : puissance de 2 telle que srcDim/sampleSize ~= MAX_DIM
+        var sampleSize = 1
+        while (srcW / (sampleSize * 2) >= MAX_DIM || srcH / (sampleSize * 2) >= MAX_DIM) {
+            sampleSize *= 2
+        }
+
+        // 3. Decode avec down-sampling au decodeur
+        val decodeOpts = BitmapFactory.Options().apply { inSampleSize = sampleSize }
+        val bitmap = BitmapFactory.decodeByteArray(sourceBytes, 0, sourceBytes.size, decodeOpts)
             ?: throw Exception("Decode image source impossible")
         val w = bitmap.width
         val h = bitmap.height
-        if (w <= MAX_DIM && h <= MAX_DIM) {
-            // Recompresse en JPEG 90 pour normaliser le format
-            return ByteArrayOutputStream().apply {
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, this)
-            }.toByteArray()
-        }
-        // Scale proportionnel
-        val scale = MAX_DIM.toFloat() / maxOf(w, h)
-        val newW = (w * scale).toInt()
-        val newH = (h * scale).toInt()
-        val scaled = Bitmap.createScaledBitmap(bitmap, newW, newH, true)
+
+        // 4. Scale fin si encore au-dessus de MAX_DIM
+        val finalBmp = if (w > MAX_DIM || h > MAX_DIM) {
+            val scale = MAX_DIM.toFloat() / maxOf(w, h)
+            val newW = (w * scale).toInt().coerceAtLeast(1)
+            val newH = (h * scale).toInt().coerceAtLeast(1)
+            val scaled = Bitmap.createScaledBitmap(bitmap, newW, newH, true)
+            if (scaled !== bitmap) bitmap.recycle()
+            scaled
+        } else bitmap
+
         val out = ByteArrayOutputStream().apply {
-            scaled.compress(Bitmap.CompressFormat.JPEG, 90, this)
+            finalBmp.compress(Bitmap.CompressFormat.JPEG, 90, this)
         }.toByteArray()
-        if (scaled != bitmap) scaled.recycle()
-        bitmap.recycle()
+        finalBmp.recycle()
         return out
     }
 
