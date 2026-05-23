@@ -8,8 +8,12 @@ import com.shredcoach.app.data.local.secure.SecureKeyStore
 import com.shredcoach.app.data.remote.LlmApiService
 import com.shredcoach.app.data.remote.LlmProvider
 import com.shredcoach.app.data.remote.ChatMessage as ApiChatMessage
+import com.shredcoach.app.data.remote.EmbeddingService
 import com.shredcoach.app.data.remote.GitHubModelsCatalogService
+import com.shredcoach.app.data.remote.ImageGenerationService
 import com.shredcoach.app.data.remote.NvidiaNimCatalogService
+import com.shredcoach.app.data.remote.SttService
+import com.shredcoach.app.data.remote.TtsService
 import com.shredcoach.app.domain.llm.LlmCatalog
 import com.shredcoach.app.domain.llm.LlmModelInfo
 import com.shredcoach.app.domain.llm.ModelKind
@@ -38,6 +42,10 @@ class LlmDebugViewModel @Inject constructor(
     private val llmApiService: LlmApiService,
     private val githubCatalog: GitHubModelsCatalogService,
     private val nvidiaCatalog: NvidiaNimCatalogService,
+    private val embeddingService: EmbeddingService,
+    private val imageGenService: ImageGenerationService,
+    private val ttsService: TtsService,
+    private val sttService: SttService,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LlmDebugState())
@@ -348,6 +356,107 @@ class LlmDebugViewModel @Inject constructor(
         _state.update { it.copy(lastError = null) }
     }
 
+    // ─── EMBEDDING ──────────────────────────────────────────────────────────
+
+    fun generateEmbedding(text: String) {
+        val resolved = _state.value.selectedModel ?: return
+        val apiKey = secureKeyStore.getKey(apiKeySlotFor(resolved.provider))
+        if (apiKey.isBlank()) {
+            _state.update { it.copy(lastError = "Cle API manquante.") }
+            return
+        }
+        viewModelScope.launch {
+            _state.update { it.copy(isSending = true, lastError = null, embeddingResult = null) }
+            val result = embeddingService.embedText(
+                input = text, model = resolved.info.id, provider = resolved.provider, apiKey = apiKey,
+            )
+            result.fold(
+                onSuccess = { r ->
+                    _state.update { it.copy(isSending = false, embeddingResult = r) }
+                },
+                onFailure = { e ->
+                    _state.update { it.copy(isSending = false, lastError = e.message) }
+                },
+            )
+        }
+    }
+
+    // ─── IMAGE GENERATION ───────────────────────────────────────────────────
+
+    fun generateImage(prompt: String, size: String = "1024x1024") {
+        val resolved = _state.value.selectedModel ?: return
+        val apiKey = secureKeyStore.getKey(apiKeySlotFor(resolved.provider))
+        if (apiKey.isBlank()) {
+            _state.update { it.copy(lastError = "Cle API manquante.") }
+            return
+        }
+        viewModelScope.launch {
+            _state.update { it.copy(isSending = true, lastError = null, imageResult = null) }
+            val result = imageGenService.generate(
+                prompt = prompt, model = resolved.info.id,
+                provider = resolved.provider, apiKey = apiKey, size = size,
+            )
+            result.fold(
+                onSuccess = { r -> _state.update { it.copy(isSending = false, imageResult = r) } },
+                onFailure = { e -> _state.update { it.copy(isSending = false, lastError = e.message) } },
+            )
+        }
+    }
+
+    // ─── TTS ────────────────────────────────────────────────────────────────
+
+    fun synthesizeTts(text: String, voice: String = "default", format: String = "mp3") {
+        val resolved = _state.value.selectedModel ?: return
+        val apiKey = secureKeyStore.getKey(apiKeySlotFor(resolved.provider))
+        if (apiKey.isBlank()) {
+            _state.update { it.copy(lastError = "Cle API manquante.") }
+            return
+        }
+        viewModelScope.launch {
+            _state.update { it.copy(isSending = true, lastError = null, ttsResult = null) }
+            val result = ttsService.synthesize(
+                text = text, model = resolved.info.id, provider = resolved.provider,
+                apiKey = apiKey, voice = voice, format = format,
+            )
+            result.fold(
+                onSuccess = { r -> _state.update { it.copy(isSending = false, ttsResult = r) } },
+                onFailure = { e -> _state.update { it.copy(isSending = false, lastError = e.message) } },
+            )
+        }
+    }
+
+    // ─── STT ────────────────────────────────────────────────────────────────
+
+    fun transcribeAudio(file: java.io.File, mimeType: String, language: String? = null) {
+        val resolved = _state.value.selectedModel ?: return
+        val apiKey = secureKeyStore.getKey(apiKeySlotFor(resolved.provider))
+        if (apiKey.isBlank()) {
+            _state.update { it.copy(lastError = "Cle API manquante.") }
+            return
+        }
+        viewModelScope.launch {
+            _state.update { it.copy(isSending = true, lastError = null, sttResult = null) }
+            val result = sttService.transcribe(
+                audioFile = file, mimeType = mimeType, model = resolved.info.id,
+                provider = resolved.provider, apiKey = apiKey, language = language,
+                withTimestamps = true,
+            )
+            result.fold(
+                onSuccess = { r -> _state.update { it.copy(isSending = false, sttResult = r) } },
+                onFailure = { e -> _state.update { it.copy(isSending = false, lastError = e.message) } },
+            )
+        }
+    }
+
+    fun clearKindResults() {
+        _state.update {
+            it.copy(
+                embeddingResult = null, imageResult = null,
+                ttsResult = null, sttResult = null,
+            )
+        }
+    }
+
     // ─── Helpers ────────────────────────────────────────────────────────────
 
     private fun apiKeySlotFor(provider: LlmProvider): SecureKeyStore.Provider = when (provider) {
@@ -411,6 +520,12 @@ data class LlmDebugState(
     val messages: List<DebugChatMessage> = emptyList(),
     val isSending: Boolean = false,
     val lastError: String? = null,
+
+    // Non-chat kind results (un seul affiche a la fois selon le kind du model)
+    val embeddingResult: EmbeddingService.EmbeddingResult? = null,
+    val imageResult: ImageGenerationService.ImageGenerationResult? = null,
+    val ttsResult: TtsService.TtsResult? = null,
+    val sttResult: SttService.TranscriptionResult? = null,
 
     // API key availability (boolean only, jamais la valeur)
     val apiKeyAvailable: Map<SecureKeyStore.Provider, Boolean> = emptyMap(),

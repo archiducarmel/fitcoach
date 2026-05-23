@@ -101,19 +101,44 @@ fun LlmDebugScreen(
         },
     ) { pad ->
         Box(Modifier.fillMaxSize().padding(pad)) {
+            val selected = state.selectedModel
             when {
-                state.selectedModel == null -> EmptyState(
+                selected == null -> EmptyState(
                     state = state,
                     onPickModel = { viewModel.togglePicker() },
                     onConfigureKey = { showApiKeyDialog = it },
                 )
-                state.selectedModel!!.info.kind in setOf(ModelKind.LANGUAGE, ModelKind.VLM, ModelKind.REWARD_MODEL) ->
-                    ChatInteraction(
+                selected.info.kind == ModelKind.LANGUAGE ||
+                    selected.info.kind == ModelKind.VLM ||
+                    selected.info.kind == ModelKind.REWARD_MODEL ->
+                        ChatInteraction(
+                            state = state,
+                            onSend = { text, image -> viewModel.sendMessage(text, image) },
+                            onCancel = { viewModel.cancelStream() },
+                        )
+                selected.info.kind == ModelKind.EMBEDDING ||
+                    selected.info.kind == ModelKind.MULTIMODAL_EMBEDDING ->
+                        EmbeddingInteraction(
+                            state = state,
+                            onGenerate = { text -> viewModel.generateEmbedding(text) },
+                            onClear = { viewModel.clearKindResults() },
+                        )
+                selected.info.kind == ModelKind.IMAGE_GENERATION ->
+                    ImageGenerationInteraction(
                         state = state,
-                        onSend = { text, image -> viewModel.sendMessage(text, image) },
-                        onCancel = { viewModel.cancelStream() },
+                        onGenerate = { prompt, size -> viewModel.generateImage(prompt, size) },
                     )
-                else -> UnsupportedKindPlaceholder(state.selectedModel!!.info.kind)
+                selected.info.kind == ModelKind.TTS ->
+                    TtsInteraction(
+                        state = state,
+                        onSynthesize = { text, voice, format -> viewModel.synthesizeTts(text, voice, format) },
+                    )
+                selected.info.kind == ModelKind.STT ->
+                    SttInteraction(
+                        state = state,
+                        onTranscribe = { file, mime, lang -> viewModel.transcribeAudio(file, mime, lang) },
+                    )
+                else -> UnsupportedKindPlaceholder(selected.info.kind)
             }
         }
 
