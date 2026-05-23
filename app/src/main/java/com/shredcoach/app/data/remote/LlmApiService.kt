@@ -193,7 +193,11 @@ class LlmApiService @Inject constructor(
 ) {
 
     private val client = baseClient.newBuilder()
-        .readTimeout(120, TimeUnit.SECONDS)
+        // 300s pour supporter les modeles reasoning (DeepSeek V4 Pro, Kimi K2.6,
+        // Nemotron Ultra, GLM 5.1, QwQ) qui prennent 1-5 min avec thinking active.
+        // Le streaming SSE reset le timer entre tokens donc 300s sur readTimeout
+        // (per-byte) est conservateur sans degrader les chat rapides.
+        .readTimeout(300, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
 
