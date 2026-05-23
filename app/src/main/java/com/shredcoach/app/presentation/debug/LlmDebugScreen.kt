@@ -497,10 +497,14 @@ private fun ChatInteraction(
         }
     }
 
-    // Auto-scroll vers le bas quand un nouveau message arrive
-    LaunchedEffect(state.messages.size, state.messages.lastOrNull()?.text?.length) {
+    // Auto-scroll : déclenché UNIQUEMENT quand le nombre de messages change
+    // (= nouveau message ajouté). Le scroll incremental pendant le streaming
+    // est evite car les ~500 changements de text.length/sec saturaient le
+    // dispatcher Main avec des animateScrollToItem cancelable -> empechait
+    // les recompositions de bubble.
+    LaunchedEffect(state.messages.size) {
         if (state.messages.isNotEmpty()) {
-            scope.launch { scrollState.animateScrollToItem(state.messages.lastIndex) }
+            scrollState.animateScrollToItem(state.messages.lastIndex)
         }
     }
 

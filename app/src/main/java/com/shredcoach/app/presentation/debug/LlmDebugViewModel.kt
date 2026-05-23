@@ -370,23 +370,44 @@ class LlmDebugViewModel @Inject constructor(
                 }
 
                 var tokenCount = 0
+                var lastUiUpdateMs = 0L
+                val UPDATE_INTERVAL_MS = 50L
                 flow.collect { token ->
                     tokenCount++
                     if (tokenCount <= 3 || tokenCount % 20 == 0) {
                         android.util.Log.d("LlmDiag", "◀ VM token #$tokenCount : '${token.take(40)}'")
                     }
                     responseBuf.append(token)
-                    // Update in-place le dernier message (assistant placeholder)
-                    _state.update { st ->
-                        val msgs = st.messages.toMutableList()
-                        val idx = msgs.lastIndex
-                        if (idx >= 0 && msgs[idx].role == "assistant") {
-                            msgs[idx] = msgs[idx].copy(text = responseBuf.toString())
+                    // ROOT CAUSE FIX : throttle UI updates to 20 FPS (50ms).
+                    // Sans ce throttle, les ~500 updates/sec saturaient le Main
+                    // dispatcher (chaque update = StateFlow emit + Snapshot notif
+                    // + auto-scroll relance) ce qui empechait Choreographer de
+                    // fire des frames -> 0 recomposition pendant le stream ->
+                    // bulle invisible jusqu'a la fin du stream.
+                    val now = System.currentTimeMillis()
+                    if (now - lastUiUpdateMs >= UPDATE_INTERVAL_MS) {
+                        lastUiUpdateMs = now
+                        _state.update { st ->
+                            val msgs = st.messages.toMutableList()
+                            val idx = msgs.lastIndex
+                            if (idx >= 0 && msgs[idx].role == "assistant") {
+                                msgs[idx] = msgs[idx].copy(text = responseBuf.toString())
+                            }
+                            st.copy(messages = msgs)
                         }
-                        st.copy(messages = msgs)
                     }
                 }
                 android.util.Log.d("LlmDiag", "✓ VM stream FINISHED : tokenCount=$tokenCount responseLength=${responseBuf.length}")
+                // Update final OBLIGATOIRE : garantit que le dernier texte est
+                // affiche meme si le throttle a skip le dernier token.
+                _state.update { st ->
+                    val msgs = st.messages.toMutableList()
+                    val idx = msgs.lastIndex
+                    if (idx >= 0 && msgs[idx].role == "assistant") {
+                        msgs[idx] = msgs[idx].copy(text = responseBuf.toString())
+                    }
+                    st.copy(messages = msgs)
+                }
                 val latency = System.currentTimeMillis() - startMs
                 // Finalize message (stop streaming indicator + add metadata)
                 _state.update { st ->
