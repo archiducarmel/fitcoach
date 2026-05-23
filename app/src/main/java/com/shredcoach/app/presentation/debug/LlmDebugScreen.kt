@@ -107,6 +107,11 @@ fun LlmDebugScreen(
                 onReset = { viewModel.resetSession() },
             )
         },
+        // Inclus l'IME dans les contentWindowInsets du Scaffold -> pad.bottom
+        // grandit quand le clavier ouvre, donc le Box racine retrecit
+        // automatiquement. Plus besoin d'imePadding manuel sur les enfants
+        // (qui causaient un double-padding qui ecrasait le contenu en haut).
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets.safeDrawing,
     ) { pad ->
         // Pattern Material3 standard : Box racine prend juste le padding du
         // Scaffold (status bar top, nav bar bottom). PAS d'imePadding ici.
@@ -508,18 +513,12 @@ private fun ChatInteraction(
         }
     }
 
-    // PATTERN MATERIAL3 CANONIQUE pour chat avec IME :
-    // - Column OUTER applique .imePadding() pour consommer l'IME inset sur
-    //   l'ensemble du contenu chat (LazyColumn + InputBar montent ensemble
-    //   quand le clavier ouvre).
-    // - LazyColumn weight=1f recoit la hauteur RESTANTE apres InputBar.
-    // - InputBar n'a PLUS d'imePadding (sinon double-consumption).
-    // - .navigationBarsPadding() reste sur InputBar pour respecter la nav bar.
-    Column(
-        Modifier
-            .fillMaxSize()
-            .imePadding(),
-    ) {
+    // L'IME est gere au niveau du Scaffold (contentWindowInsets = safeDrawing).
+    // Le Box racine retrecit automatiquement quand le clavier ouvre, donc
+    // cette Column reçoit deja la hauteur RESTANTE apres clavier. Plus besoin
+    // d'imePadding ici. LazyColumn weight=1f remplit le haut, InputBar reste
+    // au bas juste au-dessus du clavier.
+    Column(Modifier.fillMaxSize()) {
         android.util.Log.d("LlmDiag", "▶ ChatInteraction recompose messages.size=${state.messages.size}")
         // Messages list (weight 1f)
         LazyColumn(
@@ -612,9 +611,8 @@ private fun ChatInputBar(
         Column(
             Modifier
                 .fillMaxWidth()
-                // PAS d'imePadding ici : applique sur la Column parent de
-                // ChatInteraction. navigationBarsPadding reste pour edge-to-edge.
-                .navigationBarsPadding()
+                // PAS de navigationBarsPadding/imePadding ici : Scaffold gere
+                // tous les insets via contentWindowInsets = safeDrawing.
                 .padding(horizontal = 12.dp, vertical = 8.dp),
         ) {
             // Image attachment preview
