@@ -272,16 +272,24 @@ class LlmDebugViewModel @Inject constructor(
      * Streaming SSE pour CHAT/VLM via LlmApiService.streamMessage.
      */
     fun sendMessage(text: String, imageBitmap: Bitmap? = null) {
+        android.util.Log.d("LlmDiag", "═══ sendMessage CALLED text='${text.take(40)}' image=${imageBitmap != null} ═══")
         val resolved = _state.value.selectedModel ?: run {
+            android.util.Log.e("LlmDiag", "× selectedModel == null — abort")
             _state.update { it.copy(lastError = "Selectionne un modele d'abord.") }
             return
         }
-        if (text.isBlank() && imageBitmap == null) return
+        android.util.Log.d("LlmDiag", "▶ resolved provider=${resolved.provider} model=${resolved.info.id} kind=${resolved.info.kind}")
+        if (text.isBlank() && imageBitmap == null) {
+            android.util.Log.w("LlmDiag", "× text blank + no image — abort silently")
+            return
+        }
 
         // Get API key for the provider
         val keySlot = apiKeySlotFor(resolved.provider)
         val apiKey = secureKeyStore.getKey(keySlot)
+        android.util.Log.d("LlmDiag", "▶ keySlot=$keySlot apiKey present=${apiKey.isNotBlank()} length=${apiKey.length}")
         if (apiKey.isBlank()) {
+            android.util.Log.e("LlmDiag", "× apiKey blank for slot=$keySlot — abort")
             _state.update { it.copy(lastError = "Cle API manquante pour ${resolved.provider.displayName}.") }
             return
         }
@@ -379,16 +387,18 @@ class LlmDebugViewModel @Inject constructor(
                     st.copy(messages = msgs, isSending = false)
                 }
             } catch (e: Exception) {
+                android.util.Log.e("LlmDiag", "× sendMessage caught exception", e)
+                val errMsg = e.message ?: "${e.javaClass.simpleName} (pas de message)"
                 _state.update { st ->
                     val msgs = st.messages.toMutableList()
                     val idx = msgs.lastIndex
                     if (idx >= 0 && msgs[idx].role == "assistant") {
                         msgs[idx] = msgs[idx].copy(
                             isStreaming = false,
-                            error = e.message ?: "Echec inconnu",
+                            error = errMsg,
                         )
                     }
-                    st.copy(messages = msgs, isSending = false, lastError = e.message)
+                    st.copy(messages = msgs, isSending = false, lastError = errMsg)
                 }
             }
         }

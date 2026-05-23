@@ -59,6 +59,7 @@ class NvidiaNimCatalogService @Inject constructor(
         }
 
         try {
+            Log.d("LlmDiag", "▶ NVIDIA fetchCatalog url=$BASE_URL/models apiKey length=${apiKey.length} prefix=${apiKey.take(8)}…")
             val request = Request.Builder()
                 .url("$BASE_URL/models")
                 .header("Authorization", "Bearer $apiKey")
@@ -67,6 +68,8 @@ class NvidiaNimCatalogService @Inject constructor(
                 .build()
             val response = client.newCall(request).execute()
             val body = response.body?.string() ?: throw Exception("Réponse vide")
+            Log.d("LlmDiag", "◀ NVIDIA fetchCatalog HTTP ${response.code} body.size=${body.length}")
+            Log.d("LlmDiag", "◀ NVIDIA body (first 500) : ${body.take(500)}")
             if (!response.isSuccessful) {
                 // Friendly error mapping
                 val friendly = when (response.code) {

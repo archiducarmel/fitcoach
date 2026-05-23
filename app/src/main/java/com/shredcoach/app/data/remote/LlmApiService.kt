@@ -589,9 +589,16 @@ The user's personalized data follows below (only sent on the first message)."""
 
         val request = buildOpenAiRequest(provider, apiKey, body)
 
+        // ── LOGCAT DIAGNOSTIC ──
+        android.util.Log.d("LlmDiag", "▶ STREAM provider=$provider model=$model url=${provider.baseUrl}")
+        android.util.Log.d("LlmDiag", "▶ apiKey length=${apiKey.length} prefix=${apiKey.take(6)}…")
+        android.util.Log.d("LlmDiag", "▶ body size=${body.length} bytes (first 200) : ${body.take(200)}")
+
         val response = client.newCall(request).execute()
+        android.util.Log.d("LlmDiag", "◀ HTTP ${response.code} ${response.message} from $provider")
         if (!response.isSuccessful) {
             val errorBody = response.body?.string() ?: ""
+            android.util.Log.e("LlmDiag", "◀ ERROR body (first 500) : ${errorBody.take(500)}")
             throw Exception("Erreur ${response.code}: ${extractError(errorBody)}")
         }
 
