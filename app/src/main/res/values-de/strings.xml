@@ -1060,6 +1060,11 @@
     <string name="model_kind_tts">Sprachsynthese</string>
     <string name="model_kind_stt">Audio-Transkription</string>
     <string name="model_kind_object_detection">Objekterkennung</string>
+    <!-- AI Playground -->
+    <string name="settings_section_playground">🎮 KI-Playground</string>
+    <string name="settings_playground_title">Beliebiges KI-Modell testen</string>
+    <string name="settings_playground_subtitle">Chat, Vision, Embeddings, Bild, Audio — 150+ Modelle von GitHub + NVIDIA NIM</string>
+    <string name="playground_title">🎮 KI-Playground</string>
     <!-- Presets -->
     <string name="llm_settings_presets_header">Schnellkonfigurationen</string>
     <string name="llm_preset_economic">Sparsam</string>

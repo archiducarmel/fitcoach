@@ -624,39 +624,50 @@ fun SettingsScreen(
                 // tester les builders context-aware sans attendre l'heure de
                 // l'alarme. Compile-time guard via BuildConfig.DEBUG —
                 // disparaît du build release (R8 dead-code elimination).
+                // ═══ PLAYGROUND IA (pérenne, accessible en production) ═══
+                // Promu depuis "Debug" en feature permanente : interagir avec
+                // tous les modèles IA intégrés (CHAT/VLM/Embedding/ImageGen/
+                // TTS/STT) avec test de qualité avant adoption en production.
+                SettingsSection(
+                    stringResource(R.string.settings_section_playground),
+                    Icons.Default.Science,
+                ) {
+                    Surface(
+                        onClick = { navController.navigate(com.shredcoach.app.presentation.navigation.Screen.LlmDebugPlayground.route) },
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
+                    ) {
+                        Row(
+                            Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            Text("🎮", fontSize = 24.sp)
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    stringResource(R.string.settings_playground_title),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Text(
+                                    stringResource(R.string.settings_playground_subtitle),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                )
+                            }
+                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null,
+                                Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f))
+                        }
+                    }
+                }
+
                 if (com.shredcoach.app.BuildConfig.DEBUG) {
                     SettingsSection("🛠 Debug : test notifications", Icons.Default.BugReport) {
                         NotifDebugSection(context = context)
-                    }
-                    // Debug LLM Playground — accessible uniquement en build debug
-                    SettingsSection("🧪 Debug : Playground Modèles IA", Icons.Default.Science) {
-                        Surface(
-                            onClick = { navController.navigate(com.shredcoach.app.presentation.navigation.Screen.LlmDebugPlayground.route) },
-                            shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.surface,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
-                        ) {
-                            Row(
-                                Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            ) {
-                                Text("🧪", fontSize = 24.sp)
-                                Column(Modifier.weight(1f)) {
-                                    Text("Tester n'importe quel modèle IA",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.SemiBold)
-                                    Text("CHAT/VLM + 150+ modèles GitHub Models + NVIDIA NIM",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-                                }
-                                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null,
-                                    Modifier.size(20.dp),
-                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f))
-                            }
-                        }
                     }
                 }
 

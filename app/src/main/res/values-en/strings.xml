@@ -1093,6 +1093,11 @@
     <string name="model_kind_tts">Text-to-speech</string>
     <string name="model_kind_stt">Speech-to-text</string>
     <string name="model_kind_object_detection">Object detection</string>
+    <!-- AI Playground -->
+    <string name="settings_section_playground">🎮 AI Playground</string>
+    <string name="settings_playground_title">Try any AI model</string>
+    <string name="settings_playground_subtitle">Chat, vision, embeddings, image, audio — 150+ models from GitHub + NVIDIA NIM</string>
+    <string name="playground_title">🎮 AI Playground</string>
     <!-- One-tap presets to configure all 19 assistants -->
     <string name="llm_settings_presets_header">Quick presets</string>
     <string name="llm_preset_economic">Economic</string>

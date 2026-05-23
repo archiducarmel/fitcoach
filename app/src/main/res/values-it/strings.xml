@@ -1170,6 +1170,11 @@
     <string name="model_kind_tts">Sintesi vocale</string>
     <string name="model_kind_stt">Trascrizione audio</string>
     <string name="model_kind_object_detection">Rilevamento oggetti</string>
+    <!-- AI Playground -->
+    <string name="settings_section_playground">🎮 Playground IA</string>
+    <string name="settings_playground_title">Prova qualsiasi modello IA</string>
+    <string name="settings_playground_subtitle">Chat, visione, embeddings, immagini, audio — 150+ modelli GitHub + NVIDIA NIM</string>
+    <string name="playground_title">🎮 Playground IA</string>
     <!-- Presets -->
     <string name="llm_settings_presets_header">Configurazioni rapide</string>
     <string name="llm_preset_economic">Economico</string>

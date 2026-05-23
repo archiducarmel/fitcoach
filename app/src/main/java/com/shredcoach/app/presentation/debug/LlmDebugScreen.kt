@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -67,8 +68,10 @@ import com.shredcoach.app.domain.llm.ModelKind
 import kotlinx.coroutines.launch
 
 /**
- * Debug page : playground multi-modal pour interagir avec n'importe quel
- * modele IA integre. Routing UI selon `selectedModel.kind`.
+ * Playground IA : page perenne multi-modale qui permet d'interagir avec
+ * n'importe quel modele IA integre (LANGUAGE/VLM/Embedding/ImageGen/TTS/STT).
+ *
+ * Routing UI selon `selectedModel.kind` -> sous-ecran dedie.
  *
  * **Polish FAANG-grade** :
  *  - Header sticky avec model picker (chip tap → bottom sheet plein ecran)
@@ -79,6 +82,10 @@ import kotlinx.coroutines.launch
  *  - Inline error states avec retry
  *  - Animations slide-in/fade pour les messages
  *  - Bouton attach image visible uniquement si model.acceptsImageInput
+ *
+ * NOTE: les fichiers du package `presentation/debug/` ne sont pas renommes
+ * pour preserver l'historique Git. Le nom "debug" est purement interne — UI
+ * et nav route exposees a l'user disent "Playground" partout.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -199,7 +206,7 @@ private fun DebugTopBar(
         TopAppBar(
             title = {
                 Text(
-                    "🧪 Debug Modèles IA",
+                    stringResource(com.shredcoach.app.R.string.playground_title),
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 18.sp,
                 )
