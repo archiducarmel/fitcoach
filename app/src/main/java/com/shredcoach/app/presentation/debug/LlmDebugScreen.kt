@@ -107,16 +107,10 @@ fun LlmDebugScreen(
             )
         },
     ) { pad ->
-        Box(
-            Modifier
-                .fillMaxSize()
-                .padding(pad)
-                // Centralise IME inset pour TOUTES les sous-pages (chat, embedding,
-                // image, TTS, STT). Sans ce padding, la zone InputBar montait par
-                // dessus le contenu sans retrecir le content area → 90% de
-                // l'ecran pris par InputBar+clavier. TopBar reste fixe en haut.
-                .imePadding(),
-        ) {
+        Box(Modifier.fillMaxSize().padding(pad)) {
+            // PAS de .imePadding() ici : Scaffold + enableEdgeToEdge gerent l'IME
+            // au niveau du systeme. Les InputBars de chaque sous-page (ChatInputBar,
+            // EmbeddingInput, etc.) appliquent .imePadding() localement.
             // ── Bandeau d'erreur global (catalogError + lastError) ─────────────
             // Visible immediatement (pas confine au bottom sheet). Sans ca,
             // l'utilisateur ne voyait pas pourquoi rien ne fonctionnait.
@@ -608,10 +602,8 @@ private fun ChatInputBar(
         Column(
             Modifier
                 .fillMaxWidth()
+                .imePadding()
                 .navigationBarsPadding()
-                // .imePadding() retire : centralise sur le Column parent de
-                // ChatInteraction pour eviter le double-padding qui crevait
-                // le layout (InputBar montait + LazyColumn ne se retrecissait pas).
                 .padding(horizontal = 12.dp, vertical = 8.dp),
         ) {
             // Image attachment preview

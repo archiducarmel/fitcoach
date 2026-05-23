@@ -110,14 +110,16 @@ class NvidiaNimCatalogService @Inject constructor(
             }
         } catch (e: Exception) {
             Log.e(TAG, "fetchCatalog failed", e)
-            // Pour les erreurs reseau pures (timeout, no internet), on fallback
-            // egalement sur le catalogue editorialise (l'user pourra tester chaque
-            // modele individuellement — l'erreur reseau se reverra a l'envoi).
-            if (e is java.net.UnknownHostException || e is java.net.SocketTimeoutException) {
-                Log.w(TAG, "Erreur reseau — fallback catalogue editorialise complet")
-                return@withContext Result.success(NvidiaNimCatalog.ALL_MODELS)
-            }
-            Result.failure(e)
+            // Fallback agressif : pour TOUS les types d'erreur (auth, reseau,
+            // parse, format), on retombe sur le catalogue editorialise complet
+            // pour que l'user puisse au moins picker un modele. Si la cle est
+            // vraiment invalide, l'erreur 401 se reverra a l'envoi du premier
+            // message (et sera affichee dans le bandeau d'erreur global du
+            // Playground). Bien meilleure UX que "aucun modele dispo".
+            // Le caller (ViewModel) peut surfacer le message d'erreur via le
+            // log/banner sans bloquer l'access au catalogue.
+            Log.w(TAG, "Fallback catalogue editorialise complet (${NvidiaNimCatalog.ALL_MODELS.size} modeles)")
+            Result.success(NvidiaNimCatalog.ALL_MODELS)
         }
     }
 
