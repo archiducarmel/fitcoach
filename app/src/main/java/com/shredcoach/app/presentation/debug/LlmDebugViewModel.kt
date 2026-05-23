@@ -8,10 +8,12 @@ import com.shredcoach.app.data.local.secure.SecureKeyStore
 import com.shredcoach.app.data.remote.LlmApiService
 import com.shredcoach.app.data.remote.LlmProvider
 import com.shredcoach.app.data.remote.ChatMessage as ApiChatMessage
+import com.shredcoach.app.data.remote.CloudflareAiService
 import com.shredcoach.app.data.remote.EmbeddingService
 import com.shredcoach.app.data.remote.GitHubModelsCatalogService
 import com.shredcoach.app.data.remote.ImageGenerationService
 import com.shredcoach.app.data.remote.NvidiaNimCatalogService
+import com.shredcoach.app.data.remote.PollinationsService
 import com.shredcoach.app.data.remote.SttService
 import com.shredcoach.app.data.remote.TtsService
 import com.shredcoach.app.domain.llm.LlmCatalog
@@ -46,6 +48,8 @@ class LlmDebugViewModel @Inject constructor(
     private val imageGenService: ImageGenerationService,
     private val ttsService: TtsService,
     private val sttService: SttService,
+    private val pollinationsService: PollinationsService,
+    private val cloudflareAiService: CloudflareAiService,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LlmDebugState())
@@ -167,14 +171,8 @@ class LlmDebugViewModel @Inject constructor(
      * "presente ou pas" pour eviter de leak la cle via state inspection.
      */
     private fun refreshApiKeyAvailability() {
-        val avail = mapOf(
-            SecureKeyStore.Provider.GITHUB_MODELS to secureKeyStore.hasKey(SecureKeyStore.Provider.GITHUB_MODELS),
-            SecureKeyStore.Provider.NVIDIA_NIM to secureKeyStore.hasKey(SecureKeyStore.Provider.NVIDIA_NIM),
-            SecureKeyStore.Provider.LLM to secureKeyStore.hasKey(SecureKeyStore.Provider.LLM),
-            SecureKeyStore.Provider.GEMINI to secureKeyStore.hasKey(SecureKeyStore.Provider.GEMINI),
-            SecureKeyStore.Provider.GROQ_MEAL to secureKeyStore.hasKey(SecureKeyStore.Provider.GROQ_MEAL),
-            SecureKeyStore.Provider.MISTRAL to secureKeyStore.hasKey(SecureKeyStore.Provider.MISTRAL),
-        )
+        val avail = SecureKeyStore.Provider.values()
+            .associateWith { secureKeyStore.hasKey(it) }
         _state.update { it.copy(apiKeyAvailable = avail) }
     }
 
@@ -381,26 +379,68 @@ class LlmDebugViewModel @Inject constructor(
         }
     }
 
-    // ─── IMAGE GENERATION ───────────────────────────────────────────────────
+    // ─── IMAGE GENERATION (txt2img + img2img, multi-providers) ──────────────
 
-    fun generateImage(prompt: String, size: String = "1024x1024") {
+    /**
+     * Genere une image txt2img. Route vers le service selon le provider :
+     *  - POLLINATIONS  → PollinationsService (no auth)
+     *  - CLOUDFLARE_AI → CloudflareAiService.txt2img (Account ID + token)
+     *  - autres        → ImageGenerationService (OpenAI-compatible)
+     */
+    fun generateImage(prompt: String, size: String = "1024x1024", sourceImageBytes: ByteArray? = null) {
         val resolved = _state.value.selectedModel ?: return
-        val apiKey = secureKeyStore.getKey(apiKeySlotFor(resolved.provider))
-        if (apiKey.isBlank()) {
-            _state.update { it.copy(lastError = "Cle API manquante.") }
-            return
-        }
         viewModelScope.launch {
             _state.update { it.copy(isSending = true, lastError = null, imageResult = null) }
-            val result = imageGenService.generate(
-                prompt = prompt, model = resolved.info.id,
-                provider = resolved.provider, apiKey = apiKey, size = size,
-            )
+            val (w, h) = parseSize(size)
+            val result = when (resolved.provider) {
+                LlmProvider.POLLINATIONS -> pollinationsService.generate(
+                    prompt = prompt, model = resolved.info.id,
+                    width = w, height = h,
+                )
+                LlmProvider.CLOUDFLARE_AI -> {
+                    val token = secureKeyStore.getKey(SecureKeyStore.Provider.CLOUDFLARE_AI_TOKEN)
+                    val accountId = secureKeyStore.getKey(SecureKeyStore.Provider.CLOUDFLARE_ACCOUNT_ID)
+                    if (token.isBlank() || accountId.isBlank()) {
+                        _state.update { it.copy(isSending = false, lastError = "Cloudflare : Token + Account ID requis.") }
+                        return@launch
+                    }
+                    if (resolved.info.acceptsImageInput && sourceImageBytes != null) {
+                        cloudflareAiService.img2img(
+                            prompt = prompt, sourceImageBytes = sourceImageBytes,
+                            model = resolved.info.id, accountId = accountId, token = token,
+                            outputWidth = w, outputHeight = h,
+                        )
+                    } else {
+                        cloudflareAiService.txt2img(
+                            prompt = prompt, model = resolved.info.id,
+                            accountId = accountId, token = token,
+                        )
+                    }
+                }
+                else -> {
+                    val apiKey = secureKeyStore.getKey(apiKeySlotFor(resolved.provider))
+                    if (apiKey.isBlank()) {
+                        _state.update { it.copy(isSending = false, lastError = "Cle API manquante.") }
+                        return@launch
+                    }
+                    imageGenService.generate(
+                        prompt = prompt, model = resolved.info.id,
+                        provider = resolved.provider, apiKey = apiKey, size = size,
+                    )
+                }
+            }
             result.fold(
                 onSuccess = { r -> _state.update { it.copy(isSending = false, imageResult = r) } },
                 onFailure = { e -> _state.update { it.copy(isSending = false, lastError = e.message) } },
             )
         }
+    }
+
+    private fun parseSize(s: String): Pair<Int, Int> {
+        val parts = s.split('x', 'X', '×')
+        val w = parts.getOrNull(0)?.toIntOrNull() ?: 1024
+        val h = parts.getOrNull(1)?.toIntOrNull() ?: 1024
+        return w to h
     }
 
     // ─── TTS ────────────────────────────────────────────────────────────────
@@ -467,6 +507,8 @@ class LlmDebugViewModel @Inject constructor(
         LlmProvider.OPENAI -> SecureKeyStore.Provider.LLM
         LlmProvider.CLAUDE -> SecureKeyStore.Provider.LLM
         LlmProvider.MISTRAL -> SecureKeyStore.Provider.MISTRAL
+        LlmProvider.POLLINATIONS -> SecureKeyStore.Provider.LLM // pas utilise (no auth)
+        LlmProvider.CLOUDFLARE_AI -> SecureKeyStore.Provider.CLOUDFLARE_AI_TOKEN
     }
 }
 

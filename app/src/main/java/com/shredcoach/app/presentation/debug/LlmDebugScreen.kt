@@ -133,7 +133,9 @@ fun LlmDebugScreen(
                 selected.info.kind == ModelKind.IMAGE_GENERATION ->
                     ImageGenerationInteraction(
                         state = state,
-                        onGenerate = { prompt, size -> viewModel.generateImage(prompt, size) },
+                        onGenerate = { prompt, size, sourceBytes ->
+                            viewModel.generateImage(prompt, size, sourceBytes)
+                        },
                     )
                 selected.info.kind == ModelKind.TTS ->
                     TtsInteraction(
@@ -360,7 +362,7 @@ private fun EmptyState(
             Text("Choisir un modèle", fontWeight = FontWeight.Bold, fontSize = 15.sp)
         }
         Spacer(Modifier.height(16.dp))
-        // Quick-access API key buttons
+        // Quick-access API key buttons (2 rangees pour ne pas trop charger)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             ApiKeyShortcut(
                 label = "Token GitHub",
@@ -375,6 +377,27 @@ private fun EmptyState(
                 onClick = { onConfigureKey(SecureKeyStore.Provider.NVIDIA_NIM) },
             )
         }
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            ApiKeyShortcut(
+                label = "CF Token",
+                isSet = state.apiKeyAvailable[SecureKeyStore.Provider.CLOUDFLARE_AI_TOKEN] == true,
+                modifier = Modifier.weight(1f),
+                onClick = { onConfigureKey(SecureKeyStore.Provider.CLOUDFLARE_AI_TOKEN) },
+            )
+            ApiKeyShortcut(
+                label = "CF Account",
+                isSet = state.apiKeyAvailable[SecureKeyStore.Provider.CLOUDFLARE_ACCOUNT_ID] == true,
+                modifier = Modifier.weight(1f),
+                onClick = { onConfigureKey(SecureKeyStore.Provider.CLOUDFLARE_ACCOUNT_ID) },
+            )
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(
+            "🌸 Pollinations ne nécessite pas de clé.",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+        )
     }
 }
 
@@ -675,11 +698,15 @@ private fun ApiKeyEntryDialog(
     val titlePrefix = when (provider) {
         SecureKeyStore.Provider.GITHUB_MODELS -> "🐙 Token GitHub"
         SecureKeyStore.Provider.NVIDIA_NIM -> "🟢 Clé NVIDIA"
+        SecureKeyStore.Provider.CLOUDFLARE_AI_TOKEN -> "🟠 Clé Cloudflare AI"
+        SecureKeyStore.Provider.CLOUDFLARE_ACCOUNT_ID -> "🟠 Cloudflare Account ID"
         else -> "Clé ${provider.name}"
     }
     val hint = when (provider) {
         SecureKeyStore.Provider.GITHUB_MODELS -> "PAT GitHub (ghp_xxx). Crée-en un sur github.com/settings/tokens avec le scope models:read."
         SecureKeyStore.Provider.NVIDIA_NIM -> "Clé nvapi-xxx. Obtiens-la sur build.nvidia.com après login."
+        SecureKeyStore.Provider.CLOUDFLARE_AI_TOKEN -> "Token cfat-xxx. Profil → API Tokens → Create avec template \"Workers AI\". Pense aussi à enregistrer ton Account ID séparément."
+        SecureKeyStore.Provider.CLOUDFLARE_ACCOUNT_ID -> "32 chars hex visible en haut à droite du dashboard Cloudflare (dash.cloudflare.com)."
         else -> "Clé API du provider"
     }
 
@@ -769,6 +796,8 @@ internal fun ProviderAvatar(provider: LlmProvider, size: androidx.compose.ui.uni
         LlmProvider.MISTRAL -> Color(0xFFFF7000) to Color.White
         LlmProvider.GITHUB_MODELS -> Color(0xFF1F2328) to Color.White
         LlmProvider.NVIDIA_NIM -> Color(0xFF76B900) to Color.Black
+        LlmProvider.POLLINATIONS -> Color(0xFFEC4899) to Color.White
+        LlmProvider.CLOUDFLARE_AI -> Color(0xFFF38020) to Color.White
     }
     Box(
         Modifier

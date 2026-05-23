@@ -115,6 +115,34 @@ enum class LlmProvider(
         defaultModel = "meta/llama-3.3-70b-instruct",
         iconLabel = "NV",
     ),
+    /**
+     * Pollinations : API gratuite text-to-image, sans cle, sans inscription.
+     * Endpoint GET avec prompt URL-encode dans le path. Reponse = binaire
+     * directement (PNG/JPEG). Modeles : flux, turbo, kontext, gptimage.
+     *
+     * Pas supportsChat = pas conversationnel (image gen only).
+     */
+    POLLINATIONS(
+        displayName = "Pollinations",
+        baseUrl = "https://image.pollinations.ai/prompt",
+        defaultModel = "flux",
+        iconLabel = "🌸",
+        supportsChat = false,
+    ),
+    /**
+     * Cloudflare Workers AI : 10k neurons/jour gratuits avec compte.
+     * Auth = Bearer token + Account ID dans l'URL.
+     * Endpoint POST a /accounts/{accountId}/ai/run/{model}
+     * Modeles : 4 txt2img (flux-schnell, sdxl-lightning, sdxl, dreamshaper)
+     * + 2 img2img (sd-v1.5-img2img, flux-2-klein-9b multipart).
+     */
+    CLOUDFLARE_AI(
+        displayName = "Cloudflare AI",
+        baseUrl = "https://api.cloudflare.com/client/v4/accounts",
+        defaultModel = "@cf/black-forest-labs/flux-1-schnell",
+        iconLabel = "CF",
+        supportsChat = false,
+    ),
 }
 
 // ══════════════════════════════════════════

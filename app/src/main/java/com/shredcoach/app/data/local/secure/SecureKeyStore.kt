@@ -46,6 +46,10 @@ class SecureKeyStore @Inject constructor(
         GITHUB_MODELS,
         /** NVIDIA NIM — API key nvapi-xxx pour 150+ modeles NIM. */
         NVIDIA_NIM,
+        /** Cloudflare Workers AI — API token cfat-xxx (10k neurons/jour gratuits). */
+        CLOUDFLARE_AI_TOKEN,
+        /** Cloudflare Workers AI — Account ID (32 chars hex, visible sur dashboard). */
+        CLOUDFLARE_ACCOUNT_ID,
     }
 
     private val masterKey: MasterKey = MasterKey.Builder(context)

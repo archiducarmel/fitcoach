@@ -107,6 +107,8 @@ object LlmPricing {
     private fun pricingDefaultFor(provider: LlmProvider): ModelPricing? = when (provider) {
         LlmProvider.GITHUB_MODELS -> FREE_TIER
         LlmProvider.NVIDIA_NIM -> FREE_TIER
+        LlmProvider.POLLINATIONS -> FREE_TIER
+        LlmProvider.CLOUDFLARE_AI -> FREE_TIER
         else -> null
     }
 

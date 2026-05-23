@@ -80,6 +80,8 @@ object LlmQuotaDetector {
             LlmProvider.MISTRAL -> classifyMistral(httpCode, body)
             LlmProvider.GITHUB_MODELS -> classifyGitHubModels(httpCode, body, retryAfterSec)
             LlmProvider.NVIDIA_NIM -> classifyNvidiaNim(httpCode, body, retryAfterSec)
+            LlmProvider.POLLINATIONS -> classifyPollinations(httpCode, body)
+            LlmProvider.CLOUDFLARE_AI -> classifyCloudflareAi(httpCode, body, retryAfterSec)
         }
     }
 
@@ -189,6 +191,31 @@ object LlmQuotaDetector {
      */
     private fun classifyNvidiaNim(httpCode: Int, body: String, retryAfterSec: Long?): Classification {
         if (body.contains("free credits exhausted") || body.contains("credits depleted")) {
+            return Classification.QUOTA_EXHAUSTED
+        }
+        if (retryAfterSec != null && retryAfterSec > 3600) return Classification.QUOTA_EXHAUSTED
+        return Classification.TRANSIENT
+    }
+
+    /**
+     * Pollinations — API gratuite, pas d'auth. Les erreurs principales sont
+     * surcharge serveur (503/504) plutot que quota.
+     */
+    private fun classifyPollinations(httpCode: Int, body: String): Classification {
+        if (httpCode == 503 || httpCode == 504) return Classification.TRANSIENT
+        if (body.contains("rate limit") || body.contains("too many")) return Classification.TRANSIENT
+        return Classification.OTHER
+    }
+
+    /**
+     * Cloudflare Workers AI — free tier = 10k neurons/jour. Erreurs courantes :
+     *  - 429 + "neurons exhausted" -> QUOTA_EXHAUSTED (jusqu'au reset minuit UTC)
+     *  - 401 / "invalid token" -> AUTH_ERROR
+     *  - 403 + Account ID incorrect -> AUTH_ERROR
+     */
+    private fun classifyCloudflareAi(httpCode: Int, body: String, retryAfterSec: Long?): Classification {
+        if (body.contains("neurons exhausted") || body.contains("daily limit") ||
+            body.contains("quota exceeded")) {
             return Classification.QUOTA_EXHAUSTED
         }
         if (retryAfterSec != null && retryAfterSec > 3600) return Classification.QUOTA_EXHAUSTED
