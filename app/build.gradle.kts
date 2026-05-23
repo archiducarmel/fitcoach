@@ -218,6 +218,11 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.5.0")
     implementation("io.coil-kt:coil-gif:2.5.0")
 
+    // Markdown rendering for chat playground (LLM responses contain **bold**,
+    // listes, ```code```, headings etc.). dev.jeziellago utilise Markwon (mature
+    // AndroidView interop) + expose un MarkdownText Composable simple.
+    implementation("com.github.jeziellago:compose-markdown:0.5.4")
+
     // Lottie for reward animations (PR celebration, streak milestones, etc.)
     // Les .json animations sont attendus dans app/src/main/assets/lottie/
     // Si un asset manque, [LottieReward] retombe sur une animation Compose-natif.

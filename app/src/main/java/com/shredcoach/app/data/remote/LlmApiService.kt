@@ -152,6 +152,75 @@ enum class LlmProvider(
 @Immutable
 data class ChatMessage(val role: String, val content: String)
 
+/**
+ * Chunk de streaming : separe le THINKING (raisonnement cache) de la
+ * REPONSE (texte affiche). Supporte les 3 patterns LLM :
+ *  - DeepSeek R1 : inline `<think>...</think>` dans delta.content
+ *  - Groq gpt-oss / NVIDIA reasoning : `delta.reasoning_content` separe
+ *  - Anthropic Claude : `delta.thinking` separe
+ */
+sealed interface StreamChunk {
+    data class Thinking(val text: String) : StreamChunk
+    data class Response(val text: String) : StreamChunk
+}
+
+/**
+ * Stateful parser pour les tags `<think>...</think>` qui peuvent etre
+ * splittes a travers plusieurs chunks SSE. Maintient l'etat in/out de la
+ * zone thinking + un buffer pour les tags partiels (e.g. `<thi` arrive
+ * dans un chunk, `nk>` dans le suivant).
+ */
+class ThinkTagParser {
+    private var inThinking = false
+    // Buffer pour les tags potentiellement coupes en fin de chunk
+    private var pendingTail = ""
+
+    fun process(text: String): List<StreamChunk> {
+        val full = pendingTail + text
+        pendingTail = ""
+        val chunks = mutableListOf<StreamChunk>()
+        var pos = 0
+        while (pos < full.length) {
+            if (inThinking) {
+                val endIdx = full.indexOf("</think>", pos)
+                if (endIdx == -1) {
+                    // Pas de end tag : reserve un tail au cas ou </think> est split
+                    val safeEnd = (full.length - 8).coerceAtLeast(pos)
+                    if (safeEnd > pos) chunks.add(StreamChunk.Thinking(full.substring(pos, safeEnd)))
+                    pendingTail = full.substring(safeEnd)
+                    pos = full.length
+                } else {
+                    if (endIdx > pos) chunks.add(StreamChunk.Thinking(full.substring(pos, endIdx)))
+                    pos = endIdx + "</think>".length
+                    inThinking = false
+                }
+            } else {
+                val startIdx = full.indexOf("<think>", pos)
+                if (startIdx == -1) {
+                    // Pas de start tag : reserve un tail au cas ou <think> est split
+                    val safeEnd = (full.length - 7).coerceAtLeast(pos)
+                    if (safeEnd > pos) chunks.add(StreamChunk.Response(full.substring(pos, safeEnd)))
+                    pendingTail = full.substring(safeEnd)
+                    pos = full.length
+                } else {
+                    if (startIdx > pos) chunks.add(StreamChunk.Response(full.substring(pos, startIdx)))
+                    pos = startIdx + "<think>".length
+                    inThinking = true
+                }
+            }
+        }
+        return chunks
+    }
+
+    /** A la fin du stream, flush le pending tail comme reponse (ou thinking selon l'etat). */
+    fun flush(): StreamChunk? {
+        val tail = pendingTail
+        pendingTail = ""
+        if (tail.isEmpty()) return null
+        return if (inThinking) StreamChunk.Thinking(tail) else StreamChunk.Response(tail)
+    }
+}
+
 private data class OpenAiRequest(
     val model: String,
     val messages: List<ChatMessage>,
@@ -575,6 +644,83 @@ The user's personalized data follows below (only sent on the first message)."""
     }.flowOn(Dispatchers.IO)
 
     // ─── OpenAI-compatible streaming (Groq + OpenAI) ───
+
+    /**
+     * Version "thinking-aware" du streaming : emet StreamChunk au lieu de
+     * String pour separer le raisonnement de la reponse. Detecte les 3
+     * patterns LLM (inline tags, reasoning_content, thinking).
+     *
+     * Utilise par le Playground pour afficher une animation pendant le
+     * reasoning et streamer SEULEMENT la reponse finale a l'user.
+     */
+    fun streamOpenAiCompatibleChunked(
+        messages: List<ChatMessage>,
+        provider: LlmProvider,
+        apiKey: String,
+        model: String,
+        systemPrompt: String,
+    ): Flow<StreamChunk> = flow {
+        val fullMessages = listOf(ChatMessage("system", systemPrompt)) + messages
+        val body = gson.toJson(OpenAiRequest(model = model, messages = fullMessages, stream = true))
+        val request = buildOpenAiRequest(provider, apiKey, body)
+
+        android.util.Log.d("LlmDiag", "▶ STREAM (chunked) provider=$provider model=$model")
+
+        val response = client.newCall(request).execute()
+        android.util.Log.d("LlmDiag", "◀ HTTP ${response.code} from $provider")
+        if (!response.isSuccessful) {
+            val errorBody = response.body?.string() ?: ""
+            android.util.Log.e("LlmDiag", "◀ ERROR body : ${errorBody.take(500)}")
+            throw Exception("Erreur ${response.code}: ${extractError(errorBody)}")
+        }
+        val reader = response.body?.byteStream()?.bufferedReader()
+            ?: throw Exception("Réponse vide")
+
+        val tagParser = ThinkTagParser()
+        var emittedThinking = 0
+        var emittedResponse = 0
+        parseSseStream(reader, slowMode = false) { line ->
+            try {
+                val json = JsonParser.parseString(line).asJsonObject
+                val delta = json.getAsJsonArray("choices")
+                    ?.get(0)?.asJsonObject
+                    ?.getAsJsonObject("delta") ?: return@parseSseStream
+
+                // PATTERN B : reasoning_content separe (Groq gpt-oss, NVIDIA reasoning)
+                val reasoning = delta.get("reasoning_content")
+                    ?.takeIf { it.isJsonPrimitive && !it.isJsonNull }?.asString
+                if (!reasoning.isNullOrEmpty()) {
+                    emittedThinking++
+                    emit(StreamChunk.Thinking(reasoning))
+                }
+
+                // PATTERN C : thinking (Anthropic Claude extended thinking — peu probable
+                // pour OpenAI-compatible mais on capture par robustesse)
+                val thinking = delta.get("thinking")
+                    ?.takeIf { it.isJsonPrimitive && !it.isJsonNull }?.asString
+                if (!thinking.isNullOrEmpty()) {
+                    emittedThinking++
+                    emit(StreamChunk.Thinking(thinking))
+                }
+
+                // PATTERN A : delta.content avec <think>...</think> inline (DeepSeek R1)
+                val content = delta.get("content")
+                    ?.takeIf { it.isJsonPrimitive && !it.isJsonNull }?.asString
+                if (!content.isNullOrEmpty()) {
+                    for (chunk in tagParser.process(content)) {
+                        when (chunk) {
+                            is StreamChunk.Thinking -> { emittedThinking++; emit(chunk) }
+                            is StreamChunk.Response -> { emittedResponse++; emit(chunk) }
+                        }
+                    }
+                }
+            } catch (_: Exception) { /* ignore malformed chunks */ }
+        }
+        // Flush le tail residuel (au cas ou un tag etait splittee a la fin)
+        tagParser.flush()?.let { emit(it) }
+        android.util.Log.d("LlmDiag", "◀ chunked done : thinking=$emittedThinking response=$emittedResponse")
+        reader.close()
+    }.flowOn(Dispatchers.IO)
 
     private fun streamOpenAiCompatible(
         messages: List<ChatMessage>,

@@ -190,31 +190,51 @@ class GitHubModelsCatalogService @Inject constructor(
 
     // ─── Kind inference ─────────────────────────────────────────────────────
 
+    /**
+     * Classifie un modele en ModelKind avec une **logique de priorite robuste**.
+     *
+     * REGLE D'OR : un modele STT pur a **audio en entree uniquement**. Si le
+     * modele accepte text+image+audio (= multimodal type gpt-4o, gemini-2.5),
+     * il est VLM, pas STT. De meme TTS pur = text-only entree + audio sortie.
+     *
+     * Pipeline de priorite :
+     *  1. **Patterns d'id explicites** (whisper, magpie, flux, embed, vlm…) :
+     *     l'id est le signal le plus fiable, surtout pour les modeles
+     *     specialises ou les API qui exposent mal les modalites.
+     *  2. **Output-driven** : embedding/image/video → kind directement.
+     *  3. **Audio output** : TTS uniquement si entree text-only (pur synth),
+     *     sinon multimodal (= VLM en V1).
+     *  4. **Text output** :
+     *     - audio-only en entree → STT (Whisper-like dedicated)
+     *     - image en entree (avec ou sans audio) → VLM
+     *     - audio en entree (sans image) → VLM (multimodal speaker)
+     *     - text-only → LANGUAGE
+     */
     private fun inferKind(id: String, inputs: Set<String>, outputs: Set<String>): ModelKind {
         val lower = id.lowercase()
-        // Output-driven first
-        if ("embedding" in outputs) {
-            return if ("image" in inputs) ModelKind.MULTIMODAL_EMBEDDING else ModelKind.EMBEDDING
-        }
-        if ("image" in outputs) return ModelKind.IMAGE_GENERATION
-        if ("audio" in outputs && "text" in inputs) return ModelKind.TTS
-        if ("video" in outputs) return ModelKind.VIDEO_GENERATION
-        if ("text" in outputs && "audio" in inputs) return ModelKind.STT
 
-        // Patterns sur id pour les cas borderline
-        if (lower.contains("embed") || lower.contains("rerank")) {
-            return if (lower.contains("rerank")) ModelKind.RERANKER else ModelKind.EMBEDDING
+        // ─── 1. Patterns d'id prioritaires (specialises) ────────────────────
+        // Embedding / reranking
+        if (lower.contains("rerank")) return ModelKind.RERANKER
+        if (lower.contains("nvclip")) return ModelKind.MULTIMODAL_EMBEDDING
+        if (lower.contains("embed")) {
+            return if ("image" in inputs || lower.contains("clip")) ModelKind.MULTIMODAL_EMBEDDING
+                   else ModelKind.EMBEDDING
         }
+        // Safety / moderation / PII
         if (lower.contains("guard") || lower.contains("safety") || lower.contains("nemoguard") ||
             lower.contains("jailbreak") || lower.contains("gliner-pii") ||
             lower.contains("deepfake") || lower.contains("ai-synthetic")) {
             return ModelKind.CLASSIFICATION
         }
+        // Reward
         if (lower.contains("reward")) return ModelKind.REWARD_MODEL
-        if (lower.contains("ocr") || lower.contains("parse") || lower.contains("deplot") ||
-            lower.contains("ocdrnet")) {
+        // OCR dedicated
+        if (lower.contains("ocr") || lower.contains("ocdrnet") || lower.contains("deplot") ||
+            (lower.contains("parse") && !lower.contains("sparse"))) {
             return ModelKind.OCR
         }
+        // Sciences (bio, drug, weather, autonomy)
         if (lower.contains("alphafold") || lower.contains("esmfold") || lower.contains("esm2") ||
             lower.contains("diffdock") || lower.contains("boltz") || lower.contains("molmim") ||
             lower.contains("genmol") || lower.contains("proteinmpnn") || lower.contains("rfdiffusion") ||
@@ -223,38 +243,82 @@ class GitHubModelsCatalogService @Inject constructor(
             return ModelKind.SCIENTIFIC
         }
         if (lower.contains("cuopt")) return ModelKind.OPTIMIZATION
+        // Object detection / vision specialise
         if (lower.contains("dinov2") || lower.contains("grounding-dino") ||
             lower.contains("retail-object-detection") || lower.contains("sparsedrive") ||
             lower.contains("streampetr") || lower.contains("bevformer") ||
             lower.contains("visual-changenet")) {
             return ModelKind.OBJECT_DETECTION
         }
-        if (lower.contains("magpie")) return ModelKind.TTS
+        // STT dedicated (Whisper/Parakeet/Canary/ASR)
         if (lower.contains("whisper") || lower.contains("parakeet") || lower.contains("canary") ||
-            lower.contains("-asr")) {
+            lower.contains("-asr") || lower.contains("/asr-") ||
+            lower.contains("speech-to-text") || lower.contains("speech-recognition")) {
             return ModelKind.STT
         }
+        // TTS dedicated (Magpie / TTS-* / Coqui / Bark / VALL-E / OpenVoice)
+        if (lower.contains("magpie") || lower.contains("/tts-") || lower.contains("-tts-") ||
+            lower.contains("text-to-speech") || lower.contains("/coqui-") ||
+            lower.contains("/bark") || lower.contains("vall-e") || lower.contains("openvoice")) {
+            return ModelKind.TTS
+        }
+        // Image generation dedicated
         if (lower.contains("flux") || lower.contains("stable-diffusion") || lower.contains("sdxl") ||
-            lower.contains("dall-e")) {
+            lower.contains("dall-e") || lower.contains("dreamshaper") ||
+            lower.contains("/sd-v") || lower.contains("imagen") || lower.contains("midjourney") ||
+            lower.contains("kandinsky") || lower.contains("playground-v")) {
             return ModelKind.IMAGE_GENERATION
         }
+        // Video generation
         if (lower.contains("stable-video") || lower.contains("trellis") ||
-            lower.contains("cosmos-predict")) {
+            lower.contains("cosmos-predict") || lower.contains("/sora") ||
+            lower.contains("animatediff")) {
             return ModelKind.VIDEO_GENERATION
         }
-        if (lower.contains("nvclip")) return ModelKind.MULTIMODAL_EMBEDDING
-
-        // Multi-modal language : VLM si accepte image
-        if ("image" in inputs && "text" in outputs) return ModelKind.VLM
-
-        // Pattern vision dans le nom
-        if (lower.contains("vision") || lower.contains("-vl-") || lower.contains("vlm") ||
-            lower.contains("multimodal") || lower.contains("vila") || lower.contains("neva") ||
-            lower.contains("kosmos") || lower.contains("fuyu")) {
+        // VLM explicit dans le nom
+        if (lower.contains("-vl-") || lower.contains("-vlm") || lower.contains("/vlm-") ||
+            lower.contains("vision-instruct") || lower.contains("vila") || lower.contains("neva") ||
+            lower.contains("kosmos") || lower.contains("fuyu") || lower.contains("llava") ||
+            lower.contains("idefics") || lower.contains("minicpm-v")) {
             return ModelKind.VLM
         }
 
-        // Default : language model
+        // ─── 2. Output-driven (apres les patterns specialises) ──────────────
+        if ("embedding" in outputs) {
+            return if ("image" in inputs) ModelKind.MULTIMODAL_EMBEDDING else ModelKind.EMBEDDING
+        }
+        if ("image" in outputs) return ModelKind.IMAGE_GENERATION
+        if ("video" in outputs) return ModelKind.VIDEO_GENERATION
+
+        // ─── 3. Audio output : TTS pur uniquement si entree text-only ───────
+        // (sinon = multimodal qui parle, type gpt-4o-audio → traite comme VLM)
+        if ("audio" in outputs) {
+            // TTS pur : entree text-only ou audio (regen)
+            if (inputs.isEmpty() || inputs == setOf("text") ||
+                (inputs == setOf("audio")) || (inputs == setOf("text", "audio"))) {
+                return ModelKind.TTS
+            }
+            // Sinon : multimodal (text+image+audio in → text+audio out), traite comme VLM
+            // car le chat playground n'exploite pas l'audio out en V1.
+            return ModelKind.VLM
+        }
+
+        // ─── 4. Text output (le cas le plus frequent) ───────────────────────
+        if ("text" in outputs) {
+            // STT pur : audio-only en entree (Whisper-like dedicated, sans text/image)
+            if ("audio" in inputs && "text" !in inputs && "image" !in inputs) {
+                return ModelKind.STT
+            }
+            // VLM : image en entree (multimodal vision, peut aussi avoir audio)
+            if ("image" in inputs) return ModelKind.VLM
+            // Multimodal speaker (audio in + text in, sans image) : VLM en V1
+            // (= gpt-4o-mini-audio, gpt-4o-realtime, etc.)
+            if ("audio" in inputs) return ModelKind.VLM
+            // Default : pur text-in/text-out
+            return ModelKind.LANGUAGE
+        }
+
+        // Fallback : si pas de text in outputs (rare), default LANGUAGE
         return ModelKind.LANGUAGE
     }
 

@@ -341,15 +341,19 @@ class LlmDebugViewModel @Inject constructor(
             val startMs = System.currentTimeMillis()
             try {
                 val responseBuf = StringBuilder()
+                val thinkingBuf = StringBuilder()
                 val systemPrompt = "Tu es un assistant IA en mode test. Reponds naturellement."
 
-                // Fix #1 VLM proper : si image attachee + VLM, on construit un payload
-                // multimodal OpenAI-compatible (content blocks text + image_url base64).
-                // Pour CHAT pur, on garde le path streamMessage classique text-only.
-                val flow = if (imageBytes != null && resolved.info.acceptsImageInput) {
+                // Choix du flow selon presence d'image :
+                //  - Image attachee + VLM : streamMessageWithImage (Flow<String>, pas
+                //    de thinking pour les VLM courants)
+                //  - Text only : streamOpenAiCompatibleChunked (Flow<StreamChunk>)
+                //    qui separe thinking vs reponse pour les reasoning models
+                val isImagePath = imageBytes != null && resolved.info.acceptsImageInput
+                val stringFlow: kotlinx.coroutines.flow.Flow<String>? = if (isImagePath) {
                     llmApiService.streamMessageWithImage(
                         text = text,
-                        imageBytes = imageBytes,
+                        imageBytes = imageBytes!!,
                         imageMimeType = "image/jpeg",
                         provider = resolved.provider,
                         apiKey = apiKey,
@@ -357,57 +361,143 @@ class LlmDebugViewModel @Inject constructor(
                         overrideSystemPrompt = systemPrompt,
                         assistant = null,
                     )
-                } else {
+                } else null
+                val chunkFlow: kotlinx.coroutines.flow.Flow<com.shredcoach.app.data.remote.StreamChunk>? = if (!isImagePath) {
                     val messages = listOf(ApiChatMessage(role = "user", content = text))
-                    llmApiService.streamMessage(
-                        messages = messages,
-                        provider = resolved.provider,
-                        apiKey = apiKey,
-                        model = resolved.info.id,
-                        overrideSystemPrompt = systemPrompt,
-                        slowMode = false,
-                    )
-                }
-
-                var tokenCount = 0
-                var lastUiUpdateMs = 0L
-                val UPDATE_INTERVAL_MS = 50L
-                flow.collect { token ->
-                    tokenCount++
-                    if (tokenCount <= 3 || tokenCount % 20 == 0) {
-                        android.util.Log.d("LlmDiag", "◀ VM token #$tokenCount : '${token.take(40)}'")
-                    }
-                    responseBuf.append(token)
-                    // ROOT CAUSE FIX : throttle UI updates to 20 FPS (50ms).
-                    // Sans ce throttle, les ~500 updates/sec saturaient le Main
-                    // dispatcher (chaque update = StateFlow emit + Snapshot notif
-                    // + auto-scroll relance) ce qui empechait Choreographer de
-                    // fire des frames -> 0 recomposition pendant le stream ->
-                    // bulle invisible jusqu'a la fin du stream.
-                    val now = System.currentTimeMillis()
-                    if (now - lastUiUpdateMs >= UPDATE_INTERVAL_MS) {
-                        lastUiUpdateMs = now
-                        _state.update { st ->
-                            val msgs = st.messages.toMutableList()
-                            val idx = msgs.lastIndex
-                            if (idx >= 0 && msgs[idx].role == "assistant") {
-                                msgs[idx] = msgs[idx].copy(text = responseBuf.toString())
+                    if (resolved.provider == LlmProvider.CLAUDE) {
+                        // Claude utilise format Anthropic (x-api-key, /v1/messages),
+                        // pas OpenAI. On route vers streamMessage (Flow<String>) et
+                        // wrap chaque token comme Response chunk. Pas de thinking
+                        // detection pour Claude V1 (extended thinking = V2).
+                        kotlinx.coroutines.flow.flow {
+                            llmApiService.streamMessage(
+                                messages = messages,
+                                provider = resolved.provider,
+                                apiKey = apiKey,
+                                model = resolved.info.id,
+                                overrideSystemPrompt = systemPrompt,
+                                slowMode = false,
+                            ).collect { token ->
+                                emit(com.shredcoach.app.data.remote.StreamChunk.Response(token))
                             }
-                            st.copy(messages = msgs)
                         }
+                    } else {
+                        // OpenAI-compatible (Groq, OpenAI, GitHub, NVIDIA) avec
+                        // thinking detection native (reasoning_content + <think> tags)
+                        llmApiService.streamOpenAiCompatibleChunked(
+                            messages = messages,
+                            provider = resolved.provider,
+                            apiKey = apiKey,
+                            model = resolved.info.id,
+                            systemPrompt = systemPrompt,
+                        )
                     }
-                }
-                android.util.Log.d("LlmDiag", "✓ VM stream FINISHED : tokenCount=$tokenCount responseLength=${responseBuf.length}")
-                // Update final OBLIGATOIRE : garantit que le dernier texte est
-                // affiche meme si le throttle a skip le dernier token.
+                } else null
+
+                // Marque le message comme "thinking" des le depart, l'UI montre
+                // l'animation. Sera flip a false des qu'un Response chunk arrive.
                 _state.update { st ->
                     val msgs = st.messages.toMutableList()
                     val idx = msgs.lastIndex
                     if (idx >= 0 && msgs[idx].role == "assistant") {
-                        msgs[idx] = msgs[idx].copy(text = responseBuf.toString())
+                        msgs[idx] = msgs[idx].copy(isThinking = true)
                     }
                     st.copy(messages = msgs)
                 }
+
+                // ── Drip-feed UI ──────────────────────────────────────────────
+                // Pour une lecture humaine confortable, on decouple le rythme
+                // serveur (~500 tokens/sec) du rythme d'affichage UI. Cible :
+                // ~10 tokens/sec = ~40 chars/sec (= rythme de frappe rapide,
+                // facile a lire).
+                //
+                // Architecture : 2 coroutines paralleles
+                //  1) collect serveur : empile dans responseBuf au max speed
+                //  2) drip ticker : tick chaque 100ms, avance displayedChars
+                //     d'un quota (DRIP_CHARS_PER_TICK), update state.
+                // Quand collect fini, drip continue jusqu'a rattraper le buffer
+                // puis Finalize fire la metadata finale.
+                val DRIP_TICK_MS = 100L
+                val DRIP_CHARS_PER_TICK = 4  // 4 chars / 100ms = 40 chars/s ~ 10 tokens/s
+                val streamComplete = java.util.concurrent.atomic.AtomicBoolean(false)
+                var displayedChars = 0
+                var tokenCount = 0
+
+                val drip = launch {
+                    while (true) {
+                        val target = responseBuf.length
+                        if (displayedChars < target) {
+                            displayedChars = minOf(displayedChars + DRIP_CHARS_PER_TICK, target)
+                            val snapshot = responseBuf.substring(0, displayedChars)
+                            _state.update { st ->
+                                val msgs = st.messages.toMutableList()
+                                val idx = msgs.lastIndex
+                                if (idx >= 0 && msgs[idx].role == "assistant") {
+                                    msgs[idx] = msgs[idx].copy(text = snapshot)
+                                }
+                                st.copy(messages = msgs)
+                            }
+                        }
+                        // Sortie : stream fini ET buffer entierement affiche
+                        if (streamComplete.get() && displayedChars >= responseBuf.length) break
+                        kotlinx.coroutines.delay(DRIP_TICK_MS)
+                    }
+                }
+
+                if (stringFlow != null) {
+                    // Path image : Flow<String>, tout est response
+                    stringFlow.collect { token ->
+                        tokenCount++
+                        if (tokenCount <= 3 || tokenCount % 20 == 0) {
+                            android.util.Log.d("LlmDiag", "◀ VM token #$tokenCount : '${token.take(40)}'")
+                        }
+                        responseBuf.append(token)
+                    }
+                } else {
+                    // Path text : Flow<StreamChunk>, separe thinking vs response
+                    var firstResponseChunkSeen = false
+                    chunkFlow!!.collect { chunk ->
+                        when (chunk) {
+                            is com.shredcoach.app.data.remote.StreamChunk.Thinking -> {
+                                thinkingBuf.append(chunk.text)
+                                // On update juste le thinkingText pour le debug,
+                                // l'UI ne l'affiche pas (juste l'animation).
+                                _state.update { st ->
+                                    val msgs = st.messages.toMutableList()
+                                    val idx = msgs.lastIndex
+                                    if (idx >= 0 && msgs[idx].role == "assistant") {
+                                        msgs[idx] = msgs[idx].copy(thinkingText = thinkingBuf.toString())
+                                    }
+                                    st.copy(messages = msgs)
+                                }
+                            }
+                            is com.shredcoach.app.data.remote.StreamChunk.Response -> {
+                                if (!firstResponseChunkSeen) {
+                                    firstResponseChunkSeen = true
+                                    // Premier chunk de reponse : flip isThinking=false
+                                    // pour basculer l'UI de "animation" a "texte streame"
+                                    _state.update { st ->
+                                        val msgs = st.messages.toMutableList()
+                                        val idx = msgs.lastIndex
+                                        if (idx >= 0 && msgs[idx].role == "assistant") {
+                                            msgs[idx] = msgs[idx].copy(isThinking = false)
+                                        }
+                                        st.copy(messages = msgs)
+                                    }
+                                    android.util.Log.d("LlmDiag", "▶ THINKING -> RESPONSE phase shift (thinkingChars=${thinkingBuf.length})")
+                                }
+                                tokenCount++
+                                if (tokenCount <= 3 || tokenCount % 20 == 0) {
+                                    android.util.Log.d("LlmDiag", "◀ VM response #$tokenCount : '${chunk.text.take(40)}'")
+                                }
+                                responseBuf.append(chunk.text)
+                            }
+                        }
+                    }
+                }
+                streamComplete.set(true)
+                android.util.Log.d("LlmDiag", "✓ VM stream FINISHED : tokenCount=$tokenCount responseLength=${responseBuf.length}")
+                drip.join()  // attend que le drip rattrape le buffer complet
                 val latency = System.currentTimeMillis() - startMs
                 // Finalize message (stop streaming indicator + add metadata)
                 _state.update { st ->
@@ -417,6 +507,7 @@ class LlmDebugViewModel @Inject constructor(
                         msgs[idx] = msgs[idx].copy(
                             text = responseBuf.toString(),
                             isStreaming = false,
+                            isThinking = false,  // safety : flip off au cas ou aucun Response chunk
                             latencyMs = latency,
                             tokensOutput = responseBuf.length / 4, // estimation (LlmApiService streams sans usage block exact)
                             tokensInput = text.length / 4 + (imageBytes?.size?.div(1024)?.times(3) ?: 0),
@@ -677,6 +768,12 @@ data class DebugChatMessage(
     val tokensOutput: Int = 0,
     val latencyMs: Long = 0,
     val error: String? = null,
+    // Reasoning models : on stocke le "thinking" cote VM pour permettre une
+    // future "show reasoning" toggle (debug), mais l'UI affiche seulement
+    // text (la VRAIE reponse apres </think>). isThinking=true tant qu'on
+    // n'a pas recu de Response chunk -> UI montre l'animation de cogitation.
+    val isThinking: Boolean = false,
+    val thinkingText: String = "",
 )
 
 @Immutable
