@@ -364,33 +364,44 @@ class LlmDebugViewModel @Inject constructor(
                 } else null
                 val chunkFlow: kotlinx.coroutines.flow.Flow<com.shredcoach.app.data.remote.StreamChunk>? = if (!isImagePath) {
                     val messages = listOf(ApiChatMessage(role = "user", content = text))
-                    if (resolved.provider == LlmProvider.CLAUDE) {
-                        // Claude utilise format Anthropic (x-api-key, /v1/messages),
-                        // pas OpenAI. On route vers streamMessage (Flow<String>) et
-                        // wrap chaque token comme Response chunk. Pas de thinking
-                        // detection pour Claude V1 (extended thinking = V2).
-                        kotlinx.coroutines.flow.flow {
-                            llmApiService.streamMessage(
+                    when (resolved.provider) {
+                        LlmProvider.CLAUDE -> {
+                            // Claude utilise format Anthropic (x-api-key, /v1/messages),
+                            // pas OpenAI. On wrap streamMessage en Response chunks.
+                            // Pas de thinking detection V1 (extended thinking = V2).
+                            kotlinx.coroutines.flow.flow {
+                                llmApiService.streamMessage(
+                                    messages = messages,
+                                    provider = resolved.provider,
+                                    apiKey = apiKey,
+                                    model = resolved.info.id,
+                                    overrideSystemPrompt = systemPrompt,
+                                    slowMode = false,
+                                ).collect { token ->
+                                    emit(com.shredcoach.app.data.remote.StreamChunk.Response(token))
+                                }
+                            }
+                        }
+                        LlmProvider.GEMINI -> {
+                            // Gemini : format generateContent specifique
+                            llmApiService.streamGemini(
+                                messages = messages,
+                                apiKey = apiKey,
+                                model = resolved.info.id,
+                                systemPrompt = systemPrompt,
+                            )
+                        }
+                        else -> {
+                            // OpenAI-compatible (Groq, OpenAI, GitHub, NVIDIA) avec
+                            // thinking detection native (reasoning_content + <think> tags)
+                            llmApiService.streamOpenAiCompatibleChunked(
                                 messages = messages,
                                 provider = resolved.provider,
                                 apiKey = apiKey,
                                 model = resolved.info.id,
-                                overrideSystemPrompt = systemPrompt,
-                                slowMode = false,
-                            ).collect { token ->
-                                emit(com.shredcoach.app.data.remote.StreamChunk.Response(token))
-                            }
+                                systemPrompt = systemPrompt,
+                            )
                         }
-                    } else {
-                        // OpenAI-compatible (Groq, OpenAI, GitHub, NVIDIA) avec
-                        // thinking detection native (reasoning_content + <think> tags)
-                        llmApiService.streamOpenAiCompatibleChunked(
-                            messages = messages,
-                            provider = resolved.provider,
-                            apiKey = apiKey,
-                            model = resolved.info.id,
-                            systemPrompt = systemPrompt,
-                        )
                     }
                 } else null
 

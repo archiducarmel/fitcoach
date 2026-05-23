@@ -65,7 +65,10 @@ enum class LlmProvider(
         baseUrl = "https://generativelanguage.googleapis.com/v1beta/models",
         defaultModel = "gemini-2.5-flash",
         iconLabel = "G",
-        supportsChat = false,
+        // Chat supporte via streamGemini (format generateContent specifique,
+        // != OpenAI). MealScanner/BodyScan ont leur propre pipeline via
+        // GeminiMealService (non-streaming, vision-only).
+        supportsChat = true,
     ),
     /**
      * Mistral — utilisé pour Vision (alternative MealScanner) via GeminiMealService.
@@ -644,6 +647,85 @@ The user's personalized data follows below (only sent on the first message)."""
     }.flowOn(Dispatchers.IO)
 
     // ─── OpenAI-compatible streaming (Groq + OpenAI) ───
+
+    /**
+     * Streaming Google Gemini : format API DIFFERENT d'OpenAI.
+     *
+     *  - URL : POST /v1beta/models/{model}:streamGenerateContent?key=KEY&alt=sse
+     *  - Body : `{contents:[{role,parts:[{text}]}], systemInstruction:{parts}, generationConfig}`
+     *  - SSE : `data: {candidates:[{content:{parts:[{text:"..."}]}}]}`
+     *
+     * Pas de support thinking V1 (Gemini 3 thoughtSignature = V2).
+     */
+    fun streamGemini(
+        messages: List<ChatMessage>,
+        apiKey: String,
+        model: String,
+        systemPrompt: String,
+    ): Flow<StreamChunk> = flow {
+        val baseUrl = "https://generativelanguage.googleapis.com/v1beta/models"
+        val url = "$baseUrl/$model:streamGenerateContent?key=$apiKey&alt=sse"
+
+        // Build Gemini-format body
+        val contents = com.google.gson.JsonArray().apply {
+            for (msg in messages) {
+                add(com.google.gson.JsonObject().apply {
+                    addProperty("role", if (msg.role == "assistant") "model" else "user")
+                    add("parts", com.google.gson.JsonArray().apply {
+                        add(com.google.gson.JsonObject().apply { addProperty("text", msg.content) })
+                    })
+                })
+            }
+        }
+        val reqBody = com.google.gson.JsonObject().apply {
+            add("contents", contents)
+            add("systemInstruction", com.google.gson.JsonObject().apply {
+                add("parts", com.google.gson.JsonArray().apply {
+                    add(com.google.gson.JsonObject().apply { addProperty("text", systemPrompt) })
+                })
+            })
+            add("generationConfig", com.google.gson.JsonObject().apply {
+                addProperty("temperature", 0.7)
+                addProperty("maxOutputTokens", 2048)
+            })
+        }
+
+        android.util.Log.d("LlmDiag", "▶ GEMINI stream model=$model url=$baseUrl/$model:streamGenerateContent")
+
+        val request = Request.Builder()
+            .url(url)
+            .header("Content-Type", "application/json")
+            .post(reqBody.toString().toRequestBody(jsonMediaType))
+            .build()
+
+        val response = client.newCall(request).execute()
+        android.util.Log.d("LlmDiag", "◀ GEMINI HTTP ${response.code}")
+        if (!response.isSuccessful) {
+            val errorBody = response.body?.string() ?: ""
+            android.util.Log.e("LlmDiag", "◀ GEMINI ERROR : ${errorBody.take(500)}")
+            throw Exception("Erreur Gemini ${response.code}: ${extractError(errorBody)}")
+        }
+        val reader = response.body?.byteStream()?.bufferedReader()
+            ?: throw Exception("Réponse Gemini vide")
+
+        parseSseStream(reader, slowMode = false) { line ->
+            try {
+                val json = JsonParser.parseString(line).asJsonObject
+                // {candidates: [{content: {parts: [{text: "..."}]}}]}
+                val candidates = json.getAsJsonArray("candidates") ?: return@parseSseStream
+                if (candidates.size() == 0) return@parseSseStream
+                val candidate = candidates.get(0).asJsonObject
+                val parts = candidate.getAsJsonObject("content")?.getAsJsonArray("parts")
+                    ?: return@parseSseStream
+                for (i in 0 until parts.size()) {
+                    val partObj = parts.get(i).asJsonObject
+                    val text = partObj.get("text")?.takeIf { it.isJsonPrimitive }?.asString
+                    if (!text.isNullOrEmpty()) emit(StreamChunk.Response(text))
+                }
+            } catch (_: Exception) { /* ignore */ }
+        }
+        reader.close()
+    }.flowOn(Dispatchers.IO)
 
     /**
      * Version "thinking-aware" du streaming : emet StreamChunk au lieu de
