@@ -107,47 +107,107 @@ fun LlmDebugScreen(
             )
         },
     ) { pad ->
-        Box(Modifier.fillMaxSize().padding(pad)) {
-            val selected = state.selectedModel
-            when {
-                selected == null -> EmptyState(
-                    state = state,
-                    onPickModel = { viewModel.togglePicker() },
-                    onConfigureKey = { showApiKeyDialog = it },
-                )
-                selected.info.kind == ModelKind.LANGUAGE ||
-                    selected.info.kind == ModelKind.VLM ||
-                    selected.info.kind == ModelKind.REWARD_MODEL ->
-                        ChatInteraction(
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(pad)
+                // Centralise IME inset pour TOUTES les sous-pages (chat, embedding,
+                // image, TTS, STT). Sans ce padding, la zone InputBar montait par
+                // dessus le contenu sans retrecir le content area → 90% de
+                // l'ecran pris par InputBar+clavier. TopBar reste fixe en haut.
+                .imePadding(),
+        ) {
+            // ── Bandeau d'erreur global (catalogError + lastError) ─────────────
+            // Visible immediatement (pas confine au bottom sheet). Sans ca,
+            // l'utilisateur ne voyait pas pourquoi rien ne fonctionnait.
+            Column(Modifier.fillMaxSize()) {
+                val displayedError = state.lastError ?: state.catalogError
+                AnimatedVisibility(
+                    visible = displayedError != null,
+                    enter = slideInVertically { -it } + fadeIn(),
+                    exit = slideOutVertically { -it } + fadeOut(),
+                ) {
+                    displayedError?.let { err ->
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            color = MaterialTheme.colorScheme.errorContainer,
+                            tonalElevation = 2.dp,
+                        ) {
+                            Row(
+                                Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                Text("⚠️", fontSize = 16.sp)
+                                Text(
+                                    err,
+                                    modifier = Modifier.weight(1f),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    fontWeight = FontWeight.Medium,
+                                )
+                                IconButton(
+                                    onClick = { viewModel.dismissError() },
+                                    modifier = Modifier.size(24.dp),
+                                ) {
+                                    Icon(
+                                        Icons.Default.Close, "Fermer",
+                                        modifier = Modifier.size(16.dp),
+                                        tint = MaterialTheme.colorScheme.onErrorContainer,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Zone contenu : weight=1f recoit la hauteur restante (apres banner + IME)
+                Box(Modifier.weight(1f).fillMaxWidth()) {
+                    val selected = state.selectedModel
+                    when {
+                        selected == null -> EmptyState(
                             state = state,
-                            onSend = { text, image -> viewModel.sendMessage(text, image) },
-                            onCancel = { viewModel.cancelStream() },
+                            onPickModel = { viewModel.togglePicker() },
+                            onConfigureKey = { showApiKeyDialog = it },
                         )
-                selected.info.kind == ModelKind.EMBEDDING ||
-                    selected.info.kind == ModelKind.MULTIMODAL_EMBEDDING ->
-                        EmbeddingInteraction(
-                            state = state,
-                            onGenerate = { text, imgBytes -> viewModel.generateEmbedding(text, imgBytes) },
-                            onClear = { viewModel.clearKindResults() },
-                        )
-                selected.info.kind == ModelKind.IMAGE_GENERATION ->
-                    ImageGenerationInteraction(
-                        state = state,
-                        onGenerate = { prompt, size, sourceBytes ->
-                            viewModel.generateImage(prompt, size, sourceBytes)
-                        },
-                    )
-                selected.info.kind == ModelKind.TTS ->
-                    TtsInteraction(
-                        state = state,
-                        onSynthesize = { text, voice, format -> viewModel.synthesizeTts(text, voice, format) },
-                    )
-                selected.info.kind == ModelKind.STT ->
-                    SttInteraction(
-                        state = state,
-                        onTranscribe = { file, mime, lang -> viewModel.transcribeAudio(file, mime, lang) },
-                    )
-                else -> UnsupportedKindPlaceholder(selected.info.kind)
+                        selected.info.kind == ModelKind.LANGUAGE ||
+                            selected.info.kind == ModelKind.VLM ||
+                            selected.info.kind == ModelKind.REWARD_MODEL ->
+                                ChatInteraction(
+                                    state = state,
+                                    onSend = { text, image -> viewModel.sendMessage(text, image) },
+                                    onCancel = { viewModel.cancelStream() },
+                                )
+                        selected.info.kind == ModelKind.EMBEDDING ||
+                            selected.info.kind == ModelKind.MULTIMODAL_EMBEDDING ->
+                                EmbeddingInteraction(
+                                    state = state,
+                                    onGenerate = { text, imgBytes -> viewModel.generateEmbedding(text, imgBytes) },
+                                    onClear = { viewModel.clearKindResults() },
+                                )
+                        selected.info.kind == ModelKind.IMAGE_GENERATION ->
+                            ImageGenerationInteraction(
+                                state = state,
+                                onGenerate = { prompt, size, sourceBytes ->
+                                    viewModel.generateImage(prompt, size, sourceBytes)
+                                },
+                            )
+                        selected.info.kind == ModelKind.TTS ->
+                            TtsInteraction(
+                                state = state,
+                                onSynthesize = { text, voice, format -> viewModel.synthesizeTts(text, voice, format) },
+                            )
+                        selected.info.kind == ModelKind.STT ->
+                            SttInteraction(
+                                state = state,
+                                onTranscribe = { file, mime, lang -> viewModel.transcribeAudio(file, mime, lang) },
+                            )
+                        else -> UnsupportedKindPlaceholder(selected.info.kind)
+                    }
+                }
             }
         }
 
@@ -181,11 +241,11 @@ fun LlmDebugScreen(
         }
     }
 
-    // Snackbar global pour lastError
+    // Auto-dismiss lastError apres 6s (catalogError reste : c'est un etat
+    // persistant que l'user dismiss explicitement avec la croix).
     state.lastError?.let { err ->
         LaunchedEffect(err) {
-            // Auto-dismiss after 4s
-            kotlinx.coroutines.delay(4000)
+            kotlinx.coroutines.delay(6000)
             viewModel.dismissError()
         }
     }
@@ -549,7 +609,9 @@ private fun ChatInputBar(
             Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .imePadding()
+                // .imePadding() retire : centralise sur le Column parent de
+                // ChatInteraction pour eviter le double-padding qui crevait
+                // le layout (InputBar montait + LazyColumn ne se retrecissait pas).
                 .padding(horizontal = 12.dp, vertical = 8.dp),
         ) {
             // Image attachment preview

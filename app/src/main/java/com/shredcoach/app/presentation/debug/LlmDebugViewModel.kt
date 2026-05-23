@@ -63,27 +63,41 @@ class LlmDebugViewModel @Inject constructor(
             models.map { ResolvedModel(provider = provider, info = it) }
         }
         _state.update { it.copy(staticModels = staticModels) }
-        // Restore les API keys depuis le keystore (sans afficher leur valeur)
-        refreshApiKeyAvailability()
+        // Restore les API keys depuis le keystore (sans afficher leur valeur).
+        // Defensif : EncryptedSharedPreferences peut throw si le master key
+        // a ete invalide (mismatch apres install/clear data).
+        runCatching { refreshApiKeyAvailability() }
+            .onFailure { android.util.Log.e(TAG, "init refreshApiKeyAvailability failed", it) }
         // Fix #4 : auto-fetch les catalogues dynamiques si les cles sont deja
         // configurees, pour que le picker montre l'integralite des modeles
         // accessibles des l'ouverture du Playground (vs attendre un refresh manuel).
-        if (secureKeyStore.hasKey(SecureKeyStore.Provider.GITHUB_MODELS)) refreshGitHubCatalog()
-        if (secureKeyStore.hasKey(SecureKeyStore.Provider.NVIDIA_NIM)) refreshNvidiaCatalog()
+        runCatching {
+            if (secureKeyStore.hasKey(SecureKeyStore.Provider.GITHUB_MODELS)) refreshGitHubCatalog()
+            if (secureKeyStore.hasKey(SecureKeyStore.Provider.NVIDIA_NIM)) refreshNvidiaCatalog()
+        }.onFailure { android.util.Log.e(TAG, "init auto-fetch catalogs failed", it) }
+    }
+
+    companion object {
+        private const val TAG = "LlmDebugVM"
     }
 
     // ─── Catalog management ─────────────────────────────────────────────────
 
     /** Refetch le catalogue GitHub Models (force HTTP, bypass cache 24h). */
     fun refreshGitHubCatalog() {
-        val token = secureKeyStore.getKey(SecureKeyStore.Provider.GITHUB_MODELS)
+        val token = runCatching { secureKeyStore.getKey(SecureKeyStore.Provider.GITHUB_MODELS) }
+            .getOrDefault("")
         if (token.isBlank()) {
             _state.update { it.copy(catalogError = "Token GitHub manquant. Configure-le d'abord.") }
             return
         }
         viewModelScope.launch {
             _state.update { it.copy(isFetchingCatalog = true, catalogError = null) }
-            val result = githubCatalog.fetchCatalog(token, forceRefresh = true)
+            val result = runCatching { githubCatalog.fetchCatalog(token, forceRefresh = true) }
+                .getOrElse {
+                    android.util.Log.e(TAG, "refreshGitHubCatalog crash", it)
+                    Result.failure(it)
+                }
             result.fold(
                 onSuccess = { models ->
                     val resolved = models.map { ResolvedModel(LlmProvider.GITHUB_MODELS, it) }
@@ -113,14 +127,19 @@ class LlmDebugViewModel @Inject constructor(
      * editorialise. Cache 24h.
      */
     fun refreshNvidiaCatalog() {
-        val apiKey = secureKeyStore.getKey(SecureKeyStore.Provider.NVIDIA_NIM)
+        val apiKey = runCatching { secureKeyStore.getKey(SecureKeyStore.Provider.NVIDIA_NIM) }
+            .getOrDefault("")
         if (apiKey.isBlank()) {
             _state.update { it.copy(catalogError = "Clé NVIDIA manquante. Configure-la d'abord.") }
             return
         }
         viewModelScope.launch {
             _state.update { it.copy(isFetchingCatalog = true, catalogError = null) }
-            val result = nvidiaCatalog.fetchCatalog(apiKey, forceRefresh = true)
+            val result = runCatching { nvidiaCatalog.fetchCatalog(apiKey, forceRefresh = true) }
+                .getOrElse {
+                    android.util.Log.e(TAG, "refreshNvidiaCatalog crash", it)
+                    Result.failure(it)
+                }
             result.fold(
                 onSuccess = { models ->
                     val resolved = models.map { ResolvedModel(LlmProvider.NVIDIA_NIM, it) }
@@ -152,32 +171,55 @@ class LlmDebugViewModel @Inject constructor(
 
     // ─── API keys ───────────────────────────────────────────────────────────
 
+    /**
+     * Persiste une cle API et auto-refresh le catalogue du provider si applicable.
+     *
+     * Bulletproof : tout le chemin est wrappe dans un runCatching car
+     * EncryptedSharedPreferences peut throw (master key invalide / fichier
+     * corrompu / decrypt fail) — sans ce wrapper, la Composable click handler
+     * propage l'exception et l'app crash.
+     */
     fun saveApiKey(provider: SecureKeyStore.Provider, value: String) {
-        secureKeyStore.setKey(provider, value.trim())
-        refreshApiKeyAvailability()
-        // Si une cle vient d'arriver, refresh le catalogue correspondant automatiquement
-        if (value.isNotBlank()) {
-            when (provider) {
-                SecureKeyStore.Provider.GITHUB_MODELS -> refreshGitHubCatalog()
-                SecureKeyStore.Provider.NVIDIA_NIM -> refreshNvidiaCatalog()
-                else -> { /* no-op pour les autres slots */ }
+        runCatching {
+            secureKeyStore.setKey(provider, value.trim())
+            refreshApiKeyAvailability()
+            // Si une cle vient d'arriver, refresh le catalogue correspondant automatiquement
+            if (value.isNotBlank()) {
+                when (provider) {
+                    SecureKeyStore.Provider.GITHUB_MODELS -> refreshGitHubCatalog()
+                    SecureKeyStore.Provider.NVIDIA_NIM -> refreshNvidiaCatalog()
+                    else -> { /* no-op pour les autres slots */ }
+                }
             }
+        }.onFailure { e ->
+            android.util.Log.e(TAG, "saveApiKey failed for $provider", e)
+            _state.update { it.copy(lastError = "Echec sauvegarde cle : ${e.message ?: e.javaClass.simpleName}") }
         }
     }
 
     fun clearApiKey(provider: SecureKeyStore.Provider) {
-        secureKeyStore.clear(provider)
-        refreshApiKeyAvailability()
+        runCatching {
+            secureKeyStore.clear(provider)
+            refreshApiKeyAvailability()
+        }.onFailure { e ->
+            android.util.Log.e(TAG, "clearApiKey failed for $provider", e)
+            _state.update { it.copy(lastError = "Echec suppression cle : ${e.message ?: e.javaClass.simpleName}") }
+        }
     }
 
     /**
      * Met a jour l'etat avec la disponibilite (non-blank) des cles par provider.
      * On NE PAS expose la valeur reelle dans le state — uniquement un boolean
      * "presente ou pas" pour eviter de leak la cle via state inspection.
+     *
+     * Defensif par cle : si une cle precise echoue a se decrypter, on la traite
+     * comme absente (false) au lieu de crash global.
      */
     private fun refreshApiKeyAvailability() {
         val avail = SecureKeyStore.Provider.values()
-            .associateWith { secureKeyStore.hasKey(it) }
+            .associateWith { p ->
+                runCatching { secureKeyStore.hasKey(p) }.getOrDefault(false)
+            }
         _state.update { it.copy(apiKeyAvailable = avail) }
     }
 
@@ -370,8 +412,9 @@ class LlmDebugViewModel @Inject constructor(
         _state.update { it.copy(messages = emptyList(), lastError = null, isSending = false) }
     }
 
+    /** Dismiss explicite : clear lastError ET catalogError (single banner partage). */
     fun dismissError() {
-        _state.update { it.copy(lastError = null) }
+        _state.update { it.copy(lastError = null, catalogError = null) }
     }
 
     // ─── EMBEDDING (text-only et multimodal) ────────────────────────────────

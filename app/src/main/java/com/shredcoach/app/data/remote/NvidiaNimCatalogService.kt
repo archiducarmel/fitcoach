@@ -66,22 +66,57 @@ class NvidiaNimCatalogService @Inject constructor(
                 .get()
                 .build()
             val response = client.newCall(request).execute()
-            val body = response.body?.string() ?: throw Exception("Reponse vide")
+            val body = response.body?.string() ?: throw Exception("Réponse vide")
             if (!response.isSuccessful) {
-                throw Exception("HTTP ${response.code} : ${body.take(200)}")
+                // Friendly error mapping
+                val friendly = when (response.code) {
+                    401 -> "Clé NVIDIA invalide (HTTP 401). Vérifie le format nvapi-xxx."
+                    403 -> "Clé NVIDIA sans accès au catalogue (HTTP 403). Vérifie le scope."
+                    404 -> "Endpoint /v1/models introuvable (HTTP 404)."
+                    429 -> "Quota NVIDIA dépassé (HTTP 429). Réessaie plus tard."
+                    in 500..599 -> "Serveur NVIDIA indisponible (HTTP ${response.code})."
+                    else -> "HTTP ${response.code}"
+                }
+                throw Exception(friendly)
             }
+            // Parsing defensif : si la structure differe (NVIDIA peut renvoyer un
+            // wrapper different selon les tiers de cle), on tente plusieurs paths.
             val json = JsonParser.parseString(body).asJsonObject
-            val data = json.getAsJsonArray("data") ?: throw Exception("Pas de data[]")
-            val ids = data.mapNotNull { it.asJsonObject.get("id")?.asString }.toSet()
+            val dataArr = json.getAsJsonArray("data")
+                ?: json.getAsJsonArray("models")
+                ?: throw Exception("Format inattendu (pas de data[] ni models[])")
+            val ids = dataArr.mapNotNull { el ->
+                runCatching {
+                    if (el == null || !el.isJsonObject) null
+                    else el.asJsonObject.get("id")?.takeIf { it.isJsonPrimitive }?.asString
+                }.getOrNull()
+            }.toSet()
 
             cachedAccessibleIds = ids
             cachedAtMs = now
-            Log.i(TAG, "NVIDIA NIM catalog : ${ids.size} IDs accessibles, ${NvidiaNimCatalog.ALL_MODELS.size} editorialises")
+            Log.i(TAG, "NVIDIA NIM : ${ids.size} IDs accessibles, ${NvidiaNimCatalog.ALL_MODELS.size} editorialises")
             val filtered = filterByAccessible(ids)
             Log.i(TAG, "Intersection : ${filtered.size} modeles affichables")
-            Result.success(filtered)
+
+            // Resilience : si l'intersection est vide (ex: les IDs NVIDIA ont
+            // un prefix different de notre catalogue), on FALLBACK sur le catalogue
+            // editorialise complet plutot que de laisser le user sans aucun
+            // modele. La cle aura ete validee par le 200 OK du /v1/models.
+            if (filtered.isEmpty() && ids.isNotEmpty()) {
+                Log.w(TAG, "Intersection vide — fallback sur le catalogue editorialise complet")
+                Result.success(NvidiaNimCatalog.ALL_MODELS)
+            } else {
+                Result.success(filtered)
+            }
         } catch (e: Exception) {
             Log.e(TAG, "fetchCatalog failed", e)
+            // Pour les erreurs reseau pures (timeout, no internet), on fallback
+            // egalement sur le catalogue editorialise (l'user pourra tester chaque
+            // modele individuellement — l'erreur reseau se reverra a l'envoi).
+            if (e is java.net.UnknownHostException || e is java.net.SocketTimeoutException) {
+                Log.w(TAG, "Erreur reseau — fallback catalogue editorialise complet")
+                return@withContext Result.success(NvidiaNimCatalog.ALL_MODELS)
+            }
             Result.failure(e)
         }
     }
