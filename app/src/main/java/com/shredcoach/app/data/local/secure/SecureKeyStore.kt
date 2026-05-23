@@ -42,6 +42,10 @@ class SecureKeyStore @Inject constructor(
         MISTRAL,
         /** Google Cloud Text-to-Speech (Chirp 3 HD) — voix Shreddy premium. */
         GOOGLE_TTS,
+        /** GitHub Models — PAT GitHub (ghp_xxx) pour acces au catalogue. */
+        GITHUB_MODELS,
+        /** NVIDIA NIM — API key nvapi-xxx pour 150+ modeles NIM. */
+        NVIDIA_NIM,
     }
 
     private val masterKey: MasterKey = MasterKey.Builder(context)

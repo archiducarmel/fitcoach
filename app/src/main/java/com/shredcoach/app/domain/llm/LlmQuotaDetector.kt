@@ -78,6 +78,8 @@ object LlmQuotaDetector {
             LlmProvider.OPENAI -> classifyOpenAi(httpCode, body)
             LlmProvider.CLAUDE -> classifyClaude(httpCode, body, retryAfterSec)
             LlmProvider.MISTRAL -> classifyMistral(httpCode, body)
+            LlmProvider.GITHUB_MODELS -> classifyGitHubModels(httpCode, body, retryAfterSec)
+            LlmProvider.NVIDIA_NIM -> classifyNvidiaNim(httpCode, body, retryAfterSec)
         }
     }
 
@@ -152,6 +154,44 @@ object LlmQuotaDetector {
         if (body.contains("quota") || body.contains("monthly limit")) {
             return Classification.QUOTA_EXHAUSTED
         }
+        return Classification.TRANSIENT
+    }
+
+    /**
+     * GitHub Models — distingue clairement 3 cas :
+     *  - `unavailable_model` : modele gated (Copilot Pro+ requis) sur free tier
+     *    → AUTH_ERROR (pas de fallback, l'user doit upgrade ou changer de modele)
+     *  - `rate_limit_exceeded` avec retry-after > 1h → QUOTA_EXHAUSTED
+     *    (quota daily epuise du tier — 30 req/jour sur custom tier minimum)
+     *  - `rate_limit_exceeded` court → TRANSIENT (rate limit minute)
+     *  - 404 model_not_found → OTHER (model id invalide, pas un quota issue)
+     */
+    private fun classifyGitHubModels(httpCode: Int, body: String, retryAfterSec: Long?): Classification {
+        // Gated model on free tier → erreur "unavailable_model"
+        if (body.contains("unavailable_model") || body.contains("not available for your tier")) {
+            return Classification.AUTH_ERROR
+        }
+        if (body.contains("model_not_found")) return Classification.OTHER
+        // Rate limit : long retry-after = quota daily, court = minute
+        if (body.contains("rate_limit") || body.contains("too many requests")) {
+            if (retryAfterSec != null && retryAfterSec > 3600) return Classification.QUOTA_EXHAUSTED
+            return Classification.TRANSIENT
+        }
+        return Classification.TRANSIENT
+    }
+
+    /**
+     * NVIDIA NIM — endpoint cloud unifie. Format d'erreur OpenAI-like
+     * generalement, mais quelques specificites :
+     *  - 429 + "free credits exhausted" → QUOTA_EXHAUSTED
+     *  - 429 standard → TRANSIENT (rate limit minute)
+     *  - 401 + "invalid api key" → AUTH_ERROR (deja capture en amont)
+     */
+    private fun classifyNvidiaNim(httpCode: Int, body: String, retryAfterSec: Long?): Classification {
+        if (body.contains("free credits exhausted") || body.contains("credits depleted")) {
+            return Classification.QUOTA_EXHAUSTED
+        }
+        if (retryAfterSec != null && retryAfterSec > 3600) return Classification.QUOTA_EXHAUSTED
         return Classification.TRANSIENT
     }
 }

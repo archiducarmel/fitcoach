@@ -58,7 +58,21 @@ object LlmPricing {
         (LlmProvider.CLAUDE to "claude-sonnet-4-20250514") to ModelPricing(3.00, 15.00),
         (LlmProvider.CLAUDE to "claude-haiku-4-20250514") to ModelPricing(0.80, 4.00),
         (LlmProvider.CLAUDE to "claude-opus-4-20250514") to ModelPricing(15.00, 75.00),
+
+        // ─── GITHUB MODELS ──────────────────────────────────────────────
+        // Free tier : tous les modeles sont gratuits (rate-limited via tier
+        // low/high/custom). On enregistre $0.00 pour la telemetrie dashboard.
+        // Si GitHub introduit du billing dans le futur, mettre les prix reels.
+        // Les modeles concrets sont ajoutes dynamiquement via le catalogue —
+        // ici on a juste une entree par defaut pour le fallback.
+
+        // ─── NVIDIA NIM ─────────────────────────────────────────────────
+        // NVIDIA NIM cloud : free tier avec credits limites pour les nouveaux
+        // accounts, sinon billing per-token. On enregistre $0.00 par defaut.
     )
+
+    /** Tarif "free tier" pour GitHub Models / NVIDIA NIM (catalogues dynamiques). */
+    private val FREE_TIER = ModelPricing(0.0, 0.0)
 
     /**
      * Estime le coût en USD d'un appel LLM.
@@ -74,12 +88,26 @@ object LlmPricing {
         tokensOutput: Int,
         tokensThinking: Int = 0,
     ): Double {
-        val pricing = PRICES[provider to model] ?: FALLBACK
+        val pricing = PRICES[provider to model]
+            ?: pricingDefaultFor(provider)
+            ?: FALLBACK
         val thinkingRate = pricing.thinkingPerMtok ?: pricing.outputPerMtok
         val inputCost = tokensInput / 1_000_000.0 * pricing.inputPerMtok
         val outputCost = tokensOutput / 1_000_000.0 * pricing.outputPerMtok
         val thinkingCost = tokensThinking / 1_000_000.0 * thinkingRate
         return inputCost + outputCost + thinkingCost
+    }
+
+    /**
+     * Pricing par defaut pour les providers a catalogue dynamique (GitHub
+     * Models, NVIDIA NIM) ou les modeles individuels ne sont pas enumeres
+     * dans PRICES. Free tier $0 pour eviter de gonfler le dashboard de couts
+     * artificiels.
+     */
+    private fun pricingDefaultFor(provider: LlmProvider): ModelPricing? = when (provider) {
+        LlmProvider.GITHUB_MODELS -> FREE_TIER
+        LlmProvider.NVIDIA_NIM -> FREE_TIER
+        else -> null
     }
 
     /** Tarif pour affichage UI (provider + model). Retourne null si inconnu. */

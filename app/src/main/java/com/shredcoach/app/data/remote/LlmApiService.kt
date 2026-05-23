@@ -77,6 +77,44 @@ enum class LlmProvider(
         iconLabel = "M",
         supportsChat = false,
     ),
+    /**
+     * GitHub Models — proxy unifie qui expose OpenAI/Meta/Microsoft/Mistral/
+     * Cohere/AI21/etc. via une API OpenAI-compatible. Catalogue DYNAMIQUE
+     * (cf. GitHubModelsCatalogService) avec rate-limit tiers low/high/custom
+     * et des modeles "gated" (openai/gpt-5-*, o-series en tier custom)
+     * qui requierent Copilot Pro+.
+     *
+     * Auth : header `Authorization: Bearer ghp_xxx` (GitHub PAT) +
+     * `Accept: application/vnd.github+json`.
+     *
+     * Endpoint chat : POST /inference/chat/completions
+     * Endpoint catalog : GET /catalog/models (DTO GitHub specifique)
+     */
+    GITHUB_MODELS(
+        displayName = "GitHub Models",
+        baseUrl = "https://models.github.ai/inference/chat/completions",
+        defaultModel = "openai/gpt-4o-mini",
+        iconLabel = "GH",
+    ),
+    /**
+     * NVIDIA NIM — proxy unifie de 150+ modeles open-source/open-weights
+     * heberges sur NVIDIA Cloud (Llama, Phi, Mistral, DeepSeek, Qwen, IBM
+     * Granite, Nemotron, etc.) + des dizaines de modeles specialises
+     * (TTS Magpie, STT Parakeet/Whisper, Embeddings nv-prefix, Image gen FLUX/SD,
+     * SCIENTIFIC alphafold/esm, etc.).
+     *
+     * Auth : header Authorization Bearer nvapi-xxx. Endpoints :
+     *  - /chat/completions (LANGUAGE/VLM)
+     *  - /embeddings (EMBEDDING)
+     *  - /audio/speech, /audio/transcriptions (TTS/STT)
+     *  - autres endpoints custom selon modele
+     */
+    NVIDIA_NIM(
+        displayName = "NVIDIA NIM",
+        baseUrl = "https://integrate.api.nvidia.com/v1/chat/completions",
+        defaultModel = "meta/llama-3.3-70b-instruct",
+        iconLabel = "NV",
+    ),
 }
 
 // ══════════════════════════════════════════
@@ -158,6 +196,32 @@ class LlmApiService @Inject constructor(
         .readTimeout(120, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
+
+    /**
+     * Construit une Request OpenAI-compatible avec les headers provider-specifiques.
+     *
+     *  - GROQ/OPENAI : Bearer + Content-Type JSON standards
+     *  - GITHUB_MODELS : + `Accept: application/vnd.github+json` (recommande
+     *    pour le routage versionne cote GitHub Models API)
+     *  - NVIDIA_NIM : Bearer + JSON (pas de header extra requis)
+     *
+     * Permet d'eviter la duplication des Request.Builder dans
+     * streamOpenAiCompatible / openAiWithTools / openAiStreamWithTools.
+     */
+    private fun buildOpenAiRequest(
+        provider: LlmProvider,
+        apiKey: String,
+        body: String,
+    ): Request {
+        val builder = Request.Builder()
+            .url(provider.baseUrl)
+            .header("Authorization", "Bearer $apiKey")
+            .header("Content-Type", "application/json")
+        if (provider == LlmProvider.GITHUB_MODELS) {
+            builder.header("Accept", "application/vnd.github+json")
+        }
+        return builder.post(body.toRequestBody(jsonMediaType)).build()
+    }
 
     private val gson = Gson()
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
@@ -378,12 +442,7 @@ The user's personalized data follows below (only sent on the first message)."""
         val fullMessages = listOf(ChatMessage("system", systemPrompt)) + messages
         val body = gson.toJson(OpenAiRequest(model = model, messages = fullMessages, stream = true))
 
-        val request = Request.Builder()
-            .url(provider.baseUrl)
-            .header("Authorization", "Bearer $apiKey")
-            .header("Content-Type", "application/json")
-            .post(body.toRequestBody(jsonMediaType))
-            .build()
+        val request = buildOpenAiRequest(provider, apiKey, body)
 
         val response = client.newCall(request).execute()
         if (!response.isSuccessful) {
@@ -560,12 +619,7 @@ The user's personalized data follows below (only sent on the first message)."""
             add("tools", toolsArr)
         }
 
-        val request = Request.Builder()
-            .url(provider.baseUrl)
-            .header("Authorization", "Bearer $apiKey")
-            .header("Content-Type", "application/json")
-            .post(req.toString().toRequestBody(jsonMediaType))
-            .build()
+        val request = buildOpenAiRequest(provider, apiKey, req.toString())
         val response = client.newCall(request).execute()
         val body = response.body?.string() ?: throw Exception("Réponse vide")
         if (!response.isSuccessful) throw Exception("Erreur ${response.code}: ${extractError(body)}")
@@ -840,12 +894,7 @@ The user's personalized data follows below (only sent on the first message)."""
             add("tools", toolsArr)
         }
 
-        val request = Request.Builder()
-            .url(provider.baseUrl)
-            .header("Authorization", "Bearer $apiKey")
-            .header("Content-Type", "application/json")
-            .post(req.toString().toRequestBody(jsonMediaType))
-            .build()
+        val request = buildOpenAiRequest(provider, apiKey, req.toString())
         val response = client.newCall(request).execute()
         if (!response.isSuccessful) {
             val errorBody = response.body?.string() ?: ""
