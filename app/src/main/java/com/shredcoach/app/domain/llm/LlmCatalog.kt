@@ -743,6 +743,10 @@ object LlmCatalog {
                 notes = "MoE multimodal nouvelle generation",
                 acceptsImageInput = true, supportsVision = true,
                 supportsToolCalling = true, supportsAgentic = true,
+                // Test empirique v2026.05.24 : 15s avec prompt toy (50 tokens) MAIS
+                // >300s avec prompt realiste 4k tokens (= Shreddy/Dr.Glykos
+                // system + userContext). NIM serving lent pour input >2k tokens.
+                supportsThinking = true,
                 architecture = ModelArchitecture.TRANSFORMER_MOE,
                 weightsSource = WeightsSource.OPEN_WEIGHTS,
                 originRegion = ModelOriginRegion.US, publisher = "meta",
@@ -754,6 +758,9 @@ object LlmCatalog {
                 kind = ModelKind.VLM, tier = LlmTier.PREMIUM,
                 notes = "Vision detaillee 90B",
                 acceptsImageInput = true, supportsVision = true, supportsToolCalling = true,
+                // 90B dense sur NIM : extrapolation depuis llama-3.3-70b (65s test).
+                // Plus gros donc encore plus lent. Safety margin thinking.
+                supportsThinking = true,
                 architecture = ModelArchitecture.TRANSFORMER_DENSE,
                 weightsSource = WeightsSource.OPEN_WEIGHTS,
                 originRegion = ModelOriginRegion.US, publisher = "meta",
@@ -797,6 +804,8 @@ object LlmCatalog {
                 kind = ModelKind.LANGUAGE, tier = LlmTier.STANDARD,
                 notes = "Multilingue 8 langues",
                 supportsToolCalling = true,
+                // 70B sur NIM = meme infrastructure que llama-3.3-70b (65s test).
+                supportsThinking = true,
                 architecture = ModelArchitecture.TRANSFORMER_DENSE,
                 weightsSource = WeightsSource.OPEN_WEIGHTS,
                 originRegion = ModelOriginRegion.US, publisher = "meta",
@@ -819,6 +828,8 @@ object LlmCatalog {
                 kind = ModelKind.LANGUAGE, tier = LlmTier.STANDARD,
                 notes = "Specialise code · tous langages",
                 supportsCodeGen = true,
+                // 70B sur NIM : lent comme les autres llama 70b (extrapolation).
+                supportsThinking = true,
                 architecture = ModelArchitecture.TRANSFORMER_DENSE,
                 weightsSource = WeightsSource.OPEN_WEIGHTS, domain = ModelDomain.CODE,
                 originRegion = ModelOriginRegion.US, publisher = "meta",
@@ -940,6 +951,10 @@ object LlmCatalog {
                 kind = ModelKind.LANGUAGE, tier = LlmTier.STANDARD,
                 notes = "Hybride 10x plus rapide · memoire enorme",
                 supportsToolCalling = true,
+                // Test empirique v2026.05.24 : 4.8s avec prompt toy (50 tokens)
+                // MAIS TIMEOUT >300s avec prompt realiste 4k tokens (= Shreddy/
+                // DrGlykos system + userContext). NIM prefill scaling penality.
+                supportsThinking = true,
                 architecture = ModelArchitecture.HYBRID_MAMBA_TRANSFORMER,
                 weightsSource = WeightsSource.OPEN_WEIGHTS,
                 originRegion = ModelOriginRegion.CHINA, publisher = "qwen",

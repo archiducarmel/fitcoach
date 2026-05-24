@@ -353,9 +353,20 @@ class LlmApiService @Inject constructor(
             m.contains("nemotron-super") || m.contains("phi-4-reasoning") ||
             m.contains("phi-4-mini-reasoning")) return true
         // (b) Modeles empiriquement >180s sur NIM (tests batch v2026.05.24)
+        // Note : tests realistes avec prompt 4k tokens (= prod Shreddy/DrGlykos)
+        // ont revele que beaucoup de modeles "rapides" en toy test (50 tokens)
+        // timeout en prod. Pattern : NIM serving penalty pour input >2k tokens.
         if (m.contains("qwen3.5-122b") || m.contains("qwen3.5-397b") ||
-            m.contains("qwen/qwen3.5") || m.contains("gemma-4-31b") ||
-            m.contains("mistral-large-3")) return true
+            m.contains("qwen/qwen3.5") || m.contains("qwen/qwen3-next") ||
+            m.contains("gemma-4-31b")) return true
+        // (c) NIM-specific : les gros modeles Llama hosted on NIM ont une
+        // latence prefill enorme (test reel avec prompt 4k tokens >300s).
+        // Note : la version Groq/GitHub des memes models est rapide,
+        // donc on filtre par "meta/" (NIM prefix) pour ne pas penaliser.
+        if (m.startsWith("meta/llama-4-maverick") || m.startsWith("meta/llama-4-scout") ||
+            m.startsWith("meta/llama-3.2-90b-vision") ||
+            m.startsWith("meta/llama-3.3-70b") || m.startsWith("meta/llama-3.1-70b") ||
+            m.startsWith("meta/codellama-70b")) return true
         return false
     }
 
