@@ -292,6 +292,8 @@ class LlmApiService @Inject constructor(
     private val fallbackBus: com.shredcoach.app.domain.llm.LlmFallbackBus,
 ) {
 
+    /** Client standard pour chat conversationnel non-reasoning. Coupe court si
+     *  TTFB > 60s = modele probablement hang/non-deploye. */
     private val client = baseClient.newBuilder()
         // ── Timeouts mesures empiriquement via tests curl NVIDIA NIM ──
         // Pattern observe :
@@ -306,6 +308,25 @@ class LlmApiService @Inject constructor(
         .readTimeout(60, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
+
+    /** Client EXTENDED-TIMEOUT pour les reasoning models avec long thinking
+     *  (o1, o3, DeepSeek R1, GLM-5.1, Kimi K2.6, MiniMax M2.7).
+     *
+     *  Le thinking peut prendre 30-300s avant le 1er output token. On laisse
+     *  6 minutes max pour couvrir les hard problems (AIME math, code agents)
+     *  tout en gardant un garde-fou : au-dela l'user pense que l'app a plante. */
+    private val thinkingClient = baseClient.newBuilder()
+        .readTimeout(360, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .build()
+
+    /** Pick le bon client selon la capability "supportsThinking" du modele.
+     *  Source de verite : `LlmCatalog.modelInfo(model)?.supportsThinking`. */
+    private fun pickClient(model: String): OkHttpClient {
+        val isThinking = com.shredcoach.app.domain.llm.LlmCatalog
+            .modelInfo(model)?.supportsThinking == true
+        return if (isThinking) thinkingClient else client
+    }
 
     /**
      * Envoie un message multimodal (texte + image) via le content blocks OpenAI
@@ -752,20 +773,33 @@ The user's personalized data follows below (only sent on the first message)."""
         val body = gson.toJson(OpenAiRequest(model = model, messages = fullMessages, stream = true))
         val request = buildOpenAiRequest(provider, apiKey, body)
 
-        android.util.Log.d("LlmDiag", "▶ STREAM (chunked) provider=$provider model=$model")
+        // Client adaptatif : 360s pour les modeles thinking (o1/o3/R1/GLM/Kimi),
+        // 60s pour les autres (cf. pickClient).
+        val httpClient = pickClient(model)
+        val isThinkingModel = httpClient === thinkingClient
+        val timeoutSec = if (isThinkingModel) 360 else 60
 
+        android.util.Log.d("LlmDiag", "▶ STREAM (chunked) provider=$provider model=$model thinking=$isThinkingModel timeout=${timeoutSec}s")
+
+        // Reference partagee pour pouvoir cancel le call depuis le finally du flow
+        // (=> propagation cancel coroutine -> abort socket OkHttp instantane).
+        val call = httpClient.newCall(request)
         val response = try {
-            client.newCall(request).execute()
+            call.execute()
         } catch (e: java.net.SocketTimeoutException) {
-            // OkHttp readTimeout=60s atteint sans byte recu → modele probablement
-            // non deploye (cf. tests curl : deepseek-v4-flash hang 5min puis 504).
-            // Message friendly au lieu de la stack trace brute.
             android.util.Log.e("LlmDiag", "× SocketTimeoutException sur $provider/$model", e)
             throw Exception(
                 if (provider == LlmProvider.NVIDIA_NIM)
-                    "Timeout NVIDIA (60s sans reponse). Ce modele '$model' est probablement non deploye sur ta cle. Essaie meta/llama-3.3-70b-instruct (confirme fonctionnel)."
-                else "Timeout ${provider.displayName} (60s). Reessaie ou change de modele."
+                    "Timeout NVIDIA (${timeoutSec}s sans reponse). Ce modele '$model' est probablement non deploye sur ta cle. Essaie meta/llama-3.3-70b-instruct (confirme fonctionnel)."
+                else if (isThinkingModel)
+                    "Le modele reflechit depuis plus de 6 min sans repondre. Probleme tres complexe ou modele bloque — annule et reessaie avec un prompt plus simple."
+                else "Timeout ${provider.displayName} (${timeoutSec}s). Reessaie ou change de modele."
             )
+        } catch (e: java.io.InterruptedIOException) {
+            // Le coroutine a ete cancel (user a clique "Annuler") -> propager
+            // proprement sans logger comme une erreur.
+            android.util.Log.d("LlmDiag", "✋ Stream cancel par user : $provider/$model")
+            throw kotlinx.coroutines.CancellationException("Stream annule par l'utilisateur")
         } catch (e: java.net.UnknownHostException) {
             throw Exception("Pas de connexion internet (${e.message}).")
         }
@@ -812,47 +846,56 @@ The user's personalized data follows below (only sent on the first message)."""
         val tagParser = ThinkTagParser()
         var emittedThinking = 0
         var emittedResponse = 0
-        parseSseStream(reader, slowMode = false) { line ->
-            try {
-                val json = JsonParser.parseString(line).asJsonObject
-                val delta = json.getAsJsonArray("choices")
-                    ?.get(0)?.asJsonObject
-                    ?.getAsJsonObject("delta") ?: return@parseSseStream
+        // try/finally garantit que `call.cancel()` est invoke sur cancel
+        // coroutine (user a clique Annuler) -> abort le socket immediatement
+        // au lieu d'attendre que readTimeout expire.
+        try {
+            parseSseStream(reader, slowMode = false) { line ->
+                try {
+                    val json = JsonParser.parseString(line).asJsonObject
+                    val delta = json.getAsJsonArray("choices")
+                        ?.get(0)?.asJsonObject
+                        ?.getAsJsonObject("delta") ?: return@parseSseStream
 
-                // PATTERN B : reasoning_content separe (Groq gpt-oss, NVIDIA reasoning)
-                val reasoning = delta.get("reasoning_content")
-                    ?.takeIf { it.isJsonPrimitive && !it.isJsonNull }?.asString
-                if (!reasoning.isNullOrEmpty()) {
-                    emittedThinking++
-                    emit(StreamChunk.Thinking(reasoning))
-                }
+                    // PATTERN B : reasoning_content separe (Groq gpt-oss, NVIDIA reasoning)
+                    val reasoning = delta.get("reasoning_content")
+                        ?.takeIf { it.isJsonPrimitive && !it.isJsonNull }?.asString
+                    if (!reasoning.isNullOrEmpty()) {
+                        emittedThinking++
+                        emit(StreamChunk.Thinking(reasoning))
+                    }
 
-                // PATTERN C : thinking (Anthropic Claude extended thinking — peu probable
-                // pour OpenAI-compatible mais on capture par robustesse)
-                val thinking = delta.get("thinking")
-                    ?.takeIf { it.isJsonPrimitive && !it.isJsonNull }?.asString
-                if (!thinking.isNullOrEmpty()) {
-                    emittedThinking++
-                    emit(StreamChunk.Thinking(thinking))
-                }
+                    // PATTERN C : thinking (Anthropic Claude extended thinking — peu probable
+                    // pour OpenAI-compatible mais on capture par robustesse)
+                    val thinking = delta.get("thinking")
+                        ?.takeIf { it.isJsonPrimitive && !it.isJsonNull }?.asString
+                    if (!thinking.isNullOrEmpty()) {
+                        emittedThinking++
+                        emit(StreamChunk.Thinking(thinking))
+                    }
 
-                // PATTERN A : delta.content avec <think>...</think> inline (DeepSeek R1)
-                val content = delta.get("content")
-                    ?.takeIf { it.isJsonPrimitive && !it.isJsonNull }?.asString
-                if (!content.isNullOrEmpty()) {
-                    for (chunk in tagParser.process(content)) {
-                        when (chunk) {
-                            is StreamChunk.Thinking -> { emittedThinking++; emit(chunk) }
-                            is StreamChunk.Response -> { emittedResponse++; emit(chunk) }
+                    // PATTERN A : delta.content avec <think>...</think> inline (DeepSeek R1)
+                    val content = delta.get("content")
+                        ?.takeIf { it.isJsonPrimitive && !it.isJsonNull }?.asString
+                    if (!content.isNullOrEmpty()) {
+                        for (chunk in tagParser.process(content)) {
+                            when (chunk) {
+                                is StreamChunk.Thinking -> { emittedThinking++; emit(chunk) }
+                                is StreamChunk.Response -> { emittedResponse++; emit(chunk) }
+                            }
                         }
                     }
-                }
-            } catch (_: Exception) { /* ignore malformed chunks */ }
+                } catch (_: Exception) { /* ignore malformed chunks */ }
+            }
+            // Flush le tail residuel (au cas ou un tag etait splittee a la fin)
+            tagParser.flush()?.let { emit(it) }
+            android.util.Log.d("LlmDiag", "◀ chunked done : thinking=$emittedThinking response=$emittedResponse")
+        } finally {
+            // Cancel OkHttp call si pas deja termine (cas cancel mid-stream).
+            // No-op si la response a deja ete lue completement.
+            try { call.cancel() } catch (_: Exception) { /* deja close */ }
+            try { reader.close() } catch (_: Exception) { /* deja close */ }
         }
-        // Flush le tail residuel (au cas ou un tag etait splittee a la fin)
-        tagParser.flush()?.let { emit(it) }
-        android.util.Log.d("LlmDiag", "◀ chunked done : thinking=$emittedThinking response=$emittedResponse")
-        reader.close()
     }.flowOn(Dispatchers.IO)
 
     private fun streamOpenAiCompatible(

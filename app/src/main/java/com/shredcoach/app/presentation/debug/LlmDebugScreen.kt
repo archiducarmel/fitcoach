@@ -536,7 +536,14 @@ private fun ChatInteraction(
                 item { ChatEmptyState(state.selectedModel?.info) }
             } else {
                 items(state.messages, key = { "${it.timestampMs}_${it.role}" }) { msg ->
-                    ChatBubble(msg, isUser = msg.role == "user")
+                    ChatBubble(
+                        msg,
+                        isUser = msg.role == "user",
+                        // Cancel disponible UNIQUEMENT sur la bulle assistant
+                        // en cours de streaming (la derniere). Evite des boutons
+                        // Annuler fantomes sur les anciennes bulles.
+                        onCancelStream = if (msg.role == "assistant" && msg.isStreaming) onCancel else null,
+                    )
                 }
             }
         }

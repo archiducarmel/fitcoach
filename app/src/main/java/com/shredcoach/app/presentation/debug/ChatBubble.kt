@@ -49,7 +49,11 @@ import com.shredcoach.app.data.remote.LlmProvider
  *  - Erreur : bordure rouge + icon + message inline + bouton retry (TODO)
  */
 @Composable
-fun ChatBubble(message: DebugChatMessage, isUser: Boolean) {
+fun ChatBubble(
+    message: DebugChatMessage,
+    isUser: Boolean,
+    onCancelStream: (() -> Unit)? = null,
+) {
     android.util.Log.d("LlmDiag", "▶ ChatBubble compose isUser=$isUser text='${message.text.take(40)}' streaming=${message.isStreaming}")
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(message.timestampMs) { visible = true }
@@ -114,11 +118,13 @@ fun ChatBubble(message: DebugChatMessage, isUser: Boolean) {
                             }
                         }
                         // Reasoning models : pendant le thinking (isThinking=true et
-                        // text vide ET pas d'erreur), on affiche une animation.
-                        // Si une erreur arrive en cours de thinking, on bascule sur
-                        // l'affichage de l'erreur SANS l'animation (sinon overlap moche).
+                        // text vide ET pas d'erreur), on affiche une animation +
+                        // compteur live "Reflechit depuis Xm Ys" + bouton Annuler.
                         if (message.isThinking && message.text.isBlank() && message.error == null) {
-                            ThinkingAnimation()
+                            ThinkingAnimation(
+                                streamStartMs = message.timestampMs,
+                                onCancel = onCancelStream,
+                            )
                         }
                         // Text content
                         val displayText = when {
@@ -152,16 +158,26 @@ fun ChatBubble(message: DebugChatMessage, isUser: Boolean) {
                                 )
                             }
                         }
-                        // Streaming caret
+                        // Streaming caret + cancel button discret pendant la generation
+                        // (visible meme apres le 1er token, l'user peut interrompre une
+                        // reponse trop longue).
                         if (message.isStreaming && message.text.isNotEmpty()) {
-                            Box(
-                                Modifier
-                                    .padding(top = 4.dp)
-                                    .size(width = 2.dp, height = 14.dp)
-                                    .background(
-                                        if (isUser) Color.White else MaterialTheme.colorScheme.primary
-                                    )
-                            )
+                            Row(
+                                modifier = Modifier.padding(top = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                Box(
+                                    Modifier
+                                        .size(width = 2.dp, height = 14.dp)
+                                        .background(
+                                            if (isUser) Color.White else MaterialTheme.colorScheme.primary
+                                        )
+                                )
+                                if (onCancelStream != null && !isUser) {
+                                    CancelStreamChip(onCancel = onCancelStream)
+                                }
+                            }
                         }
                         // Error state
                         if (message.error != null) {
@@ -258,7 +274,10 @@ private fun shortenModelId(id: String): String {
  *  - 3 points qui s'animent en cascade
  */
 @Composable
-private fun ThinkingAnimation() {
+private fun ThinkingAnimation(
+    streamStartMs: Long,
+    onCancel: (() -> Unit)? = null,
+) {
     val phrases = remember {
         listOf(
             "🧠 Hmm, laisse-moi réfléchir",
@@ -278,6 +297,16 @@ private fun ThinkingAnimation() {
         }
     }
 
+    // Compteur live "Reflechit depuis Xm Ys" — refresh chaque seconde.
+    // Permet au user de voir si le modele patine (>30s -> probablement reasoning hard).
+    var elapsedSec by remember { mutableStateOf(0L) }
+    LaunchedEffect(streamStartMs) {
+        while (true) {
+            elapsedSec = (System.currentTimeMillis() - streamStartMs) / 1000L
+            kotlinx.coroutines.delay(1000)
+        }
+    }
+
     // Pulse du conteneur global
     val infiniteTransition = rememberInfiniteTransition(label = "think_pulse")
     val pulseScale by infiniteTransition.animateFloat(
@@ -290,31 +319,89 @@ private fun ThinkingAnimation() {
         label = "pulse_scale",
     )
 
-    Row(
-        modifier = Modifier.scale(pulseScale),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        AnimatedContent(
-            targetState = phrases[phraseIdx],
-            transitionSpec = {
-                (fadeIn(animationSpec = tween(400)) +
-                    slideInVertically(initialOffsetY = { it / 3 }))
-                    .togetherWith(
-                        fadeOut(animationSpec = tween(300)) +
-                            slideOutVertically(targetOffsetY = { -it / 3 })
-                    )
-            },
-            label = "think_phrase",
-        ) { phrase ->
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            modifier = Modifier.scale(pulseScale),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            AnimatedContent(
+                targetState = phrases[phraseIdx],
+                transitionSpec = {
+                    (fadeIn(animationSpec = tween(400)) +
+                        slideInVertically(initialOffsetY = { it / 3 }))
+                        .togetherWith(
+                            fadeOut(animationSpec = tween(300)) +
+                                slideOutVertically(targetOffsetY = { -it / 3 })
+                        )
+                },
+                label = "think_phrase",
+            ) { phrase ->
+                Text(
+                    text = phrase,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+            AnimatedDots()
+        }
+        // Compteur + bouton annuler
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             Text(
-                text = phrase,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
+                text = formatElapsed(elapsedSec),
+                style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
                 fontWeight = FontWeight.Medium,
             )
+            if (onCancel != null) {
+                CancelStreamChip(onCancel = onCancel)
+            }
         }
-        AnimatedDots()
+    }
+}
+
+/** Formate "12s" / "1m23s" / "2m05s" pour le compteur live. */
+private fun formatElapsed(sec: Long): String {
+    if (sec < 60) return "Réfléchit depuis ${sec}s"
+    val m = sec / 60
+    val s = sec % 60
+    return "Réfléchit depuis ${m}m${s.toString().padStart(2, '0')}s"
+}
+
+/** Petit chip "Annuler" stylise pour interrompre un stream LLM en cours.
+ *  Visible pendant le thinking et la generation. */
+@Composable
+private fun CancelStreamChip(onCancel: () -> Unit) {
+    Surface(
+        onClick = onCancel,
+        shape = RoundedCornerShape(10.dp),
+        color = MaterialTheme.colorScheme.error.copy(alpha = 0.12f),
+        modifier = Modifier.heightIn(min = 22.dp),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(3.dp),
+        ) {
+            Text(
+                "✕",
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.error,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                "Annuler",
+                style = MaterialTheme.typography.labelSmall,
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.error,
+                fontWeight = FontWeight.Bold,
+            )
+        }
     }
 }
 
