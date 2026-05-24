@@ -337,14 +337,18 @@ class AssistantLlmSettingsViewModel @Inject constructor(
                     AiAssistant.MEAL_SCAN_LEFTOVER,
                 )
                 return@filter if (assistant in mealVisionAssistants) {
-                    // Pipeline etendu : GEMINI/MISTRAL (natif) + GROQ +
-                    // OPENAI/GITHUB_MODELS/NVIDIA_NIM via callOpenAiCompatVision.
-                    // CLAUDE EXCLU : le pipeline GeminiMealService.analyzeMeal
-                    // n'a pas de branche Claude (Anthropic utilise un format
-                    // content-blocks different). Si user pick Claude -> fall-
-                    // through au callGemini avec cle Claude -> 401. A wirer
-                    // proprement en Sprint B phase 3.
+                    // Pipeline etendu : GEMINI/MISTRAL (natif) + GROQ (GROQ_MEAL key)
+                    // + GITHUB_MODELS/NVIDIA_NIM (cles dediees) via
+                    // callOpenAiCompatVision.
+                    // EXCLUS pour eviter 401 silencieux :
+                    //  - CLAUDE : pipeline GeminiMealService n'a pas de branche
+                    //    Claude (format content-blocks Anthropic specifique)
+                    //  - OPENAI : pas de cle dediee dans SecureKeyStore. La cle
+                    //    LLM partagee ne contient OpenAI que si user a aussi
+                    //    OpenAI comme chat principal. A wirer proprement quand
+                    //    on ajoutera SecureKeyStore.Provider.OPENAI.
                     if (provider == LlmProvider.CLAUDE) return@filter false
+                    if (provider == LlmProvider.OPENAI) return@filter false
                     LlmCatalog.modelsFor(provider).any { it.supportsVision }
                 } else {
                     // Pipeline legacy : Gemini + Mistral uniquement.
