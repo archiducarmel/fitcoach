@@ -11,6 +11,7 @@ import com.shredcoach.app.domain.llm.AssistantLlmResolver
 import com.shredcoach.app.domain.llm.LlmCatalog
 import com.shredcoach.app.domain.llm.LlmModelInfo
 import com.shredcoach.app.domain.llm.LlmTier
+import com.shredcoach.app.domain.llm.ModelKind
 import com.shredcoach.app.domain.llm.ResolvedLlmConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -263,17 +264,75 @@ class AssistantLlmSettingsViewModel @Inject constructor(
         }.getOrDefault(false)
     }
 
-    /** Helper exposé pour la UI pour la liste des providers + modèles dispo. */
+    /**
+     * Helper expose pour la UI : modeles d'un provider compatibles avec
+     * l'assistant. Filtre par :
+     *  1. **Kind requis** (LANGUAGE pour chat/analyse/background, VLM pour vision)
+     *     -> evite que l'user pick `meta/llama-guard-4-12b` (CLASSIFICATION) ou
+     *     `google/deplot` (OCR) pour un assistant chat (renverrait verdict
+     *     moderation/JSON, pas reponse coach).
+     *  2. **supportsVision** si l'assistant a needsVision (back-compat avec
+     *     l'ancien comportement, mais redondant avec kind=VLM en pratique).
+     *
+     * Pour les **assistants vision**, on accepte LANGUAGE + VLM (un modele LANGUAGE
+     * compatible vision est rare mais possible — supportsVision est la verite).
+     */
+    fun availableModelsFor(provider: LlmProvider, assistant: AiAssistant): List<LlmModelInfo> {
+        val all = LlmCatalog.modelsFor(provider)
+        return if (assistant.needsVision) {
+            all.filter { it.supportsVision }
+        } else {
+            // Pour chat/analyse/background : LANGUAGE ou VLM (VLM peut aussi
+            // gerer du chat texte). On exclut EMBEDDING/OCR/CLASSIFICATION/
+            // IMAGE_GENERATION/VIDEO_GENERATION/TTS/STT/REWARD_MODEL/SCIENTIFIC
+            // /OPTIMIZATION/OBJECT_DETECTION/MULTIMODAL_EMBEDDING/RERANKER —
+            // qui sont des modeles specialises non utilisables comme assistant chat.
+            all.filter {
+                it.kind == ModelKind.LANGUAGE || it.kind == ModelKind.VLM
+            }
+        }
+    }
+
+    /** @deprecated Utiliser [availableModelsFor] avec l'assistant. */
+    @Deprecated("Use availableModelsFor(provider, assistant)")
     fun availableModelsFor(provider: LlmProvider, needsVision: Boolean): List<LlmModelInfo> {
         val all = LlmCatalog.modelsFor(provider)
         return if (needsVision) all.filter { it.supportsVision } else all
     }
 
-    /** Providers utilisables pour un assistant (filtre par vision si requis). */
+    /**
+     * Providers utilisables pour un assistant. **Pipeline reality check** :
+     *  - Pour les **assistants VISION** (needsVision=true), le pipeline actuel
+     *    (GeminiMealService.analyzeMealPhoto/BodyAnalysisService) ne supporte
+     *    QUE Gemini + Mistral comme backends. GitHub Models + NVIDIA NIM ont
+     *    des modeles vision (gpt-4o, llama-3.2-vision, qwen3.5...) mais le
+     *    pipeline ne les route pas encore -> on les exclut pour eviter un
+     *    crash silencieux (401 sur cle Gemini quand provider != GEMINI/MISTRAL).
+     *  - Pour les **assistants chat/analyse/background** (needsVision=false),
+     *    LlmApiService.streamMessage gere tous les providers OpenAI-compat
+     *    (GROQ, OPENAI, GITHUB_MODELS, NVIDIA_NIM) + GEMINI/CLAUDE specifiques.
+     *    POLLINATIONS + CLOUDFLARE_AI = image-gen only, exclus pour chat.
+     *
+     * @return providers qui ont AU MOINS un modele utilisable pour cet assistant
+     *  ET dont le pipeline est actuellement supporte.
+     */
     fun providersFor(assistant: AiAssistant): List<LlmProvider> {
         val all = LlmProvider.values().toList()
-        return if (assistant.needsVision) all.filter { provider ->
-            LlmCatalog.modelsFor(provider).any { it.supportsVision }
-        } else all
+        return all.filter { provider ->
+            // Pollinations + Cloudflare = image-gen only, jamais utilisables
+            // comme backend chat/vision assistant.
+            if (!provider.supportsChat && assistant.category != AiCategory.VISION) return@filter false
+            if (provider == LlmProvider.POLLINATIONS || provider == LlmProvider.CLOUDFLARE_AI) {
+                return@filter false
+            }
+            // Pour vision : pipeline GeminiMealService route SEULEMENT vers
+            // GEMINI/MISTRAL. Pas de support GitHub/NVIDIA vision pour l'instant.
+            if (assistant.needsVision) {
+                return@filter provider == LlmProvider.GEMINI || provider == LlmProvider.MISTRAL
+            }
+            // Pour non-vision : au moins un modele du provider doit etre
+            // LANGUAGE ou VLM (i.e. utilisable comme backend chat).
+            availableModelsFor(provider, assistant).isNotEmpty()
+        }
     }
 }

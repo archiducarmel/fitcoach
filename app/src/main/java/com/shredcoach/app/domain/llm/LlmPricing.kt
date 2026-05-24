@@ -60,15 +60,28 @@ object LlmPricing {
         (LlmProvider.CLAUDE to "claude-opus-4-20250514") to ModelPricing(15.00, 75.00),
 
         // ─── GITHUB MODELS ──────────────────────────────────────────────
-        // Free tier : tous les modeles sont gratuits (rate-limited via tier
-        // low/high/custom). On enregistre $0.00 pour la telemetrie dashboard.
-        // Si GitHub introduit du billing dans le futur, mettre les prix reels.
-        // Les modeles concrets sont ajoutes dynamiquement via le catalogue —
-        // ici on a juste une entree par defaut pour le fallback.
+        // Free tier rate-limite (tiers low/high/custom). Les modeles "custom"
+        // sont GATED Copilot Pro+ ($10/mois) et soumis a un quota mensuel.
+        // Apres quota epuise, OVERAGE billing = prix listes ci-dessous.
+        // (Source : github.com/marketplace/models pricing 2026)
+        //
+        // Pour les modeles free (gpt-4o, llama-*, mistral-*, deepseek-*), le
+        // cout dashboard reste $0 via pricingDefaultFor(GITHUB_MODELS).
+        // On ne liste ici que les modeles GATED qui ont un cout overage reel.
+        (LlmProvider.GITHUB_MODELS to "openai/gpt-5") to ModelPricing(1.25, 10.00),
+        (LlmProvider.GITHUB_MODELS to "openai/gpt-5-chat") to ModelPricing(1.25, 10.00),
+        (LlmProvider.GITHUB_MODELS to "openai/gpt-5-mini") to ModelPricing(0.25, 2.00),
+        (LlmProvider.GITHUB_MODELS to "openai/gpt-5-nano") to ModelPricing(0.05, 0.40),
+        (LlmProvider.GITHUB_MODELS to "openai/o1") to ModelPricing(15.00, 60.00),
+        (LlmProvider.GITHUB_MODELS to "openai/o1-mini") to ModelPricing(1.10, 4.40),
+        (LlmProvider.GITHUB_MODELS to "openai/o3") to ModelPricing(10.00, 40.00),
+        (LlmProvider.GITHUB_MODELS to "openai/o3-mini") to ModelPricing(1.10, 4.40),
+        (LlmProvider.GITHUB_MODELS to "openai/o4-mini") to ModelPricing(0.40, 1.60),
 
         // ─── NVIDIA NIM ─────────────────────────────────────────────────
-        // NVIDIA NIM cloud : free tier avec credits limites pour les nouveaux
-        // accounts, sinon billing per-token. On enregistre $0.00 par defaut.
+        // Free tier 1000 inferences/jour pour nouveaux comptes, sinon
+        // billing per-token. Tous les modeles open-weights sont uniformes
+        // a un prix indicatif : on garde FREE_TIER par defaut (developer-friendly).
     )
 
     /** Tarif "free tier" pour GitHub Models / NVIDIA NIM (catalogues dynamiques). */

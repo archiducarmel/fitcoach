@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Refresh
@@ -128,7 +129,7 @@ fun AssistantLlmSettingsScreen(
             currentFallbackProvider = state.sheetFallbackProvider,
             currentFallbackModelId = state.sheetFallbackModelId,
             providers = viewModel.providersFor(state.editingAssistant!!),
-            modelsForProvider = { p -> viewModel.availableModelsFor(p, state.editingAssistant!!.needsVision) },
+            modelsForProvider = { p -> viewModel.availableModelsFor(p, state.editingAssistant!!) },
             onProviderSelected = viewModel::setSheetProvider,
             onModelSelected = viewModel::setSheetModel,
             onFallbackProviderSelected = viewModel::setSheetFallbackProvider,
@@ -396,6 +397,169 @@ private fun AssistantRow(
     }
 }
 
+/**
+ * Card modele premium pour le picker Settings :
+ *  - Nom + tier badge ($/$$/$$$) + cadenas si gated
+ *  - Description vulgarisee via ModelDescriptions (fallback notes statiques)
+ *  - Capability pills (vision/thinking/tools/code) en row condensee
+ *  - Meta-row : kind emoji + publisher (creator) + parameter count + contexte
+ */
+@Composable
+private fun ModelCard(
+    model: com.shredcoach.app.domain.llm.LlmModelInfo,
+    isSelected: Boolean,
+    onSelect: () -> Unit,
+) {
+    Surface(
+        onClick = onSelect,
+        shape = RoundedCornerShape(12.dp),
+        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                else MaterialTheme.colorScheme.surface,
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                1.dp,
+                if (isSelected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                RoundedCornerShape(12.dp),
+            ),
+    ) {
+        Row(
+            Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                // Title row : kind emoji + name + tier + gated lock
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text("${model.kind.emoji} ${model.displayName}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
+                                else MaterialTheme.colorScheme.onSurface,
+                        maxLines = 2,
+                    )
+                    TierBadge(model.tier)
+                    if (model.isGated) {
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = MaterialTheme.colorScheme.error.copy(alpha = 0.12f),
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            ) {
+                                Icon(Icons.Default.Lock, null, Modifier.size(9.dp),
+                                    tint = MaterialTheme.colorScheme.error)
+                                Text("Pro+", fontSize = 8.sp, fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.error)
+                            }
+                        }
+                    }
+                }
+
+                // Meta row : publisher · params · context
+                val metaParts = buildList {
+                    model.publisher?.takeIf { it.isNotBlank() }?.let {
+                        add("🧪 ${prettifyMakerLabel(it)}")
+                    }
+                    if (model.parameterCountBillions > 0) {
+                        add("${model.parameterCountBillions.toInt()}B params")
+                    }
+                    if (model.maxContextTokens > 0) {
+                        add("${model.maxContextTokens / 1000}K ctx")
+                    }
+                }
+                if (metaParts.isNotEmpty()) {
+                    Text(
+                        metaParts.joinToString("  ·  "),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontSize = 9.5.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                    )
+                }
+
+                // Description vulgarisee : ModelDescriptions > notes catalog
+                val description = com.shredcoach.app.domain.llm.ModelDescriptions
+                    .describe(model.id, model.publisher) ?: model.notes
+                if (description.isNotBlank()) {
+                    Text(
+                        description,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontSize = 10.sp,
+                        lineHeight = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        maxLines = 3,
+                    )
+                }
+
+                // Capability pills (uniquement si au moins une est true)
+                if (model.supportsVision || model.supportsThinking ||
+                    model.supportsToolCalling || model.supportsCodeGen ||
+                    model.supportsAgentic) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                        if (model.supportsVision) CapabilityPill("👁", "Vision")
+                        if (model.supportsThinking) CapabilityPill("🧠", "Reasoning")
+                        if (model.supportsToolCalling) CapabilityPill("🛠", "Tools")
+                        if (model.supportsCodeGen) CapabilityPill("💻", "Code")
+                        if (model.supportsAgentic) CapabilityPill("⚡", "Agents")
+                    }
+                }
+            }
+            if (isSelected) {
+                Icon(Icons.Default.CheckCircle, null,
+                    Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.primary)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CapabilityPill(emoji: String, label: String) {
+    Surface(
+        shape = RoundedCornerShape(4.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+    ) {
+        Text("$emoji $label",
+            style = MaterialTheme.typography.labelSmall,
+            fontSize = 8.5.sp, fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
+        )
+    }
+}
+
+/** "mistralai" -> "Mistral AI", "openai" -> "OpenAI", etc.
+ *  Symétrique avec prettifyMaker du picker debug. */
+private fun prettifyMakerLabel(maker: String): String = when (maker.lowercase()) {
+    "openai" -> "OpenAI"
+    "mistralai", "mistral-ai" -> "Mistral AI"
+    "meta", "meta-llama" -> "Meta"
+    "google" -> "Google"
+    "microsoft" -> "Microsoft"
+    "anthropic" -> "Anthropic"
+    "deepseek", "deepseek-ai" -> "DeepSeek"
+    "qwen", "alibaba" -> "Alibaba"
+    "nvidia", "nv-mistralai" -> "NVIDIA"
+    "cohere" -> "Cohere"
+    "ibm" -> "IBM"
+    "xai" -> "xAI"
+    "moonshotai" -> "Moonshot"
+    "minimaxai" -> "MiniMax"
+    "z-ai" -> "Z.ai"
+    "stepfun-ai" -> "StepFun"
+    "ai21labs", "ai21-labs" -> "AI21 Labs"
+    "01-ai" -> "01.AI"
+    "black-forest-labs" -> "Black Forest Labs"
+    "stabilityai" -> "Stability AI"
+    else -> maker.replaceFirstChar { it.uppercase() }
+}
+
 @Composable
 private fun TierBadge(tier: LlmTier) {
     val (label, bg, fg) = when (tier) {
@@ -622,54 +786,11 @@ private fun AssistantLlmPickerSheet(
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     models.forEach { model ->
-                        val isSelected = model.id == currentModelId
-                        Surface(
-                            onClick = { onModelSelected(model.id) },
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (isSelected) MaterialTheme.colorScheme.primaryContainer
-                                else MaterialTheme.colorScheme.surface,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .border(
-                                    1.dp,
-                                    if (isSelected) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-                                    RoundedCornerShape(12.dp),
-                                ),
-                        ) {
-                            Row(
-                                Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            ) {
-                                Column(Modifier.weight(1f)) {
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        Text(
-                                            model.displayName,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
-                                                else MaterialTheme.colorScheme.onSurface,
-                                        )
-                                        TierBadge(model.tier)
-                                    }
-                                    if (model.notes.isNotBlank()) {
-                                        Text(
-                                            model.notes,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                        )
-                                    }
-                                }
-                                if (isSelected) {
-                                    Icon(
-                                        Icons.Default.CheckCircle, null,
-                                        Modifier.size(18.dp),
-                                        tint = MaterialTheme.colorScheme.primary,
-                                    )
-                                }
-                            }
-                        }
+                        ModelCard(
+                            model = model,
+                            isSelected = model.id == currentModelId,
+                            onSelect = { onModelSelected(model.id) },
+                        )
                     }
                 }
             }
