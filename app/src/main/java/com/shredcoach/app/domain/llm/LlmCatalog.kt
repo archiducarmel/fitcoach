@@ -728,6 +728,9 @@ object LlmCatalog {
                 kind = ModelKind.LANGUAGE, tier = LlmTier.STANDARD,
                 notes = "Defaut NIM · conversation experte",
                 supportsToolCalling = true,
+                // Test empirique v2026.05.24 : 65s sur NIM (vs 1-2s sur Groq).
+                // Mark thinking pour router vers le client 360s (safety margin).
+                supportsThinking = true,
                 architecture = ModelArchitecture.TRANSFORMER_DENSE,
                 weightsSource = WeightsSource.OPEN_WEIGHTS,
                 originRegion = ModelOriginRegion.US, publisher = "meta",
@@ -862,6 +865,8 @@ object LlmCatalog {
                 kind = ModelKind.VLM, tier = LlmTier.PREMIUM,
                 notes = "Vision native + function calling + long contexte",
                 acceptsImageInput = true, supportsVision = true, supportsToolCalling = true,
+                // Test empirique v2026.05.24 : timeout >300s sur NIM (non-deploye ou tres lent).
+                supportsThinking = true,
                 architecture = ModelArchitecture.TRANSFORMER_DENSE,
                 weightsSource = WeightsSource.OPEN_WEIGHTS,
                 originRegion = ModelOriginRegion.US, publisher = "google",
@@ -947,6 +952,8 @@ object LlmCatalog {
                 notes = "Multimodal · texte + images + video",
                 acceptsImageInput = true, acceptsVideoInput = true, supportsVision = true,
                 supportsToolCalling = true,
+                // Test empirique v2026.05.24 : timeout >300s sur NIM.
+                supportsThinking = true,
                 architecture = ModelArchitecture.TRANSFORMER_MOE,
                 weightsSource = WeightsSource.OPEN_WEIGHTS,
                 originRegion = ModelOriginRegion.CHINA, publisher = "qwen",
@@ -959,6 +966,8 @@ object LlmCatalog {
                 notes = "Flagship MoE · multimodal frontier",
                 acceptsImageInput = true, acceptsVideoInput = true, supportsVision = true,
                 supportsToolCalling = true, supportsAgentic = true,
+                // Test empirique v2026.05.24 : 253s sur NIM (frontier model).
+                supportsThinking = true,
                 architecture = ModelArchitecture.TRANSFORMER_MOE,
                 weightsSource = WeightsSource.OPEN_WEIGHTS,
                 originRegion = ModelOriginRegion.CHINA, publisher = "qwen",
@@ -999,6 +1008,8 @@ object LlmCatalog {
                 kind = ModelKind.LANGUAGE, tier = LlmTier.STANDARD,
                 notes = "Genie logiciel complexe · 196K contexte",
                 supportsToolCalling = true, supportsCodeGen = true,
+                // Test empirique v2026.05.24 : timeout >300s sur NIM.
+                supportsThinking = true,
                 architecture = ModelArchitecture.TRANSFORMER_MOE,
                 weightsSource = WeightsSource.OPEN_WEIGHTS, domain = ModelDomain.CODE,
                 originRegion = ModelOriginRegion.CHINA, publisher = "minimaxai",

@@ -292,29 +292,28 @@ class LlmApiService @Inject constructor(
     private val fallbackBus: com.shredcoach.app.domain.llm.LlmFallbackBus,
 ) {
 
-    /** Client standard pour chat conversationnel non-reasoning. Coupe court si
-     *  TTFB > 60s = modele probablement hang/non-deploye. */
+    /** Client standard pour chat / vision / VLM "normal".
+     *
+     *  Timeout 180s mesure empiriquement v2026.05.24 sur NVIDIA NIM :
+     *   - Modeles rapides (gpt-oss, gemini, gpt-4o, llama-4-maverick) : 3-15s
+     *   - Modeles "moyens" (llama-3.3-70b sur NIM, kimi-k2.6) : 65-76s
+     *   - Modeles lents (glm-5.1, qwen3.5-397b) : > 180s -> route thinkingClient
+     *
+     *  Le pre-fix etait 60s : trop court pour 25% des modeles NIM testes.
+     *  180s couvre les "moyens lents" tout en gardant un garde-fou anti-hang
+     *  (au-dela l'user pense que l'app a plante, sa patience est epuisee). */
     private val client = baseClient.newBuilder()
-        // ── Timeouts mesures empiriquement via tests curl NVIDIA NIM ──
-        // Pattern observe :
-        //  - Modele deploye normal -> reponse en <30s (TTFB <2s, then streaming)
-        //  - Modele dans catalogue mais NON deploye pour la cle (ex: deepseek-v4-flash)
-        //    -> 504 Gateway Timeout apres 302s (5 minutes EXACTES)
-        //
-        // readTimeout = 60s (per-byte) :
-        //  - Couvre les reasoning models lents (10-30s avant le 1er token)
-        //  - Coupe SHORT les modeles qui hang (au lieu d'attendre 5 min)
-        //  - Plus reactif que 300s pour l'UX : user voit l'echec en 1 min max
-        .readTimeout(60, TimeUnit.SECONDS)
+        .readTimeout(180, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
 
-    /** Client EXTENDED-TIMEOUT pour les reasoning models avec long thinking
-     *  (o1, o3, DeepSeek R1, GLM-5.1, Kimi K2.6, MiniMax M2.7).
+    /** Client EXTENDED-TIMEOUT pour les modeles reasoning OU empiriquement lents
+     *  (>180s mesure). Inclut : o1, o3, o4-mini, DeepSeek R1, Claude Opus 4
+     *  thinking, GLM-5.1 (197s), Qwen 3.5 397B (253s), Qwen 3.5 122B (>300s),
+     *  Gemma 4 31B sur NIM (>300s), modeles NIM non-deployes pour la cle.
      *
-     *  Le thinking peut prendre 30-300s avant le 1er output token. On laisse
-     *  6 minutes max pour couvrir les hard problems (AIME math, code agents)
-     *  tout en gardant un garde-fou : au-dela l'user pense que l'app a plante. */
+     *  6 minutes max pour couvrir les hard problems (AIME math, code agents,
+     *  long context analysis). Au-dela l'user pense que l'app a plante. */
     private val thinkingClient = baseClient.newBuilder()
         .readTimeout(360, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
@@ -336,18 +335,28 @@ class LlmApiService @Inject constructor(
     }
 
     /** Heuristique fallback pour les modeles dynamiques (NIM/GitHub) absents
-     *  de LlmCatalog.byProvider statique. Patterns couvrant les familles
-     *  reasoning connues : OpenAI o-series, DeepSeek R-series, Kimi K2.x,
-     *  GLM 5.x, MiniMax M2.x, Qwen QwQ, etc. */
+     *  de LlmCatalog.byProvider statique. Patterns couvrant :
+     *   (a) reasoning models : o-series, R-series, QwQ, GLM-5, MiniMax M2,
+     *       Kimi K2, nemotron-super, phi-4-reasoning.
+     *   (b) modeles empiriquement LENTS sur NVIDIA NIM mesures v2026.05.24
+     *       (TIMEOUT >180s) : qwen3.5 (122b/397b), gemma-4-31b, mistral-large-3.
+     *       Ces modeles ne font PAS de reasoning au sens strict, mais leur
+     *       serveur NIM les rend systematiquement >180s -> route thinkingClient. */
     private fun isLikelyReasoningModel(model: String): Boolean {
         val m = model.lowercase()
-        return m.contains("/o1") || m.contains("/o3") || m.contains("/o4-mini") ||
+        // (a) Reasoning explicit
+        if (m.contains("/o1") || m.contains("/o3") || m.contains("/o4-mini") ||
             m.contains("openai/o") || m.contains("-reasoning") ||
             m.contains("deepseek-r1") || m.contains("/r1") ||
             m.contains("kimi-k2") || m.contains("glm-5") || m.contains("/glm-4.6") ||
             m.contains("minimax-m2") || m.contains("qwen-qwq") || m.contains("qwq-") ||
             m.contains("nemotron-super") || m.contains("phi-4-reasoning") ||
-            m.contains("phi-4-mini-reasoning")
+            m.contains("phi-4-mini-reasoning")) return true
+        // (b) Modeles empiriquement >180s sur NIM (tests batch v2026.05.24)
+        if (m.contains("qwen3.5-122b") || m.contains("qwen3.5-397b") ||
+            m.contains("qwen/qwen3.5") || m.contains("gemma-4-31b") ||
+            m.contains("mistral-large-3")) return true
+        return false
     }
 
     /**
@@ -1004,7 +1013,7 @@ The user's personalized data follows below (only sent on the first message)."""
         // 60s pour les autres (cf. pickClient).
         val httpClient = pickClient(model)
         val isThinkingModel = httpClient === thinkingClient
-        val timeoutSec = if (isThinkingModel) 360 else 60
+        val timeoutSec = if (isThinkingModel) 360 else 180
 
         android.util.Log.d("LlmDiag", "▶ STREAM (chunked) provider=$provider model=$model thinking=$isThinkingModel timeout=${timeoutSec}s")
 
