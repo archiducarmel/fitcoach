@@ -435,15 +435,20 @@ private fun ModelRow(resolved: ResolvedModel, isSelected: Boolean, isKeyMissing:
                         if (info.supportsTranslation) CapabilityBadge("🌍", "i18n")
                     }
                 }
-                if (info.notes.isNotBlank()) {
+                // Description editorialisee ≤30 mots :
+                //  1. ModelDescriptions.describe (catalogue editorial avec match exact)
+                //  2. info.notes (cas non couvert : fallback notes statiques LlmCatalog)
+                val description = com.shredcoach.app.domain.llm.ModelDescriptions
+                    .describe(info.id, info.publisher) ?: info.notes
+                if (description.isNotBlank()) {
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        info.notes,
+                        description,
                         style = MaterialTheme.typography.labelSmall,
                         fontSize = 10.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
                         lineHeight = 13.sp,
-                        maxLines = 4,  // ≤30 mots = ~3-4 lignes selon largeur
+                        maxLines = 4,
                     )
                 }
             }
