@@ -500,24 +500,18 @@ private fun ChatBubble(
             Surface(shape = shape, color = bubbleColor, tonalElevation = if (isUser) 0.dp else 1.dp,
                 modifier = if (isUser) Modifier else Modifier.weight(1f, fill = false)) {
                 Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
-                    // Affiche l'image attachee (user uniquement, decode from imagePath)
+                    // Affiche l'image attachee (user uniquement, async via Coil
+                    // pour eviter ANR : decode off-main + cache + downsample auto).
                     if (isUser && !message.imagePath.isNullOrBlank()) {
-                        val bitmap = remember(message.imagePath) {
-                            try {
-                                android.graphics.BitmapFactory.decodeFile(message.imagePath)
-                            } catch (_: Exception) { null }
-                        }
-                        bitmap?.let {
-                            Image(
-                                bitmap = it.asImageBitmap(),
-                                contentDescription = "Photo envoyée",
-                                modifier = Modifier
-                                    .padding(bottom = if (message.content.isNotBlank()) 8.dp else 0.dp)
-                                    .heightIn(max = 220.dp)
-                                    .clip(RoundedCornerShape(12.dp)),
-                                contentScale = androidx.compose.ui.layout.ContentScale.FillWidth,
-                            )
-                        }
+                        coil.compose.AsyncImage(
+                            model = java.io.File(message.imagePath),
+                            contentDescription = stringResource(R.string.chat_image_sent_cd),
+                            modifier = Modifier
+                                .padding(bottom = if (message.content.isNotBlank()) 8.dp else 0.dp)
+                                .heightIn(max = 220.dp)
+                                .clip(RoundedCornerShape(12.dp)),
+                            contentScale = androidx.compose.ui.layout.ContentScale.FillWidth,
+                        )
                     }
                     if (message.content.isNotBlank()) {
                         if (isUser) {
@@ -703,21 +697,21 @@ private fun ChatInputBar(
                     ) {
                         Image(
                             bitmap = attachedBitmap.asImageBitmap(),
-                            contentDescription = "Photo attachée",
+                            contentDescription = stringResource(R.string.chat_image_preview_attached),
                             modifier = Modifier
-                                .size(48.dp)
-                                .clip(RoundedCornerShape(8.dp)),
+                                .size(80.dp)
+                                .clip(RoundedCornerShape(10.dp)),
                             contentScale = androidx.compose.ui.layout.ContentScale.Crop,
                         )
                         Column(Modifier.weight(1f)) {
                             Text(
-                                "📷 Photo prête à envoyer",
+                                stringResource(R.string.chat_image_ready_to_send),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.SemiBold,
                             )
                             Text(
-                                if (supportsVision) "Le modèle analysera cette image"
-                                else "⚠️ Modèle texte uniquement — change-le dans Réglages",
+                                if (supportsVision) stringResource(R.string.chat_image_will_be_analyzed)
+                                else stringResource(R.string.chat_image_model_text_only_warning),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontSize = 10.sp,
                                 color = if (supportsVision) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
@@ -725,7 +719,7 @@ private fun ChatInputBar(
                             )
                         }
                         IconButton(onClick = onClearImage, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Close, "Retirer l'image", Modifier.size(18.dp))
+                            Icon(Icons.Default.Close, stringResource(R.string.chat_image_remove_cd), Modifier.size(18.dp))
                         }
                     }
                 }
@@ -750,7 +744,7 @@ private fun ChatInputBar(
                     ) {
                         Icon(
                             androidx.compose.material.icons.Icons.Default.Image,
-                            "Joindre une photo",
+                            stringResource(R.string.chat_image_attach_cd),
                             Modifier.size(20.dp),
                             tint = accentColor,
                         )
@@ -762,7 +756,7 @@ private fun ChatInputBar(
                     modifier = Modifier.weight(1f).heightIn(min = 48.dp, max = 120.dp),
                     placeholder = {
                         Text(
-                            if (attachedBitmap != null) "Question optionnelle sur la photo…"
+                            if (attachedBitmap != null) stringResource(R.string.chat_image_attached_placeholder)
                             else stringResource(R.string.chat_input_placeholder),
                             style = MaterialTheme.typography.bodyMedium,
                         )

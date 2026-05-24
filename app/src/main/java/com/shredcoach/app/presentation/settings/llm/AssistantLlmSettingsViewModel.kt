@@ -340,15 +340,13 @@ class AssistantLlmSettingsViewModel @Inject constructor(
                     // Pipeline etendu : GEMINI/MISTRAL (natif) + GROQ (GROQ_MEAL key)
                     // + GITHUB_MODELS/NVIDIA_NIM (cles dediees) via
                     // callOpenAiCompatVision.
-                    // EXCLUS pour eviter 401 silencieux :
+                    // EXCLU pour eviter 401 silencieux :
                     //  - CLAUDE : pipeline GeminiMealService n'a pas de branche
-                    //    Claude (format content-blocks Anthropic specifique)
-                    //  - OPENAI : pas de cle dediee dans SecureKeyStore. La cle
-                    //    LLM partagee ne contient OpenAI que si user a aussi
-                    //    OpenAI comme chat principal. A wirer proprement quand
-                    //    on ajoutera SecureKeyStore.Provider.OPENAI.
+                    //    Claude (format content-blocks Anthropic specifique).
+                    //    OPENAI reactive depuis v2026.05.24 : SecureKeyStore a
+                    //    maintenant un slot OPENAI dedie -> LlmKeyResolver le
+                    //    lit en priorite (fallback LLM legacy si vide).
                     if (provider == LlmProvider.CLAUDE) return@filter false
-                    if (provider == LlmProvider.OPENAI) return@filter false
                     LlmCatalog.modelsFor(provider).any { it.supportsVision }
                 } else {
                     // Pipeline legacy : Gemini + Mistral uniquement.

@@ -422,9 +422,10 @@ class BackupRepository @Inject constructor(
          * v41 (body_scan_logs), v42 (chat ratings), v43 (glucose_logs),
          * v44 (chat persona), v45 (meal scan modifiers — ×N portions + restes),
          * v46 (glucose_analyses), v47 (llmAssistantOverridesJson),
-         * v48 (llm_usage_events telemetry), v49 (meal_scans GI/GL columns).
+         * v48 (llm_usage_events telemetry), v49 (meal_scans GI/GL columns),
+         * v50 (chat_messages imagePath — upload image Shreddy/DrGlykos).
          */
-        const val ROOM_DB_VERSION = 49
+        const val ROOM_DB_VERSION = 50
         val ISO_FILE: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss'Z'")
     }
 }

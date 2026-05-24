@@ -687,7 +687,14 @@ private fun hasKeyForProvider(state: LlmDebugState, provider: LlmProvider): Bool
         state.apiKeyAvailable[com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.CLOUDFLARE_ACCOUNT_ID] == true
     LlmProvider.GEMINI -> state.apiKeyAvailable[com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.GEMINI] == true
     LlmProvider.MISTRAL -> state.apiKeyAvailable[com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.MISTRAL] == true
-    LlmProvider.GROQ, LlmProvider.OPENAI, LlmProvider.CLAUDE -> state.apiKeyAvailable[com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.LLM] == true
+    // BUGFIX v2026.05.24 : check les slots DEDIES + fallback LLM legacy.
+    // Avant on lisait UNIQUEMENT LLM (partage) -> faux positifs/negatifs.
+    LlmProvider.GROQ -> state.apiKeyAvailable[com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.GROQ] == true ||
+        state.apiKeyAvailable[com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.LLM] == true
+    LlmProvider.OPENAI -> state.apiKeyAvailable[com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.OPENAI] == true ||
+        state.apiKeyAvailable[com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.LLM] == true
+    LlmProvider.CLAUDE -> state.apiKeyAvailable[com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.CLAUDE] == true ||
+        state.apiKeyAvailable[com.shredcoach.app.data.local.secure.SecureKeyStore.Provider.LLM] == true
 }
 
 @Composable

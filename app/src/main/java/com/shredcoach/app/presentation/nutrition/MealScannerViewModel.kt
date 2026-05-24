@@ -119,12 +119,13 @@ class MealScannerViewModel @Inject constructor(
      * SecureKeyStore. Delegue a [LlmKeyResolver] (source de verite unique
      * pour tout le codebase).
      *
-     * Cas special MealScan : Groq vision utilise GROQ_MEAL (cle separee
-     * pour permettre 2 plans Groq distincts chat/vision).
+     * **Cas special MealScan VISION** (PHOTO/LEFTOVER) : Groq vision utilise
+     * GROQ_MEAL (cle separee, permet 2 plans Groq distincts chat/vision).
+     * Pour MEAL_SCAN_TEXT, on prend la cle Groq chat (LlmKeyResolver standard).
      */
-    private fun providerApiKey(providerName: String): String {
-        // Cas special Meal : GROQ_MEAL dedie (separe de la cle chat Groq).
-        if (providerName.equals("GROQ", ignoreCase = true)) {
+    private fun providerApiKey(providerName: String, isVisionAssistant: Boolean): String {
+        // Cas special Meal VISION : GROQ_MEAL dedie (separe de la cle chat Groq).
+        if (isVisionAssistant && providerName.equals("GROQ", ignoreCase = true)) {
             val mealKey = userRepository.getApiKey(SecureKeyStore.Provider.GROQ_MEAL)
             if (mealKey.isNotBlank()) return mealKey
         }
@@ -147,7 +148,7 @@ class MealScannerViewModel @Inject constructor(
             // legacy : si l'user a configure un override (GitHub/NVIDIA/etc),
             // on verifie la cle du provider resolu — pas le legacy mealScanProvider.
             val resolved = llmResolver.resolveWithProfile(AiAssistant.MEAL_SCAN_PHOTO, profile)
-            val resolvedKey = providerApiKey(resolved.provider.name)
+            val resolvedKey = providerApiKey(resolved.provider.name, isVisionAssistant = true)
             val hasKey = resolvedKey.isNotBlank()
             _state.update { it.copy(isConfigured = hasKey) }
         }
@@ -315,7 +316,8 @@ class MealScannerViewModel @Inject constructor(
             // OpenAI-compat est pris en charge par analyzeMealFromText.
             val llmConfig = llmResolver.resolveWithProfile(AiAssistant.MEAL_SCAN_TEXT, profile)
             val provider = llmConfig.provider.name
-            val apiKey = providerApiKey(provider)
+            // MEAL_SCAN_TEXT = text-only -> pas de GROQ_MEAL detour, prend la cle chat.
+            val apiKey = providerApiKey(provider, isVisionAssistant = false)
             val model = llmConfig.modelId
 
             if (apiKey.isBlank()) {
@@ -402,7 +404,8 @@ class MealScannerViewModel @Inject constructor(
             // Resolver per-assistant : MEAL_SCAN_PHOTO configurable independamment.
             val llmConfig = llmResolver.resolveWithProfile(AiAssistant.MEAL_SCAN_PHOTO, profile)
             val provider = llmConfig.provider.name
-            val apiKey = providerApiKey(provider)
+            // MEAL_SCAN_PHOTO = vision -> applique le detour GROQ_MEAL si Groq.
+            val apiKey = providerApiKey(provider, isVisionAssistant = true)
             val model = llmConfig.modelId
 
             if (apiKey.isBlank()) {

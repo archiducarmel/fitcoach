@@ -38,19 +38,51 @@ class ChatImageStore @Inject constructor(
     }
 
     /**
-     * Sauvegarde une [Bitmap] sur disque et retourne le chemin absolu.
-     * Le fichier est nomme `{uuid}.jpg`. Compression JPEG 85% (~70-150 Ko
-     * pour 1024x1024).
+     * Sauvegarde une [Bitmap] sur disque et retourne (path absolu, bytes JPEG).
+     * Le fichier est nomme `{uuid}.jpg`. Compression JPEG 80%.
      *
-     * @return chemin absolu du fichier (a stocker dans ChatMessageEntity.imagePath)
+     * **Resize obligatoire** : la bitmap est downscaled a `MAX_DIMENSION_PX`
+     * sur le grand cote AVANT compression. Couvre les photos modernes
+     * 4032x3024 (~48 MB en RAM) qui causeraient OOM sur devices 3-4 GB.
+     * Les LLM vision (GPT-4o, Gemini) downscale a 768-1024px de toute facon.
+     *
+     * **Output uniforme** : 1024x768 (paysage) ou 768x1024 (portrait) max,
+     * JPEG 80%, ~80-200 Ko. Le ByteArray retourne est REUTILISE par le caller
+     * pour l'API HTTP -> evite la double compression (file write + http body).
+     *
+     * @return Pair(chemin absolu, bytes JPEG) — chemin pour DB, bytes pour HTTP
      */
-    fun save(bitmap: Bitmap): String {
+    fun saveAndEncode(bitmap: Bitmap): Pair<String, ByteArray> {
+        val resized = resizeBitmap(bitmap, MAX_DIMENSION_PX)
         val name = "${UUID.randomUUID()}.jpg"
         val file = File(imageDir, name)
-        FileOutputStream(file).use { out ->
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 85, out)
-        }
-        return file.absolutePath
+        val baos = java.io.ByteArrayOutputStream()
+        resized.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, baos)
+        val bytes = baos.toByteArray()
+        file.writeBytes(bytes)
+        // Recycle si on a alloue un nouveau bitmap (resized != input)
+        if (resized !== bitmap) resized.recycle()
+        return file.absolutePath to bytes
+    }
+
+    /** @deprecated Utiliser [saveAndEncode] pour eviter double compression. */
+    @Deprecated("Use saveAndEncode to avoid double JPEG compression",
+        ReplaceWith("saveAndEncode(bitmap).first"))
+    fun save(bitmap: Bitmap): String = saveAndEncode(bitmap).first
+
+    /**
+     * Resize [bitmap] pour que le plus grand cote ne depasse pas [maxDimension].
+     * Preserve l'aspect ratio. Retourne le bitmap original si deja sous la limite.
+     */
+    private fun resizeBitmap(bitmap: Bitmap, maxDimension: Int): Bitmap {
+        val w = bitmap.width
+        val h = bitmap.height
+        val biggest = maxOf(w, h)
+        if (biggest <= maxDimension) return bitmap
+        val scale = maxDimension.toFloat() / biggest
+        val newW = (w * scale).toInt()
+        val newH = (h * scale).toInt()
+        return Bitmap.createScaledBitmap(bitmap, newW, newH, true)
     }
 
     /** Lit les bytes JPEG d'un fichier image. null si fichier absent/illisible. */
@@ -90,5 +122,10 @@ class ChatImageStore @Inject constructor(
 
     companion object {
         private const val IMAGES_SUBDIR = "chat_images"
+        /** Cote max apres resize : ~1024px = sweet spot LLM vision (Gemini/GPT-4o
+         *  re-downscale a 768 de toute facon). 200-300 KB JPEG. */
+        private const val MAX_DIMENSION_PX = 1024
+        /** Qualite JPEG : 80 = ~30% plus petit que 85 sans perte visuelle perceptible. */
+        private const val JPEG_QUALITY = 80
     }
 }

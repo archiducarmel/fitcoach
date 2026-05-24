@@ -91,9 +91,42 @@ class SettingsViewModel @Inject constructor(
     fun updateGroqMealApiKey(v: String) = setApiKey(SecureKeyStore.Provider.GROQ_MEAL, v)
     fun updateMistralApiKey(v: String) = setApiKey(SecureKeyStore.Provider.MISTRAL, v)
     // Assistant IA — provider/model restent dans Room, clé API → SecureKeyStore
-    fun updateLlmProvider(v: String) = updateProfile { it.copy(llmProvider = v) }
+    fun updateLlmProvider(v: String) {
+        updateProfile { it.copy(llmProvider = v) }
+        // BUGFIX v2026.05.24 : quand l'user change le chat-provider, on RE-PROPAGE
+        // la cle LLM courante vers le slot dedie du NOUVEAU provider. Sinon
+        // LlmKeyResolver.firstNonBlank(NEW_PROVIDER, LLM) tomberait sur LLM
+        // qui contient la cle de l'ancien provider -> 401 silencieux.
+        viewModelScope.launch {
+            val legacy = userRepository.getApiKey(SecureKeyStore.Provider.LLM)
+            if (legacy.isNotBlank()) {
+                val target = when (v.uppercase()) {
+                    "GROQ" -> SecureKeyStore.Provider.GROQ
+                    "OPENAI" -> SecureKeyStore.Provider.OPENAI
+                    "CLAUDE" -> SecureKeyStore.Provider.CLAUDE
+                    else -> null
+                }
+                target?.let { userRepository.setApiKey(it, legacy) }
+            }
+        }
+    }
     fun updateLlmModel(v: String) = updateProfile { it.copy(llmModel = v) }
-    fun updateLlmApiKey(v: String) = setApiKey(SecureKeyStore.Provider.LLM, v)
+    fun updateLlmApiKey(v: String) {
+        // BUGFIX v2026.05.24 : ecrit dans LE slot dedie selon profile.llmProvider
+        // ACTUEL en + du slot LLM legacy. Garantit que LlmKeyResolver.keyFor()
+        // lit la bonne cle meme si l'user change de provider plus tard.
+        setApiKey(SecureKeyStore.Provider.LLM, v)
+        viewModelScope.launch {
+            val currentProvider = _state.value.profile?.llmProvider?.uppercase()
+            val dedicated = when (currentProvider) {
+                "GROQ" -> SecureKeyStore.Provider.GROQ
+                "OPENAI" -> SecureKeyStore.Provider.OPENAI
+                "CLAUDE" -> SecureKeyStore.Provider.CLAUDE
+                else -> null
+            }
+            dedicated?.let { userRepository.setApiKey(it, v) }
+        }
+    }
 
     private fun setApiKey(provider: SecureKeyStore.Provider, value: String) {
         userRepository.setApiKey(provider, value)

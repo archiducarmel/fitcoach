@@ -22,6 +22,7 @@ class ChatRepository @Inject constructor(
     private val chatDao: ChatDao,
     private val llmApiService: LlmApiService,
     private val toolExecutor: ShreddyToolExecutor,
+    private val imageStore: com.shredcoach.app.data.local.ChatImageStore,
 ) {
     fun getMessagesForConversation(conversationId: String): Flow<List<ChatMessageEntity>> =
         chatDao.getMessagesForConversation(conversationId)
@@ -55,10 +56,21 @@ class ChatRepository @Inject constructor(
     suspend fun insertMessage(message: ChatMessageEntity): Long =
         chatDao.insertMessage(message)
 
-    suspend fun deleteConversation(conversationId: String) =
+    /** Supprime une conversation ET les fichiers image references. Idempotent. */
+    suspend fun deleteConversation(conversationId: String) {
+        // 1. Recupere les imagePaths AVANT delete pour cascade-delete
+        val msgs = chatDao.getMessagesForConversationOnce(conversationId)
+        msgs.forEach { it.imagePath?.let { p -> imageStore.deleteImage(p) } }
+        // 2. Supprime les rows DB
         chatDao.deleteConversation(conversationId)
+    }
 
-    suspend fun clearHistory() = chatDao.clearAll()
+    /** Supprime TOUTES les conversations + leurs fichiers image. */
+    suspend fun clearHistory() {
+        val all = chatDao.getAllMessagesOnce()
+        all.forEach { it.imagePath?.let { p -> imageStore.deleteImage(p) } }
+        chatDao.clearAll()
+    }
 
     /** Met à jour la note utilisateur sur un message (thumbs up/down). */
     suspend fun updateRating(messageId: Long, rating: Int?) =

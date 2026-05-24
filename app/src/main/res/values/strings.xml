@@ -1823,6 +1823,19 @@
     <string name="chat_input_placeholder">Demande à Shreddy...</string>
     <string name="chat_send_cd">Envoyer</string>
 
+    <!-- Image upload v2026.05.24 -->
+    <string name="chat_image_default_prompt">Analyse cette photo.</string>
+    <string name="chat_image_attached_placeholder">Question optionnelle sur la photo…</string>
+    <string name="chat_image_sent_cd">Photo envoyée</string>
+    <string name="chat_image_attach_cd">Joindre une photo</string>
+    <string name="chat_image_remove_cd">Retirer l\'image</string>
+    <string name="chat_image_preview_attached">Photo attachée</string>
+    <string name="chat_image_ready_to_send">📷 Photo prête à envoyer</string>
+    <string name="chat_image_will_be_analyzed">Le modèle analysera cette image</string>
+    <string name="chat_image_model_text_only_warning">⚠️ Modèle texte uniquement — change-le dans Réglages</string>
+    <string name="chat_image_sent_placeholder">📷 Photo envoyée</string>
+    <string name="chat_image_no_vision_error">⚠️ Le modèle actuel ne supporte pas les images. Configure %1$s sur un modèle vision (ex : Gemini 2.5 Flash, GPT-4o, Claude Sonnet 4) dans Réglages → Assistants IA.</string>
+
     <!-- Rating thumbs -->
     <string name="chat_rate_up_cd">Réponse utile</string>
     <string name="chat_rate_down_cd">Réponse à améliorer</string>

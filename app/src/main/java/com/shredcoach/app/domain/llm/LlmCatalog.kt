@@ -1149,6 +1149,39 @@ object LlmCatalog {
     fun modelInfo(modelId: String): LlmModelInfo? =
         byProvider.values.flatten().firstOrNull { it.id == modelId }
 
+    /**
+     * Heuristique fallback : true si le model id est probablement vision-capable,
+     * memes pour les modeles dynamiques absents du catalogue statique
+     * (NVIDIA NIM /v1/models, GitHub Models /catalog/models).
+     *
+     * Sert quand `modelInfo(id)` retourne null mais qu'on veut quand meme afficher
+     * le bouton attach image dans le chat. Pattern-match sur les familles VLM
+     * connues : gpt-4o/4.1/5, gemini, claude sonnet/opus/haiku, llama-vision,
+     * gemma-3/4, qwen vision, kimi, pixtral, llava, idefics, kosmos, etc.
+     */
+    fun isLikelyVisionModel(modelId: String): Boolean {
+        // Source de verite si dans le catalogue statique
+        modelInfo(modelId)?.let { return it.acceptsImageInput }
+        // Pattern-fallback pour les modeles dynamiques
+        val m = modelId.lowercase()
+        return m.contains("gpt-4o") || m.contains("gpt-4.1") || m.contains("gpt-5") ||
+            m.contains("o3") || m.contains("o4-mini") ||
+            m.contains("gemini-") || m.contains("claude-") ||
+            m.contains("-vision") || m.contains("vision-") || m.contains("-vl-") ||
+            m.endsWith("-vl") || m.contains("vlm") ||
+            m.contains("llava") || m.contains("pixtral") || m.contains("kosmos") ||
+            m.contains("fuyu") || m.contains("idefics") || m.contains("vila") ||
+            m.contains("neva") || m.contains("kimi-k2") || m.contains("kimi-vl") ||
+            m.contains("gemma-3") || m.contains("gemma-4") ||
+            m.contains("qwen2-vl") || m.contains("qwen2.5-vl") || m.contains("qwen3.5") ||
+            m.contains("llama-4-maverick") || m.contains("llama-4-scout") ||
+            m.contains("phi-4-multimodal") || m.contains("phi-3.5-vision") ||
+            m.contains("ministral-14b") || m.contains("ministral-3b") ||
+            m.contains("mistral-medium-3.5") || m.contains("mistral-large-3") ||
+            m.contains("minimax-m2") || m.contains("nemotron-omni") ||
+            m.contains("nemotron-nano-omni")
+    }
+
     /** Tous les modèles d'un kind donné, tous providers confondus. */
     fun modelsForKind(kind: ModelKind): List<Pair<LlmProvider, LlmModelInfo>> =
         byProvider.entries.flatMap { (provider, models) ->

@@ -786,9 +786,10 @@ class LlmDebugViewModel @Inject constructor(
         LlmProvider.GITHUB_MODELS -> SecureKeyStore.Provider.GITHUB_MODELS
         LlmProvider.NVIDIA_NIM -> SecureKeyStore.Provider.NVIDIA_NIM
         LlmProvider.GEMINI -> SecureKeyStore.Provider.GEMINI
-        LlmProvider.GROQ -> SecureKeyStore.Provider.LLM
-        LlmProvider.OPENAI -> SecureKeyStore.Provider.LLM
-        LlmProvider.CLAUDE -> SecureKeyStore.Provider.LLM
+        // BUGFIX v2026.05.24 : pointe vers les slots DEDIES (ne plus partager LLM)
+        LlmProvider.GROQ -> SecureKeyStore.Provider.GROQ
+        LlmProvider.OPENAI -> SecureKeyStore.Provider.OPENAI
+        LlmProvider.CLAUDE -> SecureKeyStore.Provider.CLAUDE
         LlmProvider.MISTRAL -> SecureKeyStore.Provider.MISTRAL
         LlmProvider.POLLINATIONS -> SecureKeyStore.Provider.LLM // pas utilise (no auth)
         LlmProvider.CLOUDFLARE_AI -> SecureKeyStore.Provider.CLOUDFLARE_AI_TOKEN
