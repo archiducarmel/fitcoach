@@ -151,7 +151,9 @@ class NvidiaNimCatalogService @Inject constructor(
             displayName = displayName,
             kind = kind,
             tier = LlmTier.STANDARD,
-            notes = "",
+            // Description editorialise ≤30 mots via ModelDescriptions (NVIDIA NIM
+            // expose juste id+owned_by, on enrichit avec notre catalogue).
+            notes = com.shredcoach.app.domain.llm.ModelDescriptions.describe(id, effectivePublisher).orEmpty(),
             acceptsTextInput = kind != ModelKind.STT,
             acceptsImageInput = kind in setOf(
                 ModelKind.VLM, ModelKind.MULTIMODAL_EMBEDDING,

@@ -7,6 +7,7 @@ import com.google.gson.annotations.SerializedName
 import com.shredcoach.app.domain.llm.LlmModelInfo
 import com.shredcoach.app.domain.llm.LlmTier
 import com.shredcoach.app.domain.llm.ModelArchitecture
+import com.shredcoach.app.domain.llm.ModelDescriptions
 import com.shredcoach.app.domain.llm.ModelDomain
 import com.shredcoach.app.domain.llm.ModelKind
 import com.shredcoach.app.domain.llm.ModelOriginRegion
@@ -160,7 +161,9 @@ class GitHubModelsCatalogService @Inject constructor(
             displayName = m.friendlyName ?: prettifyId(id),
             kind = kind,
             tier = LlmTier.STANDARD, // GitHub Models n'a pas de tier qualite explicite
-            notes = m.summary?.take(80).orEmpty(),
+            // Description priorite : notre catalogue editorial ModelDescriptions
+            // (≤30 mots, finalite + contexte) > summary GitHub > vide
+            notes = ModelDescriptions.describe(id, publisher) ?: m.summary?.take(180).orEmpty(),
 
             acceptsTextInput = "text" in inputs,
             acceptsImageInput = "image" in inputs,

@@ -436,13 +436,14 @@ private fun ModelRow(resolved: ResolvedModel, isSelected: Boolean, isKeyMissing:
                     }
                 }
                 if (info.notes.isNotBlank()) {
-                    Spacer(Modifier.height(3.dp))
+                    Spacer(Modifier.height(4.dp))
                     Text(
                         info.notes,
                         style = MaterialTheme.typography.labelSmall,
                         fontSize = 10.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
-                        maxLines = 2,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+                        lineHeight = 13.sp,
+                        maxLines = 4,  // ≤30 mots = ~3-4 lignes selon largeur
                     )
                 }
             }
