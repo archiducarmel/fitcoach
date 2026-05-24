@@ -753,7 +753,28 @@ The user's personalized data follows below (only sent on the first message)."""
         if (!response.isSuccessful) {
             val errorBody = response.body?.string() ?: ""
             android.util.Log.e("LlmDiag", "◀ ERROR body : ${errorBody.take(500)}")
-            throw Exception("Erreur ${response.code}: ${extractError(errorBody)}")
+            // Messages friendly pour les erreurs courantes
+            val friendly = when (response.code) {
+                400 -> {
+                    val detail = extractError(errorBody)
+                    if (detail.contains("Unknown model", ignoreCase = true)) {
+                        "Modele non reconnu par $provider. Le catalogue le liste mais le serveur le refuse."
+                    } else "Requete invalide (400) : $detail"
+                }
+                401 -> "Cle API ${provider.displayName} invalide ou expiree."
+                403 -> "Cle ${provider.displayName} sans acces a ce modele."
+                404 -> {
+                    val detail = extractError(errorBody)
+                    if (provider == LlmProvider.NVIDIA_NIM &&
+                        detail.contains("not found for account", ignoreCase = true)) {
+                        "Modele NVIDIA non deploye sur ton compte. /v1/models liste tous les modeles du catalogue mais ta cle n'a pas tous les acces. Essaie un autre modele."
+                    } else "Modele introuvable (404) : $detail"
+                }
+                429 -> "Quota $provider depasse. Attends ou utilise un autre provider."
+                in 500..599 -> "Serveur ${provider.displayName} indisponible (${response.code})."
+                else -> "Erreur ${response.code}: ${extractError(errorBody)}"
+            }
+            throw Exception(friendly)
         }
         val reader = response.body?.byteStream()?.bufferedReader()
             ?: throw Exception("Réponse vide")

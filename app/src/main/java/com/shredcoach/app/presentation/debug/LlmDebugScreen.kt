@@ -107,11 +107,6 @@ fun LlmDebugScreen(
                 onReset = { viewModel.resetSession() },
             )
         },
-        // Inclus l'IME dans les contentWindowInsets du Scaffold -> pad.bottom
-        // grandit quand le clavier ouvre, donc le Box racine retrecit
-        // automatiquement. Plus besoin d'imePadding manuel sur les enfants
-        // (qui causaient un double-padding qui ecrasait le contenu en haut).
-        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets.safeDrawing,
     ) { pad ->
         // Pattern Material3 standard : Box racine prend juste le padding du
         // Scaffold (status bar top, nav bar bottom). PAS d'imePadding ici.
@@ -513,19 +508,23 @@ private fun ChatInteraction(
         }
     }
 
-    // L'IME est gere au niveau du Scaffold (contentWindowInsets = safeDrawing).
-    // Le Box racine retrecit automatiquement quand le clavier ouvre, donc
-    // cette Column reçoit deja la hauteur RESTANTE apres clavier. Plus besoin
-    // d'imePadding ici. LazyColumn weight=1f remplit le haut, InputBar reste
-    // au bas juste au-dessus du clavier.
-    Column(Modifier.fillMaxSize()) {
+    // PATTERN BULLETPROOF : Box avec align(BottomCenter) pour l'InputBar.
+    // Plus aucune ambiguite sur le placement, plus de Column.weight qui peut
+    // se comporter bizarrement avec les insets. L'InputBar a son propre
+    // .imePadding() qui le pousse au-dessus du clavier.
+    Box(Modifier.fillMaxSize()) {
         android.util.Log.d("LlmDiag", "▶ ChatInteraction recompose messages.size=${state.messages.size}")
-        // Messages list (weight 1f)
+
+        // Messages list : remplit l'ecran avec :
+        //  - padding bottom = 80dp pour reserver la place de l'InputBar (clavier ferme)
+        //  - imePadding pour rétrécir quand le clavier ouvre (suit l'IME)
+        // Ainsi le LazyColumn s'arrete pile sous l'InputBar, peu importe l'IME.
         LazyColumn(
             state = scrollState,
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
+                .fillMaxSize()
+                .padding(bottom = 80.dp)
+                .imePadding(),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -538,22 +537,30 @@ private fun ChatInteraction(
             }
         }
 
-        // Input bar sticky en bas
-        ChatInputBar(
-            input = input,
-            onInputChange = { input = it },
-            attachedBitmap = attachedBitmap,
-            onClearAttachment = { attachedBitmap = null },
-            supportsImage = supportsImage,
-            onPickImage = { imageLauncher.launch("image/*") },
-            isSending = state.isSending,
-            onSend = {
-                onSend(input.trim(), attachedBitmap)
-                input = ""
-                attachedBitmap = null
-            },
-            onCancel = onCancel,
-        )
+        // Input bar : align BottomCenter dans le Box racine. imePadding pousse
+        // l'InputBar au-dessus du clavier. navigationBarsPadding pour edge-to-edge.
+        Box(
+            Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .imePadding(),
+        ) {
+            ChatInputBar(
+                input = input,
+                onInputChange = { input = it },
+                attachedBitmap = attachedBitmap,
+                onClearAttachment = { attachedBitmap = null },
+                supportsImage = supportsImage,
+                onPickImage = { imageLauncher.launch("image/*") },
+                isSending = state.isSending,
+                onSend = {
+                    onSend(input.trim(), attachedBitmap)
+                    input = ""
+                    attachedBitmap = null
+                },
+                onCancel = onCancel,
+            )
+        }
     }
 }
 

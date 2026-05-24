@@ -114,9 +114,10 @@ fun ChatBubble(message: DebugChatMessage, isUser: Boolean) {
                             }
                         }
                         // Reasoning models : pendant le thinking (isThinking=true et
-                        // text vide), on affiche une animation humoristique au lieu
-                        // du placeholder "•••" generique.
-                        if (message.isThinking && message.text.isBlank()) {
+                        // text vide ET pas d'erreur), on affiche une animation.
+                        // Si une erreur arrive en cours de thinking, on bascule sur
+                        // l'affichage de l'erreur SANS l'animation (sinon overlap moche).
+                        if (message.isThinking && message.text.isBlank() && message.error == null) {
                             ThinkingAnimation()
                         }
                         // Text content
@@ -127,13 +128,18 @@ fun ChatBubble(message: DebugChatMessage, isUser: Boolean) {
                             else -> message.text
                         }
                         if (displayText.isNotEmpty()) {
-                            // User : pas de markdown (input texte brut)
-                            // Assistant : rendu markdown (LLM emet **bold**, listes, ```code```, etc.)
-                            if (isUser) {
+                            // User : pas de markdown (input texte brut).
+                            // Assistant en STREAMING : Text plain pour eviter
+                            //   l'oscillation visuelle des tableaux/listes pendant
+                            //   le re-parsing markdown a chaque chunk.
+                            // Assistant FINALISE (isStreaming=false) : rendu markdown
+                            //   complet (tables, bold, listes, code, etc.).
+                            if (isUser || message.isStreaming) {
                                 Text(
                                     text = displayText,
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White,
+                                    color = if (isUser) Color.White
+                                            else MaterialTheme.colorScheme.onSurface,
                                     lineHeight = 21.sp,
                                 )
                             } else {
