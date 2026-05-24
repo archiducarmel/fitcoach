@@ -293,11 +293,17 @@ class LlmApiService @Inject constructor(
 ) {
 
     private val client = baseClient.newBuilder()
-        // 300s pour supporter les modeles reasoning (DeepSeek V4 Pro, Kimi K2.6,
-        // Nemotron Ultra, GLM 5.1, QwQ) qui prennent 1-5 min avec thinking active.
-        // Le streaming SSE reset le timer entre tokens donc 300s sur readTimeout
-        // (per-byte) est conservateur sans degrader les chat rapides.
-        .readTimeout(300, TimeUnit.SECONDS)
+        // ── Timeouts mesures empiriquement via tests curl NVIDIA NIM ──
+        // Pattern observe :
+        //  - Modele deploye normal -> reponse en <30s (TTFB <2s, then streaming)
+        //  - Modele dans catalogue mais NON deploye pour la cle (ex: deepseek-v4-flash)
+        //    -> 504 Gateway Timeout apres 302s (5 minutes EXACTES)
+        //
+        // readTimeout = 60s (per-byte) :
+        //  - Couvre les reasoning models lents (10-30s avant le 1er token)
+        //  - Coupe SHORT les modeles qui hang (au lieu d'attendre 5 min)
+        //  - Plus reactif que 300s pour l'UX : user voit l'echec en 1 min max
+        .readTimeout(60, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
 
@@ -748,7 +754,21 @@ The user's personalized data follows below (only sent on the first message)."""
 
         android.util.Log.d("LlmDiag", "▶ STREAM (chunked) provider=$provider model=$model")
 
-        val response = client.newCall(request).execute()
+        val response = try {
+            client.newCall(request).execute()
+        } catch (e: java.net.SocketTimeoutException) {
+            // OkHttp readTimeout=60s atteint sans byte recu → modele probablement
+            // non deploye (cf. tests curl : deepseek-v4-flash hang 5min puis 504).
+            // Message friendly au lieu de la stack trace brute.
+            android.util.Log.e("LlmDiag", "× SocketTimeoutException sur $provider/$model", e)
+            throw Exception(
+                if (provider == LlmProvider.NVIDIA_NIM)
+                    "Timeout NVIDIA (60s sans reponse). Ce modele '$model' est probablement non deploye sur ta cle. Essaie meta/llama-3.3-70b-instruct (confirme fonctionnel)."
+                else "Timeout ${provider.displayName} (60s). Reessaie ou change de modele."
+            )
+        } catch (e: java.net.UnknownHostException) {
+            throw Exception("Pas de connexion internet (${e.message}).")
+        }
         android.util.Log.d("LlmDiag", "◀ HTTP ${response.code} from $provider")
         if (!response.isSuccessful) {
             val errorBody = response.body?.string() ?: ""
@@ -764,13 +784,23 @@ The user's personalized data follows below (only sent on the first message)."""
                 401 -> "Cle API ${provider.displayName} invalide ou expiree."
                 403 -> "Cle ${provider.displayName} sans acces a ce modele."
                 404 -> {
-                    val detail = extractError(errorBody)
-                    if (provider == LlmProvider.NVIDIA_NIM &&
-                        detail.contains("not found for account", ignoreCase = true)) {
-                        "Modele NVIDIA non deploye sur ton compte. /v1/models liste tous les modeles du catalogue mais ta cle n'a pas tous les acces. Essaie un autre modele."
-                    } else "Modele introuvable (404) : $detail"
+                    val detail = errorBody.take(500)
+                    when {
+                        provider == LlmProvider.NVIDIA_NIM &&
+                            detail.contains("not found for account", ignoreCase = true) ->
+                            "Modele NVIDIA non deploye sur ta cle (HTTP 404). Pattern verifie par test direct : le modele est dans /v1/models mais n'est pas activable. Essaie meta/llama-3.3-70b-instruct qui fonctionne."
+                        provider == LlmProvider.NVIDIA_NIM &&
+                            detail.contains("page not found", ignoreCase = true) ->
+                            "Modele inconnu de NVIDIA NIM. L'id '$model' n'existe pas dans leur catalogue."
+                        else -> "Modele introuvable (404) : ${extractError(errorBody)}"
+                    }
                 }
                 429 -> "Quota $provider depasse. Attends ou utilise un autre provider."
+                504 -> {
+                    if (provider == LlmProvider.NVIDIA_NIM) {
+                        "Modele NVIDIA non deploye sur ta cle (HTTP 504 Gateway Timeout). Le serveur a attendu 5 min sans pouvoir router. Verifie par curl : certains modeles du catalogue ne sont pas activables. Essaie meta/llama-3.3-70b-instruct."
+                    } else "Gateway timeout ${provider.displayName} (504)."
+                }
                 in 500..599 -> "Serveur ${provider.displayName} indisponible (${response.code})."
                 else -> "Erreur ${response.code}: ${extractError(errorBody)}"
             }
