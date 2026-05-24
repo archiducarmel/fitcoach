@@ -325,10 +325,31 @@ class AssistantLlmSettingsViewModel @Inject constructor(
             if (provider == LlmProvider.POLLINATIONS || provider == LlmProvider.CLOUDFLARE_AI) {
                 return@filter false
             }
-            // Pour vision : pipeline GeminiMealService route SEULEMENT vers
-            // GEMINI/MISTRAL. Pas de support GitHub/NVIDIA vision pour l'instant.
+            // Pour vision, le pipeline a 2 niveaux de support :
+            //  - MEAL_SCAN_PHOTO / MEAL_SCAN_LEFTOVER : pipeline ETENDU
+            //    (Sprint B phase 1) supporte GEMINI/MISTRAL/GROQ + OpenAI-compat
+            //    (OPENAI/GITHUB_MODELS/NVIDIA_NIM) via callOpenAiCompatVision.
+            //  - BODY_SCAN / GYM_SCAN / GLUCOSE_OCR : pipeline LEGACY restreint
+            //    a GEMINI/MISTRAL (a etendre en Sprint B phase 2).
             if (assistant.needsVision) {
-                return@filter provider == LlmProvider.GEMINI || provider == LlmProvider.MISTRAL
+                val mealVisionAssistants = setOf(
+                    AiAssistant.MEAL_SCAN_PHOTO,
+                    AiAssistant.MEAL_SCAN_LEFTOVER,
+                )
+                return@filter if (assistant in mealVisionAssistants) {
+                    // Pipeline etendu : GEMINI/MISTRAL (natif) + GROQ +
+                    // OPENAI/GITHUB_MODELS/NVIDIA_NIM via callOpenAiCompatVision.
+                    // CLAUDE EXCLU : le pipeline GeminiMealService.analyzeMeal
+                    // n'a pas de branche Claude (Anthropic utilise un format
+                    // content-blocks different). Si user pick Claude -> fall-
+                    // through au callGemini avec cle Claude -> 401. A wirer
+                    // proprement en Sprint B phase 3.
+                    if (provider == LlmProvider.CLAUDE) return@filter false
+                    LlmCatalog.modelsFor(provider).any { it.supportsVision }
+                } else {
+                    // Pipeline legacy : Gemini + Mistral uniquement.
+                    provider == LlmProvider.GEMINI || provider == LlmProvider.MISTRAL
+                }
             }
             // Pour non-vision : au moins un modele du provider doit etre
             // LANGUAGE ou VLM (i.e. utilisable comme backend chat).

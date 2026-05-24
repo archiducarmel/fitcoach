@@ -111,14 +111,46 @@ class MealScannerViewModel @Inject constructor(
     val state: StateFlow<MealScannerState> = _state.asStateFlow()
     private val gson = Gson()
 
+    /**
+     * Map provider-string (de l'enum LlmProvider.name) -> cle stockee dans
+     * SecureKeyStore. Centralise pour ne plus avoir 3 endroits qui font
+     * `when (provider) { ... }` differemment.
+     *
+     * Pour les providers OpenAI-compat vision (GitHub Models, NVIDIA NIM,
+     * OpenAI direct), on utilise les cles dediees. Pour Groq vision (image
+     * meal scan), on utilise GROQ_MEAL qui est une cle separee de la cle
+     * Groq chat principale (l'user peut avoir 2 plans Groq).
+     */
+    private suspend fun providerApiKey(providerName: String): String =
+        when (providerName.uppercase()) {
+            "GROQ" -> userRepository.getApiKey(SecureKeyStore.Provider.GROQ_MEAL)
+            "MISTRAL" -> userRepository.getApiKey(SecureKeyStore.Provider.MISTRAL)
+            "GITHUB_MODELS" -> userRepository.getApiKey(SecureKeyStore.Provider.GITHUB_MODELS)
+            "NVIDIA_NIM" -> userRepository.getApiKey(SecureKeyStore.Provider.NVIDIA_NIM)
+            "OPENAI", "CLAUDE" -> userRepository.getApiKey(SecureKeyStore.Provider.LLM)
+            else -> userRepository.getApiKey(SecureKeyStore.Provider.GEMINI)
+        }
+
+    private fun providerDisplayName(providerName: String): String =
+        when (providerName.uppercase()) {
+            "GROQ" -> "Groq"
+            "MISTRAL" -> "Mistral"
+            "GITHUB_MODELS" -> "GitHub Models"
+            "NVIDIA_NIM" -> "NVIDIA NIM"
+            "OPENAI" -> "OpenAI"
+            "CLAUDE" -> "Claude"
+            else -> "Gemini"
+        }
+
     init {
         viewModelScope.launch {
             val profile = userRepository.getUserProfileOnce()
-            val hasKey = when (profile?.mealScanProvider) {
-                "GROQ" -> userRepository.hasApiKey(SecureKeyStore.Provider.GROQ_MEAL)
-                "MISTRAL" -> userRepository.hasApiKey(SecureKeyStore.Provider.MISTRAL)
-                else -> userRepository.hasApiKey(SecureKeyStore.Provider.GEMINI)
-            }
+            // Resolve l'override per-assistant (MEAL_SCAN_PHOTO) AVANT le check
+            // legacy : si l'user a configure un override (GitHub/NVIDIA/etc),
+            // on verifie la cle du provider resolu — pas le legacy mealScanProvider.
+            val resolved = llmResolver.resolveWithProfile(AiAssistant.MEAL_SCAN_PHOTO, profile)
+            val resolvedKey = providerApiKey(resolved.provider.name)
+            val hasKey = resolvedKey.isNotBlank()
             _state.update { it.copy(isConfigured = hasKey) }
         }
         // Observer l'historique
@@ -277,23 +309,19 @@ class MealScannerViewModel @Inject constructor(
         viewModelScope.launch {
             val profile = userRepository.getUserProfileOnce()
 
-            // Sélection du provider : Gemini en priorité si clé dispo, sinon
-            // fallback sur la préférence vision de l'user.
-            val hasGemini = userRepository.hasApiKey(SecureKeyStore.Provider.GEMINI)
             // Resolver per-assistant : MEAL_SCAN_TEXT peut etre configure
             // independamment de MEAL_SCAN_PHOTO via Settings → Assistants IA.
+            // Plus de hack hasGemini override : on respecte le choix user.
+            // **Note (Sprint B phase 1)** : MEAL_SCAN_TEXT etant text-only,
+            // tous les providers chat sont autorises. Le routing texte
+            // OpenAI-compat est pris en charge par analyzeMealFromText.
             val llmConfig = llmResolver.resolveWithProfile(AiAssistant.MEAL_SCAN_TEXT, profile)
-            val provider = if (hasGemini) "GEMINI" else llmConfig.provider.name
-            val apiKey = when (provider) {
-                "GROQ" -> userRepository.getApiKey(SecureKeyStore.Provider.GROQ_MEAL)
-                "MISTRAL" -> userRepository.getApiKey(SecureKeyStore.Provider.MISTRAL)
-                else -> userRepository.getApiKey(SecureKeyStore.Provider.GEMINI)
-            }
+            val provider = llmConfig.provider.name
+            val apiKey = providerApiKey(provider)
             val model = llmConfig.modelId
 
             if (apiKey.isBlank()) {
-                val providerName = when (provider) { "GROQ" -> "Groq"; "MISTRAL" -> "Mistral"; else -> "Gemini" }
-                _state.update { it.copy(isAnalyzing = false, error = "Configure ta clé API $providerName dans Réglages → Meal Scanner") }
+                _state.update { it.copy(isAnalyzing = false, error = "Configure ta clé API ${providerDisplayName(provider)} dans Réglages → Assistants IA") }
                 return@launch
             }
 
@@ -376,16 +404,11 @@ class MealScannerViewModel @Inject constructor(
             // Resolver per-assistant : MEAL_SCAN_PHOTO configurable independamment.
             val llmConfig = llmResolver.resolveWithProfile(AiAssistant.MEAL_SCAN_PHOTO, profile)
             val provider = llmConfig.provider.name
-            val apiKey = when (provider) {
-                "GROQ" -> userRepository.getApiKey(SecureKeyStore.Provider.GROQ_MEAL)
-                "MISTRAL" -> userRepository.getApiKey(SecureKeyStore.Provider.MISTRAL)
-                else -> userRepository.getApiKey(SecureKeyStore.Provider.GEMINI)
-            }
+            val apiKey = providerApiKey(provider)
             val model = llmConfig.modelId
 
             if (apiKey.isBlank()) {
-                val providerName = when (provider) { "GROQ" -> "Groq"; "MISTRAL" -> "Mistral"; else -> "Gemini" }
-                _state.update { it.copy(isAnalyzing = false, error = "Configure ta clé API $providerName dans Réglages → Meal Scanner") }
+                _state.update { it.copy(isAnalyzing = false, error = "Configure ta clé API ${providerDisplayName(provider)} dans Réglages → Assistants IA") }
                 return@launch
             }
 

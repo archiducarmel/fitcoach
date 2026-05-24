@@ -593,7 +593,13 @@ class LlmDebugViewModel @Inject constructor(
             val msgs = it.messages.toMutableList()
             val idx = msgs.lastIndex
             if (idx >= 0 && msgs[idx].role == "assistant" && msgs[idx].isStreaming) {
-                msgs[idx] = msgs[idx].copy(isStreaming = false, error = "Annule")
+                // isThinking=false pour cleanup state (animation aurait disparu via
+                // la condition error!=null mais autant garder un state coherent).
+                msgs[idx] = msgs[idx].copy(
+                    isStreaming = false,
+                    isThinking = false,
+                    error = "Annulé",
+                )
             }
             it.copy(messages = msgs, isSending = false)
         }

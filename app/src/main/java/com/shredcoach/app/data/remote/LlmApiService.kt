@@ -321,11 +321,33 @@ class LlmApiService @Inject constructor(
         .build()
 
     /** Pick le bon client selon la capability "supportsThinking" du modele.
-     *  Source de verite : `LlmCatalog.modelInfo(model)?.supportsThinking`. */
+     *  Source de verite a 2 niveaux :
+     *   1. `LlmCatalog.modelInfo(model)?.supportsThinking` (statique)
+     *   2. Heuristique sur l'id pour les modeles fetches dynamiquement
+     *      depuis NVIDIA NIM /v1/models et GitHub Models /catalog/models
+     *      (LlmCatalog.modelInfo retourne null pour ceux-la).
+     *
+     *  Si l'un des deux dit "thinking", on utilise le client 360s. */
     private fun pickClient(model: String): OkHttpClient {
-        val isThinking = com.shredcoach.app.domain.llm.LlmCatalog
+        val staticHit = com.shredcoach.app.domain.llm.LlmCatalog
             .modelInfo(model)?.supportsThinking == true
+        val isThinking = staticHit || isLikelyReasoningModel(model)
         return if (isThinking) thinkingClient else client
+    }
+
+    /** Heuristique fallback pour les modeles dynamiques (NIM/GitHub) absents
+     *  de LlmCatalog.byProvider statique. Patterns couvrant les familles
+     *  reasoning connues : OpenAI o-series, DeepSeek R-series, Kimi K2.x,
+     *  GLM 5.x, MiniMax M2.x, Qwen QwQ, etc. */
+    private fun isLikelyReasoningModel(model: String): Boolean {
+        val m = model.lowercase()
+        return m.contains("/o1") || m.contains("/o3") || m.contains("/o4-mini") ||
+            m.contains("openai/o") || m.contains("-reasoning") ||
+            m.contains("deepseek-r1") || m.contains("/r1") ||
+            m.contains("kimi-k2") || m.contains("glm-5") || m.contains("/glm-4.6") ||
+            m.contains("minimax-m2") || m.contains("qwen-qwq") || m.contains("qwq-") ||
+            m.contains("nemotron-super") || m.contains("phi-4-reasoning") ||
+            m.contains("phi-4-mini-reasoning")
     }
 
     /**
@@ -343,6 +365,203 @@ class LlmApiService @Inject constructor(
      * Pour Claude (format Anthropic) : fallback temporaire vers text-only avec
      * note explicative (V2 = vraie integration Claude vision content blocks).
      */
+    /**
+     * Variante TEXT-ONLY de [messageWithImageJson] : meme contract (non-streaming,
+     * JSON garanti via response_format), sans image. Pour les assistants qui ne
+     * sont pas vision mais qui veulent une reponse JSON structuree (ex:
+     * MEAL_SCAN_TEXT, GLUCOSE_ANALYSIS, BODY_INSIGHT etc.).
+     */
+    suspend fun messageJson(
+        prompt: String,
+        provider: LlmProvider,
+        apiKey: String,
+        model: String,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+    ): Result<String> = withContext(Dispatchers.IO) {
+        require(provider in OPENAI_COMPAT_VISION_PROVIDERS) {
+            "messageJson supporte seulement OpenAI-compat: ${OPENAI_COMPAT_VISION_PROVIDERS}"
+        }
+        val startMs = System.currentTimeMillis()
+        try {
+            val msgArr = com.google.gson.JsonArray().apply {
+                add(com.google.gson.JsonObject().apply {
+                    addProperty("role", "user")
+                    addProperty("content", prompt)
+                })
+            }
+            val reqJson = com.google.gson.JsonObject().apply {
+                addProperty("model", model)
+                add("messages", msgArr)
+                addProperty("temperature", 0.3)
+                addProperty("max_tokens", 4096)
+                addProperty("stream", false)
+                add("response_format", com.google.gson.JsonObject().apply {
+                    addProperty("type", "json_object")
+                })
+            }
+            val request = buildOpenAiRequest(provider, apiKey, reqJson.toString())
+            val httpClient = pickClient(model)
+            // try/finally garantit que call.cancel() s'execute si le coroutine
+            // est cancelle pendant l'attente synchrone (abort socket immediat).
+            val call = httpClient.newCall(request)
+            try {
+                val response = call.execute()
+                if (!response.isSuccessful) {
+                    val errorBody = response.body?.string()?.take(500) ?: ""
+                    throw Exception("Erreur ${response.code} ${provider.displayName}: ${extractError(errorBody)}")
+                }
+                val bodyStr = response.body?.string() ?: throw Exception("Reponse vide")
+                response.close()
+                val responseJson = JsonParser.parseString(bodyStr).asJsonObject
+                val message = responseJson.getAsJsonArray("choices")?.get(0)
+                    ?.asJsonObject?.getAsJsonObject("message")
+                    ?: throw Exception("Format reponse inattendu")
+                val contentRaw = message.get("content")
+                val rawText = when {
+                    contentRaw == null || contentRaw.isJsonNull -> ""
+                    contentRaw.isJsonPrimitive -> contentRaw.asString
+                    contentRaw.isJsonObject -> contentRaw.asJsonObject.toString()
+                    else -> contentRaw.toString()
+                }
+                val usage = responseJson.getAsJsonObject("usage")
+                val tIn = usage?.get("prompt_tokens")?.takeIf { it.isJsonPrimitive }?.asInt
+                    ?: estimateTokens(prompt)
+                val tOut = usage?.get("completion_tokens")?.takeIf { it.isJsonPrimitive }?.asInt
+                    ?: estimateTokens(rawText)
+                usageRecorder.record(
+                    assistant = assistant, provider = provider, model = model,
+                    tokensInput = tIn, tokensOutput = tOut, tokensThinking = 0,
+                    latencyMs = System.currentTimeMillis() - startMs, success = true,
+                )
+                Result.success(rawText)
+            } finally {
+                try { call.cancel() } catch (_: Exception) { /* deja close */ }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("LlmDiag", "× messageJson $provider/$model", e)
+            usageRecorder.record(
+                assistant = assistant, provider = provider, model = model,
+                tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
+                latencyMs = System.currentTimeMillis() - startMs, success = false,
+            )
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Analyse une image en mode JSON via un provider OpenAI-compatible.
+     * **Non-streaming** : collecte toute la reponse en une string unique, parfaite
+     * pour le pipeline vision (MealScanner, BodyScan, etc.) qui doit parser un
+     * JSON complet et structure.
+     *
+     * **Providers supportes** (OpenAI-compat) : OPENAI, GROQ, GITHUB_MODELS,
+     * NVIDIA_NIM. Format `image_url` base64 dans content blocks.
+     *
+     * @param prompt prompt-system + question utilisateur concatenes (caller assemble)
+     * @param imageBytes JPEG/PNG bytes
+     * @param mimeType "image/jpeg" / "image/png"
+     * @param provider doit etre OpenAI-compatible (sinon @throws IllegalArgumentException)
+     * @param apiKey cle du provider correspondant
+     * @param model id du modele (ex: "openai/gpt-4o", "meta/llama-3.2-90b-vision-instruct")
+     * @return raw JSON string du model.response.choices[0].message.content,
+     *  ou Result.failure si erreur HTTP/network/parsing
+     */
+    suspend fun messageWithImageJson(
+        prompt: String,
+        imageBytes: ByteArray,
+        imageMimeType: String,
+        provider: LlmProvider,
+        apiKey: String,
+        model: String,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+    ): Result<String> = withContext(Dispatchers.IO) {
+        require(provider in OPENAI_COMPAT_VISION_PROVIDERS) {
+            "messageWithImageJson supporte seulement OpenAI-compat: ${OPENAI_COMPAT_VISION_PROVIDERS}"
+        }
+        val startMs = System.currentTimeMillis()
+        try {
+            val b64 = android.util.Base64.encodeToString(imageBytes, android.util.Base64.NO_WRAP)
+            val dataUrl = "data:$imageMimeType;base64,$b64"
+            val msgArr = com.google.gson.JsonArray().apply {
+                add(com.google.gson.JsonObject().apply {
+                    addProperty("role", "user")
+                    val contentArr = com.google.gson.JsonArray().apply {
+                        add(com.google.gson.JsonObject().apply {
+                            addProperty("type", "text")
+                            addProperty("text", prompt)
+                        })
+                        add(com.google.gson.JsonObject().apply {
+                            addProperty("type", "image_url")
+                            add("image_url", com.google.gson.JsonObject().apply {
+                                addProperty("url", dataUrl)
+                            })
+                        })
+                    }
+                    add("content", contentArr)
+                })
+            }
+            val reqJson = com.google.gson.JsonObject().apply {
+                addProperty("model", model)
+                add("messages", msgArr)
+                addProperty("temperature", 0.3)        // bas pour JSON structure
+                addProperty("max_tokens", 4096)         // suffisant pour analyse meal
+                addProperty("stream", false)            // NON-STREAMING
+                // response_format JSON quand le modele le supporte (OpenAI/Groq)
+                add("response_format", com.google.gson.JsonObject().apply {
+                    addProperty("type", "json_object")
+                })
+            }
+
+            val request = buildOpenAiRequest(provider, apiKey, reqJson.toString())
+            // Adaptatif : thinking models peuvent prendre 1-3 min pour vision-reasoning
+            val httpClient = pickClient(model)
+            val call = httpClient.newCall(request)
+            try {
+                val response = call.execute()
+                if (!response.isSuccessful) {
+                    val errorBody = response.body?.string()?.take(500) ?: ""
+                    throw Exception("Erreur ${response.code} ${provider.displayName}: ${extractError(errorBody)}")
+                }
+                val bodyStr = response.body?.string() ?: throw Exception("Reponse vide")
+                response.close()
+
+                val responseJson = JsonParser.parseString(bodyStr).asJsonObject
+                val message = responseJson.getAsJsonArray("choices")?.get(0)
+                    ?.asJsonObject?.getAsJsonObject("message")
+                    ?: throw Exception("Format reponse inattendu (pas de choices[0].message)")
+                val contentRaw = message.get("content")
+                val rawText = when {
+                    contentRaw == null || contentRaw.isJsonNull -> ""
+                    contentRaw.isJsonPrimitive -> contentRaw.asString
+                    contentRaw.isJsonObject -> contentRaw.asJsonObject.toString()
+                    else -> contentRaw.toString()
+                }
+
+                val usage = responseJson.getAsJsonObject("usage")
+                val tIn = usage?.get("prompt_tokens")?.takeIf { it.isJsonPrimitive }?.asInt
+                    ?: (estimateTokens(prompt) + (imageBytes.size / 1024) * 3)
+                val tOut = usage?.get("completion_tokens")?.takeIf { it.isJsonPrimitive }?.asInt
+                    ?: estimateTokens(rawText)
+                usageRecorder.record(
+                    assistant = assistant, provider = provider, model = model,
+                    tokensInput = tIn, tokensOutput = tOut, tokensThinking = 0,
+                    latencyMs = System.currentTimeMillis() - startMs, success = true,
+                )
+                Result.success(rawText)
+            } finally {
+                try { call.cancel() } catch (_: Exception) { /* deja close */ }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("LlmDiag", "× messageWithImageJson $provider/$model", e)
+            usageRecorder.record(
+                assistant = assistant, provider = provider, model = model,
+                tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
+                latencyMs = System.currentTimeMillis() - startMs, success = false,
+            )
+            Result.failure(e)
+        }
+    }
+
     fun streamMessageWithImage(
         text: String,
         imageBytes: ByteArray,
@@ -405,7 +624,7 @@ class LlmApiService @Inject constructor(
                 }
 
                 val request = buildOpenAiRequest(provider, apiKey, req.toString())
-                val response = client.newCall(request).execute()
+                val response = pickClient(effectiveModel).newCall(request).execute()
                 if (!response.isSuccessful) {
                     val errorBody = response.body?.string() ?: ""
                     throw Exception("Erreur ${response.code}: ${extractError(errorBody)}")
@@ -502,6 +721,14 @@ class LlmApiService @Inject constructor(
     }
 
     companion object {
+        /** Providers compatibles OpenAI-format vision (image_url base64 dans content blocks). */
+        internal val OPENAI_COMPAT_VISION_PROVIDERS = setOf(
+            LlmProvider.OPENAI,
+            LlmProvider.GROQ,
+            LlmProvider.GITHUB_MODELS,
+            LlmProvider.NVIDIA_NIM,
+        )
+
         private const val SYSTEM_PROMPT_FR = """Tu es Shreddy, le coach sportif et nutritionnel personnel de l'app ShredCoach. Tu parles en français.
 
 RÔLE :
@@ -725,7 +952,7 @@ The user's personalized data follows below (only sent on the first message)."""
             .post(reqBody.toString().toRequestBody(jsonMediaType))
             .build()
 
-        val response = client.newCall(request).execute()
+        val response = pickClient(model).newCall(request).execute()
         android.util.Log.d("LlmDiag", "◀ GEMINI HTTP ${response.code}")
         if (!response.isSuccessful) {
             val errorBody = response.body?.string() ?: ""
@@ -916,7 +1143,7 @@ The user's personalized data follows below (only sent on the first message)."""
         android.util.Log.d("LlmDiag", "▶ apiKey length=${apiKey.length} prefix=${apiKey.take(6)}…")
         android.util.Log.d("LlmDiag", "▶ body size=${body.length} bytes (first 200) : ${body.take(200)}")
 
-        val response = client.newCall(request).execute()
+        val response = pickClient(model).newCall(request).execute()
         android.util.Log.d("LlmDiag", "◀ HTTP ${response.code} ${response.message} from $provider")
         if (!response.isSuccessful) {
             val errorBody = response.body?.string() ?: ""
@@ -976,7 +1203,7 @@ The user's personalized data follows below (only sent on the first message)."""
             .post(body.toRequestBody(jsonMediaType))
             .build()
 
-        val response = client.newCall(request).execute()
+        val response = pickClient(model).newCall(request).execute()
         if (!response.isSuccessful) {
             val errorBody = response.body?.string() ?: ""
             throw Exception("Erreur ${response.code}: ${extractError(errorBody)}")
@@ -1107,7 +1334,7 @@ The user's personalized data follows below (only sent on the first message)."""
         }
 
         val request = buildOpenAiRequest(provider, apiKey, req.toString())
-        val response = client.newCall(request).execute()
+        val response = pickClient(model).newCall(request).execute()
         val body = response.body?.string() ?: throw Exception("Réponse vide")
         if (!response.isSuccessful) throw Exception("Erreur ${response.code}: ${extractError(body)}")
 
@@ -1205,7 +1432,7 @@ The user's personalized data follows below (only sent on the first message)."""
             .header("Content-Type", "application/json")
             .post(req.toString().toRequestBody(jsonMediaType))
             .build()
-        val response = client.newCall(request).execute()
+        val response = pickClient(model).newCall(request).execute()
         val body = response.body?.string() ?: throw Exception("Réponse vide")
         if (!response.isSuccessful) throw Exception("Erreur ${response.code}: ${extractError(body)}")
 
@@ -1382,7 +1609,7 @@ The user's personalized data follows below (only sent on the first message)."""
         }
 
         val request = buildOpenAiRequest(provider, apiKey, req.toString())
-        val response = client.newCall(request).execute()
+        val response = pickClient(model).newCall(request).execute()
         if (!response.isSuccessful) {
             val errorBody = response.body?.string() ?: ""
             throw Exception("Erreur ${response.code}: ${extractError(errorBody)}")
@@ -1499,7 +1726,7 @@ The user's personalized data follows below (only sent on the first message)."""
                         .header("Content-Type", "application/json")
                         .post(body.toRequestBody(jsonMediaType))
                         .build()
-                    val response = client.newCall(request).execute()
+                    val response = pickClient(effectiveModel).newCall(request).execute()
                     val responseBody = response.body?.string() ?: return@withContext Result.failure(Exception("Vide"))
                     if (!response.isSuccessful) return@withContext Result.failure(Exception(extractError(responseBody)))
                     val parsed = JsonParser.parseString(responseBody).asJsonObject
@@ -1519,7 +1746,7 @@ The user's personalized data follows below (only sent on the first message)."""
                         .header("Content-Type", "application/json")
                         .post(body.toRequestBody(jsonMediaType))
                         .build()
-                    val response = client.newCall(request).execute()
+                    val response = pickClient(effectiveModel).newCall(request).execute()
                     val responseBody = response.body?.string() ?: return@withContext Result.failure(Exception("Vide"))
                     if (!response.isSuccessful) return@withContext Result.failure(Exception(extractError(responseBody)))
                     val parsed = JsonParser.parseString(responseBody).asJsonObject

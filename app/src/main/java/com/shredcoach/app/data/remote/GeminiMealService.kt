@@ -105,6 +105,13 @@ class GeminiMealService @Inject constructor(
      * primary epuise). Le banner UI ecoute et affiche un message humouristique.
      */
     private val fallbackBus: com.shredcoach.app.domain.llm.LlmFallbackBus,
+    /**
+     * LlmApiService injecte pour router les providers OpenAI-compat
+     * (OPENAI/GROQ/GITHUB_MODELS/NVIDIA_NIM) vers messageWithImageJson.
+     * Permet a l'user de configurer un assistant vision sur GPT-4o, Llama Vision,
+     * Qwen Vision, Gemma 3, etc. au lieu de Gemini/Mistral hardcodes.
+     */
+    private val llmApiService: LlmApiService,
 ) {
 
     /**
@@ -460,19 +467,24 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
             val raw = when (provider.uppercase()) {
                 "GROQ" -> callGroqText(apiKey, prompt, assistant)
                 "MISTRAL" -> callMistralText(apiKey, prompt, assistant)
+                "OPENAI", "GITHUB_MODELS", "NVIDIA_NIM" ->
+                    callOpenAiCompatText(provider, apiKey, model, prompt, assistant)
                 else -> callGeminiText(apiKey, model, prompt, assistant)
             }
             if (raw.isBlank()) Result.failure(Exception("Réponse LLM vide")) else Result.success(raw)
         } catch (e: Exception) {
             Log.e(TAG, "callTextLLM failed", e)
-            // Emit failure event pour le dashboard (success est emit dans la private)
-            val effectiveProvider = runCatching { LlmProvider.valueOf(provider.uppercase()) }
-                .getOrDefault(LlmProvider.GEMINI)
-            usageRecorder.record(
-                assistant = assistant, provider = effectiveProvider, model = model,
-                tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
-                latencyMs = System.currentTimeMillis() - startMs, success = false,
-            )
+            // Emit failure event pour le dashboard (success est emit dans la private).
+            // SAUF si OpenAI-compat (LlmApiService.messageJson a deja record le failure).
+            if (!isOpenAiCompatProvider(provider)) {
+                val effectiveProvider = runCatching { LlmProvider.valueOf(provider.uppercase()) }
+                    .getOrDefault(LlmProvider.GEMINI)
+                usageRecorder.record(
+                    assistant = assistant, provider = effectiveProvider, model = model,
+                    tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
+                    latencyMs = System.currentTimeMillis() - startMs, success = false,
+                )
+            }
             // Try fallback si quota epuise (pas pour engorgement transient)
             if (shouldTriggerFallback(provider, e, fallback, assistant)) {
                 return@withContext callTextLLM(
@@ -764,18 +776,25 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
             val rawJson = when (provider.uppercase()) {
                 "GROQ" -> callGroq(imageBytes, mimeType, apiKey, prompt, assistant)
                 "MISTRAL" -> callMistral(imageBytes, mimeType, apiKey, prompt, assistant)
+                "OPENAI", "GITHUB_MODELS", "NVIDIA_NIM" ->
+                    callOpenAiCompatVision(provider, apiKey, model, imageBytes, mimeType, prompt, assistant)
                 else -> callGemini(imageBytes, mimeType, apiKey, model, prompt, assistant)
             }
             if (rawJson.isBlank()) Result.failure(Exception("Réponse LLM vide"))
             else Result.success(rawJson)
         } catch (e: Exception) {
-            val effectiveProvider = runCatching { LlmProvider.valueOf(provider.uppercase()) }
-                .getOrDefault(LlmProvider.GEMINI)
-            usageRecorder.record(
-                assistant = assistant, provider = effectiveProvider, model = model,
-                tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
-                latencyMs = System.currentTimeMillis() - startMs, success = false,
-            )
+            // Eviter double-telemetrie : LlmApiService.messageWithImageJson record
+            // deja le failure pour OpenAI-compat providers. Ne record ici que
+            // pour les paths qui ne passent PAS par LlmApiService (Gemini/Groq/Mistral).
+            if (!isOpenAiCompatProvider(provider)) {
+                val effectiveProvider = runCatching { LlmProvider.valueOf(provider.uppercase()) }
+                    .getOrDefault(LlmProvider.GEMINI)
+                usageRecorder.record(
+                    assistant = assistant, provider = effectiveProvider, model = model,
+                    tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
+                    latencyMs = System.currentTimeMillis() - startMs, success = false,
+                )
+            }
             if (shouldTriggerFallback(provider, e, fallback, assistant)) {
                 return@withContext callVisionLLM(
                     imageBytes = imageBytes, mimeType = mimeType,
@@ -787,6 +806,11 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
             Result.failure(e)
         }
     }
+
+    /** True si provider passe par LlmApiService (qui telemetered en interne).
+     *  Evite la double-record dans les catch outer de GeminiMealService. */
+    private fun isOpenAiCompatProvider(providerName: String): Boolean =
+        providerName.uppercase() in setOf("OPENAI", "GITHUB_MODELS", "NVIDIA_NIM")
 
     /**
      * Analyse un repas DÉCRIT EN TEXTE par l'utilisateur (cas où il a oublié
@@ -826,6 +850,8 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
             val rawJson = when (provider.uppercase()) {
                 "GROQ" -> callGroqTextMeal(apiKey, finalPrompt, assistant)
                 "MISTRAL" -> callMistralTextMeal(apiKey, finalPrompt, assistant)
+                "OPENAI", "GITHUB_MODELS", "NVIDIA_NIM" ->
+                    callOpenAiCompatText(provider, apiKey, model, finalPrompt, assistant)
                 else -> callGeminiTextMeal(apiKey, model, finalPrompt, assistant)
             }
 
@@ -849,13 +875,16 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
             }
             Result.success(result)
         } catch (e: Exception) {
-            val effectiveProvider = runCatching { LlmProvider.valueOf(provider.uppercase()) }
-                .getOrDefault(LlmProvider.GEMINI)
-            usageRecorder.record(
-                assistant = assistant, provider = effectiveProvider, model = model,
-                tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
-                latencyMs = System.currentTimeMillis() - startMs, success = false,
-            )
+            // Skip telemetrie outer si OpenAI-compat (LlmApiService.messageJson l'a deja fait)
+            if (!isOpenAiCompatProvider(provider)) {
+                val effectiveProvider = runCatching { LlmProvider.valueOf(provider.uppercase()) }
+                    .getOrDefault(LlmProvider.GEMINI)
+                usageRecorder.record(
+                    assistant = assistant, provider = effectiveProvider, model = model,
+                    tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
+                    latencyMs = System.currentTimeMillis() - startMs, success = false,
+                )
+            }
             if (shouldTriggerFallback(provider, e, fallback, assistant)) {
                 return@withContext analyzeMealFromText(
                     description = description, apiKey = fallback!!.apiKey,
@@ -887,6 +916,8 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
             val rawJson = when (provider.uppercase()) {
                 "GROQ" -> callGroq(imageBytes, mimeType, apiKey, finalPrompt, assistant)
                 "MISTRAL" -> callMistral(imageBytes, mimeType, apiKey, finalPrompt, assistant)
+                "OPENAI", "GITHUB_MODELS", "NVIDIA_NIM" ->
+                    callOpenAiCompatVision(provider, apiKey, model, imageBytes, mimeType, finalPrompt, assistant)
                 else -> callGemini(imageBytes, mimeType, apiKey, model, finalPrompt, assistant)
             }
 
@@ -897,7 +928,7 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
                 return@withContext Result.failure(Exception("Image non alimentaire"))
             }
 
-            // Parser avec le même pipeline robuste pour les 3 providers
+            // Parser avec le même pipeline robuste pour les 4 providers
             val result = parseRobust(rawJson)
             if (result == null) {
                 val preview = rawJson.take(300).replace("\n", "↵")
@@ -905,13 +936,16 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
             }
             Result.success(result)
         } catch (e: Exception) {
-            val effectiveProvider = runCatching { LlmProvider.valueOf(provider.uppercase()) }
-                .getOrDefault(LlmProvider.GEMINI)
-            usageRecorder.record(
-                assistant = assistant, provider = effectiveProvider, model = model,
-                tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
-                latencyMs = System.currentTimeMillis() - startMs, success = false,
-            )
+            // Skip telemetrie outer si OpenAI-compat (deja record par LlmApiService.messageWithImageJson)
+            if (!isOpenAiCompatProvider(provider)) {
+                val effectiveProvider = runCatching { LlmProvider.valueOf(provider.uppercase()) }
+                    .getOrDefault(LlmProvider.GEMINI)
+                usageRecorder.record(
+                    assistant = assistant, provider = effectiveProvider, model = model,
+                    tokensInput = 0, tokensOutput = 0, tokensThinking = 0,
+                    latencyMs = System.currentTimeMillis() - startMs, success = false,
+                )
+            }
             if (shouldTriggerFallback(provider, e, fallback, assistant)) {
                 return@withContext analyzeMeal(
                     imageBytes = imageBytes, mimeType = mimeType,
@@ -1201,6 +1235,70 @@ Remplace tous les 0 par tes estimations RÉELLES basées sur la photo. healthSco
     // ═══════════════════════════════════════
     // MISTRAL (Mistral Small — OpenAI-compatible)
     // ═══════════════════════════════════════
+
+    /**
+     * Route vers LlmApiService.messageWithImageJson pour les providers
+     * OpenAI-compatibles (OPENAI, GROQ, GITHUB_MODELS, NVIDIA_NIM).
+     *
+     * **Difference avec callGroq/callMistral** : ces 2 derniers utilisent l'API
+     * d'endpoint chat-completions specifique a chaque provider, hardcodes dans
+     * GeminiMealService historiquement. La nouvelle voie passe par
+     * LlmApiService qui :
+     *  - gere les headers provider-specific (Bearer + Accept GitHub)
+     *  - applique adaptive timeout (60s normal, 360s thinking)
+     *  - emit telemetrie unifiee
+     *  - supporte response_format=json_object (JSON garanti, fini les retours
+     *    en markdown ` ```json ```)
+     *
+     * Pour MEAL_SCAN, l'user peut donc maintenant pick GPT-4o (GitHub Models)
+     * ou Llama 3.2 Vision (NVIDIA NIM) ou Qwen 3.5 Vision (NIM) au lieu de
+     * Gemini/Mistral hardcodes.
+     */
+    /** Variante TEXT-ONLY de [callOpenAiCompatVision] pour analyzeMealFromText
+     *  et callTextLLM. Delegue a LlmApiService.messageJson. */
+    private suspend fun callOpenAiCompatText(
+        providerName: String,
+        apiKey: String,
+        model: String,
+        prompt: String,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant?,
+    ): String {
+        val provider = runCatching { LlmProvider.valueOf(providerName.uppercase()) }
+            .getOrElse { throw IllegalArgumentException("Provider inconnu : $providerName") }
+        require(provider in LlmApiService.OPENAI_COMPAT_VISION_PROVIDERS) {
+            "callOpenAiCompatText requiert un provider OpenAI-compat, recu $provider"
+        }
+        return llmApiService.messageJson(
+            prompt = prompt, provider = provider, apiKey = apiKey,
+            model = model, assistant = assistant,
+        ).getOrElse { throw it }
+    }
+
+    private suspend fun callOpenAiCompatVision(
+        providerName: String,
+        apiKey: String,
+        model: String,
+        imageBytes: ByteArray,
+        mimeType: String,
+        prompt: String,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant?,
+    ): String {
+        val provider = runCatching { LlmProvider.valueOf(providerName.uppercase()) }
+            .getOrElse { throw IllegalArgumentException("Provider inconnu : $providerName") }
+        require(provider in LlmApiService.OPENAI_COMPAT_VISION_PROVIDERS) {
+            "callOpenAiCompatVision requiert un provider OpenAI-compat, recu $provider"
+        }
+        val result = llmApiService.messageWithImageJson(
+            prompt = prompt,
+            imageBytes = imageBytes,
+            imageMimeType = mimeType,
+            provider = provider,
+            apiKey = apiKey,
+            model = model,
+            assistant = assistant,
+        )
+        return result.getOrElse { throw it }
+    }
 
     private fun callMistral(
         imageBytes: ByteArray, mimeType: String, apiKey: String,
