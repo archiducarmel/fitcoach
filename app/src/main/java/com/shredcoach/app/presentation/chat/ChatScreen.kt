@@ -2,6 +2,7 @@ package com.shredcoach.app.presentation.chat
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -24,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -207,6 +209,10 @@ fun ChatScreen(
                     onValueChange = { viewModel.onInputChanged(it) },
                     onSend = { viewModel.sendMessage() },
                     isLoading = state.isLoading,
+                    attachedBitmap = state.attachedBitmap,
+                    onAttachImage = { bmp -> viewModel.setAttachedImage(bmp) },
+                    onClearImage = { viewModel.clearAttachedImage() },
+                    supportsVision = state.supportsVisionInput,
                     accentColor = accentColor,
                 )
             }
@@ -493,17 +499,39 @@ private fun ChatBubble(
 
             Surface(shape = shape, color = bubbleColor, tonalElevation = if (isUser) 0.dp else 1.dp,
                 modifier = if (isUser) Modifier else Modifier.weight(1f, fill = false)) {
-                if (isUser) {
-                    // User → texte simple
-                    Text(message.content, modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                        style = MaterialTheme.typography.bodyMedium, color = textColor, lineHeight = 20.sp)
-                } else {
-                    // Assistant → rendu Markdown
-                    MarkdownText(
-                        text = message.content,
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                        color = textColor
-                    )
+                Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+                    // Affiche l'image attachee (user uniquement, decode from imagePath)
+                    if (isUser && !message.imagePath.isNullOrBlank()) {
+                        val bitmap = remember(message.imagePath) {
+                            try {
+                                android.graphics.BitmapFactory.decodeFile(message.imagePath)
+                            } catch (_: Exception) { null }
+                        }
+                        bitmap?.let {
+                            Image(
+                                bitmap = it.asImageBitmap(),
+                                contentDescription = "Photo envoyée",
+                                modifier = Modifier
+                                    .padding(bottom = if (message.content.isNotBlank()) 8.dp else 0.dp)
+                                    .heightIn(max = 220.dp)
+                                    .clip(RoundedCornerShape(12.dp)),
+                                contentScale = androidx.compose.ui.layout.ContentScale.FillWidth,
+                            )
+                        }
+                    }
+                    if (message.content.isNotBlank()) {
+                        if (isUser) {
+                            Text(message.content,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = textColor, lineHeight = 20.sp)
+                        } else {
+                            MarkdownText(
+                                text = message.content,
+                                modifier = Modifier,
+                                color = textColor
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -638,39 +666,129 @@ private fun ChatInputBar(
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
     isLoading: Boolean,
+    attachedBitmap: android.graphics.Bitmap? = null,
+    onAttachImage: (android.graphics.Bitmap?) -> Unit = {},
+    onClearImage: () -> Unit = {},
+    supportsVision: Boolean = false,
     accentColor: Color = OrangeVibrant,
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val imagePicker = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
+    ) { uri: android.net.Uri? ->
+        uri?.let {
+            context.contentResolver.openInputStream(it)?.use { stream ->
+                val bmp = android.graphics.BitmapFactory.decodeStream(stream)
+                if (bmp != null) onAttachImage(bmp)
+            }
+        }
+    }
+
     Surface(tonalElevation = 4.dp) {
-        Row(
+        Column(
             modifier = Modifier.fillMaxWidth().navigationBarsPadding()
                 .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            OutlinedTextField(
-                value = value, onValueChange = onValueChange,
-                modifier = Modifier.weight(1f).heightIn(min = 48.dp, max = 120.dp),
-                placeholder = { Text(stringResource(R.string.chat_input_placeholder), style = MaterialTheme.typography.bodyMedium) },
-                shape = RoundedCornerShape(24.dp),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                keyboardActions = KeyboardActions(onSend = { if (!isLoading) onSend() }),
-                maxLines = 4,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = accentColor,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                )
-            )
-            FilledIconButton(
-                onClick = onSend,
-                enabled = value.isNotBlank() && !isLoading,
-                modifier = Modifier.size(48.dp),
-                colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = accentColor,
-                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+            // ─── Preview de l'image attachee (avec bouton X pour clear) ──
+            if (attachedBitmap != null) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                    modifier = Modifier.padding(bottom = 8.dp),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Image(
+                            bitmap = attachedBitmap.asImageBitmap(),
+                            contentDescription = "Photo attachée",
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        )
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                "📷 Photo prête à envoyer",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Text(
+                                if (supportsVision) "Le modèle analysera cette image"
+                                else "⚠️ Modèle texte uniquement — change-le dans Réglages",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontSize = 10.sp,
+                                color = if (supportsVision) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                        else MaterialTheme.colorScheme.error,
+                            )
+                        }
+                        IconButton(onClick = onClearImage, modifier = Modifier.size(32.dp)) {
+                            Icon(Icons.Default.Close, "Retirer l'image", Modifier.size(18.dp))
+                        }
+                    }
+                }
+            }
+
+            // ─── Row principale : attach button + textfield + send ──
+            Row(
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                if (isLoading) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = Color.White)
-                else Icon(Icons.Default.Send, stringResource(R.string.chat_send_cd), Modifier.size(20.dp))
+                // Bouton attach image — visible seulement si le modele resolu
+                // supporte vision (sinon UX confuse : pourquoi ce bouton si crash).
+                if (supportsVision) {
+                    FilledIconButton(
+                        onClick = { imagePicker.launch("image/*") },
+                        enabled = !isLoading && attachedBitmap == null,
+                        modifier = Modifier.size(48.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = accentColor.copy(alpha = 0.15f),
+                            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        ),
+                    ) {
+                        Icon(
+                            androidx.compose.material.icons.Icons.Default.Image,
+                            "Joindre une photo",
+                            Modifier.size(20.dp),
+                            tint = accentColor,
+                        )
+                    }
+                }
+
+                OutlinedTextField(
+                    value = value, onValueChange = onValueChange,
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp, max = 120.dp),
+                    placeholder = {
+                        Text(
+                            if (attachedBitmap != null) "Question optionnelle sur la photo…"
+                            else stringResource(R.string.chat_input_placeholder),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    },
+                    shape = RoundedCornerShape(24.dp),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                    keyboardActions = KeyboardActions(onSend = { if (!isLoading) onSend() }),
+                    maxLines = 4,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = accentColor,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                    )
+                )
+                FilledIconButton(
+                    onClick = onSend,
+                    // Send active si : texte non-vide OU image attachee, ET pas en loading.
+                    enabled = (value.isNotBlank() || attachedBitmap != null) && !isLoading,
+                    modifier = Modifier.size(48.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = accentColor,
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    if (isLoading) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = Color.White)
+                    else Icon(Icons.Default.Send, stringResource(R.string.chat_send_cd), Modifier.size(20.dp))
+                }
             }
         }
     }

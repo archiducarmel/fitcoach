@@ -37,6 +37,13 @@ data class ChatState(
     val showConversationList: Boolean = false,
     /** Persona du chat (Shreddy par défaut, Dr. Glykos pour /chat/dr_glykos). */
     val persona: ChatPersona = ChatPersona.SHREDDY,
+    /** Bitmap attache en pre-send (apres pick galerie/camera). null = message
+     *  texte pur. Vide a chaque send (image consommee + persistee a part). */
+    val attachedBitmap: android.graphics.Bitmap? = null,
+    /** True si le modele resolu pour CHAT_SHREDDY/CHAT_DR_GLYKOS supporte la
+     *  vision (acceptsImageInput). Drive l'affichage du bouton attach image
+     *  + le warning "ce modele ne supporte pas la vision". */
+    val supportsVisionInput: Boolean = false,
 )
 
 @HiltViewModel
@@ -46,6 +53,7 @@ class ChatViewModel @Inject constructor(
     private val userContextBuilder: UserContextBuilder,
     private val llmResolver: AssistantLlmResolver,
     private val keyResolver: LlmKeyResolver,
+    private val chatImageStore: com.shredcoach.app.data.local.ChatImageStore,
     @dagger.hilt.android.qualifiers.ApplicationContext
     private val applicationContext: android.content.Context,
     savedStateHandle: SavedStateHandle,
@@ -97,9 +105,13 @@ class ChatViewModel @Inject constructor(
             // et stockait la cle dans LLM, copier vers le slot dedie pour que
             // les overrides per-assistant fonctionnent immediatement.
             keyResolver.migrateLegacyLlmKey(profile?.llmProvider)
+            // Check si le modele resolu accepte les images (drive le bouton attach).
+            val modelInfo = com.shredcoach.app.domain.llm.LlmCatalog.modelInfo(resolved.modelId)
+            val supportsVision = modelInfo?.acceptsImageInput == true
             _state.update { it.copy(
                 isConfigured = keyResolver.hasKey(resolved.provider),
                 providerName = keyResolver.displayName(resolved.provider),
+                supportsVisionInput = supportsVision,
             ) }
         }
     }
@@ -143,20 +155,39 @@ class ChatViewModel @Inject constructor(
     // ENVOI MESSAGE (streaming)
     // ══════════════════════════════════════════
 
+    /** Attache une image pre-send. Affichee dans une preview au-dessus de la
+     *  input bar. L'envoi via [sendMessage] consomme l'image (clear apres). */
+    fun setAttachedImage(bitmap: android.graphics.Bitmap?) {
+        _state.update { it.copy(attachedBitmap = bitmap) }
+    }
+
+    fun clearAttachedImage() {
+        _state.update { it.copy(attachedBitmap = null) }
+    }
+
     fun sendMessage() {
         val text = _state.value.inputText.trim()
-        if (text.isBlank() || _state.value.isLoading) return
+        val bitmap = _state.value.attachedBitmap
+        // Envoi autorise si texte OU image (ou les deux). Pas les deux vides.
+        if ((text.isBlank() && bitmap == null) || _state.value.isLoading) return
 
         val conversationId = _state.value.currentConversationId
-        _state.update { it.copy(inputText = "", isLoading = true, streamingText = "") }
+        _state.update { it.copy(inputText = "", isLoading = true, streamingText = "", attachedBitmap = null) }
 
         viewModelScope.launch {
             // Charger l'historique AVANT d'insérer le nouveau message (sinon il serait en double)
             val recent = chatRepository.getRecentMessages(conversationId, 10).reversed()
 
+            // Si une image est attachee, la persister localement avant insert.
+            // Le path est stocke dans le message user pour relire l'image dans
+            // l'historique chat (re-affichage thumbnail dans la bubble).
+            val imagePath: String? = bitmap?.let { chatImageStore.save(it) }
+
             // Sauver le message utilisateur (avec persona pour isoler Shreddy vs Dr. Glykos)
             chatRepository.insertMessage(ChatMessageEntity(
-                conversationId = conversationId, role = "user", content = text,
+                conversationId = conversationId, role = "user",
+                content = text.ifBlank { if (imagePath != null) "📷 Photo envoyée" else "" },
+                imagePath = imagePath,
                 persona = persona.tag,
             ))
 
@@ -241,7 +272,46 @@ class ChatViewModel @Inject constructor(
                 val useTools = com.shredcoach.app.domain.chat.ChatIntentClassifier
                     .shouldUseTools(text)
 
-                if (useTools) {
+                // Branche VISION : image jointe -> route vers streamFromLlmWithImage.
+                // Prerequis : le modele resolu doit accepter les images
+                // (acceptsImageInput=true). Sinon on insere un message d'erreur clair.
+                if (bitmap != null) {
+                    val modelInfo = model?.let { com.shredcoach.app.domain.llm.LlmCatalog.modelInfo(it) }
+                    if (modelInfo?.acceptsImageInput != true) {
+                        chatRepository.insertMessage(ChatMessageEntity(
+                            conversationId = conversationId, role = "assistant",
+                            content = "⚠️ Le modèle actuel ne supporte pas les images. " +
+                                "Configure ${if (persona == ChatPersona.DR_GLYKOS) "Dr. Glykos" else "Shreddy"} " +
+                                "sur un modèle vision (ex : Gemini 2.5 Flash, GPT-4o, Claude Sonnet 4) " +
+                                "dans Réglages → Assistants IA.",
+                            isError = true, persona = persona.tag,
+                        ))
+                        _state.update { it.copy(isLoading = false) }
+                        return@launch
+                    }
+                    // Image -> bytes JPEG 85% (memes settings que ChatImageStore.save).
+                    val baos = java.io.ByteArrayOutputStream()
+                    bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, baos)
+                    val imgBytes = baos.toByteArray()
+
+                    chatRepository.streamFromLlmWithImage(
+                        userMessage = text.ifBlank { "Analyse cette photo." },
+                        imageBytes = imgBytes,
+                        imageMimeType = "image/jpeg",
+                        provider = provider,
+                        apiKey = apiKey,
+                        model = model,
+                        userContext = userContext,
+                        persona = persona,
+                        assistant = when (persona) {
+                            ChatPersona.DR_GLYKOS -> com.shredcoach.app.domain.llm.AiAssistant.CHAT_DR_GLYKOS
+                            ChatPersona.SHREDDY -> com.shredcoach.app.domain.llm.AiAssistant.CHAT_SHREDDY
+                        },
+                    ).collect { token ->
+                        buffer.append(token)
+                        _state.update { it.copy(streamingText = buffer.toString()) }
+                    }
+                } else if (useTools) {
                     // Le system prompt utilisé par les tools est persona-aware.
                     val basePrompt = when (persona) {
                         ChatPersona.DR_GLYKOS ->

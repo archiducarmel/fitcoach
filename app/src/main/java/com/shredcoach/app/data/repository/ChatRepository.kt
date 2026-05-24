@@ -90,6 +90,55 @@ class ChatRepository @Inject constructor(
         Result.failure(e)
     }
 
+    /**
+     * Streaming chat avec IMAGE jointe. Utilise [LlmApiService.streamMessageWithImage]
+     * (format OpenAI-compat image_url base64 dans content blocks). Le modele
+     * resolu DOIT etre vision-capable (`supportsVision=true`) — le caller doit
+     * verifier avant d'appeler ou recevra un fallback texte+placeholder note.
+     *
+     * Persona : ChatPersona.SHREDDY / DR_GLYKOS. Le system prompt est le meme
+     * que streamFromLlm (text-only) — le LLM voit la conversation + le contexte
+     * + l'image en addition.
+     *
+     * Note : pas de fallback automatique vision -> texte ici. Si l'image est
+     * jointe, l'user veut une analyse visuelle. Erreur explicite si fail.
+     */
+    fun streamFromLlmWithImage(
+        userMessage: String,
+        imageBytes: ByteArray,
+        imageMimeType: String,
+        provider: LlmProvider,
+        apiKey: String,
+        model: String? = null,
+        userContext: String = "",
+        persona: ChatPersona = ChatPersona.SHREDDY,
+        assistant: com.shredcoach.app.domain.llm.AiAssistant? = null,
+    ): Flow<String> {
+        // System prompt persona-aware (Shreddy generic vs Dr. Glykos specialise glycemie).
+        val systemPrompt = when (persona) {
+            ChatPersona.DR_GLYKOS ->
+                if (userContext.isBlank()) DrGlykosSystemPrompt.SYSTEM_PROMPT
+                else DrGlykosSystemPrompt.SYSTEM_PROMPT + "\n\n" + userContext
+            ChatPersona.SHREDDY ->
+                if (userContext.isBlank()) null  // null = default Shreddy system
+                else userContext
+        }
+        // Note : streamMessageWithImage signature different de streamMessage,
+        // n'accepte qu'un userText + image. Pas d'historique pour l'instant
+        // (le LLM ne voit que le tour courant). Limitation acceptable :
+        // image upload = nouveau debut de contexte coherent.
+        return llmApiService.streamMessageWithImage(
+            text = userMessage,
+            imageBytes = imageBytes,
+            imageMimeType = imageMimeType,
+            provider = provider,
+            apiKey = apiKey,
+            model = model,
+            overrideSystemPrompt = systemPrompt,
+            assistant = assistant,
+        )
+    }
+
     fun streamFromLlm(
         userMessage: String,
         provider: LlmProvider,

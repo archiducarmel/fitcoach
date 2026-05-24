@@ -32,7 +32,7 @@ import com.shredcoach.app.data.local.entity.BodyScanLogEntity
         GlucoseAnalysisEntity::class,
         LlmUsageEventEntity::class
     ],
-    version = 49,
+    version = 50,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

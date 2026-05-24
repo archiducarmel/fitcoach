@@ -38,4 +38,10 @@ data class ChatMessageEntity(
      * par-provider sur la perf. Migration v41→v42.
      */
     val latencyMs: Long? = null,
+    /**
+     * Chemin local vers une image attachee au message user (filesDir/chat_images/
+     * UUID.jpg). null = pas d'image. Permet a Shreddy/Dr. Glykos d'accepter
+     * une photo en input et au modele VLM resolu de l'analyser. Migration v49→v50.
+     */
+    val imagePath: String? = null,
 )

@@ -358,6 +358,22 @@ object Migrations {
         }
     }
 
+    /**
+     * v49 → v50 : ajout d'`imagePath` sur `chat_messages` pour permettre l'upload
+     * d'images dans les chats Shreddy / Dr. Glykos.
+     *
+     * - `imagePath` TEXT NULL : chemin vers le fichier image stocke en interne
+     *   (filesDir/chat_images/UUID.jpg). NULL = message texte pur (cas existant).
+     * - Tous les anciens messages restent valides (NULL par defaut).
+     * - Suppression du fichier image : ChatRepository.deleteMessage doit
+     *   unlink le fichier si imagePath non-null (cleanup explicite).
+     */
+    fun migration49to50(): Migration = object : Migration(49, 50) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `chat_messages` ADD COLUMN `imagePath` TEXT DEFAULT NULL")
+        }
+    }
+
     fun migration47to48(): Migration = object : Migration(47, 48) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("""
