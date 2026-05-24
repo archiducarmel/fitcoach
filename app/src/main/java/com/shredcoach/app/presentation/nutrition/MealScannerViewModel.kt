@@ -23,8 +23,10 @@ import com.shredcoach.app.data.remote.buildMealHintBlockForText
 import com.shredcoach.app.data.repository.GlucoseRepository
 import com.shredcoach.app.data.repository.NutritionRepository
 import com.shredcoach.app.data.repository.UserRepository
+import com.shredcoach.app.data.remote.LlmProvider
 import com.shredcoach.app.domain.llm.AiAssistant
 import com.shredcoach.app.domain.llm.AssistantLlmResolver
+import com.shredcoach.app.domain.llm.LlmKeyResolver
 import com.shredcoach.app.domain.nutrition.NutriScoreCalculator
 import com.shredcoach.app.presentation.common.IncomingShareIntent
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -104,6 +106,7 @@ class MealScannerViewModel @Inject constructor(
     private val nutritionRepository: NutritionRepository,
     private val glucoseRepository: GlucoseRepository,
     private val llmResolver: AssistantLlmResolver,
+    private val keyResolver: LlmKeyResolver,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
@@ -113,34 +116,29 @@ class MealScannerViewModel @Inject constructor(
 
     /**
      * Map provider-string (de l'enum LlmProvider.name) -> cle stockee dans
-     * SecureKeyStore. Centralise pour ne plus avoir 3 endroits qui font
-     * `when (provider) { ... }` differemment.
+     * SecureKeyStore. Delegue a [LlmKeyResolver] (source de verite unique
+     * pour tout le codebase).
      *
-     * Pour les providers OpenAI-compat vision (GitHub Models, NVIDIA NIM,
-     * OpenAI direct), on utilise les cles dediees. Pour Groq vision (image
-     * meal scan), on utilise GROQ_MEAL qui est une cle separee de la cle
-     * Groq chat principale (l'user peut avoir 2 plans Groq).
+     * Cas special MealScan : Groq vision utilise GROQ_MEAL (cle separee
+     * pour permettre 2 plans Groq distincts chat/vision).
      */
-    private suspend fun providerApiKey(providerName: String): String =
-        when (providerName.uppercase()) {
-            "GROQ" -> userRepository.getApiKey(SecureKeyStore.Provider.GROQ_MEAL)
-            "MISTRAL" -> userRepository.getApiKey(SecureKeyStore.Provider.MISTRAL)
-            "GITHUB_MODELS" -> userRepository.getApiKey(SecureKeyStore.Provider.GITHUB_MODELS)
-            "NVIDIA_NIM" -> userRepository.getApiKey(SecureKeyStore.Provider.NVIDIA_NIM)
-            "OPENAI", "CLAUDE" -> userRepository.getApiKey(SecureKeyStore.Provider.LLM)
-            else -> userRepository.getApiKey(SecureKeyStore.Provider.GEMINI)
+    private fun providerApiKey(providerName: String): String {
+        // Cas special Meal : GROQ_MEAL dedie (separe de la cle chat Groq).
+        if (providerName.equals("GROQ", ignoreCase = true)) {
+            val mealKey = userRepository.getApiKey(SecureKeyStore.Provider.GROQ_MEAL)
+            if (mealKey.isNotBlank()) return mealKey
         }
+        // Fallback general : LlmKeyResolver (gere dedicated keys + legacy LLM)
+        val provider = runCatching { LlmProvider.valueOf(providerName.uppercase()) }.getOrNull()
+            ?: return userRepository.getApiKey(SecureKeyStore.Provider.GEMINI)
+        return keyResolver.keyFor(provider)
+    }
 
-    private fun providerDisplayName(providerName: String): String =
-        when (providerName.uppercase()) {
-            "GROQ" -> "Groq"
-            "MISTRAL" -> "Mistral"
-            "GITHUB_MODELS" -> "GitHub Models"
-            "NVIDIA_NIM" -> "NVIDIA NIM"
-            "OPENAI" -> "OpenAI"
-            "CLAUDE" -> "Claude"
-            else -> "Gemini"
-        }
+    private fun providerDisplayName(providerName: String): String {
+        val provider = runCatching { LlmProvider.valueOf(providerName.uppercase()) }.getOrNull()
+            ?: return "Gemini"
+        return keyResolver.displayName(provider)
+    }
 
     init {
         viewModelScope.launch {

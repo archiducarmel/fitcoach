@@ -62,6 +62,7 @@ class ProactiveCoachWorker @AssistedInject constructor(
     private val chatRepository: ChatRepository,
     private val dispatcher: AppNotificationDispatcher,
     private val llmResolver: com.shredcoach.app.domain.llm.AssistantLlmResolver,
+    private val keyResolver: com.shredcoach.app.domain.llm.LlmKeyResolver,
 ) : CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result {
@@ -103,14 +104,13 @@ class ProactiveCoachWorker @AssistedInject constructor(
             return Result.success()
         }
 
-        // LLM
-        val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.LLM)
+        // LLM — BUGFIX v2026.05.24 : resolve provider AVANT fetch key.
+        val llmConfig = llmResolver.resolveWithProfile(com.shredcoach.app.domain.llm.AiAssistant.PROACTIVE_COACH, profile)
+        val provider = llmConfig.provider
+        val model: String? = llmConfig.modelId
+        val apiKey = keyResolver.keyFor(provider)
         val message = if (apiKey.isNotBlank()) {
             try {
-                // Resolver per-assistant : PROACTIVE_COACH configurable via Settings.
-                val llmConfig = llmResolver.resolveWithProfile(com.shredcoach.app.domain.llm.AiAssistant.PROACTIVE_COACH, profile)
-                val provider = llmConfig.provider
-                val model: String? = llmConfig.modelId
                 val systemPrompt = promptBuilder.buildSystemPrompt(coachSnap.tone)
                 val userPrompt = promptBuilder.buildUserPrompt(top, ctx)
                 withTimeout(25_000) {

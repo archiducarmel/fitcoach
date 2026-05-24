@@ -15,6 +15,7 @@ import com.shredcoach.app.data.repository.UserRepository
 import com.shredcoach.app.domain.chat.ChatPersona
 import com.shredcoach.app.domain.llm.AiAssistant
 import com.shredcoach.app.domain.llm.AssistantLlmResolver
+import com.shredcoach.app.domain.llm.LlmKeyResolver
 import com.shredcoach.app.domain.locale.withCurrentLocale
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -44,6 +45,7 @@ class ChatViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val userContextBuilder: UserContextBuilder,
     private val llmResolver: AssistantLlmResolver,
+    private val keyResolver: LlmKeyResolver,
     @dagger.hilt.android.qualifiers.ApplicationContext
     private val applicationContext: android.content.Context,
     savedStateHandle: SavedStateHandle,
@@ -88,9 +90,16 @@ class ChatViewModel @Inject constructor(
     private fun loadConfig() {
         viewModelScope.launch {
             val profile = userRepository.getUserProfileOnce()
+            // Resolve l'override per-persona pour savoir quelle cle verifier.
+            val assistant = if (persona == ChatPersona.DR_GLYKOS) AiAssistant.CHAT_DR_GLYKOS else AiAssistant.CHAT_SHREDDY
+            val resolved = llmResolver.resolveWithProfile(assistant, profile)
+            // Migration legacy : si l'user avait son chat sur Groq/OpenAI/Claude
+            // et stockait la cle dans LLM, copier vers le slot dedie pour que
+            // les overrides per-assistant fonctionnent immediatement.
+            keyResolver.migrateLegacyLlmKey(profile?.llmProvider)
             _state.update { it.copy(
-                isConfigured = userRepository.hasApiKey(SecureKeyStore.Provider.LLM),
-                providerName = try { LlmProvider.valueOf(profile?.llmProvider ?: "GROQ").displayName } catch (_: Exception) { "Groq" }
+                isConfigured = keyResolver.hasKey(resolved.provider),
+                providerName = keyResolver.displayName(resolved.provider),
             ) }
         }
     }
@@ -152,13 +161,16 @@ class ChatViewModel @Inject constructor(
             ))
 
             val profile = userRepository.getUserProfileOnce()
-            val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.LLM)
             // Resolver per-assistant : ChatShreddy vs ChatDrGlykos peuvent
             // utiliser un LLM different (configurable dans Settings → Assistants IA).
             val assistant = if (persona == ChatPersona.DR_GLYKOS) AiAssistant.CHAT_DR_GLYKOS else AiAssistant.CHAT_SHREDDY
             val llmConfig = llmResolver.resolveWithProfile(assistant, profile)
             val provider = llmConfig.provider
             val model: String? = llmConfig.modelId  // jamais null (resolver garantit non-blank)
+            // BUGFIX v2026.05.24 : avant on fetchait LLM hardcode ce qui envoyait
+            // la cle Groq (`gsk_xxx`) vers GitHub Models -> 401 systematique.
+            // Maintenant on prend la cle du provider RESOLU.
+            val apiKey = keyResolver.keyFor(provider)
 
             if (apiKey.isBlank()) {
                 // Persona-aware : message renvoie vers l'écran de réglages du

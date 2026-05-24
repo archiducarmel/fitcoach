@@ -32,7 +32,9 @@ class SecureKeyStore @Inject constructor(
      * Le `name` de l'enum sert de clé dans EncryptedSharedPreferences.
      */
     enum class Provider {
-        /** Chat IA principal (Groq / OpenAI / Claude — choisi via llmProvider). */
+        /** Chat IA principal HISTORIQUE (Groq / OpenAI / Claude — choisi via llmProvider).
+         *  **DEPRECATED depuis v2026.05** : utilise GROQ / OPENAI / CLAUDE dedies.
+         *  Conserve pour back-compat lecture (migration auto au boot). */
         LLM,
         /** Gemini : MealScanner, BodyMesh, BodyAnalysis. */
         GEMINI,
@@ -50,6 +52,15 @@ class SecureKeyStore @Inject constructor(
         CLOUDFLARE_AI_TOKEN,
         /** Cloudflare Workers AI — Account ID (32 chars hex, visible sur dashboard). */
         CLOUDFLARE_ACCOUNT_ID,
+        /** Groq — cle chat principale `gsk_xxx`. Separe de GROQ_MEAL pour permettre
+         *  2 plans Groq distincts (chat haut volume vs vision quota). */
+        GROQ,
+        /** OpenAI direct — cle `sk-...` ou `sk-proj-...`. Pour assistants
+         *  configurables a OpenAI gpt-4o/4.1/5/o-series independamment du chat. */
+        OPENAI,
+        /** Anthropic Claude — cle `sk-ant-...`. Pour assistants configurables
+         *  a Claude Sonnet/Haiku/Opus independamment du chat. */
+        CLAUDE,
     }
 
     private val masterKey: MasterKey = MasterKey.Builder(context)

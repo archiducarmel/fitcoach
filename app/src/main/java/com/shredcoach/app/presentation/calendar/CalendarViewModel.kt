@@ -72,6 +72,7 @@ class CalendarViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val chatRepository: ChatRepository,
     private val llmResolver: com.shredcoach.app.domain.llm.AssistantLlmResolver,
+    private val keyResolver: com.shredcoach.app.domain.llm.LlmKeyResolver,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
@@ -264,14 +265,13 @@ class CalendarViewModel @Inject constructor(
                 cursor = cursor.plusDays(1)
             }
 
-            // Message IA (contextualisé)
-            val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.LLM)
-            val llmMessage = if (apiKey.isNotBlank() && suggestions.isNotEmpty() && profile != null) {
+            // Message IA — BUGFIX v2026.05.24 : resolve provider AVANT fetch key.
+            val llmConfig = if (profile != null) llmResolver.resolveWithProfile(com.shredcoach.app.domain.llm.AiAssistant.CALENDAR_RECAP, profile) else null
+            val provider = llmConfig?.provider
+            val model: String? = llmConfig?.modelId
+            val apiKey = if (provider != null) keyResolver.keyFor(provider) else ""
+            val llmMessage = if (apiKey.isNotBlank() && suggestions.isNotEmpty() && profile != null && provider != null) {
                 try {
-                    // Resolver per-assistant : CALENDAR_RECAP configurable via Settings.
-                    val llmConfig = llmResolver.resolveWithProfile(com.shredcoach.app.domain.llm.AiAssistant.CALENDAR_RECAP, profile)
-                    val provider = llmConfig.provider
-                    val model: String? = llmConfig.modelId
 
                     val en = com.shredcoach.app.domain.i18n.PromptLocale.isEn()
                     val datesStr = suggestions.joinToString(", ") {

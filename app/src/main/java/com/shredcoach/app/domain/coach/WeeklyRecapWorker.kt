@@ -64,6 +64,7 @@ class WeeklyRecapWorker @AssistedInject constructor(
     private val nutritionDao: NutritionDao,
     private val dispatcher: AppNotificationDispatcher,
     private val llmResolver: com.shredcoach.app.domain.llm.AssistantLlmResolver,
+    private val keyResolver: com.shredcoach.app.domain.llm.LlmKeyResolver,
 ) : CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result {
@@ -116,16 +117,13 @@ class WeeklyRecapWorker @AssistedInject constructor(
         // le top exo ou le dernier scan repas dans la formulation)
         val ctx = contextBuilder.build() ?: return Result.success()
 
-        // LLM
-        val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.LLM)
+        // LLM — BUGFIX v2026.05.24 : resolve provider AVANT fetch key.
+        val llmConfig = llmResolver.resolveWithProfile(com.shredcoach.app.domain.llm.AiAssistant.WEEKLY_RECAP, profile)
+        val provider = llmConfig.provider
+        val model: String? = llmConfig.modelId
+        val apiKey = keyResolver.keyFor(provider)
         val message = if (apiKey.isNotBlank()) {
             try {
-                // Resolver per-assistant : WEEKLY_RECAP configurable via Settings.
-                // Bon candidat pour Gemini 3.5 Flash (reasoning long-horizon
-                // 7 jours) — voir cartographie LLM dans la doc.
-                val llmConfig = llmResolver.resolveWithProfile(com.shredcoach.app.domain.llm.AiAssistant.WEEKLY_RECAP, profile)
-                val provider = llmConfig.provider
-                val model: String? = llmConfig.modelId
                 val systemPrompt = promptBuilder.buildSystemPrompt(coachSnap.tone)
                 val userPrompt = promptBuilder.buildUserPrompt(trigger, ctx)
                 withTimeout(25_000) {

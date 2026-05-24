@@ -60,6 +60,7 @@ class MealDebriefWorker @AssistedInject constructor(
     private val coachHistory: CoachHistoryStore,
     private val dispatcher: AppNotificationDispatcher,
     private val llmResolver: com.shredcoach.app.domain.llm.AssistantLlmResolver,
+    private val keyResolver: com.shredcoach.app.domain.llm.LlmKeyResolver,
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
@@ -165,13 +166,14 @@ class MealDebriefWorker @AssistedInject constructor(
         )
 
         // ─── LLM (avec timeout + fallback) ──────────────────────────────────────
-        val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.LLM)
+        // BUGFIX v2026.05.24 : resolve provider AVANT fetch key (cle dediee
+        // au provider resolu, pas LLM hardcode qui envoyait Groq -> 401 sur GitHub).
+        val llmConfig = llmResolver.resolveWithProfile(com.shredcoach.app.domain.llm.AiAssistant.MEAL_DEBRIEF, profile)
+        val provider = llmConfig.provider
+        val model: String? = llmConfig.modelId
+        val apiKey = keyResolver.keyFor(provider)
         val llmMessage = if (apiKey.isNotBlank()) {
             try {
-                // Resolver per-assistant : MEAL_DEBRIEF configurable via Settings.
-                val llmConfig = llmResolver.resolveWithProfile(com.shredcoach.app.domain.llm.AiAssistant.MEAL_DEBRIEF, profile)
-                val provider = llmConfig.provider
-                val model: String? = llmConfig.modelId
                 withTimeout(25_000) {
                     chatRepository.quickCoachMessage(
                         prompt = userPrompt,

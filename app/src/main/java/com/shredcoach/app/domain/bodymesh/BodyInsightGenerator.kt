@@ -46,6 +46,7 @@ class BodyInsightGenerator @Inject constructor(
     private val chatRepository: ChatRepository,
     private val consentStore: ConsentStore,
     private val llmResolver: com.shredcoach.app.domain.llm.AssistantLlmResolver,
+    private val keyResolver: com.shredcoach.app.domain.llm.LlmKeyResolver,
 ) {
 
     /**
@@ -67,14 +68,14 @@ class BodyInsightGenerator @Inject constructor(
         // ─── 2. Triple gate ───
         val consentSnap = consentStore.snapshot.first()
         if (!consentSnap.isCurrent(ConsentStore.ConsentType.LLM_CHAT)) return null
-        val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.LLM)
-        if (apiKey.isBlank()) return null
 
         // ─── 3. Génération LLM ───
-        // Resolver per-assistant : BODY_INSIGHT configurable via Settings.
+        // BUGFIX v2026.05.24 : resolve provider AVANT fetch key.
         val llmConfig = llmResolver.resolveWithProfile(com.shredcoach.app.domain.llm.AiAssistant.BODY_INSIGHT, profile)
         val provider = llmConfig.provider
         val model: String? = llmConfig.modelId
+        val apiKey = keyResolver.keyFor(provider)
+        if (apiKey.isBlank()) return null
 
         val systemPrompt = buildSystemPrompt()
         val userPrompt = buildUserPrompt(features, profile)

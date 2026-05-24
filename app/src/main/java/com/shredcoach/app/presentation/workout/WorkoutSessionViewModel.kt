@@ -238,6 +238,7 @@ class WorkoutSessionViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val scheduledWorkoutRepository: com.shredcoach.app.data.repository.ScheduledWorkoutRepository,
     private val llmResolver: com.shredcoach.app.domain.llm.AssistantLlmResolver,
+    private val keyResolver: com.shredcoach.app.domain.llm.LlmKeyResolver,
     val sessionManager: ActiveSessionManager,
     @dagger.hilt.android.qualifiers.ApplicationContext private val appContext: android.content.Context,
     savedStateHandle: SavedStateHandle
@@ -1184,14 +1185,13 @@ class WorkoutSessionViewModel @Inject constructor(
             )
 
             val profile = userRepository.getUserProfileOnce()
-            val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.LLM)
+            // BUGFIX v2026.05.24 : resolve provider AVANT fetch key.
+            val llmConfig = llmResolver.resolveWithProfile(com.shredcoach.app.domain.llm.AiAssistant.CHAT_SHREDDY, profile)
+            val provider = llmConfig.provider
+            val model: String? = llmConfig.modelId
+            val apiKey = keyResolver.keyFor(provider)
 
             if (apiKey.isNotBlank()) {
-                // Resolver per-assistant : voix coach Shreddy en seance utilise
-                // CHAT_SHREDDY (back-compat avec le LLM choisi pour le chat).
-                val llmConfig = llmResolver.resolveWithProfile(com.shredcoach.app.domain.llm.AiAssistant.CHAT_SHREDDY, profile)
-                val provider = llmConfig.provider
-                val model: String? = llmConfig.modelId
                 val prompt = ShreddyCoachMessages.buildExercisePrompt(
                     firstName = firstName, exerciseName = exoName,
                     sets = doneSets.size, reps = totalReps,
@@ -1292,13 +1292,12 @@ class WorkoutSessionViewModel @Inject constructor(
                 isPersonalRecord = s.isPersonalRecord, goalName = s.userGoalName
             )
             val profile = userRepository.getUserProfileOnce()
-            val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.LLM)
+            // BUGFIX v2026.05.24 : resolve provider AVANT fetch key.
+            val llmConfig = llmResolver.resolveWithProfile(com.shredcoach.app.domain.llm.AiAssistant.CHAT_SHREDDY, profile)
+            val provider = llmConfig.provider
+            val model: String? = llmConfig.modelId
+            val apiKey = keyResolver.keyFor(provider)
             if (apiKey.isNotBlank()) {
-                // Resolver per-assistant : voix coach Shreddy en seance utilise
-                // CHAT_SHREDDY (back-compat avec le LLM choisi pour le chat).
-                val llmConfig = llmResolver.resolveWithProfile(com.shredcoach.app.domain.llm.AiAssistant.CHAT_SHREDDY, profile)
-                val provider = llmConfig.provider
-                val model: String? = llmConfig.modelId
                 val prompt = ShreddyCoachMessages.buildExercisePrompt(
                     firstName = firstName, exerciseName = exoName,
                     sets = doneSets.size, reps = totalReps, volume = totalVol,
@@ -1505,15 +1504,14 @@ class WorkoutSessionViewModel @Inject constructor(
                 sessionManager.lastShreddyMessage = fallbackMsg
                 _state.update { it.copy(isSessionComplete = true, shreddyCoachMessage = fallbackMsg) }
 
-                // Appel LLM en arrière-plan — met à jour le summary si encore visible
+                // Appel LLM en arrière-plan — BUGFIX v2026.05.24 : resolve AVANT fetch key.
                 val profile2 = profileFresh
-                val apiKey = userRepository.getApiKey(SecureKeyStore.Provider.LLM)
+                val llmConfig2 = llmResolver.resolveWithProfile(com.shredcoach.app.domain.llm.AiAssistant.CHAT_SHREDDY, profile2)
+                val provider = llmConfig2.provider
+                val model: String? = llmConfig2.modelId
+                val apiKey = keyResolver.keyFor(provider)
                 if (apiKey.isNotBlank()) {
                     viewModelScope.launch {
-                        // Resolver per-assistant : meme route CHAT_SHREDDY pour la voix coach.
-                        val llmConfig2 = llmResolver.resolveWithProfile(com.shredcoach.app.domain.llm.AiAssistant.CHAT_SHREDDY, profile2)
-                        val provider = llmConfig2.provider
-                        val model: String? = llmConfig2.modelId
                         val prompt = ShreddyCoachMessages.buildSessionPrompt(
                             firstName = firstName,
                             totalSets = s.totalSetsCompleted, totalReps = s.totalRepsCompleted,
