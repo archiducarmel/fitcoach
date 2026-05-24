@@ -266,6 +266,43 @@ class LlmDebugViewModel @Inject constructor(
         _state.update { it.copy(pickerProviderFilter = provider) }
     }
 
+    /** Filtre par "model maker" — l'editeur qui a entraine les poids
+     *  (meta, openai, mistralai, etc.). Distinct du service provider qui
+     *  expose les endpoints (NVIDIA NIM, GitHub Models, Groq, etc.). */
+    fun setPickerModelMakerFilter(maker: String?) {
+        _state.update { it.copy(pickerModelMakerFilter = maker) }
+    }
+
+    fun setPickerSortMode(mode: PickerSortMode) {
+        _state.update { it.copy(pickerSortMode = mode) }
+    }
+
+    /** Applique un preset rapide (Chat, Code, Vision...) — combine
+     *  kind filter + reset search + clear maker pour repartir propre. */
+    fun applyPickerPreset(preset: PickerPreset) {
+        _state.update {
+            it.copy(
+                pickerSearch = "",
+                pickerKindFilter = preset.kind,
+                pickerModelMakerFilter = null,
+                pickerProviderFilter = null,
+            )
+        }
+    }
+
+    fun clearAllPickerFilters() {
+        _state.update {
+            it.copy(
+                pickerSearch = "",
+                pickerKindFilter = null,
+                pickerProviderFilter = null,
+                pickerModelMakerFilter = null,
+                pickerHideGated = true,
+                pickerSortMode = PickerSortMode.RECOMMENDED,
+            )
+        }
+    }
+
     fun togglePickerHideGated() {
         _state.update { it.copy(pickerHideGated = !it.pickerHideGated) }
     }
@@ -792,6 +829,27 @@ data class DebugChatMessage(
     val thinkingText: String = "",
 )
 
+/** Modes de tri pour le picker. RECOMMENDED = ordre catalogue (statique d'abord, puis NVIDIA, puis GitHub). */
+enum class PickerSortMode(val label: String, val emoji: String) {
+    RECOMMENDED("Recommandé", "⭐"),
+    NAME_ASC("Nom (A → Z)", "🔤"),
+    NEWEST("Plus récents", "🆕"),
+    LARGEST("Plus gros", "🐘"),
+    SMALLEST("Plus petits", "🐭"),
+}
+
+/** Presets rapides : un tap = applique un kind filter + reset autres filtres. */
+enum class PickerPreset(val label: String, val emoji: String, val kind: ModelKind?) {
+    ALL("Tous", "🌐", null),
+    CHAT("Discussion", "💬", ModelKind.LANGUAGE),
+    VISION("Vision", "👁", ModelKind.VLM),
+    IMAGE("Image", "🎨", ModelKind.IMAGE_GENERATION),
+    VOICE_TTS("Voix synthèse", "🔊", ModelKind.TTS),
+    VOICE_STT("Voix→texte", "🎙", ModelKind.STT),
+    EMBED("Embeddings", "📐", ModelKind.EMBEDDING),
+    SAFETY("Modération", "🛡", ModelKind.CLASSIFICATION),
+}
+
 @Immutable
 data class LlmDebugState(
     /** Modeles statiques (hardcoded dans LlmCatalog) + dynamiques GitHub + NVIDIA. */
@@ -807,7 +865,12 @@ data class LlmDebugState(
     val pickerOpen: Boolean = false,
     val pickerSearch: String = "",
     val pickerKindFilter: ModelKind? = null,
+    /** Service provider (qui SERT l'API : NVIDIA NIM, GitHub Models, Groq...). */
     val pickerProviderFilter: LlmProvider? = null,
+    /** Model maker (qui A FAIT les poids : meta, openai, mistralai, deepseek-ai...).
+     *  Match sur la chaine lowercase de `info.publisher`. */
+    val pickerModelMakerFilter: String? = null,
+    val pickerSortMode: PickerSortMode = PickerSortMode.RECOMMENDED,
     val pickerHideGated: Boolean = true, // hide gated par defaut (clarte free tier)
 
     // Chat state

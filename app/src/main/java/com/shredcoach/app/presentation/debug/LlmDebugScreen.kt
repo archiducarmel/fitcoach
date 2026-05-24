@@ -207,6 +207,10 @@ fun LlmDebugScreen(
                 onSearch = { viewModel.setPickerSearch(it) },
                 onFilterKind = { viewModel.setPickerKindFilter(it) },
                 onFilterProvider = { viewModel.setPickerProviderFilter(it) },
+                onFilterModelMaker = { viewModel.setPickerModelMakerFilter(it) },
+                onApplyPreset = { viewModel.applyPickerPreset(it) },
+                onSetSortMode = { viewModel.setPickerSortMode(it) },
+                onClearAll = { viewModel.clearAllPickerFilters() },
                 onToggleHideGated = { viewModel.togglePickerHideGated() },
                 onRefreshCatalog = { viewModel.refreshAllCatalogs() },
             )

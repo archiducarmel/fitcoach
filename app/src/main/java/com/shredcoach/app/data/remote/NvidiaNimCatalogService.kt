@@ -176,45 +176,98 @@ class NvidiaNimCatalogService @Inject constructor(
     }
 
     private fun inferKindFromId(lower: String): ModelKind = when {
-        // Embedding / reranking
-        lower.contains("rerank") -> ModelKind.RERANKER
+        // ─── Embeddings multimodaux (priorite haute pour ne pas etre vole par VLM) ──
         lower.contains("nvclip") -> ModelKind.MULTIMODAL_EMBEDDING
-        lower.contains("embed") -> ModelKind.EMBEDDING
-        // Safety / moderation / PII
+        lower.contains("nemoretriever") && (lower.contains("vlm") || lower.contains("-vl-") ||
+            lower.endsWith("-vl") || lower.contains("multimodal") || lower.contains("embed")) ->
+                ModelKind.MULTIMODAL_EMBEDDING
+        lower.contains("embed-vl") || lower.contains("vl-embed") -> ModelKind.MULTIMODAL_EMBEDDING
+
+        // ─── Reranking ─────────────────────────────────────────────────────
+        lower.contains("rerank") -> ModelKind.RERANKER
+
+        // ─── Embeddings text-only (incl. familles connues sans 'embed' dans l'id) ──
+        lower.contains("embed") || lower.contains("/bge-") || lower.contains("baai/bge") ||
+            lower.endsWith("/bge-m3") || lower.contains("/gte-") || lower.contains("arctic-embed") ||
+            lower.contains("e5-mistral") || lower.contains("/sentence-t5") ||
+            lower.contains("instructor-xl") -> ModelKind.EMBEDDING
+
+        // ─── Safety / moderation / PII / deepfake ──────────────────────────
         lower.contains("guard") || lower.contains("nemoguard") || lower.contains("jailbreak") ||
-            lower.contains("gliner-pii") || lower.contains("deepfake") -> ModelKind.CLASSIFICATION
+            lower.contains("gliner-pii") || lower.contains("deepfake") ||
+            lower.contains("synthetic-video-detector") || lower.contains("content-safety") ||
+            lower.contains("safety-guard") || lower.contains("topic-control") -> ModelKind.CLASSIFICATION
         lower.contains("reward") -> ModelKind.REWARD_MODEL
-        // OCR / document parsing
+
+        // ─── OCR / document parsing ────────────────────────────────────────
         lower.contains("ocr") || lower.contains("ocdrnet") || lower.contains("deplot") ||
-            lower.contains("paddleocr") -> ModelKind.OCR
-        // Sciences (bio/drug/weather/auto)
+            lower.contains("paddleocr") || lower.contains("nemotron-parse") ||
+            lower.contains("nemoretriever-parse") -> ModelKind.OCR
+
+        // ─── Sciences (bio/drug/weather/auto/quantum) ──────────────────────
         lower.contains("alphafold") || lower.contains("esmfold") || lower.contains("esm2") ||
             lower.contains("diffdock") || lower.contains("boltz") || lower.contains("molmim") ||
             lower.contains("genmol") || lower.contains("proteinmpnn") || lower.contains("rfdiffusion") ||
             lower.contains("evo2") || lower.contains("maisi") || lower.contains("vista3d") ||
-            lower.contains("corrdiff") || lower.contains("fourcastnet") -> ModelKind.SCIENTIFIC
+            lower.contains("corrdiff") || lower.contains("fourcastnet") ||
+            lower.contains("ising-calibration") -> ModelKind.SCIENTIFIC
         lower.contains("cuopt") -> ModelKind.OPTIMIZATION
-        // Object detection
+
+        // ─── Object detection ──────────────────────────────────────────────
         lower.contains("dinov2") || lower.contains("grounding-dino") ||
             lower.contains("retail-object-detection") || lower.contains("sparsedrive") ||
             lower.contains("streampetr") || lower.contains("bevformer") ||
             lower.contains("visual-changenet") -> ModelKind.OBJECT_DETECTION
-        // STT / TTS dedicated
+
+        // ─── STT / TTS dedies ──────────────────────────────────────────────
         lower.contains("whisper") || lower.contains("parakeet") || lower.contains("canary") ||
             lower.contains("-asr") || lower.contains("/asr-") -> ModelKind.STT
-        lower.contains("magpie") || lower.contains("/tts-") || lower.contains("-tts-") -> ModelKind.TTS
-        // Image / video gen
+        lower.contains("magpie") || lower.contains("/tts-") || lower.contains("-tts-") ||
+            lower.contains("riva-tts") -> ModelKind.TTS
+
+        // ─── Image / video gen ─────────────────────────────────────────────
         lower.contains("flux") || lower.contains("stable-diffusion") || lower.contains("sdxl") ||
-            lower.contains("dall-e") || lower.contains("/sd-v") -> ModelKind.IMAGE_GENERATION
+            lower.contains("dall-e") || lower.contains("/sd-v") ||
+            lower.contains("dreamshaper") -> ModelKind.IMAGE_GENERATION
         lower.contains("stable-video") || lower.contains("trellis") ||
-            lower.contains("cosmos-predict") -> ModelKind.VIDEO_GENERATION
-        // VLM explicit
-        lower.contains("-vl-") || lower.contains("-vlm") || lower.contains("vision-instruct") ||
+            lower.contains("cosmos-predict") || lower.contains("cosmos-transfer") ||
+            lower.contains("cosmos-vid2vid") -> ModelKind.VIDEO_GENERATION
+
+        // ─── VLM (multimodal vision-langage) ───────────────────────────────
+        // Suffix/middle "-vl-" / "-vl" / "-vlm"
+        lower.contains("-vl-") || lower.endsWith("-vl") || lower.contains("-vlm") ||
+            lower.endsWith("-vlm") ||
+            // Famille vision Llama
+            lower.contains("vision-instruct") || lower.contains("vision-128k") ||
+            lower.contains("llama-4-maverick") || lower.contains("llama-4-scout") ||
+            // VLMs NVIDIA dedies
             lower.contains("vila") || lower.contains("neva") || lower.contains("kosmos") ||
             lower.contains("fuyu") || lower.contains("llava") || lower.contains("idefics") ||
-            lower.contains("minicpm-v") || lower.contains("phi-3.5-vision") ||
-            lower.contains("phi-4-multimodal") -> ModelKind.VLM
-        // Default : chat language model
+            lower.contains("minicpm-v") || lower.contains("cosmos-reason") ||
+            // Phi/Gemma multimodaux
+            lower.contains("phi-3.5-vision") || lower.contains("phi-4-multimodal") ||
+            lower.contains("phi-3-vision") || lower.contains("gemma-3-4b") ||
+            lower.contains("gemma-3-12b") || lower.contains("gemma-3n-") ||
+            lower.contains("gemma-4-") ||
+            // Mistral derniere gen multimodale
+            lower.contains("pixtral") || lower.contains("ministral-14b-instruct-2512") ||
+            lower.contains("ministral-3b") || lower.contains("mistral-medium-3.5") ||
+            lower.contains("mistral-medium-2505") || lower.contains("mistral-small-2503") ||
+            lower.contains("mistral-large-3") ||
+            // Qwen 3.5 et Qwen2-VL multimodaux
+            lower.contains("qwen3.5") || lower.contains("qwen2-vl") || lower.contains("qwen2.5-vl") ||
+            // Moonshot/Kimi
+            lower.contains("kimi-k2") || lower.contains("kimi-vl") ||
+            // MiniMax M2.7 multimodal
+            lower.contains("minimax-m2") ||
+            // Nemotron omni / nano-omni
+            lower.contains("nemotron-nano-omni") || lower.contains("nemotron-omni") ||
+            lower.contains("nano-omni") ||
+            // GPT-4o / GPT-4.1 / GPT-5 omnimodaux OpenAI
+            lower.contains("gpt-4o") || lower.contains("gpt-4.1") || lower.contains("gpt-5") ->
+                ModelKind.VLM
+
+        // ─── Default : chat language model ─────────────────────────────────
         else -> ModelKind.LANGUAGE
     }
 
